@@ -1,4 +1,4 @@
-export { toRpcSocket, wsAdapter } from './adapters/ws-adapter.ts';
+export { toRpcSocket, wsAdapter } from './adapters/node-ws-adapter.ts';
 export {
   type AuthContext,
   type Authenticator,
@@ -31,7 +31,7 @@ export type {
   CreateSocketOptions,
   RpcSocket as WsRpcSocket,
   WsAdapter,
-} from './ws-adapter.ts';
+} from './types.ts';
 export { WsClient } from './ws-client.ts';
 export {
   type ConnectionContext,

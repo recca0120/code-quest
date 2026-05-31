@@ -218,7 +218,7 @@ describe('GitPane', () => {
 
     const menu = await screen.findByRole('menu');
     expect(menu).toBeInTheDocument();
-    // `main` is listed (FakeGitService seeds it by default).
+    // `main` is listed (FakeGit seeds it by default).
     const main = await screen.findAllByText('main');
     expect(main.length).toBeGreaterThan(0);
   });
@@ -235,7 +235,7 @@ describe('GitPane', () => {
     await user.click(screen.getByRole('button', { name: /switch branch/i }));
     // Wait for popover to render branch list
     const items = await screen.findAllByRole('menuitem');
-    // Click 'main' item (the only branch seeded by FakeGitService)
+    // Click 'main' item (the only branch seeded by FakeGit)
     const mainItem = items.find((el) => el.textContent?.includes('main'));
     if (!mainItem) throw new Error('main branch item not found');
     await user.click(mainItem);

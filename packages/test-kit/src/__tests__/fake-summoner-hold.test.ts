@@ -1,6 +1,6 @@
 import {
   createFakeSocket,
-  FakeFilesystemService,
+  FakeFilesystem,
   FakeProcessProvider,
   FakeSummoner,
 } from '@code-quest/test-kit';
@@ -13,7 +13,7 @@ function createTestSummoner() {
     connect: () => ({
       socket,
       provider,
-      filesystem: new FakeFilesystemService(),
+      filesystem: new FakeFilesystem(),
     }),
   };
   return new FakeSummoner(server);

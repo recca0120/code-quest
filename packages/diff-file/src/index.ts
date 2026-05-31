@@ -1,2 +1,2 @@
-export { LocalDiffFileService } from './local.ts';
-export type { DiffFileService } from './types.ts';
+export { LocalDiffFile } from './local-diff-file.ts';
+export type { DiffFile } from './types.ts';

@@ -1,13 +1,13 @@
-import type { FilesystemService } from '@code-quest/filesystem';
-import type { GitService } from '@code-quest/git';
-import type { OpenspecService } from '@code-quest/openspec';
+import type { RootGuardFilesystem } from '@code-quest/filesystem';
+import type { Git } from '@code-quest/git';
+import type { Openspec } from '@code-quest/openspec';
 import type { PluginCliService } from '@code-quest/summoner';
-import type { FakeOpenspecService, FakePluginCliService } from '@code-quest/summoner/test';
+import type { FakeOpenspec, FakePluginCli } from '@code-quest/summoner/test';
 import {
   createFakeSocket,
   type FakeClaude,
-  type FakeFilesystemService,
-  type FakeGitService,
+  type FakeFilesystem,
+  type FakeGit,
   FakeProcessProvider,
   type FakeSocket,
   type FakeSummoner,
@@ -53,10 +53,10 @@ export class FakeServer {
   connect(): {
     socket: FakeSocket;
     provider: FakeProcessProvider;
-    filesystem: FakeFilesystemService;
-    git: FakeGitService;
-    openspec: FakeOpenspecService;
-    pluginCli: FakePluginCliService;
+    filesystem: FakeFilesystem;
+    git: FakeGit;
+    openspec: FakeOpenspec;
+    pluginCli: FakePluginCli;
   } {
     const socket = createFakeSocket();
     this._allServerSockets.push(socket.serverSocket);
@@ -65,16 +65,15 @@ export class FakeServer {
     if (!this._container.isBound(TYPES.ProcessProvider)) {
       this._container.bind(TYPES.ProcessProvider).toConstantValue(provider);
     }
-    const filesystem = this._container.get<FilesystemService>(
-      TYPES.FilesystemService,
-    ) as FakeFilesystemService;
-    const git = this._container.get<GitService>(TYPES.GitService) as FakeGitService;
-    const openspec = this._container.get<OpenspecService>(
-      TYPES.OpenspecService,
-    ) as FakeOpenspecService;
+    const guarded = this._container.get<RootGuardFilesystem>(
+      TYPES.Filesystem,
+    ) as RootGuardFilesystem;
+    const filesystem = guarded.filesystem as FakeFilesystem;
+    const git = this._container.get<Git>(TYPES.Git) as FakeGit;
+    const openspec = this._container.get<Openspec>(TYPES.Openspec) as FakeOpenspec;
     const pluginCli = this._container.get<PluginCliService>(
       TYPES.PluginCliService,
-    ) as FakePluginCliService;
+    ) as FakePluginCli;
     return { socket, provider, filesystem, git, openspec, pluginCli };
   }
 }

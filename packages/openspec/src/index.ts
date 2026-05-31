@@ -1,2 +1,2 @@
-export { LocalOpenspecService } from './local.ts';
-export type { OpenspecArchiveOptions, OpenspecService } from './types.ts';
+export { LocalOpenspec } from './local-openspec.ts';
+export type { Openspec, OpenspecArchiveOptions } from './types.ts';

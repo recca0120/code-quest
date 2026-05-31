@@ -1,9 +1,9 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { RemoteFilesystemService } from '@code-quest/filesystem';
-import { RemoteGitService } from '@code-quest/git';
+import { RemoteFilesystem } from '@code-quest/filesystem';
+import { RemoteGit } from '@code-quest/git';
 import { Agent, FsHandler, GitHandler, ProcessHandler } from '@code-quest/summoner/connection';
-import { FakeFilesystemService, FakeGitService, FakeProcessProvider } from '@code-quest/test-kit';
+import { FakeFilesystem, FakeGit, FakeProcessProvider } from '@code-quest/test-kit';
 import { RpcChannel, type RpcChannelSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
@@ -22,8 +22,8 @@ function makeSetup() {
   let wss: WebSocketServer;
 
   async function setup() {
-    const filesystem = new FakeFilesystemService();
-    const git = new FakeGitService();
+    const filesystem = new FakeFilesystem();
+    const git = new FakeGit();
 
     httpServer = createServer();
     wss = new WebSocketServer({ noServer: true });
@@ -45,8 +45,8 @@ function makeSetup() {
     await new Promise<void>((r) => clientWs.once('open', r));
 
     const rpc = new RpcChannel(wrapWs(clientWs));
-    const fsService = new RemoteFilesystemService(rpc);
-    const gitService = new RemoteGitService(rpc);
+    const fsService = new RemoteFilesystem(rpc);
+    const gitService = new RemoteGit(rpc);
 
     return { filesystem, git, rpc, fsService, gitService, clientWs };
   }
@@ -61,9 +61,9 @@ function makeSetup() {
   return { setup, teardown };
 }
 
-// ─── RemoteFilesystemService ────────────────────────────────────────────────
+// ─── RemoteFilesystem ────────────────────────────────────────────────
 
-describe('RemoteFilesystemService', () => {
+describe('RemoteFilesystem', () => {
   const { setup, teardown } = makeSetup();
   let ctx: Awaited<ReturnType<ReturnType<typeof makeSetup>['setup']>>;
 
@@ -184,9 +184,9 @@ describe('RemoteFilesystemService', () => {
   });
 });
 
-// ─── RemoteGitService ────────────────────────────────────────────────────────
+// ─── RemoteGit ────────────────────────────────────────────────────────
 
-describe('RemoteGitService', () => {
+describe('RemoteGit', () => {
   const { setup, teardown } = makeSetup();
   let ctx: Awaited<ReturnType<ReturnType<typeof makeSetup>['setup']>>;
 

@@ -13,7 +13,7 @@ export interface OpenspecArchiveOptions {
   skipSpecs?: boolean;
 }
 
-export interface OpenspecService {
+export interface Openspec {
   list(cwd: string): Promise<OpenspecListResult>;
   read(
     cwd: string,

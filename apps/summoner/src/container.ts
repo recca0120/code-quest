@@ -5,13 +5,13 @@ import {
   LocalBroadcaster,
   OpenspecDataSource,
 } from '@code-quest/broadcaster';
-import type { FilesystemService } from '@code-quest/filesystem';
-import { LocalFilesystemService, LocalRootGuard } from '@code-quest/filesystem';
-import type { GitService } from '@code-quest/git';
-import { LocalGitService } from '@code-quest/git';
-import { LocalOpenspecService } from '@code-quest/openspec';
+import { LocalFileWatcher } from '@code-quest/file-watcher';
+import type { Filesystem } from '@code-quest/filesystem';
+import { LocalFilesystem, RootGuardFilesystem } from '@code-quest/filesystem';
+import type { Git } from '@code-quest/git';
+import { LocalGit } from '@code-quest/git';
+import { LocalOpenspec } from '@code-quest/openspec';
 import type { ProcessProvider } from '@code-quest/schemas';
-import { LocalWatchService } from '@code-quest/watch';
 import type { RemoteConfig as Config } from './config.ts';
 import { ChildProcessProvider } from './transports/child-process.ts';
 
@@ -41,24 +41,23 @@ export class Container {
 }
 
 export const TOKENS: {
-  Filesystem: Token<FilesystemService>;
-  Git: Token<GitService>;
+  Filesystem: Token<Filesystem>;
+  Git: Token<Git>;
   ProcessProvider: Token<ProcessProvider>;
   Broadcaster: Token<Broadcaster>;
 } = {
-  Filesystem: new Token<FilesystemService>('FilesystemService'),
-  Git: new Token<GitService>('GitService'),
+  Filesystem: new Token<Filesystem>('Filesystem'),
+  Git: new Token<Git>('Git'),
   ProcessProvider: new Token<ProcessProvider>('ProcessProvider'),
   Broadcaster: new Token<Broadcaster>('Broadcaster'),
 };
 
 export function createContainer(config: Config): Container {
   const processProvider = new ChildProcessProvider();
-  const rootGuard = new LocalRootGuard(config.fsRoots);
-  const filesystem = new LocalFilesystemService(config.fsRoots, rootGuard);
-  const git = new LocalGitService();
-  const watchService = new LocalWatchService();
-  const openspec = new LocalOpenspecService(filesystem, processProvider);
+  const filesystem = new RootGuardFilesystem(new LocalFilesystem(), config.fsRoots);
+  const git = new LocalGit();
+  const watchService = new LocalFileWatcher();
+  const openspec = new LocalOpenspec(filesystem, processProvider);
 
   const broadcaster = new LocalBroadcaster()
     .add('files', (cwd) => new FilesDataSource(cwd, watchService, filesystem))

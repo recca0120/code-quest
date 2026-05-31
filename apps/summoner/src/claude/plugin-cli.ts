@@ -30,7 +30,7 @@ interface LocalPluginCliOptions {
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
-export class LocalPluginCliService implements PluginCliService {
+export class LocalPluginCli implements PluginCliService {
   private readonly binary: string;
   private readonly subcommand: string;
   private readonly timeoutMs: number;
@@ -68,10 +68,7 @@ export class LocalPluginCliService implements PluginCliService {
       const stdout = await readFile(outPath, 'utf-8');
       return { stdout, stderr: result.stderr, ok: result.ok };
     } catch (err) {
-      logger.error(
-        { err, binary: this.binary, args: fullArgs },
-        '[LocalPluginCliService] run failed',
-      );
+      logger.error({ err, binary: this.binary, args: fullArgs }, '[LocalPluginCli] run failed');
       return { stdout: '', stderr: errMsg(err), ok: false };
     } finally {
       if (outFh) await outFh.close().catch(() => {});

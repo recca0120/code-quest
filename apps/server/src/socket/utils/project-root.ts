@@ -1,4 +1,4 @@
-import type { GitService } from '@code-quest/git';
+import type { Git } from '@code-quest/git';
 import { logger } from '../../logger.ts';
 
 /**
@@ -8,7 +8,7 @@ import { logger } from '../../logger.ts';
  * cwd is inside a repo, otherwise falls back to `cwd` itself so the
  * caller always gets a non-null string (matches the required schema).
  */
-export async function resolveProjectRoot(gitService: GitService, cwd: string): Promise<string> {
+export async function resolveProjectRoot(gitService: Git, cwd: string): Promise<string> {
   const root = await gitService.getProjectRoot(cwd).catch((err) => {
     logger.debug({ err, cwd }, 'getProjectRoot failed, falling back to cwd');
     return null;

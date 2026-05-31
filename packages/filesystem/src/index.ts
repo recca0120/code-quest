@@ -1,15 +1,15 @@
-export { LocalFilesystemService } from './local.ts';
-export { LocalRootGuard } from './local-root-guard.ts';
-export { RemoteFilesystemService } from './remote.ts';
+export { isPathWithin } from './is-path-within.ts';
+export { LocalFilesystem } from './local-filesystem.ts';
+export { RemoteFilesystem } from './remote-filesystem.ts';
+export { RootGuardFilesystem } from './root-guard-filesystem.ts';
 export type {
   DirectoryEntry,
   FileKind,
   FileResult,
-  FilesystemService,
+  Filesystem,
   FsMutationResult,
   ReadFileAbsoluteResult,
   ReadFileResult,
-  RootGuard,
   WriteFileResult,
 } from './types.ts';
 export { PathOutsideRootsError } from './types.ts';

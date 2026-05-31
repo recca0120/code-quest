@@ -369,13 +369,13 @@ describe('ChatHandler > control', () => {
 
   describe('open_diff error handling', () => {
     it('auto-denies control request when diffFileService.read throws', async () => {
-      const throwingDiffFileService = {
+      const throwingDiffFile = {
         async read(): Promise<string> {
           throw new Error('disk read failed');
         },
       };
       const container = createTestContainer({
-        diffFileService: throwingDiffFileService,
+        diffFileService: throwingDiffFile,
       });
       const server = createFakeServer(container);
       const summoner = createFakeSummoner(server);

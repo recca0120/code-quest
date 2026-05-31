@@ -2,7 +2,7 @@ import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
-import { wsAdapter } from '../adapters/ws-adapter.ts';
+import { wsAdapter } from '../adapters/node-ws-adapter.ts';
 
 describe('wsAdapter — createSocket', () => {
   let httpServer: HttpServer;

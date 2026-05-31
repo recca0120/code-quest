@@ -1,9 +1,9 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness uses type assertions */
 
-import type { FakeOpenspecService, FakePluginCliService } from '@code-quest/summoner/test';
+import type { FakeOpenspec, FakePluginCli } from '@code-quest/summoner/test';
 import { FakeClaude } from './fake-claude.ts';
-import type { FakeFilesystemService } from './fake-filesystem-service.ts';
-import type { FakeGitService } from './fake-git-service.ts';
+import type { FakeFilesystem } from './fake-filesystem.ts';
+import type { FakeGit } from './fake-git.ts';
 import type { FakeProcessProvider } from './fake-process-provider.ts';
 import type { FakeSocket } from './fake-socket.ts';
 
@@ -16,10 +16,10 @@ import type { FakeSocket } from './fake-socket.ts';
 export class FakeSummoner {
   private readonly _socket: FakeSocket;
   private readonly _provider: FakeProcessProvider;
-  private readonly _filesystem: FakeFilesystemService;
-  private readonly _git?: FakeGitService;
-  private readonly _openspec?: FakeOpenspecService;
-  private readonly _pluginCli?: FakePluginCliService;
+  private readonly _filesystem: FakeFilesystem;
+  private readonly _git?: FakeGit;
+  private readonly _openspec?: FakeOpenspec;
+  private readonly _pluginCli?: FakePluginCli;
   private readonly _recordedEvents: Array<{ event: string; payload: any }> = [];
   private readonly _sentEvents: Array<{ event: string; payload: any }> = [];
   private _claude?: FakeClaude;
@@ -72,23 +72,23 @@ export class FakeSummoner {
     return this._socket;
   }
 
-  /** Get the FakeFilesystemService. */
-  filesystem(): FakeFilesystemService {
+  /** Get the FakeFilesystem. */
+  filesystem(): FakeFilesystem {
     return this._filesystem;
   }
 
-  /** Get the FakeGitService (only available when connected to a server with GitService). */
-  git(): FakeGitService | undefined {
+  /** Get the FakeGit (only available when connected to a server with Git). */
+  git(): FakeGit | undefined {
     return this._git;
   }
 
-  /** Get the FakeOpenspecService. */
-  openspec(): FakeOpenspecService | undefined {
+  /** Get the FakeOpenspec. */
+  openspec(): FakeOpenspec | undefined {
     return this._openspec;
   }
 
-  /** Get the FakePluginCliService (only when wired by server FakeServer). */
-  pluginCli(): FakePluginCliService | undefined {
+  /** Get the FakePluginCli (only when wired by server FakeServer). */
+  pluginCli(): FakePluginCli | undefined {
     return this._pluginCli;
   }
 
@@ -168,10 +168,10 @@ export interface ServerConnector {
   connect(): {
     socket: FakeSocket;
     provider: FakeProcessProvider;
-    filesystem: FakeFilesystemService;
-    git?: FakeGitService;
-    openspec?: FakeOpenspecService;
-    pluginCli?: FakePluginCliService;
+    filesystem: FakeFilesystem;
+    git?: FakeGit;
+    openspec?: FakeOpenspec;
+    pluginCli?: FakePluginCli;
   };
 }
 

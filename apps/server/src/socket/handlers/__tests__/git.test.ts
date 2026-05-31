@@ -76,7 +76,7 @@ describe('ChatHandler > git', () => {
 
     it('git:diff returns empty string on error', async () => {
       const { claude } = await setup();
-      // FakeGitService default: empty diff
+      // FakeGit default: empty diff
 
       const result = await claude.send<{ diff: string }>('git:diff', { cwd: '/repo' });
 

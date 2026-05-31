@@ -38,6 +38,9 @@ importers:
       '@code-quest/diff-file':
         specifier: workspace:*
         version: link:../../packages/diff-file
+      '@code-quest/file-watcher':
+        specifier: workspace:*
+        version: link:../../packages/file-watcher
       '@code-quest/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
@@ -59,9 +62,6 @@ importers:
       '@code-quest/utils':
         specifier: workspace:*
         version: link:../../packages/utils
-      '@code-quest/watch':
-        specifier: workspace:*
-        version: link:../../packages/watch
       better-sqlite3:
         specifier: ^12.10.0
         version: 12.10.0
@@ -162,6 +162,9 @@ importers:
       '@code-quest/diff-file':
         specifier: workspace:*
         version: link:../../packages/diff-file
+      '@code-quest/file-watcher':
+        specifier: workspace:*
+        version: link:../../packages/file-watcher
       '@code-quest/filesystem':
         specifier: workspace:*
         version: link:../../packages/filesystem
@@ -180,9 +183,6 @@ importers:
       '@code-quest/utils':
         specifier: workspace:*
         version: link:../../packages/utils
-      '@code-quest/watch':
-        specifier: workspace:*
-        version: link:../../packages/watch
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
@@ -464,6 +464,9 @@ importers:
 
   packages/broadcaster:
     dependencies:
+      '@code-quest/file-watcher':
+        specifier: workspace:*
+        version: link:../file-watcher
       '@code-quest/filesystem':
         specifier: workspace:*
         version: link:../filesystem
@@ -476,9 +479,6 @@ importers:
       '@code-quest/utils':
         specifier: workspace:*
         version: link:../utils
-      '@code-quest/watch':
-        specifier: workspace:*
-        version: link:../watch
     devDependencies:
       '@code-quest/test-kit':
         specifier: workspace:*
@@ -522,6 +522,25 @@ importers:
         version: 6.0.3
 
   packages/diff-file:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.19.19
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.6
+        version: 4.1.6(@types/node@22.19.19)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@22.19.19)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
+
+  packages/file-watcher:
+    dependencies:
+      '@code-quest/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      chokidar:
+        specifier: ^5.0.0
+        version: 5.0.0
     devDependencies:
       '@types/node':
         specifier: ^22.15.3
@@ -616,6 +635,9 @@ importers:
 
   packages/schemas:
     dependencies:
+      '@code-quest/file-watcher':
+        specifier: workspace:*
+        version: link:../file-watcher
       '@code-quest/filesystem':
         specifier: workspace:*
         version: link:../filesystem
@@ -625,9 +647,6 @@ importers:
       '@code-quest/utils':
         specifier: workspace:*
         version: link:../utils
-      '@code-quest/watch':
-        specifier: workspace:*
-        version: link:../watch
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -644,6 +663,9 @@ importers:
 
   packages/test-kit:
     dependencies:
+      '@code-quest/file-watcher':
+        specifier: workspace:*
+        version: link:../file-watcher
       '@code-quest/filesystem':
         specifier: workspace:*
         version: link:../filesystem
@@ -659,9 +681,6 @@ importers:
       '@code-quest/utils':
         specifier: workspace:*
         version: link:../utils
-      '@code-quest/watch':
-        specifier: workspace:*
-        version: link:../watch
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -709,25 +728,6 @@ importers:
       '@code-quest/schemas':
         specifier: workspace:*
         version: link:../schemas
-    devDependencies:
-      '@types/node':
-        specifier: ^22.15.3
-        version: 22.19.19
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: ^4.1.6
-        version: 4.1.6(@types/node@22.19.19)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@22.19.19)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
-
-  packages/watch:
-    dependencies:
-      '@code-quest/schemas':
-        specifier: workspace:*
-        version: link:../schemas
-      chokidar:
-        specifier: ^5.0.0
-        version: 5.0.0
     devDependencies:
       '@types/node':
         specifier: ^22.15.3

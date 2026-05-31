@@ -1,5 +1,5 @@
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
-import { FakeGitService } from '@code-quest/test-kit';
+import { FakeGit } from '@code-quest/test-kit';
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -8,7 +8,7 @@ import { renderWithWorkspace } from '@/test/render-with-workspace';
 describe('Create Worktree end-to-end flow (right-click → dialog → new tab)', () => {
   it('right-click ProjectCard → Create Worktree… → fill name → submit → new tab in same Project', async () => {
     // Arrange: FakeGit reports /projects/app as the git root for any cwd under it.
-    const fakeGit = new FakeGitService();
+    const fakeGit = new FakeGit();
     fakeGit.setProjectRoot('/projects/app');
     const container = createTestContainer({ gitService: fakeGit });
     const server = createFakeServer(container);

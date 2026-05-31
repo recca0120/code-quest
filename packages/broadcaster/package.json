@@ -17,7 +17,7 @@
     "@code-quest/filesystem": "workspace:*",
     "@code-quest/git": "workspace:*",
     "@code-quest/utils": "workspace:*",
-    "@code-quest/watch": "workspace:*"
+    "@code-quest/file-watcher": "workspace:*"
   },
   "devDependencies": {
     "@code-quest/test-kit": "workspace:*",

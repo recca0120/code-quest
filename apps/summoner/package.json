@@ -28,7 +28,7 @@
     "@code-quest/schemas": "workspace:*",
     "@code-quest/transport": "workspace:*",
     "@code-quest/utils": "workspace:*",
-    "@code-quest/watch": "workspace:*",
+    "@code-quest/file-watcher": "workspace:*",
     "@types/ws": "^8.18.1",
     "dotenv": "^17.4.2",
     "pino": "^10.3.1",

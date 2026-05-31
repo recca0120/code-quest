@@ -1,0 +1,24 @@
+{
+  "name": "@code-quest/file-watcher",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WatchService interface, LocalWatchService (chokidar), RemoteWatchService (RPC)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@code-quest/schemas": "workspace:*",
+    "chokidar": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.6"
+  }
+}

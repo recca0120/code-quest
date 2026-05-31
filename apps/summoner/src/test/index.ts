@@ -1,3 +1,3 @@
-export { FakeDiffFileService } from './fake-diff-file-service.ts';
-export { FakeOpenspecService } from './fake-openspec-service.ts';
-export { FakePluginCliService } from './fake-plugin-cli-service.ts';
+export { FakeDiffFile } from './fake-diff-file.ts';
+export { FakeOpenspec } from './fake-openspec.ts';
+export { FakePluginCli } from './fake-plugin-cli.ts';

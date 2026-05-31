@@ -1,8 +1,8 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
-import type { DiffFileService } from '@code-quest/diff-file';
-import type { FilesystemService } from '@code-quest/filesystem';
-import type { GitService } from '@code-quest/git';
-import type { OpenspecService } from '@code-quest/openspec';
+import type { DiffFile } from '@code-quest/diff-file';
+import type { Filesystem } from '@code-quest/filesystem';
+import type { Git } from '@code-quest/git';
+import type { Openspec } from '@code-quest/openspec';
 import type { LaunchOptions, PluginCliService, ProcessRunner } from '@code-quest/summoner';
 import type { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
 import type { ProjectStore } from './services/project-store.ts';
@@ -33,13 +33,13 @@ export const TYPES: {
   readonly ChannelManager: symbol;
   readonly SessionHistory: symbol;
   readonly ChannelEventRouter: symbol;
-  readonly FilesystemService: symbol;
-  readonly GitService: symbol;
-  readonly OpenspecService: symbol;
+  readonly Filesystem: symbol;
+  readonly Git: symbol;
+  readonly Openspec: symbol;
   readonly PluginCliService: symbol;
-  readonly DiffFileService: symbol;
+  readonly DiffFile: symbol;
   readonly ProcessProvider: symbol;
-  readonly WatchService: symbol;
+  readonly FileWatcher: symbol;
   readonly AutoMode: symbol;
   readonly Broadcaster: symbol;
 } = {
@@ -55,13 +55,13 @@ export const TYPES: {
   ChannelManager: Symbol.for('ChannelManager'),
   SessionHistory: Symbol.for('SessionHistory'),
   ChannelEventRouter: Symbol.for('ChannelEventRouter'),
-  FilesystemService: Symbol.for('FilesystemService'),
-  GitService: Symbol.for('GitService'),
-  OpenspecService: Symbol.for('OpenspecService'),
+  Filesystem: Symbol.for('Filesystem'),
+  Git: Symbol.for('Git'),
+  Openspec: Symbol.for('Openspec'),
   PluginCliService: Symbol.for('PluginCliService'),
-  DiffFileService: Symbol.for('DiffFileService'),
+  DiffFile: Symbol.for('DiffFile'),
   ProcessProvider: Symbol.for('ProcessProvider'),
-  WatchService: Symbol.for('WatchService'),
+  FileWatcher: Symbol.for('FileWatcher'),
   AutoMode: Symbol.for('AutoMode'),
   Broadcaster: Symbol.for('Broadcaster'),
 } as const;
@@ -77,11 +77,11 @@ export interface HandlerContext {
   usageTracker: UsageTracker;
   sessionHistory: SessionHistory;
   rawEventService: RawEventService;
-  filesystemService: FilesystemService;
-  gitService: GitService;
-  openspecService: OpenspecService;
+  filesystemService: Filesystem;
+  gitService: Git;
+  openspecService: Openspec;
   pluginCli: PluginCliService;
-  diffFileService: DiffFileService;
+  diffFileService: DiffFile;
   planHandler: PlanApi;
   broadcaster: Broadcaster;
 }

@@ -1,6 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { FakeFilesystemService, FakeGitService, FakeProcessProvider } from '@code-quest/test-kit';
+import { FakeFilesystem, FakeGit, FakeProcessProvider } from '@code-quest/test-kit';
 import { type Envelope, RpcChannel, toRpcSocket } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
@@ -15,8 +15,8 @@ function makeSetup() {
 
   async function setup() {
     const processProvider = new FakeProcessProvider();
-    const filesystem = new FakeFilesystemService();
-    const git = new FakeGitService();
+    const filesystem = new FakeFilesystem();
+    const git = new FakeGit();
 
     httpServer = createServer();
     wss = new WebSocketServer({ noServer: true });
@@ -171,7 +171,7 @@ describe('Agent', () => {
   });
 
   describe('fs dispatch', () => {
-    it('browseDirectories returns entries from FilesystemService', async () => {
+    it('browseDirectories returns entries from Filesystem', async () => {
       ctx.filesystem.fromTree('/projects', { app: {}, blog: {} });
 
       const result = await ctx.rpc<{ entries: { name: string; path: string }[] }>(

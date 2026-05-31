@@ -1,13 +1,13 @@
 import { REMOTE_METHODS } from '@code-quest/schemas';
-import { FakeAgentTransport, FakeFilesystemService } from '@code-quest/test-kit';
+import { FakeAgentTransport, FakeFilesystem } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FsHandler } from '../fs-handler.ts';
 
 describe('FsHandler', () => {
-  let fs: FakeFilesystemService;
+  let fs: FakeFilesystem;
 
   beforeEach(() => {
-    fs = new FakeFilesystemService();
+    fs = new FakeFilesystem();
     fs.setRoots(['/repo']);
     fs.addDirectory('/repo', ['src', 'tests']);
     fs.addFile('/repo/src/index.ts', 'export {}');
