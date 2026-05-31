@@ -15,7 +15,7 @@ export async function rawGit(
     const stdout = await git.raw(args);
     return { stdout, exitCode: 0 };
   } catch (err) {
-    logger?.debug({ err, args: args.join(' ') }, '[GitService] git raw failed');
+    logger?.debug({ err, args: args.join(' ') }, '[Git] git raw failed');
     const fromGitField =
       err instanceof GitResponseError && typeof err.git === 'string' ? err.git : '';
     const stdout = fromGitField || errMsg(err);

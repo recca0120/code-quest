@@ -5,7 +5,7 @@
  *  or other locations outside the user's project roots, but they are still
  *  legitimate diff inputs. Use this ONLY for IPC-supplied paths originating
  *  from the CLI control channel; never expose it to client RPC. */
-export interface DiffFileService {
+export interface DiffFile {
   /** Resolves with the file contents, or `''` for missing/empty/error
    *  cases (matches the legacy `readFileOrEmpty` contract). */
   read(path: string): Promise<string>;

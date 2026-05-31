@@ -140,8 +140,8 @@ describe('ChatHandler > session', () => {
     });
 
     it('persists projectRoot on session record (from gitService.getProjectRoot)', async () => {
-      const { FakeGitService } = await import('@code-quest/test-kit');
-      const fakeGit = new FakeGitService();
+      const { FakeGit } = await import('@code-quest/test-kit');
+      const fakeGit = new FakeGit();
       fakeGit.setProjectRoot('/repo');
       const container = createTestContainer({ gitService: fakeGit });
       const server = createFakeServer(container);

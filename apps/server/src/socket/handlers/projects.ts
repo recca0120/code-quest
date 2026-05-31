@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
-import type { FilesystemService } from '@code-quest/filesystem';
+import type { Filesystem } from '@code-quest/filesystem';
 import { PathOutsideRootsError } from '@code-quest/filesystem';
 import {
   EVENTS,
@@ -23,7 +23,7 @@ function canonicalize(path: string): string {
   return resolve(path);
 }
 
-async function validateAddPath(fs: FilesystemService, path: string): Promise<ProjectsError | null> {
+async function validateAddPath(fs: Filesystem, path: string): Promise<ProjectsError | null> {
   try {
     const kind = await fs.statKind(path);
     if (kind === null) return { error: 'path_not_found', path };

@@ -1,6 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { FakeFilesystemService, FakeGitService, FakeProcessProvider } from '@code-quest/test-kit';
+import { FakeFilesystem, FakeGit, FakeProcessProvider } from '@code-quest/test-kit';
 import { RpcChannel, toRpcSocket, WsClient } from '@code-quest/transport';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
@@ -38,8 +38,8 @@ describe('Connection reconnect loop', () => {
     const processProvider = opts.processProvider ?? new FakeProcessProvider();
     const agent = new Agent([
       new ProcessHandler(processProvider),
-      new FsHandler(new FakeFilesystemService()),
-      new GitHandler(new FakeGitService()),
+      new FsHandler(new FakeFilesystem()),
+      new GitHandler(new FakeGit()),
     ]);
     return { agent, processProvider };
   }
@@ -63,11 +63,11 @@ describe('Connection reconnect loop', () => {
       serverRpcs.push(new RpcChannel(toRpcSocket(ws)));
     });
 
-    const filesystem = new FakeFilesystemService();
+    const filesystem = new FakeFilesystem();
     const agent = new Agent([
       new ProcessHandler(new FakeProcessProvider()),
       new FsHandler(filesystem),
-      new GitHandler(new FakeGitService()),
+      new GitHandler(new FakeGit()),
     ]);
     const events: string[] = [];
 

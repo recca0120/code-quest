@@ -138,7 +138,7 @@ export class GitCommands {
     try {
       return (await createGit(cwd).revparse(['--show-toplevel'])).trim();
     } catch (err) {
-      this.logger.debug({ err }, '[GitService] getRepoRoot failed');
+      this.logger.debug({ err }, '[Git] getRepoRoot failed');
       return null;
     }
   }
@@ -152,7 +152,7 @@ export class GitCommands {
       if (dotGitIdx === -1) return absolute;
       return absolute.slice(0, dotGitIdx);
     } catch (err) {
-      this.logger.debug({ err }, '[GitService] getProjectRoot failed');
+      this.logger.debug({ err }, '[Git] getProjectRoot failed');
       return null;
     }
   }
@@ -164,7 +164,7 @@ export class GitCommands {
     try {
       await git.raw(['commit', '--allow-empty', '-m', 'Initial commit']);
     } catch (err) {
-      this.logger.debug({ err }, '[GitService] commit without user config failed, retrying');
+      this.logger.debug({ err }, '[Git] commit without user config failed, retrying');
       await git.raw([
         '-c',
         'user.email=code-quest@local',
@@ -200,14 +200,14 @@ export class GitCommands {
       await git.checkout(branch);
       return;
     } catch (err) {
-      this.logger.debug({ err }, '[GitService] checkout strategy 1 failed');
+      this.logger.debug({ err }, '[Git] checkout strategy 1 failed');
     }
     try {
       await git.fetch('origin');
       await git.checkout(branch);
       return;
     } catch (err) {
-      this.logger.debug({ err }, '[GitService] checkout strategy 2 failed');
+      this.logger.debug({ err }, '[Git] checkout strategy 2 failed');
     }
     await git.checkout(['-t', `origin/${branch}`]);
   }

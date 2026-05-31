@@ -1,13 +1,13 @@
 import { REMOTE_METHODS } from '@code-quest/schemas';
-import { FakeAgentTransport, FakeGitService } from '@code-quest/test-kit';
+import { FakeAgentTransport, FakeGit } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { GitHandler } from '../git-handler.ts';
 
 describe('GitHandler', () => {
-  let git: FakeGitService;
+  let git: FakeGit;
 
   beforeEach(() => {
-    git = new FakeGitService();
+    git = new FakeGit();
   });
 
   it('status returns git status for cwd', async () => {

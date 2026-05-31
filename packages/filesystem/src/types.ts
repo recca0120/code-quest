@@ -8,13 +8,6 @@ export type ReadFileAbsoluteResult =
 export type WriteFileResult = { ok: true } | { error: string };
 export type FsMutationResult = { ok: true } | { error: string };
 
-export interface RootGuard {
-  /** Strict check: uses realpath; returns false if path does not exist. */
-  isWithinRoots(path: string): Promise<boolean>;
-  /** Structural check: uses resolve; allows nonexistent paths for write/create operations. */
-  isStructurallyWithinRoots(path: string): Promise<boolean>;
-}
-
 export class PathOutsideRootsError extends Error {
   readonly path: string;
   constructor(path: string) {
@@ -24,7 +17,7 @@ export class PathOutsideRootsError extends Error {
   }
 }
 
-export interface FilesystemService {
+export interface Filesystem {
   browseDirectories(path?: string): Promise<DirectoryEntry[]>;
   browseEntries(
     path?: string,

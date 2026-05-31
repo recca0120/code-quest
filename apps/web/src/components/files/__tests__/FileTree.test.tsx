@@ -1,5 +1,5 @@
 import { createFakeServer, createTestContainer, TYPES } from '@code-quest/server/test';
-import type { FakeWatchService } from '@code-quest/test-kit';
+import type { FakeFileWatcher } from '@code-quest/test-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useEffect } from 'react';
@@ -194,7 +194,7 @@ describe('FileTree', () => {
   });
 
   describe('fine-grained invalidation on fs:dirty', () => {
-    /** Container-aware setup with access to FakeWatchService for triggering
+    /** Container-aware setup with access to FakeFileWatcher for triggering
      *  realistic dirty events via the server-side broadcaster. */
     function setupWithWatch() {
       const container = createTestContainer();
@@ -205,7 +205,7 @@ describe('FileTree', () => {
       summoner.filesystem().addDirectory('/projects/app', ['src', 'tests']);
       summoner.filesystem().addFile('/projects/app/README.md', '# hi');
       summoner.filesystem().addFile('/projects/app/src/foo.ts', '');
-      const watch = container.get<FakeWatchService>(TYPES.WatchService);
+      const watch = container.get<FakeFileWatcher>(TYPES.FileWatcher);
 
       // Subscribe via FsActions so fs:watch reaches the server. Empty
       // cb — FileTree renders below and owns its own subscribe with the

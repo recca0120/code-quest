@@ -6,7 +6,7 @@ import { type Logger, NOOP_LOGGER } from '@code-quest/utils';
 import { type Envelope, PONG_JSON, parseEnvelope } from './envelope.ts';
 import { Pipeline } from './pipeline.ts';
 import { RESUME_EVENT, RpcChannel } from './rpc-channel.ts';
-import type { AcceptCallback, RpcSocket, WsAdapter } from './ws-adapter.ts';
+import type { AcceptCallback, RpcSocket, WsAdapter } from './types.ts';
 
 export interface ConnectionContext {
   req?: IncomingMessage;

@@ -1,5 +1,5 @@
 import { createFakeServer } from '@code-quest/server/test';
-import { FakeOpenspecService } from '@code-quest/summoner/test';
+import { FakeOpenspec } from '@code-quest/summoner/test';
 import { render, renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode, useRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -30,7 +30,7 @@ describe('OpenspecContext (external store via useSyncExternalStore)', () => {
   it('two consumers for the same cwd produce exactly one openspec:list RPC', async () => {
     const { Wrapper, priming } = makeEnv();
     priming.filesystem().setRoots(['/repo']);
-    const listSpy = vi.spyOn(FakeOpenspecService.prototype, 'list');
+    const listSpy = vi.spyOn(FakeOpenspec.prototype, 'list');
 
     function Consumer() {
       useOpenspecList('/repo');
@@ -81,14 +81,14 @@ describe('OpenspecContext (external store via useSyncExternalStore)', () => {
   it('openspec:dirty for un-subscribed cwd does not fetch', async () => {
     const { Wrapper, priming } = makeEnv();
     priming.filesystem().setRoots(['/repo']);
-    const listSpy = vi.spyOn(FakeOpenspecService.prototype, 'list');
+    const listSpy = vi.spyOn(FakeOpenspec.prototype, 'list');
 
     renderHook(() => useOpenspecActions(), { wrapper: Wrapper });
     expect(listSpy).not.toHaveBeenCalled();
   });
 
   describe('write actions', () => {
-    it('changeNew round-trips to FakeOpenspecService and returns {ok:true}', async () => {
+    it('changeNew round-trips to FakeOpenspec and returns {ok:true}', async () => {
       const { Wrapper, priming } = makeEnv();
       priming.filesystem().setRoots(['/repo']);
       const { result } = renderHook(() => useOpenspecActions(), { wrapper: Wrapper });

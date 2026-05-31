@@ -34,12 +34,12 @@ export interface CreateWorktreeOptions {
   path?: string;
 }
 
-interface GitServiceCapabilities {
+interface GitCapabilities {
   readonly worktree: boolean;
 }
 
-export interface GitService {
-  readonly capabilities: GitServiceCapabilities;
+export interface Git {
+  readonly capabilities: GitCapabilities;
 
   status(cwd: string): Promise<GitStatusResult>;
   checkout(cwd: string, branch: string): Promise<void>;

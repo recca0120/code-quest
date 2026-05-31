@@ -1,5 +1,5 @@
-import type { FileResult, FilesystemService } from '@code-quest/filesystem';
-import type { WatchService } from '@code-quest/watch';
+import type { FileWatcher } from '@code-quest/file-watcher';
+import type { FileResult, Filesystem } from '@code-quest/filesystem';
 import { DataSource, GIT_META_RE } from '../data-source.ts';
 
 const IGNORE_RES: RegExp[] = [
@@ -24,9 +24,9 @@ function matchesFs(path: string): boolean {
 
 export class FilesDataSource extends DataSource<FileResult[]> {
   private readonly pattern: string;
-  private readonly fs: FilesystemService;
+  private readonly fs: Filesystem;
 
-  constructor(cwd: string, watchService: WatchService, fs: FilesystemService, pattern = '') {
+  constructor(cwd: string, watchService: FileWatcher, fs: Filesystem, pattern = '') {
     super(cwd, watchService, matchesFs);
     this.pattern = pattern;
     this.fs = fs;

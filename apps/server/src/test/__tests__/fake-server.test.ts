@@ -11,7 +11,7 @@ describe('FakeSummoner', () => {
     expect(channelId).toBeTruthy();
   });
 
-  it('fs:browse uses FakeFilesystemService', async () => {
+  it('fs:browse uses FakeFilesystem', async () => {
     const summoner = createFakeSummoner();
     summoner.filesystem().fromTree('/projects', { app: {}, blog: {} });
 

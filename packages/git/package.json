@@ -6,7 +6,7 @@
   "description": "LocalGitService and RemoteGitService",
   "exports": {
     ".": "./src/index.ts",
-    "./contract": "./src/__tests__/git-service.contract.ts"
+    "./contract": "./src/__tests__/git.contract.ts"
   },
   "scripts": {
     "test": "vitest run --passWithNoTests",

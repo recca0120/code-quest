@@ -23,7 +23,7 @@ function setup() {
 
 function seedOpenspec(summoner: ReturnType<typeof setup>['summoner']) {
   const openspec = summoner.openspec();
-  if (!openspec) throw new Error('FakeOpenspecService not wired');
+  if (!openspec) throw new Error('FakeOpenspec not wired');
   openspec.setChanges([{ name: 'add-foo', tasks: { done: 1, total: 2 }, status: 'in-progress' }]);
   openspec.setSpecs([{ capability: 'auth' }]);
   openspec.setContent('/repo', 'change', 'add-foo', 'proposal', '# Add Foo proposal');

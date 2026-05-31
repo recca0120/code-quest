@@ -5,12 +5,7 @@ import {
   LocalBroadcaster,
 } from '@code-quest/broadcaster';
 import { REMOTE_METHODS } from '@code-quest/schemas';
-import {
-  FakeAgentTransport,
-  FakeFilesystemService,
-  FakeGitService,
-  FakeWatchService,
-} from '@code-quest/test-kit';
+import { FakeAgentTransport, FakeFilesystem, FakeFileWatcher, FakeGit } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BroadcasterHandler } from '../broadcaster-handler.ts';
 
@@ -23,16 +18,16 @@ function snapshots(emitted: Array<[string, unknown]>, type?: string) {
 }
 
 describe('BroadcasterHandler', () => {
-  let watch: FakeWatchService;
-  let fs: FakeFilesystemService;
-  let git: FakeGitService;
+  let watch: FakeFileWatcher;
+  let fs: FakeFilesystem;
+  let git: FakeGit;
   let broadcaster: Broadcaster;
 
   beforeEach(() => {
-    watch = new FakeWatchService();
-    fs = new FakeFilesystemService();
+    watch = new FakeFileWatcher();
+    fs = new FakeFilesystem();
     fs.setRoots(['/repo']);
-    git = new FakeGitService();
+    git = new FakeGit();
     broadcaster = new LocalBroadcaster()
       .add('files', (cwd) => new FilesDataSource(cwd, watch, fs))
       .add('git', (cwd) => new GitDataSource(cwd, watch, git));

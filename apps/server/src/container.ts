@@ -5,25 +5,21 @@ import {
   LocalBroadcaster,
   OpenspecDataSource,
 } from '@code-quest/broadcaster';
-import { type DiffFileService, LocalDiffFileService } from '@code-quest/diff-file';
-import type { FilesystemService } from '@code-quest/filesystem';
-import {
-  LocalFilesystemService,
-  LocalRootGuard,
-  RemoteFilesystemService,
-} from '@code-quest/filesystem';
-import type { GitService } from '@code-quest/git';
-import { LocalGitService, RemoteGitService } from '@code-quest/git';
-import { LocalOpenspecService, type OpenspecService } from '@code-quest/openspec';
+import { type DiffFile, LocalDiffFile } from '@code-quest/diff-file';
+import { type FileWatcher, LocalFileWatcher } from '@code-quest/file-watcher';
+import type { Filesystem } from '@code-quest/filesystem';
+import { LocalFilesystem, RemoteFilesystem, RootGuardFilesystem } from '@code-quest/filesystem';
+import type { Git } from '@code-quest/git';
+import { LocalGit, RemoteGit } from '@code-quest/git';
+import { LocalOpenspec, type Openspec } from '@code-quest/openspec';
 import type { ProcessProvider } from '@code-quest/schemas';
 import {
   ChildProcessProvider,
   ClaudeAdapter,
-  LocalPluginCliService,
+  LocalPluginCli,
   type PluginCliService,
   ProcessRunner,
 } from '@code-quest/summoner';
-import { LocalWatchService, type WatchService } from '@code-quest/watch';
 import { Container } from 'inversify';
 import { config } from './config.ts';
 import type { DatabaseEntry } from './db/create-database.ts';
@@ -63,7 +59,7 @@ export interface StoreConfig {
 export interface ContainerOptions {
   processProvider?: ProcessProvider;
   storeConfig: StoreConfig;
-  watchService?: WatchService;
+  watchService?: FileWatcher;
   historyBatchSize?: number;
   autoMode?: boolean;
   remoteRpc?: ReconnectableRpc;
@@ -147,8 +143,8 @@ export function createContainer(options: ContainerOptions): Container {
       return { cwd: row.cwd, projectRoot: row.projectRoot ?? row.cwd };
     },
   };
-  const watchService: WatchService = options.watchService ?? new LocalWatchService();
-  container.bind<WatchService>(TYPES.WatchService).toConstantValue(watchService);
+  const watchService: FileWatcher = options.watchService ?? new LocalFileWatcher();
+  container.bind<FileWatcher>(TYPES.FileWatcher).toConstantValue(watchService);
   if (remoteRpc) {
     bindRemoteSnapshotBroadcasters(container, remoteRpc);
   } else {
@@ -193,30 +189,23 @@ function bindServices(
   fsRoots: string[],
 ): void {
   if (remoteRpc) {
-    container.bind(TYPES.FilesystemService).toConstantValue(new RemoteFilesystemService(remoteRpc));
-    container.bind<GitService>(TYPES.GitService).toConstantValue(new RemoteGitService(remoteRpc));
+    container.bind(TYPES.Filesystem).toConstantValue(new RemoteFilesystem(remoteRpc));
+    container.bind<Git>(TYPES.Git).toConstantValue(new RemoteGit(remoteRpc));
   } else {
     container
-      .bind(TYPES.FilesystemService)
-      .toConstantValue(new LocalFilesystemService(fsRoots, new LocalRootGuard(fsRoots)));
-    container.bind<GitService>(TYPES.GitService).toConstantValue(new LocalGitService());
+      .bind(TYPES.Filesystem)
+      .toConstantValue(new RootGuardFilesystem(new LocalFilesystem(), fsRoots));
+    container.bind<Git>(TYPES.Git).toConstantValue(new LocalGit());
   }
-  container
-    .bind<PluginCliService>(TYPES.PluginCliService)
-    .toConstantValue(new LocalPluginCliService());
-  container
-    .bind<DiffFileService>(TYPES.DiffFileService)
-    .toConstantValue(new LocalDiffFileService());
+  container.bind<PluginCliService>(TYPES.PluginCliService).toConstantValue(new LocalPluginCli());
+  container.bind<DiffFile>(TYPES.DiffFile).toConstantValue(new LocalDiffFile());
   const openspecProcess = container.isBound(TYPES.ProcessProvider)
     ? container.get<ProcessProvider>(TYPES.ProcessProvider)
     : new ChildProcessProvider();
   container
-    .bind<OpenspecService>(TYPES.OpenspecService)
+    .bind<Openspec>(TYPES.Openspec)
     .toConstantValue(
-      new LocalOpenspecService(
-        container.get<FilesystemService>(TYPES.FilesystemService),
-        openspecProcess,
-      ),
+      new LocalOpenspec(container.get<Filesystem>(TYPES.Filesystem), openspecProcess),
     );
 }
 
@@ -228,18 +217,18 @@ function bindRemoteSnapshotBroadcasters(container: Container, remoteRpc: Reconne
   container.bind(TYPES.Broadcaster).toConstantValue(new RemoteBroadcaster(remoteRpc));
 }
 
-function bindSnapshotBroadcasters(container: Container, watchService: WatchService): void {
+function bindSnapshotBroadcasters(container: Container, watchService: FileWatcher): void {
   const broadcaster = new LocalBroadcaster()
     .add('files', (cwd) => {
-      const fs = container.get<FilesystemService>(TYPES.FilesystemService);
+      const fs = container.get<Filesystem>(TYPES.Filesystem);
       return new FilesDataSource(cwd, watchService, fs);
     })
     .add('git', (cwd) => {
-      const git = container.get<GitService>(TYPES.GitService);
+      const git = container.get<Git>(TYPES.Git);
       return new GitDataSource(cwd, watchService, git);
     })
     .add('openspec', (cwd) => {
-      const openspec = container.get<OpenspecService>(TYPES.OpenspecService);
+      const openspec = container.get<Openspec>(TYPES.Openspec);
       return new OpenspecDataSource(cwd, watchService, openspec);
     });
   container.bind(TYPES.Broadcaster).toConstantValue(broadcaster);

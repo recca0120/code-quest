@@ -1,8 +1,9 @@
 export { AlreadyRepoError, NotARepoError } from './errors.ts';
-export { LocalGitService } from './local.ts';
-export { RemoteGitService } from './remote.ts';
+export { LocalGit } from './local-git.ts';
+export { RemoteGit } from './remote-git.ts';
 export type {
   CreateWorktreeOptions,
+  Git,
   GitAddResult,
   GitCommitResult,
   GitDiffResult,
@@ -13,7 +14,6 @@ export type {
   GitLogResult,
   GitPullResult,
   GitPushResult,
-  GitService,
   GitStatusResult,
   WorktreeInfo,
 } from './types.ts';

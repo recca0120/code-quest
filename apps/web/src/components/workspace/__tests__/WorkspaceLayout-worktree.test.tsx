@@ -1,6 +1,6 @@
 import type { CreateWorktreeResponse } from '@code-quest/schemas';
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
-import { FakeGitService } from '@code-quest/test-kit';
+import { FakeGit } from '@code-quest/test-kit';
 import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -8,9 +8,9 @@ import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('WorkspaceLayout worktree grouping', () => {
   it('git:worktree:add is a pure git op — it does NOT auto-spawn a chat tab', async () => {
-    // FakeGitService: any cwd under /projects/app (including worktrees) reports
+    // FakeGit: any cwd under /projects/app (including worktrees) reports
     // projectRoot === /projects/app, so server + client group them together.
-    const fakeGit = new FakeGitService();
+    const fakeGit = new FakeGit();
     fakeGit.setProjectRoot('/projects/app');
     const container = createTestContainer({ gitService: fakeGit });
     const server = createFakeServer(container);

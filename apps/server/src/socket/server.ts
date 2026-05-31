@@ -1,8 +1,8 @@
 import type { Broadcaster } from '@code-quest/broadcaster';
-import type { DiffFileService } from '@code-quest/diff-file';
-import type { FilesystemService } from '@code-quest/filesystem';
-import type { GitService } from '@code-quest/git';
-import type { OpenspecService } from '@code-quest/openspec';
+import type { DiffFile } from '@code-quest/diff-file';
+import type { Filesystem } from '@code-quest/filesystem';
+import type { Git } from '@code-quest/git';
+import type { Openspec } from '@code-quest/openspec';
 import type { TransportHandle } from '@code-quest/schemas';
 import type { PluginCliService } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
@@ -49,11 +49,11 @@ export class SocketServer {
   private channelManager: ChannelManager;
   private sessionHistory: SessionHistory;
   private emitter: ChannelEmitter;
-  private filesystemService: FilesystemService;
-  private gitService: GitService;
-  private openspecService: OpenspecService;
+  private filesystemService: Filesystem;
+  private gitService: Git;
+  private openspecService: Openspec;
   private pluginCli: PluginCliService;
-  private diffFileService: DiffFileService;
+  private diffFileService: DiffFile;
   private settingsStore: SettingsStore;
   private broadcaster: Broadcaster;
   constructor(
@@ -66,11 +66,11 @@ export class SocketServer {
     @inject(TYPES.ChannelManager) channelManager: ChannelManager,
     @inject(TYPES.SessionHistory) sessionHistory: SessionHistory,
     @inject(TYPES.ChannelEventRouter) emitter: ChannelEmitter,
-    @inject(TYPES.FilesystemService) filesystemService: FilesystemService,
-    @inject(TYPES.GitService) gitService: GitService,
-    @inject(TYPES.OpenspecService) openspecService: OpenspecService,
+    @inject(TYPES.Filesystem) filesystemService: Filesystem,
+    @inject(TYPES.Git) gitService: Git,
+    @inject(TYPES.Openspec) openspecService: Openspec,
     @inject(TYPES.PluginCliService) pluginCli: PluginCliService,
-    @inject(TYPES.DiffFileService) diffFileService: DiffFileService,
+    @inject(TYPES.DiffFile) diffFileService: DiffFile,
     @inject(TYPES.SettingsStore) settingsStore: SettingsStore,
     @inject(TYPES.Broadcaster) broadcaster: Broadcaster,
   ) {

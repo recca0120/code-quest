@@ -1,18 +1,14 @@
 import 'reflect-metadata';
 import { sqliteMigrationsFolder, sqliteSchema } from '@code-quest/db-schema';
-import type { DiffFileService } from '@code-quest/diff-file';
-import type { FilesystemService } from '@code-quest/filesystem';
-import type { GitService } from '@code-quest/git';
-import type { OpenspecService } from '@code-quest/openspec';
+import type { DiffFile } from '@code-quest/diff-file';
+import type { FileWatcher } from '@code-quest/file-watcher';
+import { type Filesystem, RootGuardFilesystem } from '@code-quest/filesystem';
+import type { Git } from '@code-quest/git';
+import type { Openspec } from '@code-quest/openspec';
 import type { ProcessProvider } from '@code-quest/schemas';
 import type { PluginCliService } from '@code-quest/summoner';
-import {
-  FakeDiffFileService,
-  FakeOpenspecService,
-  FakePluginCliService,
-} from '@code-quest/summoner/test';
-import { FakeFilesystemService, FakeGitService, FakeWatchService } from '@code-quest/test-kit';
-import type { WatchService } from '@code-quest/watch';
+import { FakeDiffFile, FakeOpenspec, FakePluginCli } from '@code-quest/summoner/test';
+import { FakeFilesystem, FakeFileWatcher, FakeGit } from '@code-quest/test-kit';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';
 import { createContainer } from '../container.ts';
@@ -23,12 +19,12 @@ import { InMemorySettingsStore } from './in-memory-settings-store.ts';
 
 interface TestContainerOverrides {
   processProvider?: ProcessProvider;
-  filesystemService?: FilesystemService;
-  gitService?: GitService;
-  openspecService?: OpenspecService;
+  filesystemService?: Filesystem;
+  gitService?: Git;
+  openspecService?: Openspec;
   pluginCli?: PluginCliService;
-  diffFileService?: DiffFileService;
-  watchService?: WatchService;
+  diffFileService?: DiffFile;
+  watchService?: FileWatcher;
   historyBatchSize?: number;
   autoMode?: boolean;
   rawEvents?: { writeDeltas?: boolean; readDeltas?: boolean };
@@ -40,7 +36,7 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
 
   const container = createContainer({
     ...overrides,
-    watchService: overrides.watchService ?? new FakeWatchService(),
+    watchService: overrides.watchService ?? new FakeFileWatcher(),
     storeConfig: {
       databases: [
         { type: 'sqlite', url: 'file::memory:', db: sqliteDatabase, schema: sqliteSchema },
@@ -54,25 +50,27 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
   // Use in-memory settings in tests to avoid file system state leaking between runs
   container.rebind<SettingsStore>(TYPES.SettingsStore).toConstantValue(new InMemorySettingsStore());
 
-  container
-    .rebind<FilesystemService>(TYPES.FilesystemService)
-    .toConstantValue(overrides.filesystemService ?? new FakeFilesystemService());
+  const guardedFs =
+    overrides.filesystemService ??
+    (() => {
+      const fakeFs = new FakeFilesystem();
+      return new RootGuardFilesystem(fakeFs, () => fakeFs.getRoots());
+    })();
+  container.rebind<Filesystem>(TYPES.Filesystem).toConstantValue(guardedFs);
+
+  container.rebind<Git>(TYPES.Git).toConstantValue(overrides.gitService ?? new FakeGit());
 
   container
-    .rebind<GitService>(TYPES.GitService)
-    .toConstantValue(overrides.gitService ?? new FakeGitService());
-
-  container
-    .rebind<OpenspecService>(TYPES.OpenspecService)
-    .toConstantValue(overrides.openspecService ?? new FakeOpenspecService());
+    .rebind<Openspec>(TYPES.Openspec)
+    .toConstantValue(overrides.openspecService ?? new FakeOpenspec());
 
   container
     .rebind<PluginCliService>(TYPES.PluginCliService)
-    .toConstantValue(overrides.pluginCli ?? new FakePluginCliService());
+    .toConstantValue(overrides.pluginCli ?? new FakePluginCli());
 
   container
-    .rebind<DiffFileService>(TYPES.DiffFileService)
-    .toConstantValue(overrides.diffFileService ?? new FakeDiffFileService());
+    .rebind<DiffFile>(TYPES.DiffFile)
+    .toConstantValue(overrides.diffFileService ?? new FakeDiffFile());
 
   return container;
 }

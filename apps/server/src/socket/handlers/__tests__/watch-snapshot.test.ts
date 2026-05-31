@@ -1,14 +1,14 @@
 import { EVENTS } from '@code-quest/schemas';
-import { FakeWatchService } from '@code-quest/test-kit';
+import { FakeFileWatcher } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestContainer } from '../../../test/create-test-container.ts';
 import { createFakeServer } from '../../../test/fake-server.ts';
 
 describe('fs:watch snapshot integration', () => {
-  let watch: FakeWatchService;
+  let watch: FakeFileWatcher;
 
   beforeEach(() => {
-    watch = new FakeWatchService();
+    watch = new FakeFileWatcher();
   });
 
   function setup() {

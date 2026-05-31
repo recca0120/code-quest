@@ -32,7 +32,7 @@
     "@code-quest/git": "workspace:*",
     "@code-quest/openspec": "workspace:*",
     "@code-quest/schemas": "workspace:*",
-    "@code-quest/watch": "workspace:*",
+    "@code-quest/file-watcher": "workspace:*",
     "@code-quest/transport": "workspace:*",
     "@code-quest/utils": "workspace:*",
     "@code-quest/summoner": "workspace:*",

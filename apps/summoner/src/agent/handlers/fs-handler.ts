@@ -1,4 +1,4 @@
-import type { FilesystemService } from '@code-quest/filesystem';
+import type { Filesystem } from '@code-quest/filesystem';
 import type { AgentTransport } from '@code-quest/schemas';
 import {
   fsBrowseDirectoriesParamsSchema,
@@ -20,9 +20,9 @@ import {
 import type { AgentHandler } from '../agent-handler.ts';
 
 export class FsHandler implements AgentHandler {
-  private readonly filesystem: FilesystemService;
+  private readonly filesystem: Filesystem;
 
-  constructor(filesystem: FilesystemService) {
+  constructor(filesystem: Filesystem) {
     this.filesystem = filesystem;
   }
 

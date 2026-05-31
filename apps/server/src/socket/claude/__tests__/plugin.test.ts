@@ -8,7 +8,7 @@ async function setup(sessionId = 'cli-sess') {
   const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
   const pluginCli = summoner.pluginCli();
-  if (!pluginCli) throw new Error('FakePluginCliService not wired');
+  if (!pluginCli) throw new Error('FakePluginCli not wired');
   return { claude, channelId, pluginCli };
 }
 

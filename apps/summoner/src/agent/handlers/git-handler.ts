@@ -1,4 +1,4 @@
-import type { GitService } from '@code-quest/git';
+import type { Git } from '@code-quest/git';
 import type { AgentTransport } from '@code-quest/schemas';
 import {
   gitAddParamsSchema,
@@ -23,9 +23,9 @@ function parseCwd(p: unknown): string {
 }
 
 export class GitHandler implements AgentHandler {
-  private readonly git: GitService;
+  private readonly git: Git;
 
-  constructor(git: GitService) {
+  constructor(git: Git) {
     this.git = git;
   }
 

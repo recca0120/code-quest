@@ -1,5 +1,5 @@
 import { createFakeServer, createTestContainer, TYPES } from '@code-quest/server/test';
-import type { FakeWatchService } from '@code-quest/test-kit';
+import type { FakeFileWatcher } from '@code-quest/test-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -12,7 +12,7 @@ function makeEnv() {
   const server = createFakeServer(container);
   const summoner = new FakeSummoner(server);
   summoner.filesystem().setRoots(['/repo']);
-  const watch = container.get<FakeWatchService>(TYPES.WatchService);
+  const watch = container.get<FakeFileWatcher>(TYPES.FileWatcher);
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <SocketProvider socket={summoner.socket}>
