@@ -10,6 +10,9 @@ pre-commit:
     typecheck-shared:
       glob: "packages/shared/**/*.ts"
       run: pnpm --filter @code-quest/shared exec tsc --noEmit
+    typecheck-session-store:
+      glob: "packages/session-store/**/*.ts"
+      run: pnpm --filter @code-quest/session-store exec tsc --noEmit
     typecheck-server:
       glob: "apps/server/**/*.ts"
       run: pnpm --filter @code-quest/server exec tsc --noEmit
@@ -19,6 +22,9 @@ pre-commit:
     typecheck-summoner:
       glob: "apps/summoner/**/*.ts"
       run: pnpm --filter @code-quest/summoner exec tsc --noEmit
+    deprecated-session-store:
+      glob: "packages/session-store/**/*.ts"
+      run: node scripts/check-deprecated.mjs packages/session-store/tsconfig.json {staged_files}
     deprecated-web:
       glob: "apps/web/**/*.{ts,tsx}"
       run: node scripts/check-deprecated.mjs apps/web/tsconfig.json {staged_files}
@@ -50,6 +56,9 @@ pre-push:
     test-shared:
       priority: 2
       run: pnpm --filter @code-quest/shared exec vitest run
+    test-session-store:
+      priority: 2
+      run: pnpm --filter @code-quest/session-store exec vitest run
     test-server:
       priority: 2
       run: pnpm --filter @code-quest/server exec vitest run
