@@ -1,7 +1,10 @@
 import { CompositeStore } from './composite-store.ts';
-import type { RawDeltaEntry, RawDeltaStore } from './raw-delta-store.ts';
+import type { RawDeltaEntry, RawDeltaRepository } from './raw-delta-repository.ts';
 
-export class CompositeRawDeltaStore extends CompositeStore<RawDeltaStore> implements RawDeltaStore {
+export class CompositeRawDeltaStore
+  extends CompositeStore<RawDeltaRepository>
+  implements RawDeltaRepository
+{
   async append(event: RawDeltaEntry): Promise<void> {
     await this.fanOut('raw delta append', (s) => s.append(event));
   }

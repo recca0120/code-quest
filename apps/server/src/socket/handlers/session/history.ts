@@ -8,8 +8,8 @@ import {
 import type { ProviderAdapter, RawEvent } from '@code-quest/summoner';
 import { isRecord } from '@code-quest/utils';
 import { logger } from '../../../logger.ts';
-import type { RawEventService } from '../../../services/raw-event-service.ts';
-import type { SessionPreview } from '../../../services/raw-event-store.ts';
+import type { SessionPreview } from '../../../services/raw-event-repository.ts';
+import type { RawEventStore } from '../../../services/raw-event-store.ts';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { Channel } from '../../channel.ts';
 import { typedJsonObjectSchema, userMessageInputSchema } from '../../schemas.ts';
@@ -91,13 +91,13 @@ function parseRawEvents(
 }
 
 export class SessionHistory {
-  private rawEventService: RawEventService;
+  private rawEventService: RawEventStore;
   private sessionStore: SessionStore;
   private adapter: ProviderAdapter;
   private channels: ChannelLookup;
   private batchSize: number;
   constructor(
-    rawEventService: RawEventService,
+    rawEventService: RawEventStore,
     sessionStore: SessionStore,
     adapter: ProviderAdapter,
     channels: ChannelLookup,

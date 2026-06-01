@@ -8,7 +8,7 @@ import type { PluginCliService } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
 import type { ProjectAutoUpserter } from '../services/project-auto-upserter.ts';
 import type { ProjectStore } from '../services/project-store.ts';
-import type { RawEventService } from '../services/raw-event-service.ts';
+import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { SettingsStore } from '../services/settings-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
@@ -41,7 +41,7 @@ import * as usage from './handlers/usage.ts';
 @injectable()
 export class SocketServer {
   private autoMode: boolean;
-  private rawEventService: RawEventService;
+  private rawEventService: RawEventStore;
   private sessionStore: SessionStore;
   private projectStore: ProjectStore;
   private projectAutoUpserter: ProjectAutoUpserter;
@@ -58,7 +58,7 @@ export class SocketServer {
   private broadcaster: Broadcaster;
   constructor(
     @inject(TYPES.AutoMode) autoMode: boolean,
-    @inject(TYPES.RawEventService) rawEventService: RawEventService,
+    @inject(TYPES.RawEventStore) rawEventService: RawEventStore,
     @inject(TYPES.SessionStore) sessionStore: SessionStore,
     @inject(TYPES.ProjectStore) projectStore: ProjectStore,
     @inject(TYPES.ProjectAutoUpserter) projectAutoUpserter: ProjectAutoUpserter,

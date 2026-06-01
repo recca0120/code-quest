@@ -24,7 +24,8 @@ export interface Filesystem {
     opts?: { showHidden?: boolean },
   ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }>;
   readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult>;
-  writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult>;
+  readLines(absolutePath: string): AsyncIterable<string>;
+  writeFile(absolutePath: string, content: string): Promise<WriteFileResult>;
   create(absolutePath: string, kind: FileKind): Promise<FsMutationResult>;
   delete(absolutePath: string): Promise<FsMutationResult>;
   rename(from: string, to: string): Promise<FsMutationResult>;

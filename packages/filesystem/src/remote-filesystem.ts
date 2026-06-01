@@ -50,8 +50,16 @@ export class RemoteFilesystem implements Filesystem {
     return fsReadFileAbsoluteResponseSchema.parse(raw);
   }
 
-  async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
-    const raw = await this.rpc.request(REMOTE_METHODS.fs.writeFileAbsolute, {
+  async *readLines(absolutePath: string): AsyncIterable<string> {
+    const result = await this.readFileAbsolute(absolutePath);
+    if ('error' in result) return;
+    for (const line of result.content.split('\n')) {
+      if (line.trim()) yield line;
+    }
+  }
+
+  async writeFile(absolutePath: string, content: string): Promise<WriteFileResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.writeFile, {
       absolutePath,
       content,
     });

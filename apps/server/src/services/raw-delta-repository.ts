@@ -6,7 +6,7 @@ export interface RawDeltaEntry {
   timestamp: number;
 }
 
-export interface RawDeltaStore {
+export interface RawDeltaRepository {
   append(event: RawDeltaEntry): Promise<void>;
   getBySession(sessionId: string): Promise<RawDeltaEntry[]>;
   deleteBySession(sessionId: string): Promise<void>;

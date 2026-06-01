@@ -45,9 +45,9 @@ export class FsHandler implements AgentHandler {
       return fs.readFileAbsolute(p.absolutePath);
     });
 
-    rpc.onRequest(REMOTE_METHODS.fs.writeFileAbsolute, async (params) => {
+    rpc.onRequest(REMOTE_METHODS.fs.writeFile, async (params) => {
       const p = fsWriteFileAbsoluteParamsSchema.parse(params);
-      return fs.writeFileAbsolute(p.absolutePath, p.content);
+      return fs.writeFile(p.absolutePath, p.content);
     });
 
     rpc.onRequest(REMOTE_METHODS.fs.create, async (params) => {

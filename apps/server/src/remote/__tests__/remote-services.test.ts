@@ -102,9 +102,9 @@ describe('RemoteFilesystem', () => {
     expect(result).toMatchObject({ content: 'hello world' });
   });
 
-  it('writeFileAbsolute — writes and reads back content', async () => {
+  it('writeFile — writes and reads back content', async () => {
     ctx.filesystem.fromTree('/tmp', {});
-    await ctx.fsService.writeFileAbsolute('/tmp/out.txt', 'written');
+    await ctx.fsService.writeFile('/tmp/out.txt', 'written');
     const result = await ctx.fsService.readFileAbsolute('/tmp/out.txt');
     expect(result).toMatchObject({ content: 'written' });
   });

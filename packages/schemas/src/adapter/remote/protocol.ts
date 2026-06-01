@@ -133,7 +133,7 @@ export interface FsReadFileAbsoluteParams {
 
 export type FsReadFileAbsoluteResult = z.infer<typeof fsReadFileAbsoluteResponseSchema>;
 
-// ---------- fs/writeFileAbsolute ----------
+// ---------- fs/writeFile ----------
 
 export interface FsWriteFileAbsoluteParams {
   absolutePath: string;
@@ -289,7 +289,7 @@ export type RemoteRequest =
   | JsonRpcRequest<'fs/browseDirectories', FsBrowseDirectoriesParams>
   | JsonRpcRequest<'fs/browseEntries', FsBrowseEntriesParams>
   | JsonRpcRequest<'fs/readFileAbsolute', FsReadFileAbsoluteParams>
-  | JsonRpcRequest<'fs/writeFileAbsolute', FsWriteFileAbsoluteParams>
+  | JsonRpcRequest<'fs/writeFile', FsWriteFileAbsoluteParams>
   | JsonRpcRequest<'fs/create', FsCreateParams>
   | JsonRpcRequest<'fs/delete', FsDeleteParams>
   | JsonRpcRequest<'fs/rename', FsRenameParams>

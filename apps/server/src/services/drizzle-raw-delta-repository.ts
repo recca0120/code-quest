@@ -2,7 +2,8 @@ import { asc, type Column, eq } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { z } from 'zod';
 import type { DrizzleDb } from './drizzle-types.ts';
-import type { RawDeltaEntry, RawDeltaStore } from './raw-delta-store.ts';
+import type { RawDeltaEntry, RawDeltaRepository } from './raw-delta-repository.ts';
+import { type BaseRawTable, directionSchema } from './raw-event-repository.ts';
 
 const rowSchema = z.object({
   id: z.string(),
@@ -13,18 +14,11 @@ const rowSchema = z.object({
   createdAt: z.string(),
 });
 
-const directionSchema = z.enum(['in', 'out', 'err']);
-
-interface RawDeltasTable {
-  id: Column;
+interface RawDeltasTable extends BaseRawTable {
   parentId: Column;
-  sessionId: Column;
-  dir: Column;
-  raw: Column;
-  createdAt: Column;
 }
 
-export class DrizzleRawDeltaStore implements RawDeltaStore {
+export class DrizzleRawDeltaStore implements RawDeltaRepository {
   private db: DrizzleDb;
   private table: RawDeltasTable;
   constructor(db: DrizzleDb, table: RawDeltasTable) {

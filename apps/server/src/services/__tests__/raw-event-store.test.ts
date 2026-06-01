@@ -1,15 +1,17 @@
 import type { RawEvent } from '@code-quest/summoner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RawDeltaEntry, RawDeltaStore } from '../raw-delta-store.ts';
-import { RawEventService } from '../raw-event-service.ts';
-import type { RawEventStore } from '../raw-event-store.ts';
+import type { RawDeltaEntry, RawDeltaRepository } from '../raw-delta-repository.ts';
+import type { RawEventRepository } from '../raw-event-repository.ts';
+import { RawEventStore } from '../raw-event-store.ts';
 
-function mockEventStore(overrides: Partial<RawEventStore> = {}): RawEventStore {
+function mockEventStore(overrides: Partial<RawEventRepository> = {}): RawEventRepository {
   return {
     append: vi.fn(async () => 'evt-id'),
     getBySession: vi.fn(async () => []),
     getPreview: vi.fn(async () => ({})),
     cloneEvents: vi.fn(async () => {}),
+    countBySession: vi.fn(async () => 0),
+    hasEvents: vi.fn(async () => false),
     hasUserEcho: vi.fn(async () => false),
     streamBySession: vi.fn(async function* () {}),
     deleteBySession: vi.fn(async () => {}),
@@ -17,7 +19,7 @@ function mockEventStore(overrides: Partial<RawEventStore> = {}): RawEventStore {
   };
 }
 
-function mockDeltaStore(overrides: Partial<RawDeltaStore> = {}): RawDeltaStore {
+function mockDeltaStore(overrides: Partial<RawDeltaRepository> = {}): RawDeltaRepository {
   return {
     append: vi.fn(async () => {}),
     getBySession: vi.fn(async () => []),
@@ -47,15 +49,15 @@ function makeDelta(overrides: Partial<RawDeltaEntry> = {}): RawDeltaEntry {
   };
 }
 
-describe('RawEventService', () => {
-  let eventStore: RawEventStore;
-  let deltaStore: RawDeltaStore;
-  let service: RawEventService;
+describe('RawEventStore', () => {
+  let eventStore: RawEventRepository;
+  let deltaStore: RawDeltaRepository;
+  let service: RawEventStore;
 
   beforeEach(() => {
     eventStore = mockEventStore();
     deltaStore = mockDeltaStore();
-    service = new RawEventService(eventStore, deltaStore);
+    service = new RawEventStore(eventStore, deltaStore);
   });
 
   it('appendEvent routes to eventStore.append and returns the id', async () => {
@@ -76,13 +78,16 @@ describe('RawEventService', () => {
   it('appendDelta routes to deltaStore.append', async () => {
     await service.appendDelta(makeDelta());
     expect(deltaStore.append).toHaveBeenCalledTimes(1);
+    expect(deltaStore.append).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'sess', direction: 'out' }),
+    );
     expect(eventStore.append).not.toHaveBeenCalled();
   });
 
   it('getBySession delegates to eventStore (UNION happens inside the store)', async () => {
     const rows = [makeEvent({ raw: 'E' })];
     eventStore = mockEventStore({ getBySession: vi.fn(async () => rows) });
-    service = new RawEventService(eventStore, deltaStore);
+    service = new RawEventStore(eventStore, deltaStore);
 
     expect(await service.getBySession('sess')).toEqual(rows);
     expect(eventStore.getBySession).toHaveBeenCalledWith('sess');
