@@ -290,7 +290,7 @@ describe('ChannelManager', () => {
       await claude.emitSegment(s.assistant('reply'));
       await claude.emitSegment(s.result());
 
-      const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
+      const rawEventService = container.get<RawEventStore>(TYPES.RawEventStore);
       const events = await rawEventService.getBySession('test-session-001');
       expect(events.length).toBeGreaterThan(0);
     });

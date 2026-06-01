@@ -141,7 +141,7 @@ describe('session:delete', () => {
     await claude.emitSegment(s.assistant('reply'));
     await claude.emitSegment(s.result());
 
-    const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
+    const rawEventService = container.get<RawEventStore>(TYPES.RawEventStore);
     const eventsBefore = await rawEventService.getBySession('sess-to-delete');
     expect(eventsBefore.length).toBeGreaterThan(0);
 

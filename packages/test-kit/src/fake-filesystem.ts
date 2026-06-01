@@ -17,6 +17,7 @@ export class FakeFilesystem implements Filesystem {
   private roots: string[] = [];
   private dirs = new Map<string, string[]>();
   private files = new Map<string, string>();
+  private failWrites = new Set<string>();
 
   // ── Setup API ──
 
@@ -36,10 +37,19 @@ export class FakeFilesystem implements Filesystem {
     this.files.set(path, content);
   }
 
+  getFile(path: string): string | undefined {
+    return this.files.get(path);
+  }
+
+  failNextWrite(path: string): void {
+    this.failWrites.add(path);
+  }
+
   reset(): void {
     this.roots = [];
     this.dirs.clear();
     this.files.clear();
+    this.failWrites.clear();
   }
 
   fromTree(root: string, tree: FileTree): void {
@@ -137,7 +147,19 @@ export class FakeFilesystem implements Filesystem {
     return { content: encoded, contentType, encoding };
   }
 
-  async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
+  async *readLines(absolutePath: string): AsyncIterable<string> {
+    const content = this.files.get(absolutePath);
+    if (content === undefined) throw new Error(`File not found: ${absolutePath}`);
+    for (const line of content.split('\n')) {
+      if (line.trim()) yield line;
+    }
+  }
+
+  async writeFile(absolutePath: string, content: string): Promise<WriteFileResult> {
+    if (this.failWrites.has(absolutePath)) {
+      this.failWrites.delete(absolutePath);
+      return { error: `Write failed: ${absolutePath}` };
+    }
     this.files.set(absolutePath, content);
     return { ok: true };
   }

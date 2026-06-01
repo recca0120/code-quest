@@ -3,11 +3,11 @@ import { rawEvents } from '@code-quest/db-schema/sqlite';
 import type { RawEvent } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { createDatabase } from '../../db/sqlite-client.ts';
-import { CompositeRawEventStore } from '../composite-raw-event-store.ts';
-import { DrizzleRawEventStore } from '../drizzle-raw-event-store.ts';
-import type { RawEventStore } from '../raw-event-store.ts';
+import { CompositeRawEventStore } from '../composite-raw-event-repository.ts';
+import { DrizzleRawEventStore } from '../drizzle-raw-event-repository.ts';
+import type { RawEventRepository } from '../raw-event-repository.ts';
 
-function stubStore(overrides: Partial<RawEventStore> = {}): RawEventStore {
+function stubStore(overrides: Partial<RawEventRepository> = {}): RawEventRepository {
   return {
     async append() {
       return 'id';
@@ -19,9 +19,16 @@ function stubStore(overrides: Partial<RawEventStore> = {}): RawEventStore {
       return {};
     },
     async cloneEvents() {},
+    async countBySession() {
+      return 0;
+    },
+    async hasEvents() {
+      return false;
+    },
     async hasUserEcho() {
       return false;
     },
+    async appendBatch() {},
     async *streamBySession() {},
     async deleteBySession() {},
     ...overrides,
@@ -75,7 +82,9 @@ describe('CompositeRawEventStore', () => {
   });
 
   it('throws when constructed with empty stores array', () => {
-    expect(() => new CompositeRawEventStore([])).toThrow();
+    expect(() => new CompositeRawEventStore([])).toThrow(
+      'CompositeStore requires at least one store',
+    );
   });
 
   it('throws when all stores fail on append', async () => {
@@ -98,7 +107,7 @@ describe('CompositeRawEventStore', () => {
       raw: 'test',
     };
 
-    await expect(composite.append(event)).rejects.toThrow();
+    await expect(composite.append(event)).rejects.toThrow('All stores failed: raw event append');
   });
 
   it('continues writing to other stores even if one fails', async () => {
@@ -123,7 +132,7 @@ describe('CompositeRawEventStore', () => {
 
   it('generates id once and passes it to all inner stores', async () => {
     const idsSeenBy: string[] = [];
-    const makeSpy = (): RawEventStore =>
+    const makeSpy = (): RawEventRepository =>
       stubStore({
         async append(_e, id) {
           idsSeenBy.push(id ?? '(none)');
@@ -152,7 +161,7 @@ describe('CompositeRawEventStore', () => {
   it('cloneEvents generates ids once and passes the same ids to every inner store', async () => {
     const idsSeenByA: string[][] = [];
     const idsSeenByB: string[][] = [];
-    const makeSpy = (captured: string[][]): RawEventStore =>
+    const makeSpy = (captured: string[][]): RawEventRepository =>
       stubStore({
         async append(_event, id) {
           return id ?? 'gen';

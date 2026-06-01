@@ -6,7 +6,7 @@ import type { Openspec } from '@code-quest/openspec';
 import type { LaunchOptions, PluginCliService, ProcessRunner } from '@code-quest/summoner';
 import type { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
 import type { ProjectStore } from './services/project-store.ts';
-import type { RawEventService } from './services/raw-event-service.ts';
+import type { RawEventStore } from './services/raw-event-store.ts';
 import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
 import type { UsageTracker } from './services/usage-tracker.ts';
@@ -25,7 +25,7 @@ export const TYPES: {
   readonly SessionStore: symbol;
   readonly ProjectStore: symbol;
   readonly ProjectAutoUpserter: symbol;
-  readonly RawEventService: symbol;
+  readonly RawEventStore: symbol;
   readonly SocketServer: symbol;
   readonly Database: symbol;
   readonly UsageTracker: symbol;
@@ -47,7 +47,7 @@ export const TYPES: {
   SessionStore: Symbol.for('SessionStore'),
   ProjectStore: Symbol.for('ProjectStore'),
   ProjectAutoUpserter: Symbol.for('ProjectAutoUpserter'),
-  RawEventService: Symbol.for('RawEventService'),
+  RawEventStore: Symbol.for('RawEventStore'),
   SocketServer: Symbol.for('SocketServer'),
   Database: Symbol.for('Database'),
   UsageTracker: Symbol.for('UsageTracker'),
@@ -76,7 +76,7 @@ export interface HandlerContext {
   settingsStore: SettingsStore;
   usageTracker: UsageTracker;
   sessionHistory: SessionHistory;
-  rawEventService: RawEventService;
+  rawEventService: RawEventStore;
   filesystemService: Filesystem;
   gitService: Git;
   openspecService: Openspec;

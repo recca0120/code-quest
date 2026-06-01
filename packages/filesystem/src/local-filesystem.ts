@@ -1,5 +1,7 @@
+import { createReadStream } from 'node:fs';
 import { cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { basename, join, normalize, resolve } from 'node:path';
+import { basename, dirname, join, normalize, resolve } from 'node:path';
+import { createInterface } from 'node:readline';
 import { errMsg, mimeForPath } from '@code-quest/utils';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
@@ -128,11 +130,23 @@ export class LocalFilesystem implements Filesystem {
     }
   }
 
-  // ── writeFileAbsolute ──
+  // ── readLines ──
 
-  async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
+  async *readLines(absolutePath: string): AsyncIterable<string> {
+    const validated = resolve(absolutePath);
+    const stream = createReadStream(validated, { encoding: 'utf-8' });
+    const rl = createInterface({ input: stream, crlfDelay: Infinity });
+    for await (const line of rl) {
+      if (line.trim()) yield line;
+    }
+  }
+
+  // ── writeFile ──
+
+  async writeFile(absolutePath: string, content: string): Promise<WriteFileResult> {
     const validated = resolve(absolutePath);
     try {
+      await mkdir(dirname(validated), { recursive: true });
       await writeFile(validated, content, 'utf-8');
       return { ok: true };
     } catch (err) {

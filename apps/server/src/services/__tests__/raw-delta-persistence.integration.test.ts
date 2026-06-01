@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DrizzleDatabase } from '../../db/sqlite-client.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../../test/index.ts';
 import { TYPES } from '../../types.ts';
-import type { RawEventService } from '../raw-event-service.ts';
+import type { RawEventStore } from '../raw-event-store.ts';
 
 function deltaLine(text: string): string {
   return JSON.stringify({
@@ -51,7 +51,7 @@ describe('raw delta persistence — four flag quadrants', () => {
     const deltaRows = await db.select().from(rawDeltas);
     expect(deltaRows).toEqual([]);
 
-    const svc = container.get<RawEventService>(TYPES.RawEventService);
+    const svc = container.get<RawEventStore>(TYPES.RawEventStore);
     const rows = await svc.getBySession('sess-q1');
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((r) => !r.raw.includes('content_block_delta'))).toBe(true);
@@ -64,7 +64,7 @@ describe('raw delta persistence — four flag quadrants', () => {
     const deltaRows = await db.select().from(rawDeltas);
     expect(deltaRows.length).toBeGreaterThanOrEqual(2);
 
-    const svc = container.get<RawEventService>(TYPES.RawEventService);
+    const svc = container.get<RawEventStore>(TYPES.RawEventStore);
     const rows = await svc.getBySession('sess-q2');
     expect(rows.every((r) => !r.raw.includes('content_block_delta'))).toBe(true);
   });
@@ -76,7 +76,7 @@ describe('raw delta persistence — four flag quadrants', () => {
     const deltaRows = await db.select().from(rawDeltas);
     expect(deltaRows.length).toBeGreaterThanOrEqual(2);
 
-    const svc = container.get<RawEventService>(TYPES.RawEventService);
+    const svc = container.get<RawEventStore>(TYPES.RawEventStore);
     const unioned = await svc.getBySession('sess-q3');
     expect(unioned.some((r) => r.raw.includes('content_block_delta'))).toBe(true);
     expect(unioned.some((r) => r.raw.startsWith('{"type":"assistant"'))).toBe(true);
@@ -89,7 +89,7 @@ describe('raw delta persistence — four flag quadrants', () => {
     const deltaRows = await db.select().from(rawDeltas);
     expect(deltaRows).toEqual([]);
 
-    const svc = container.get<RawEventService>(TYPES.RawEventService);
+    const svc = container.get<RawEventStore>(TYPES.RawEventStore);
     const rows = await svc.getBySession('sess-q4');
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((r) => !r.raw.includes('content_block_delta'))).toBe(true);

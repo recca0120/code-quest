@@ -6,6 +6,7 @@
  */
 
 interface DrizzleQueryResult extends Promise<unknown[]> {
+  limit(n: number): { offset(n: number): Promise<unknown[]> } & Promise<unknown[]>;
   orderBy(...cols: unknown[]): {
     limit(n: number): { offset(n: number): Promise<unknown[]> } & Promise<unknown[]>;
   } & Promise<unknown[]>;

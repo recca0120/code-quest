@@ -4,8 +4,8 @@ import type { RawEvent } from '@code-quest/summoner';
 import { segments as s } from '@code-quest/test-kit';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { createDatabase } from '../../db/sqlite-client.ts';
-import { DrizzleRawDeltaStore } from '../drizzle-raw-delta-store.ts';
-import { DrizzleRawEventStore } from '../drizzle-raw-event-store.ts';
+import { DrizzleRawDeltaStore } from '../drizzle-raw-delta-repository.ts';
+import { DrizzleRawEventStore } from '../drizzle-raw-event-repository.ts';
 
 describe('DrizzleRawEventStore', () => {
   let db: ReturnType<typeof createDatabase>;

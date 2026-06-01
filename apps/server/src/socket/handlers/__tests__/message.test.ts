@@ -137,7 +137,7 @@ describe('ChatHandler > message', () => {
     await claude.emitSegment(s.assistant('ok'));
     await claude.emitSegment(s.result());
 
-    const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
+    const rawEventService = container.get<RawEventStore>(TYPES.RawEventStore);
     const stored = await rawEventService.getBySession('cli-sess');
     expect(stored.length).toBeGreaterThan(0);
   });

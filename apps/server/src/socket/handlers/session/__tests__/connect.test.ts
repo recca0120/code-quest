@@ -15,7 +15,7 @@ type ResumeOk = Extract<SessionResumeResponse, { ok: true }>;
 
 import { type FakeClaude, segments as s } from '@code-quest/test-kit';
 import { logger } from '../../../../logger.ts';
-import type { RawEventService } from '../../../../services/raw-event-service.ts';
+import type { RawEventStore } from '../../../../services/raw-event-store.ts';
 import type { SessionStore } from '../../../../services/session-store.ts';
 import {
   createFakeServer,
@@ -456,7 +456,7 @@ describe('ChatHandler > session', () => {
       await claude.emitSegment(s.result());
 
       // Verify raw_event_store has both stdin and stdout records
-      const rawStore = container.get<RawEventService>(TYPES.RawEventService);
+      const rawStore = container.get<RawEventStore>(TYPES.RawEventStore);
       const mgr = getChannelManager(container);
       const channel = mgr.get(channelId)!;
       const rawEvents = await rawStore.getBySession(channel.sessionId!);
@@ -672,7 +672,7 @@ describe('ChatHandler > session', () => {
     it('raw events are persisted to DB after session is created (no FK error)', async () => {
       const { container } = await setupSession();
 
-      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const rawEventService = container.get<RawEventStore>(TYPES.RawEventStore);
       const events = await rawEventService.getBySession('cli-sess');
       expect(events.length).toBeGreaterThan(0);
     });
@@ -682,7 +682,7 @@ describe('ChatHandler > session', () => {
 
       await claude.send('chat:send', { channelId, message: 'hello' });
 
-      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const rawEventService = container.get<RawEventStore>(TYPES.RawEventStore);
       const events = await rawEventService.getBySession('cli-sess');
       const stdinHellos = events.filter(
         (e) =>
@@ -986,7 +986,7 @@ describe('ChatHandler > session', () => {
       await claude.emitSegment(s.assistant('hi'));
       await claude.emitSegment(s.result());
 
-      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const rawEventService = container.get<RawEventStore>(TYPES.RawEventStore);
       const events = await rawEventService.getBySession('cli-sess');
       expect(events.length).toBeGreaterThan(0);
     });

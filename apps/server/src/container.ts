@@ -29,19 +29,19 @@ import { RemoteProcessProvider } from './remote/process-provider.ts';
 import type { ReconnectableRpc } from './remote/reconnectable-rpc.ts';
 import { RemoteBroadcaster } from './remote/remote-broadcaster.ts';
 import { CompositeProjectStore } from './services/composite-project-store.ts';
-import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts';
-import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
+import { CompositeRawDeltaStore } from './services/composite-raw-delta-repository.ts';
+import { CompositeRawEventStore } from './services/composite-raw-event-repository.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
 import { CompositeSettingsStore } from './services/composite-settings-store.ts';
-import { DrizzleRawDeltaStore } from './services/drizzle-raw-delta-store.ts';
-import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
+import { DrizzleRawDeltaStore } from './services/drizzle-raw-delta-repository.ts';
+import { DrizzleRawEventStore } from './services/drizzle-raw-event-repository.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { DrizzleSettingsStore } from './services/drizzle-settings-store.ts';
 import { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
 import { DrizzleProjectStore, type ProjectStore } from './services/project-store.ts';
-import type { RawDeltaStore } from './services/raw-delta-store.ts';
-import { RawEventService } from './services/raw-event-service.ts';
-import type { RawEventStore } from './services/raw-event-store.ts';
+import type { RawDeltaRepository } from './services/raw-delta-repository.ts';
+import type { RawEventRepository } from './services/raw-event-repository.ts';
+import { RawEventStore } from './services/raw-event-store.ts';
 import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
@@ -113,8 +113,8 @@ export function createContainer(options: ContainerOptions): Container {
   const lowEventStore = pickOrComposite(eventStores, (s) => new CompositeRawEventStore(s));
   const lowDeltaStore = pickOrComposite(deltaStores, (s) => new CompositeRawDeltaStore(s));
 
-  const rawEventService = new RawEventService(lowEventStore, lowDeltaStore);
-  container.bind<RawEventService>(TYPES.RawEventService).toConstantValue(rawEventService);
+  const rawEventService = new RawEventStore(lowEventStore, lowDeltaStore);
+  container.bind<RawEventStore>(TYPES.RawEventStore).toConstantValue(rawEventService);
 
   const sessionStore = pickOrComposite(sessionStores, (s) => new CompositeSessionStore(s));
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
@@ -238,13 +238,13 @@ function buildStores(
   databases: DatabaseEntry[],
   flags: { readDeltas: boolean } = { readDeltas: false },
 ): {
-  eventStores: RawEventStore[];
-  deltaStores: RawDeltaStore[];
+  eventStores: RawEventRepository[];
+  deltaStores: RawDeltaRepository[];
   sessionStores: SessionStore[];
   settingsStores: SettingsStore[];
 } {
-  const eventStores: RawEventStore[] = [];
-  const deltaStores: RawDeltaStore[] = [];
+  const eventStores: RawEventRepository[] = [];
+  const deltaStores: RawDeltaRepository[] = [];
   const sessionStores: SessionStore[] = [];
   const settingsStores: SettingsStore[] = [];
 

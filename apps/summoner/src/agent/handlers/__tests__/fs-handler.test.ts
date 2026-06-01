@@ -58,9 +58,9 @@ describe('FsHandler', () => {
     expect((result as Record<string, unknown>).encoding).toBe('utf-8');
   });
 
-  it('writeFileAbsolute writes content and returns ok', async () => {
+  it('writeFile writes content and returns ok', async () => {
     const { request } = makeHandler();
-    const result = await request(REMOTE_METHODS.fs.writeFileAbsolute, {
+    const result = await request(REMOTE_METHODS.fs.writeFile, {
       absolutePath: '/repo/src/index.ts',
       content: 'new content',
     });

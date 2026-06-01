@@ -4,7 +4,7 @@ import type {
   TeleportSessionResponse,
 } from '@code-quest/schemas';
 import { segments as s } from '@code-quest/test-kit';
-import type { RawEventService } from '../../../../services/raw-event-service.ts';
+import type { RawEventStore } from '../../../../services/raw-event-store.ts';
 import type { SessionStore } from '../../../../services/session-store.ts';
 import {
   createFakeServer,
@@ -282,7 +282,7 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
       createdAt: new Date().toISOString(),
     });
 
-    const rawStore = container.get<RawEventService>(TYPES.RawEventService);
+    const rawStore = container.get<RawEventStore>(TYPES.RawEventStore);
     await rawStore.appendEvent({
       timestamp: Date.now(),
       sessionId: 'sess-clone-parent',

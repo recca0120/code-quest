@@ -3,7 +3,13 @@ import { and, asc, type Column, desc, eq, sql } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { z } from 'zod';
 import type { DrizzleDb } from './drizzle-types.ts';
-import { extractTextFromRaw, type RawEventStore, type SessionPreview } from './raw-event-store.ts';
+import {
+  type BaseRawTable,
+  directionSchema,
+  extractTextFromRaw,
+  type RawEventRepository,
+  type SessionPreview,
+} from './raw-event-repository.ts';
 
 const rawEventRowSchema = z.object({
   id: z.string(),
@@ -15,23 +21,8 @@ const rawEventRowSchema = z.object({
 
 type RawEventRow = z.infer<typeof rawEventRowSchema>;
 
-const directionSchema = z.enum(['in', 'out', 'err']);
-
-interface RawEventsTable {
-  id: Column;
-  sessionId: Column;
-  dir: Column;
-  raw: Column;
-  createdAt: Column;
-}
-
-interface RawDeltasTable {
-  id: Column;
+interface RawDeltasTable extends BaseRawTable {
   parentId: Column;
-  sessionId: Column;
-  dir: Column;
-  raw: Column;
-  createdAt: Column;
 }
 
 /** Drizzle's select-builder chain supports .unionAll + .orderBy; our minimal
@@ -69,16 +60,24 @@ function toRawEvent(row: RawEventRow): RawEvent {
   };
 }
 
-export class DrizzleRawEventStore implements RawEventStore {
+function parseRawRows(rows: unknown): RawEventRow[] {
+  return z.array(rawEventRowSchema).parse(rows);
+}
+
+function parseRows(rows: unknown): RawEvent[] {
+  return parseRawRows(rows).map(toRawEvent);
+}
+
+export class DrizzleRawEventStore implements RawEventRepository {
   /**
    * @param deltaTable optional sibling table. When supplied, `getBySession`
    *   emits a SQL `UNION ALL` across raw_events + raw_deltas. Omitted for
    *   single-table scenarios (e.g. isolated unit tests).
    */
   private db: DrizzleDb;
-  private table: RawEventsTable;
+  private table: BaseRawTable;
   private deltaTable?: RawDeltasTable;
-  constructor(db: DrizzleDb, table: RawEventsTable, deltaTable?: RawDeltasTable) {
+  constructor(db: DrizzleDb, table: BaseRawTable, deltaTable?: RawDeltasTable) {
     this.db = db;
     this.table = table;
     this.deltaTable = deltaTable;
@@ -94,6 +93,18 @@ export class DrizzleRawEventStore implements RawEventStore {
       createdAt: new Date(event.timestamp).toISOString(),
     });
     return rowId;
+  }
+
+  async appendBatch(events: RawEvent[]): Promise<void> {
+    if (events.length === 0) return;
+    const values = events.map((event) => ({
+      id: uuidv7(),
+      sessionId: event.sessionId,
+      dir: event.direction,
+      raw: event.raw,
+      createdAt: new Date(event.timestamp).toISOString(),
+    }));
+    await this.db.insert(this.table).values(values);
   }
 
   async getPreview(sessionId: string): Promise<SessionPreview> {
@@ -114,8 +125,8 @@ export class DrizzleRawEventStore implements RawEventStore {
     ]);
 
     return {
-      lastAssistant: findText(z.array(rawEventRowSchema).parse(lastOutRaw), 'assistant'),
-      firstUser: findText(z.array(rawEventRowSchema).parse(firstInRaw), 'user'),
+      lastAssistant: findText(parseRawRows(lastOutRaw), 'assistant'),
+      firstUser: findText(parseRawRows(firstInRaw), 'user'),
     };
   }
 
@@ -139,7 +150,7 @@ export class DrizzleRawEventStore implements RawEventStore {
   async getBySession(sessionId: string): Promise<RawEvent[]> {
     if (!this.deltaTable) return this.getEventsBySession(sessionId);
     const rows = await this.getUnionBySession(sessionId, this.deltaTable);
-    return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
+    return parseRows(rows);
   }
 
   private getUnionBySession(sessionId: string, deltaTable: typeof this.table) {
@@ -174,12 +185,36 @@ export class DrizzleRawEventStore implements RawEventStore {
       .where(eq(this.table.sessionId, sessionId))
       .orderBy(asc(this.table.createdAt), asc(this.table.id));
 
-    return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
+    return parseRows(rows);
+  }
+
+  async countBySession(sessionId: string): Promise<number> {
+    const countRows = async (table: BaseRawTable) => {
+      const rows = await this.db
+        .select({ count: sql`count(*)` })
+        .from(table)
+        .where(eq(table.sessionId, sessionId));
+      return z.coerce.number().parse((rows[0] as { count: unknown } | undefined)?.count ?? 0);
+    };
+    const [eventsCount, deltasCount] = await Promise.all([
+      countRows(this.table),
+      this.deltaTable ? countRows(this.deltaTable) : Promise.resolve(0),
+    ]);
+    return eventsCount + deltasCount;
+  }
+
+  async hasEvents(sessionId: string): Promise<boolean> {
+    const rows = await this.db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .where(eq(this.table.sessionId, sessionId))
+      .limit(1);
+    return rows.length > 0;
   }
 
   async hasUserEcho(sessionId: string): Promise<boolean> {
     const rows = await this.db
-      .select()
+      .select({ id: this.table.id })
       .from(this.table)
       .where(
         and(
@@ -188,16 +223,12 @@ export class DrizzleRawEventStore implements RawEventStore {
           sql`json_extract(${this.table.raw}, '$.type') = 'user'`,
         ),
       )
-      .orderBy(asc(this.table.createdAt), asc(this.table.id))
       .limit(1);
     return rows.length > 0;
   }
 
   async deleteBySession(sessionId: string): Promise<void> {
     await this.db.delete(this.table).where(eq(this.table.sessionId, sessionId));
-    if (this.deltaTable) {
-      await this.db.delete(this.deltaTable).where(eq(this.deltaTable.sessionId, sessionId));
-    }
   }
 
   async *streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]> {
@@ -216,10 +247,10 @@ export class DrizzleRawEventStore implements RawEventStore {
           .where(cond)
           .orderBy(asc(this.table.createdAt), asc(this.table.id)) as PageableQuery<RawEventRow>
       ).limit(batchSize);
-      const parsed = z.array(rawEventRowSchema).parse(rows);
+      const parsed = parseRawRows(rows);
       if (parsed.length === 0) break;
-      const last = parsed.at(-1);
-      if (last) cursor = { createdAt: last.createdAt, id: last.id };
+      const last = parsed[parsed.length - 1] as RawEventRow;
+      cursor = { createdAt: last.createdAt, id: last.id };
       yield parsed.map(toRawEvent);
       if (parsed.length < batchSize) break;
     }

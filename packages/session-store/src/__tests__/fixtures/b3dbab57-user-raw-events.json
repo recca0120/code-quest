@@ -1,0 +1,7 @@
+[
+  "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan \u7814\u7a76\u4e00\u4e0b\u9019\u4e00\u7bc7\u7684\u5167\u5bb9\uff0c\u5c0d\u6211\u5011\u9019\u500b\u5c08\u6848\u7684\u5f71\u97ff\u662f\u4ec0\u9ebc\uff1f\"}]}}",
+  "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"\u4f46\u9019\u500b\u5c08\u6848\u5176\u5be6\u4e0d\u53eb cc-office \u9019\u540d\u5b57\u51fa\u73fe\u5728\u54ea\u908a\uff1f\u5b83\u61c9\u8a72\u53eb code-quest\"}]}}",
+  "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"\u5728\u65b0\u7248\u672c\u88e1\u6709 background_tasks \u7684 subtype \u9019\u500b\u5728 mysql \u8cc7\u6599\u5eab\u88e1\u9762\u6709\u51fa\u73fe\u55ce\uff1f\u90a3\u5b83\u5728 extension \u88e1\u6703\u600e\u9ebc\u64cd\u4f5c\uff1f\"}]}}",
+  "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"\u8acb\u7528\u4e2d\u6587\u56de\u8986\"}]}}",
+  "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"\u6240\u4ee5 extension \u7684 UI \u6703\u600e\u9ebc\u5448\u73fe\uff1f\"}]}}"
+]

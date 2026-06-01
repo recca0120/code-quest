@@ -3,8 +3,8 @@ import { rawDeltas } from '@code-quest/db-schema/sqlite';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase } from '../../db/sqlite-client.ts';
-import { DrizzleRawDeltaStore } from '../drizzle-raw-delta-store.ts';
-import type { RawDeltaEntry } from '../raw-delta-store.ts';
+import { DrizzleRawDeltaStore } from '../drizzle-raw-delta-repository.ts';
+import type { RawDeltaEntry } from '../raw-delta-repository.ts';
 
 function makeEntry(overrides: Partial<RawDeltaEntry> = {}): RawDeltaEntry {
   return {

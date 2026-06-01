@@ -61,9 +61,14 @@ export class RootGuardFilesystem implements Filesystem {
     return this.filesystem.readFileAbsolute(absolutePath);
   }
 
-  async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
+  async *readLines(absolutePath: string): AsyncIterable<string> {
     this.guard(absolutePath);
-    return this.filesystem.writeFileAbsolute(absolutePath, content);
+    yield* this.filesystem.readLines(absolutePath);
+  }
+
+  async writeFile(absolutePath: string, content: string): Promise<WriteFileResult> {
+    this.guard(absolutePath);
+    return this.filesystem.writeFile(absolutePath, content);
   }
 
   async create(absolutePath: string, kind: FileKind): Promise<FsMutationResult> {

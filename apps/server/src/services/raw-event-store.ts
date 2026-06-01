@@ -1,58 +1,72 @@
 import type { RawEvent } from '@code-quest/summoner';
-import { z } from 'zod';
-import { logger } from '../logger.ts';
+import type { RawDeltaEntry, RawDeltaRepository } from './raw-delta-repository.ts';
+import type { RawEventRepository, SessionPreview } from './raw-event-repository.ts';
 
-const sessionPreviewSchema: z.ZodObject<{
-  lastAssistant: z.ZodOptional<z.ZodString>;
-  firstUser: z.ZodOptional<z.ZodString>;
-}> = z.object({
-  lastAssistant: z.string().optional(),
-  firstUser: z.string().optional(),
-});
-export type SessionPreview = z.infer<typeof sessionPreviewSchema>;
-
-const rawTextMessageSchema = z.object({
-  type: z.string(),
-  message: z.object({
-    content: z.array(z.looseObject({ type: z.string(), text: z.string().optional() })),
-  }),
-});
-
-/** Extract text content from a raw JSON entry if it matches the given type. */
-export function extractTextFromRaw(raw: string, type: 'user' | 'assistant'): string | undefined {
-  try {
-    const result = rawTextMessageSchema.safeParse(JSON.parse(raw));
-    if (!result.success || result.data.type !== type) return undefined;
-    const textBlock = result.data.message.content.find((b) => b.type === 'text');
-    return textBlock?.text;
-  } catch (err) {
-    logger.debug({ err }, 'failed to parse raw event content');
+/**
+ * Facade presenting a single public API over the split raw_events / raw_deltas
+ * storage. Consumers treat this as "the event store"; the split is an
+ * implementation detail they don't see.
+ *
+ * Write-side routing:
+ *  - appendEvent  → raw_events (returns inserted id)
+ *  - appendDelta  → raw_deltas (parent_id points at the user-stdin raw_events row)
+ *
+ * Read-side: `getBySession` returns the DB-level UNION ALL of both tables,
+ * configured at the store layer. `cloneEvents` uses an events-only path
+ * internally — forks carry conversation state, not token-stream debug data.
+ */
+export class RawEventStore {
+  private readonly eventStore: RawEventRepository;
+  private readonly deltaStore: RawDeltaRepository;
+  constructor(eventStore: RawEventRepository, deltaStore: RawDeltaRepository) {
+    this.eventStore = eventStore;
+    this.deltaStore = deltaStore;
   }
-  return undefined;
-}
 
-export interface RawEventStore {
-  /**
-   * Append a raw event. Returns the primary-key id of the inserted row.
-   * If `id` is provided, the store uses it verbatim; otherwise one is generated.
-   * Composite stores use this to share the same id across all backing stores,
-   * so downstream references (e.g. raw_deltas.parent_id) remain consistent.
-   */
-  append(event: RawEvent, id?: string): Promise<string>;
-  getBySession(sessionId: string): Promise<RawEvent[]>;
-  getPreview(sessionId: string): Promise<SessionPreview>;
-  /**
-   * Clone all events of `fromSessionId` under `toSessionId`. When `ids` is
-   * supplied the Nth cloned row uses `ids[N]` as its primary key (aligned with
-   * the row order returned by `getBySession`); otherwise ids are generated.
-   * Composite stores use the shared-id variant so all backing stores end up
-   * with identical primary keys.
-   */
-  cloneEvents(fromSessionId: string, toSessionId: string, ids?: string[]): Promise<void>;
-  /** Returns true if the session has at least one stdout event of type "user" (stdout user echo). */
-  hasUserEcho(sessionId: string): Promise<boolean>;
-  /** Yields events in batches of `batchSize`. */
-  streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]>;
-  /** Delete all events for a session. */
-  deleteBySession(sessionId: string): Promise<void>;
+  appendEvent(event: RawEvent, id?: string): Promise<string> {
+    return this.eventStore.append(event, id);
+  }
+
+  appendEvents(events: RawEvent[]): Promise<void> {
+    return this.eventStore.appendBatch(events);
+  }
+
+  appendDelta(entry: RawDeltaEntry): Promise<void> {
+    return this.deltaStore.append(entry);
+  }
+
+  getBySession(sessionId: string): Promise<RawEvent[]> {
+    return this.eventStore.getBySession(sessionId);
+  }
+
+  getPreview(sessionId: string): Promise<SessionPreview> {
+    return this.eventStore.getPreview(sessionId);
+  }
+
+  cloneEvents(fromSessionId: string, toSessionId: string): Promise<void> {
+    return this.eventStore.cloneEvents(fromSessionId, toSessionId);
+  }
+
+  countBySession(sessionId: string): Promise<number> {
+    return this.eventStore.countBySession(sessionId);
+  }
+
+  hasEvents(sessionId: string): Promise<boolean> {
+    return this.eventStore.hasEvents(sessionId);
+  }
+
+  hasUserEcho(sessionId: string): Promise<boolean> {
+    return this.eventStore.hasUserEcho(sessionId);
+  }
+
+  streamBySession(sessionId: string, batchSize: number): AsyncGenerator<RawEvent[]> {
+    return this.eventStore.streamBySession(sessionId, batchSize);
+  }
+
+  async deleteBySession(sessionId: string): Promise<void> {
+    await Promise.all([
+      this.eventStore.deleteBySession(sessionId),
+      this.deltaStore.deleteBySession(sessionId),
+    ]);
+  }
 }

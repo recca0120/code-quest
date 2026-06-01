@@ -1,6 +1,6 @@
 import { isRecord } from '@code-quest/utils';
 import { logger } from '../logger.ts';
-import type { RawEventService } from '../services/raw-event-service.ts';
+import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { Channel } from './channel.ts';
 import { isDelta } from './raw-classifier.ts';
 
@@ -27,9 +27,9 @@ function isUserStdin(raw: string, direction: 'in' | 'out' | 'err'): boolean {
 const PENDING_CAP = 1000;
 
 export class RawRecorder {
-  private service: RawEventService;
+  private service: RawEventStore;
   private writeDeltas: boolean;
-  constructor(service: RawEventService, writeDeltas: boolean) {
+  constructor(service: RawEventStore, writeDeltas: boolean) {
     this.service = service;
     this.writeDeltas = writeDeltas;
   }

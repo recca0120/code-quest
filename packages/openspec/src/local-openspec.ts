@@ -159,7 +159,7 @@ export class LocalOpenspec implements Openspec {
     const [, prefix, mark, rest] = match;
     const checked = mark === ' ';
     lines[lineIndex] = `${prefix}${checked ? 'x' : ' '}${rest}`;
-    const write = await this.fs.writeFileAbsolute(path, lines.join('\n'));
+    const write = await this.fs.writeFile(path, lines.join('\n'));
     if ('error' in write) return { error: write.error };
     return { ok: true, checked };
   }
