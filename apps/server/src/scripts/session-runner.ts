@@ -21,6 +21,7 @@ async function selectProject<T extends { cwd: string; sessions: unknown[] }>(
 ): Promise<T | null> {
   return select({
     message,
+    pageSize: Math.max(10, (process.stdout.rows ?? 24) - 4),
     choices: [
       ...projects.map((p) => ({
         name: `${p.cwd}   ${chalk.gray(`${String(p.sessions.length)} sessions`)} · ${formatCount(p)}`,
@@ -114,6 +115,7 @@ export class SessionRunner {
 
       const toImport = await checkbox({
         message: `${projectChoice.cwd} — select sessions to import`,
+        pageSize: Math.max(10, (process.stdout.rows ?? 24) - 4),
         choices,
       });
 
@@ -164,6 +166,7 @@ export class SessionRunner {
 
       const toExport = await checkbox({
         message: `${projectChoice.cwd} — select sessions to export`,
+        pageSize: Math.max(10, (process.stdout.rows ?? 24) - 4),
         choices,
       });
 
