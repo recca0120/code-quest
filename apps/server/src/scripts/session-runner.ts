@@ -1,15 +1,11 @@
-import { basename } from 'node:path';
-import type { Filesystem } from '@code-quest/filesystem';
 import type {
   ExportableSession,
   ImportStatusEntry,
   SessionMigrator,
-  SessionReader,
-  SessionWriter,
 } from '@code-quest/session-store';
-import { JsonlFileReader, JsonlFileWriter, Transfer } from '@code-quest/session-store';
 import { checkbox, Separator, select } from '@inquirer/prompts';
 import chalk from 'chalk';
+import type { SessionTransfer } from '../services/session-transfer.ts';
 import {
   buildGroupedChoices,
   formatExportSession,
@@ -49,35 +45,13 @@ async function runBatch<T>(
   console.log(chalk.green(`\nDone. ${items.length} session(s) processed.\n`));
 }
 
-// ── SessionManager class ──────────────────────────────────────────────────
-
-export class SessionManager {
+export class SessionRunner {
   private readonly scanner: SessionMigrator;
-  private readonly reader: SessionReader;
-  private readonly writer: SessionWriter;
-  private readonly filesystem: Filesystem;
+  private readonly transfer: SessionTransfer;
 
-  constructor(
-    scanner: SessionMigrator,
-    reader: SessionReader,
-    writer: SessionWriter,
-    filesystem: Filesystem,
-  ) {
+  constructor(scanner: SessionMigrator, transfer: SessionTransfer) {
     this.scanner = scanner;
-    this.reader = reader;
-    this.writer = writer;
-    this.filesystem = filesystem;
-  }
-
-  async importSession(filePath: string): Promise<void> {
-    const sessionId = basename(filePath, '.jsonl');
-    await new Transfer(new JsonlFileReader(filePath, this.filesystem), this.writer).run(sessionId);
-  }
-
-  async exportSession(sessionId: string, outputPath: string): Promise<void> {
-    await new Transfer(this.reader, new JsonlFileWriter(outputPath, this.filesystem)).run(
-      sessionId,
-    );
+    this.transfer = transfer;
   }
 
   async run(): Promise<void> {
@@ -150,7 +124,7 @@ export class SessionManager {
       await runBatch(
         withPath,
         ({ session }) => session.sessionId.slice(0, 8),
-        ({ session }) => this.importSession(session.filePath),
+        ({ session }) => this.transfer.importSession(session.filePath),
       );
     }
   }
@@ -195,7 +169,7 @@ export class SessionManager {
       await runBatch(
         selected,
         (s) => s.session.sessionId.slice(0, 8),
-        (s) => this.exportSession(s.session.sessionId, s.filePath),
+        (s) => this.transfer.exportSession(s.session.sessionId, s.filePath),
       );
     }
   }

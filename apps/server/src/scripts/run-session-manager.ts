@@ -12,8 +12,9 @@ import { DbSessionReader } from '../services/db-session-reader.ts';
 import { DbSessionWriter } from '../services/db-session-writer.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
+import { SessionTransfer } from '../services/session-transfer.ts';
 import { TYPES } from '../types.ts';
-import { SessionManager } from './session-manager.ts';
+import { SessionRunner } from './session-runner.ts';
 
 async function main() {
   if (config.database.length === 0) throw new Error('No databases configured');
@@ -42,7 +43,9 @@ async function main() {
 
   const reader = new DbSessionReader(rawEventService, sessionStore);
   const writer = new DbSessionWriter(rawEventService, sessionStore);
-  await new SessionManager(scanner, reader, writer, guardedFs).run();
+  const transfer = new SessionTransfer(reader, writer, guardedFs);
+
+  await new SessionRunner(scanner, transfer).run();
 }
 
 const SILENT_EXIT_PATTERNS = ['force closed', 'ExitPromptError'];
