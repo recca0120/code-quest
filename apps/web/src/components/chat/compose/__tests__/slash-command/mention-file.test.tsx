@@ -2,7 +2,7 @@ import { segments as s } from '@code-quest/test-kit';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatInputArea } from '@/components/chat/compose/ChatInputArea';
 import { renderWithChannel } from '@/test/render-with-channel';
 
@@ -28,6 +28,10 @@ async function renderChatInputAreaStrict(initOpts?: Parameters<typeof s.init>[1]
 }
 
 describe('slash command integration', () => {
+  // singleFork runs all component tests in one process; a prior test may leave
+  // fake timers active, which freezes waitFor's internal setTimeout polling.
+  beforeEach(() => vi.useRealTimers());
+
   describe('Mention file from this project', () => {
     it('Click inserts @ into textarea, closes slash menu, and triggers mention search', async () => {
       const user = userEvent.setup();
