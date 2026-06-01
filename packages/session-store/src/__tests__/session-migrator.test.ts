@@ -21,7 +21,10 @@ function makeJsonlLine(sessionId: string, type = 'user'): string {
 }
 
 class StubProjectScanner implements ProjectScanner {
-  constructor(private readonly projects: ProjectSummary[] = []) {}
+  private readonly projects: ProjectSummary[];
+  constructor(projects: ProjectSummary[] = []) {
+    this.projects = projects;
+  }
   async scanProjects(): Promise<ProjectSummary[]> {
     return this.projects;
   }
