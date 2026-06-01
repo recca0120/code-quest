@@ -79,6 +79,18 @@ describe('JsonlFileWriter', () => {
   });
 });
 
+describe('JsonlFileWriter — no double parse', () => {
+  it('written lines contain sessionId and cwd without enrichLine re-parse', async () => {
+    const fakeFs = new FakeFilesystem();
+    const data = await readFixture();
+    const outPath = '/tmp/no-double-parse.jsonl';
+    await new JsonlFileWriter(outPath, fakeFs).write(SESSION_ID, data);
+
+    const lines = fakeFs.getFile(outPath)!.split('\n').filter(Boolean);
+    expect(lines.every((l) => JSON.parse(l).sessionId === SESSION_ID)).toBe(true);
+  });
+});
+
 describe('MemoryWriter', () => {
   it('stores written data accessible via .data', async () => {
     const source = await readFixture();

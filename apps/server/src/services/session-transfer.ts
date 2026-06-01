@@ -15,8 +15,17 @@ export class SessionTransfer {
   }
 
   async importSession(filePath: string): Promise<void> {
-    const sessionId = basename(filePath, '.jsonl');
-    await new Transfer(new JsonlFileReader(filePath, this.filesystem), this.writer).run(sessionId);
+    const fileReader = new JsonlFileReader(filePath, this.filesystem);
+    // Use filename as fallback so events without explicit sessionId get a reasonable ID
+    const filenameId = basename(filePath, '.jsonl');
+    const data = await fileReader.read(filenameId);
+    // Authoritative sessionId comes from the record, not the filename
+    const sessionId = data.record.id;
+    const normalized = {
+      ...data,
+      events: data.events.map((e) => ({ ...e, sessionId })),
+    };
+    await this.writer.write(sessionId, normalized);
   }
 
   async exportSession(sessionId: string, outputPath: string): Promise<void> {

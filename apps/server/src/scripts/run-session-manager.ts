@@ -35,9 +35,9 @@ async function main() {
   const rawEventService = container.get<RawEventStore>(TYPES.RawEventStore);
   const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 
-  const projectsDir = join(homedir(), '.claude', 'projects');
-  const guardedFs = new RootGuardFilesystem(new LocalFilesystem(), [projectsDir]);
-  const source = new JsonlProjectScanner(guardedFs, projectsDir);
+  const claudeProjectsDir = join(homedir(), '.claude', 'projects');
+  const guardedFs = new RootGuardFilesystem(new LocalFilesystem(), [claudeProjectsDir]);
+  const source = new JsonlProjectScanner(guardedFs, claudeProjectsDir);
   const target = new DbProjectScanner(rawEventService, sessionStore);
   const scanner = new SessionMigrator(source, target);
 

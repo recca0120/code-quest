@@ -59,6 +59,18 @@ describe('SessionTransfer', () => {
   });
 
   describe('importSession', () => {
+    it('uses sessionId from JSONL record, not filename', async () => {
+      const actualSessionId = SESSION_A;
+      const wrongFilename = 'wrong-filename.jsonl';
+      fakeFs.addFile(`${PROJECT_DIR}/${wrongFilename}`, makeJsonlLine(actualSessionId));
+
+      const transfer = makeTransfer(rawEventService, sessionStore, fakeFs);
+      await transfer.importSession(`${PROJECT_DIR}/${wrongFilename}`);
+
+      expect((await sessionStore.getById(actualSessionId))?.id).toBe(actualSessionId);
+      expect(await sessionStore.getById('wrong-filename')).toBeNull();
+    });
+
     it('imports JSONL file into DB', async () => {
       const transfer = makeTransfer(rawEventService, sessionStore, fakeFs);
       await transfer.importSession(`${PROJECT_DIR}/${SESSION_A}.jsonl`);
