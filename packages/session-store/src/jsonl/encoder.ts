@@ -10,7 +10,10 @@ function isUserToolResult(entry: Record<string, unknown>): boolean {
   return firstBlock?.type === 'tool_result';
 }
 
-export function encodeEvent(event: RawEvent): string | null {
+export function encodeEvent(
+  event: RawEvent,
+  context?: { sessionId: string; cwd: string },
+): string | null {
   if (event.direction === 'err') return null;
   let entry: Record<string, unknown>;
   try {
@@ -21,10 +24,13 @@ export function encodeEvent(event: RawEvent): string | null {
   const type = entry.type;
   if (typeof type !== 'string') return null;
   if (SKIP_TYPES.has(type)) return null;
-  // dir:out user entries are either echoes of stdin (text) or CLI-generated tool results.
-  // Only keep tool results; skip echoes to avoid duplicates with dir:in user entries.
   if (event.direction === 'out' && type === 'user') {
     if (!isUserToolResult(entry)) return null;
+  }
+  if (context) {
+    entry.sessionId = context.sessionId;
+    if (context.cwd) entry.cwd = context.cwd;
+    return JSON.stringify(entry);
   }
   return event.raw;
 }

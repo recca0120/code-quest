@@ -96,15 +96,15 @@ export class DrizzleRawEventStore implements RawEventRepository {
   }
 
   async appendBatch(events: RawEvent[]): Promise<void> {
-    for (const event of events) {
-      await this.db.insert(this.table).values({
-        id: uuidv7(),
-        sessionId: event.sessionId,
-        dir: event.direction,
-        raw: event.raw,
-        createdAt: new Date(event.timestamp).toISOString(),
-      });
-    }
+    if (events.length === 0) return;
+    const values = events.map((event) => ({
+      id: uuidv7(),
+      sessionId: event.sessionId,
+      dir: event.direction,
+      raw: event.raw,
+      createdAt: new Date(event.timestamp).toISOString(),
+    }));
+    await this.db.insert(this.table).values(values);
   }
 
   async getPreview(sessionId: string): Promise<SessionPreview> {

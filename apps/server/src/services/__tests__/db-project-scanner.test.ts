@@ -86,6 +86,22 @@ describe('DbProjectScanner', () => {
     });
   });
 
+  it('fetches all sessions across multiple pages when total exceeds one page', async () => {
+    const container = createTestContainer();
+    const store = container.get<SessionStore>(TYPES.SessionStore);
+    const raw = container.get<RawEventStore>(TYPES.RawEventStore);
+    // insert 5 sessions across 2 projects to test pagination
+    for (let i = 1; i <= 5; i++) {
+      await store.upsert(
+        makeSession({ id: `page-sess-${i}`, projectRoot: i <= 3 ? '/proj-a' : '/proj-b' }),
+      );
+    }
+    const paginatedScanner = new DbProjectScanner(raw, store, 2); // page size 2
+    const projects = await paginatedScanner.scanProjects();
+    expect(projects.find((p) => p.cwd === '/proj-a')?.sessions).toHaveLength(3);
+    expect(projects.find((p) => p.cwd === '/proj-b')?.sessions).toHaveLength(2);
+  });
+
   describe('countEvents', () => {
     it('returns event count from rawEventStore', async () => {
       await rawEventStore.appendEvent({

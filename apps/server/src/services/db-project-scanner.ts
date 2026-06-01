@@ -2,30 +2,41 @@ import type { ProjectScanner, ProjectSummary } from '@code-quest/session-store';
 import type { RawEventStore } from './raw-event-store.ts';
 import type { SessionStore } from './session-store.ts';
 
-const SESSION_LIMIT = 10000;
+const DEFAULT_PAGE_SIZE = 1000;
 
 export class DbProjectScanner implements ProjectScanner {
   private readonly rawEventStore: RawEventStore;
   private readonly sessionStore: SessionStore;
+  private readonly pageSize: number;
 
-  constructor(rawEventStore: RawEventStore, sessionStore: SessionStore) {
+  constructor(
+    rawEventStore: RawEventStore,
+    sessionStore: SessionStore,
+    pageSize: number = DEFAULT_PAGE_SIZE,
+  ) {
     this.rawEventStore = rawEventStore;
     this.sessionStore = sessionStore;
+    this.pageSize = pageSize;
   }
 
   async scanProjects(): Promise<ProjectSummary[]> {
-    const { sessions } = await this.sessionStore.list({ limit: SESSION_LIMIT });
     const byCwd = new Map<string, ProjectSummary>();
+    let offset = 0;
 
-    for (const s of sessions) {
-      const cwd = s.projectRoot;
-      if (!cwd) continue;
-      let project = byCwd.get(cwd);
-      if (!project) {
-        project = { cwd, sessions: [] };
-        byCwd.set(cwd, project);
+    while (true) {
+      const { sessions, total } = await this.sessionStore.list({ limit: this.pageSize, offset });
+      for (const s of sessions) {
+        const cwd = s.projectRoot;
+        if (!cwd) continue;
+        let project = byCwd.get(cwd);
+        if (!project) {
+          project = { cwd, sessions: [] };
+          byCwd.set(cwd, project);
+        }
+        project.sessions.push({ sessionId: s.id, createdAt: s.createdAt });
       }
-      project.sessions.push({ sessionId: s.id, createdAt: s.createdAt });
+      offset += sessions.length;
+      if (offset >= total) break;
     }
 
     return [...byCwd.values()];

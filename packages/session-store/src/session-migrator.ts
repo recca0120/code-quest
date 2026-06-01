@@ -87,14 +87,12 @@ export class SessionMigrator {
 
     return targetProjects
       .map((p) => {
-        const sessions = p.sessions.map((s) => {
+        const sessions: ExportableSession[] = p.sessions.map((s) => {
           const filePath = s.filePath ?? '';
           return {
             session: s,
             filePath,
-            status: (filePath && exportedIds.has(s.sessionId)
-              ? 'EXPORTED'
-              : 'NOT_EXPORTED') as ExportStatus,
+            status: filePath && exportedIds.has(s.sessionId) ? 'EXPORTED' : 'NOT_EXPORTED',
           };
         });
         return {
