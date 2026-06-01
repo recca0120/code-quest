@@ -10,8 +10,12 @@
   --font-sans: "Outfit", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 
+  /* Body text size — rem cascade off html font-size axis (sm/md/lg).
+   * text-xs is promoted to 0.875rem so sm-mode body stays readable (≥12px). */
+  --text-xs: 0.875rem; /* 14px at md(16px base); 12.25px sm; 15.75px lg */
+
   /* Sub-xs text size — for uppercase tracked chip badges (Ready/Archive)
-   * and section-heading labels. Body text stays at text-xs (12px). */
+   * and section-heading labels. */
   --text-2xs: 0.625rem; /* 10px */
 
   /* Z-index tiers — use semantic names so stacking intent is explicit */
@@ -231,9 +235,9 @@
   --color-accent-glow: rgba(198, 97, 63, 0.1);
   --color-row-active-bg: rgba(198, 97, 63, 0.12);
   --color-accent-mark-bg: rgba(198, 97, 63, 0.25);
-  --color-text-subtle: #8a8a8a;
-  --color-text-faint: #b5b5b5;
-  --color-text-dim: #9c9c9c;
+  --color-text-subtle: #767676; /* WCAG AA 4.5:1 on white */
+  --color-text-faint: #b5b5b5; /* decorative only — intentionally low contrast */
+  --color-text-dim: #808080; /* ~3.95:1 — weakest semantic text */
   --color-info: #2563eb;
 }
 
