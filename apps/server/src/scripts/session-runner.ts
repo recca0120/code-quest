@@ -5,6 +5,7 @@ import type {
 } from '@code-quest/session-store';
 import { checkbox, Separator, select } from '@inquirer/prompts';
 import chalk from 'chalk';
+import ora from 'ora';
 import type { SessionTransfer } from '../services/session-transfer.ts';
 import {
   buildGroupedChoices,
@@ -77,8 +78,9 @@ export class SessionRunner {
   }
 
   private async runImport(): Promise<void> {
-    console.log(chalk.dim('\nScanning ~/.claude/projects/ ...'));
+    const spinner = ora('Scanning ~/.claude/projects/').start();
     const projects = await this.scanner.scanProjects();
+    spinner.stop();
 
     if (projects.length === 0) {
       console.log('No projects found.');
@@ -96,11 +98,12 @@ export class SessionRunner {
       );
       if (!projectChoice) break;
 
-      console.log(chalk.dim('\nLoading session statuses...'));
+      const statusSpinner = ora('Loading session statuses').start();
       const sessionStatuses = await this.scanner.resolveImportStatuses(
         projectChoice.sessions,
         projectChoice.importedIds,
       );
+      statusSpinner.stop();
 
       const groups = groupByDate(sessionStatuses, ({ session }) => session.createdAt);
       const choices = buildGroupedChoices(groups, ({ session, status }) => ({
@@ -130,10 +133,11 @@ export class SessionRunner {
   }
 
   private async runExport(): Promise<void> {
-    console.log(chalk.dim('\nLoading exportable sessions...'));
+    const spinner = ora('Loading exportable sessions').start();
     const projects = (await this.scanner.scanExportable()).sort(
       (a, b) => b.sessions.length - a.sessions.length,
     );
+    spinner.stop();
 
     if (projects.length === 0) {
       console.log('No exportable sessions found.');
