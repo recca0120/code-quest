@@ -2,9 +2,9 @@ import { join } from 'node:path';
 import { RootGuardFilesystem } from '@code-quest/filesystem';
 import { FakeFilesystem } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { JsonlProjectScanner } from '../project-scanner.ts';
-import { SessionScanner } from '../session-scanner.ts';
-import type { ProjectList, ProjectSummary } from '../types.ts';
+import { JsonlProjectScanner } from '../jsonl-project-scanner.ts';
+import { SessionMigrator } from '../session-migrator.ts';
+import type { ProjectScanner, ProjectSummary } from '../types.ts';
 
 const PROJECTS_DIR = '/home/.claude/projects';
 const PROJECT_DIR = `${PROJECTS_DIR}/-Users-alice-repo`;
@@ -20,7 +20,9 @@ function makeJsonlLine(sessionId: string, type = 'user'): string {
   });
 }
 
-function mockDbList(overrides: Partial<ProjectList> & { sessions?: string[] } = {}): ProjectList {
+function mockDbList(
+  overrides: Partial<ProjectScanner> & { sessions?: string[] } = {},
+): ProjectScanner {
   const importedIds = overrides.sessions ?? [];
   return {
     scanProjects: vi.fn(
@@ -35,13 +37,13 @@ function mockDbList(overrides: Partial<ProjectList> & { sessions?: string[] } = 
   };
 }
 
-function makeScanner(dbProjects: ProjectList, fakeFs: FakeFilesystem) {
+function makeScanner(target: ProjectScanner, fakeFs: FakeFilesystem) {
   const guardedFs = new RootGuardFilesystem(fakeFs, () => fakeFs.getRoots());
-  const jsonlProjects = new JsonlProjectScanner(guardedFs, PROJECTS_DIR);
-  return new SessionScanner(jsonlProjects, dbProjects);
+  const source = new JsonlProjectScanner(guardedFs, PROJECTS_DIR);
+  return new SessionMigrator(source, target);
 }
 
-describe('SessionScanner', () => {
+describe('SessionMigrator', () => {
   let fakeFs: FakeFilesystem;
 
   beforeEach(() => {
@@ -94,8 +96,8 @@ describe('SessionScanner', () => {
             {
               cwd: '/Users/alice/repo',
               sessions: [
-                { sessionId: SESSION_A, jsonlPath: join(PROJECT_DIR, `${SESSION_A}.jsonl`) },
-                { sessionId: SESSION_B, jsonlPath: join(PROJECT_DIR, `${SESSION_B}.jsonl`) },
+                { sessionId: SESSION_A, filePath: join(PROJECT_DIR, `${SESSION_A}.jsonl`) },
+                { sessionId: SESSION_B, filePath: join(PROJECT_DIR, `${SESSION_B}.jsonl`) },
               ],
             },
           ],
@@ -117,7 +119,7 @@ describe('SessionScanner', () => {
             {
               cwd: '/Users/alice/repo',
               sessions: [
-                { sessionId: SESSION_A, jsonlPath: join(PROJECT_DIR, `${SESSION_A}.jsonl`) },
+                { sessionId: SESSION_A, filePath: join(PROJECT_DIR, `${SESSION_A}.jsonl`) },
               ],
             },
           ],
@@ -131,11 +133,11 @@ describe('SessionScanner', () => {
     });
 
     it('marks session as NOT_EXPORTED when file does not exist', async () => {
-      const jsonlPath = join(PROJECT_DIR, 'nonexistent.jsonl');
+      const filePath = join(PROJECT_DIR, 'nonexistent.jsonl');
       const dbProjects = mockDbList({
         scanProjects: vi.fn(
           async (): Promise<ProjectSummary[]> => [
-            { cwd: '/Users/alice/repo', sessions: [{ sessionId: 'no-file', jsonlPath }] },
+            { cwd: '/Users/alice/repo', sessions: [{ sessionId: 'no-file', filePath }] },
           ],
         ),
         hasSession: vi.fn(async () => false),

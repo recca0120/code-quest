@@ -1,6 +1,6 @@
-import type { ProjectList } from '@code-quest/session-store';
+import type { ProjectScanner } from '@code-quest/session-store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DbProjectList } from '../db-project-list.ts';
+import { DbProjectScanner } from '../db-project-scanner.ts';
 import type { RawEventStore } from '../raw-event-store.ts';
 import type { SessionRecord, SessionStore } from '../session-store.ts';
 
@@ -37,10 +37,10 @@ function mockRawEventStore(count = 0): RawEventStore {
   } as unknown as RawEventStore;
 }
 
-describe('DbProjectList', () => {
+describe('DbProjectScanner', () => {
   let sessionStore: SessionStore;
   let rawEventStore: RawEventStore;
-  let list: ProjectList;
+  let list: ProjectScanner;
 
   beforeEach(() => {
     sessionStore = mockSessionStore([
@@ -49,7 +49,7 @@ describe('DbProjectList', () => {
       makeSession({ id: 'sess-3', projectRoot: '/project-b' }),
     ]);
     rawEventStore = mockRawEventStore(5);
-    list = new DbProjectList(rawEventStore, sessionStore);
+    list = new DbProjectScanner(rawEventStore, sessionStore);
   });
 
   describe('scanProjects', () => {
@@ -73,12 +73,12 @@ describe('DbProjectList', () => {
     });
 
     it('returns empty array when no sessions', async () => {
-      list = new DbProjectList(rawEventStore, mockSessionStore([]));
+      list = new DbProjectScanner(rawEventStore, mockSessionStore([]));
       expect(await list.scanProjects()).toEqual([]);
     });
 
     it('skips sessions with empty projectRoot', async () => {
-      list = new DbProjectList(
+      list = new DbProjectScanner(
         rawEventStore,
         mockSessionStore([makeSession({ id: 'no-root', projectRoot: '' })]),
       );

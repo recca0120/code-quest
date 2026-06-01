@@ -1,6 +1,6 @@
 import type { RawEvent } from '@code-quest/summoner';
 
-export interface JsonlSessionRecord {
+export interface SessionRecord {
   id: string;
   channelId: string;
   provider: string;
@@ -15,7 +15,7 @@ export interface JsonlSessionRecord {
 
 export interface SessionData {
   events: RawEvent[];
-  record: JsonlSessionRecord;
+  record: SessionRecord;
 }
 
 export interface SessionReader {
@@ -29,7 +29,7 @@ export interface SessionWriter {
 export interface SessionSummary {
   sessionId: string;
   createdAt?: string;
-  jsonlPath?: string;
+  filePath?: string;
   title?: string;
   sizeBytes?: number;
   decodableLines?: number;
@@ -41,7 +41,7 @@ export interface ProjectSummary {
   sessions: SessionSummary[];
 }
 
-export interface ProjectList {
+export interface ProjectScanner {
   scanProjects(): Promise<ProjectSummary[]>;
   hasSession(sessionId: string): Promise<boolean>;
   countEvents(sessionId: string): Promise<number>;

@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { LocalFilesystem, RootGuardFilesystem } from '@code-quest/filesystem';
-import { JsonlFileReader, JsonlProjectScanner, SessionScanner } from '@code-quest/session-store';
+import { JsonlFileReader, JsonlProjectScanner, SessionMigrator } from '@code-quest/session-store';
 import { FakeFilesystem } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DbProjectList } from '../../services/db-project-list.ts';
+import { DbProjectScanner } from '../../services/db-project-scanner.ts';
 import { DbSessionReader } from '../../services/db-session-reader.ts';
 import { DbSessionWriter } from '../../services/db-session-writer.ts';
 import type { RawEventStore } from '../../services/raw-event-store.ts';
@@ -40,9 +40,9 @@ function makeManager(
   fakeFs: FakeFilesystem,
 ): SessionManager {
   const guardedFs = new RootGuardFilesystem(fakeFs, () => fakeFs.getRoots());
-  const jsonlProjects = new JsonlProjectScanner(guardedFs, PROJECTS_DIR);
-  const dbProjects = new DbProjectList(rawEventService, sessionStore);
-  const scanner = new SessionScanner(jsonlProjects, dbProjects);
+  const source = new JsonlProjectScanner(guardedFs, PROJECTS_DIR);
+  const target = new DbProjectScanner(rawEventService, sessionStore);
+  const scanner = new SessionMigrator(source, target);
   const reader = new DbSessionReader(rawEventService, sessionStore);
   const writer = new DbSessionWriter(rawEventService, sessionStore);
   return new SessionManager(scanner, reader, writer, fakeFs);

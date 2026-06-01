@@ -3,8 +3,8 @@ import type { Filesystem } from '@code-quest/filesystem';
 import type {
   ExportableSession,
   ImportStatusEntry,
+  SessionMigrator,
   SessionReader,
-  SessionScanner,
   SessionWriter,
 } from '@code-quest/session-store';
 import { JsonlFileReader, JsonlFileWriter, Transfer } from '@code-quest/session-store';
@@ -52,13 +52,13 @@ async function runBatch<T>(
 // ── SessionManager class ──────────────────────────────────────────────────
 
 export class SessionManager {
-  private readonly scanner: SessionScanner;
+  private readonly scanner: SessionMigrator;
   private readonly reader: SessionReader;
   private readonly writer: SessionWriter;
   private readonly filesystem: Filesystem;
 
   constructor(
-    scanner: SessionScanner,
+    scanner: SessionMigrator,
     reader: SessionReader,
     writer: SessionWriter,
     filesystem: Filesystem,
@@ -69,9 +69,9 @@ export class SessionManager {
     this.filesystem = filesystem;
   }
 
-  async importSession(jsonlPath: string): Promise<void> {
-    const sessionId = basename(jsonlPath, '.jsonl');
-    await new Transfer(new JsonlFileReader(jsonlPath, this.filesystem), this.writer).run(sessionId);
+  async importSession(filePath: string): Promise<void> {
+    const sessionId = basename(filePath, '.jsonl');
+    await new Transfer(new JsonlFileReader(filePath, this.filesystem), this.writer).run(sessionId);
   }
 
   async exportSession(sessionId: string, outputPath: string): Promise<void> {
@@ -142,15 +142,15 @@ export class SessionManager {
 
       const selected = toImport.filter((s): s is ImportStatusEntry => s !== null);
       const withPath = selected.filter(
-        (s): s is ImportStatusEntry & { session: { jsonlPath: string } } =>
-          s.session.jsonlPath != null,
+        (s): s is ImportStatusEntry & { session: { filePath: string } } =>
+          s.session.filePath != null,
       );
       if (withPath.length === 0) continue;
 
       await runBatch(
         withPath,
         ({ session }) => session.sessionId.slice(0, 8),
-        ({ session }) => this.importSession(session.jsonlPath),
+        ({ session }) => this.importSession(session.filePath),
       );
     }
   }
@@ -195,7 +195,7 @@ export class SessionManager {
       await runBatch(
         selected,
         (s) => s.session.sessionId.slice(0, 8),
-        (s) => this.exportSession(s.session.sessionId, s.jsonlPath),
+        (s) => this.exportSession(s.session.sessionId, s.filePath),
       );
     }
   }

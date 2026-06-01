@@ -2,12 +2,12 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { sqliteMigrationsFolder } from '@code-quest/db-schema';
 import { LocalFilesystem, RootGuardFilesystem } from '@code-quest/filesystem';
-import { JsonlProjectScanner, SessionScanner } from '@code-quest/session-store';
+import { JsonlProjectScanner, SessionMigrator } from '@code-quest/session-store';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { config } from '../config.ts';
 import { createContainer } from '../container.ts';
 import { createDatabaseFromUrl } from '../db/create-database.ts';
-import { DbProjectList } from '../services/db-project-list.ts';
+import { DbProjectScanner } from '../services/db-project-scanner.ts';
 import { DbSessionReader } from '../services/db-session-reader.ts';
 import { DbSessionWriter } from '../services/db-session-writer.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
@@ -34,11 +34,11 @@ async function main() {
   const rawEventService = container.get<RawEventStore>(TYPES.RawEventStore);
   const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 
-  const claudeProjectsDir = join(homedir(), '.claude', 'projects');
-  const scanFs = new RootGuardFilesystem(new LocalFilesystem(), [claudeProjectsDir]);
-  const jsonlProjects = new JsonlProjectScanner(scanFs, claudeProjectsDir);
-  const dbProjects = new DbProjectList(rawEventService, sessionStore);
-  const scanner = new SessionScanner(jsonlProjects, dbProjects);
+  const projectsDir = join(homedir(), '.claude', 'projects');
+  const scanFs = new RootGuardFilesystem(new LocalFilesystem(), [projectsDir]);
+  const source = new JsonlProjectScanner(scanFs, projectsDir);
+  const target = new DbProjectScanner(rawEventService, sessionStore);
+  const scanner = new SessionMigrator(source, target);
 
   const writeFs = new LocalFilesystem();
   const reader = new DbSessionReader(rawEventService, sessionStore);

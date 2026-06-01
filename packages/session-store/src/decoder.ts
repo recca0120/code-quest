@@ -1,5 +1,5 @@
 import type { RawEvent } from '@code-quest/summoner';
-import type { JsonlSessionRecord, SessionData } from './types.ts';
+import type { SessionData, SessionRecord } from './types.ts';
 
 export interface JsonlEntry {
   type: string;
@@ -20,7 +20,7 @@ const SESSION_DEFAULTS = {
   role: 'chat',
 } as const;
 
-export function makeDefaultSessionRecord(id: string): JsonlSessionRecord {
+export function makeDefaultSessionRecord(id: string): SessionRecord {
   return {
     id,
     channelId: id,
@@ -44,7 +44,7 @@ export function parseLine(line: string): JsonlEntry | null {
 
 function buildSessionRecord(
   entry: JsonlEntry & { sessionId: string; cwd: string; timestamp: string },
-): JsonlSessionRecord {
+): SessionRecord {
   return {
     id: entry.sessionId,
     channelId: entry.sessionId,
@@ -95,7 +95,7 @@ function hasSessionFields(
 
 export function decodeSession(lines: string[], sessionId: string): SessionData {
   const decoder = new JsonlDecoder(sessionId);
-  let record: JsonlSessionRecord | null = null;
+  let record: SessionRecord | null = null;
   const events = lines.flatMap((l) => {
     const entry = parseLine(l);
     if (!entry) return [];

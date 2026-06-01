@@ -1,4 +1,4 @@
-import type { ProjectList, ProjectSummary, SessionSummary } from './types.ts';
+import type { ProjectScanner, ProjectSummary, SessionSummary } from './types.ts';
 
 const IMPORT_THRESHOLD = 0.95;
 
@@ -6,8 +6,8 @@ export type ImportStatus = 'NOT_IMPORTED' | 'IMPORTED' | 'PARTIAL';
 type ExportStatus = 'NOT_EXPORTED' | 'EXPORTED';
 
 export interface ExportableSession {
-  session: { sessionId: string; jsonlPath?: string; createdAt?: string; title?: string | null };
-  jsonlPath: string;
+  session: { sessionId: string; filePath?: string; createdAt?: string; title?: string | null };
+  filePath: string;
   status: ExportStatus;
 }
 
@@ -30,22 +30,24 @@ export interface ImportStatusEntry {
   status: ImportStatus;
 }
 
-export class SessionScanner {
-  private readonly jsonlProjects: ProjectList;
-  private readonly dbProjects: ProjectList;
+export class SessionMigrator {
+  private readonly source: ProjectScanner;
+  private readonly target: ProjectScanner;
 
-  constructor(jsonlProjects: ProjectList, dbProjects: ProjectList) {
-    this.jsonlProjects = jsonlProjects;
-    this.dbProjects = dbProjects;
+  constructor(source: ProjectScanner, target: ProjectScanner) {
+    this.source = source;
+    this.target = target;
   }
 
   async scanProjects(): Promise<ProjectInfo[]> {
-    const [rawProjects, dbSessions] = await Promise.all([
-      this.jsonlProjects.scanProjects(),
-      this.dbProjects.scanProjects(),
+    const [sourceProjects, targetProjects] = await Promise.all([
+      this.source.scanProjects(),
+      this.target.scanProjects(),
     ]);
-    const allImportedIds = new Set(dbSessions.flatMap((p) => p.sessions.map((s) => s.sessionId)));
-    return rawProjects.map((p) => {
+    const allImportedIds = new Set(
+      targetProjects.flatMap((p) => p.sessions.map((s) => s.sessionId)),
+    );
+    return sourceProjects.map((p) => {
       const importedIds = new Set(
         p.sessions.map((s) => s.sessionId).filter((id) => allImportedIds.has(id)),
       );
@@ -67,15 +69,15 @@ export class SessionScanner {
       sessions.map(async (session) => {
         const isImported = importedIds
           ? importedIds.has(session.sessionId)
-          : await this.dbProjects.hasSession(session.sessionId);
-        const dbCount = isImported ? await this.dbProjects.countEvents(session.sessionId) : 0;
-        return { session, status: this.getImportStatus(session, dbCount) };
+          : await this.target.hasSession(session.sessionId);
+        const targetCount = isImported ? await this.target.countEvents(session.sessionId) : 0;
+        return { session, status: this.getImportStatus(session, targetCount) };
       }),
     );
   }
 
   async scanExportable(): Promise<ExportableProject[]> {
-    const dbProjects = await this.dbProjects.scanProjects();
+    const dbProjects = await this.target.scanProjects();
     if (dbProjects.length === 0) return [];
 
     const projects = await Promise.all(
@@ -95,22 +97,22 @@ export class SessionScanner {
   private async buildExportableSessions(project: ProjectSummary): Promise<ExportableSession[]> {
     return Promise.all(
       project.sessions.map(async (s) => {
-        const jsonlPath = s.jsonlPath ?? '';
-        const exists = jsonlPath
-          ? await this.jsonlProjects.hasSession(s.sessionId).catch(() => false)
+        const filePath = s.filePath ?? '';
+        const exists = filePath
+          ? await this.source.hasSession(s.sessionId).catch(() => false)
           : false;
         return {
           session: s,
-          jsonlPath,
+          filePath,
           status: exists ? 'EXPORTED' : 'NOT_EXPORTED',
         };
       }),
     );
   }
 
-  private getImportStatus(session: SessionSummary, dbCount: number): ImportStatus {
-    if (dbCount === 0) return 'NOT_IMPORTED';
+  private getImportStatus(session: SessionSummary, targetCount: number): ImportStatus {
+    if (targetCount === 0) return 'NOT_IMPORTED';
     const threshold = session.decodableLines ?? 0;
-    return dbCount >= threshold * IMPORT_THRESHOLD ? 'IMPORTED' : 'PARTIAL';
+    return targetCount >= threshold * IMPORT_THRESHOLD ? 'IMPORTED' : 'PARTIAL';
   }
 }

@@ -1,10 +1,10 @@
-import type { ProjectList, ProjectSummary } from '@code-quest/session-store';
+import type { ProjectScanner, ProjectSummary } from '@code-quest/session-store';
 import type { RawEventStore } from './raw-event-store.ts';
 import type { SessionStore } from './session-store.ts';
 
 const SESSION_LIMIT = 10000;
 
-export class DbProjectList implements ProjectList {
+export class DbProjectScanner implements ProjectScanner {
   private readonly rawEventStore: RawEventStore;
   private readonly sessionStore: SessionStore;
 
