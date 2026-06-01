@@ -1,4 +1,4 @@
-import { parseLine, parseLines } from './decoder.ts';
+import { parseLine, parseLines } from '../jsonl/decoder.ts';
 import { FileProjectScanner, type SessionMeta } from './file-project-scanner.ts';
 
 function extractSessionMeta(lines: string[]): SessionMeta {

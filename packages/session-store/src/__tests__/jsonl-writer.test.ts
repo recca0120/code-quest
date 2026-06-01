@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FakeFilesystem } from '@code-quest/test-kit';
 import { describe, expect, it } from 'vitest';
-import { JsonlFileReader } from '../jsonl-file-reader.ts';
-import { JsonlFileWriter } from '../jsonl-file-writer.ts';
-import { MemoryWriter } from '../memory.ts';
+import { JsonlFileReader } from '../reader/jsonl-file-reader.ts';
+import { JsonlFileWriter } from '../writer/jsonl-file-writer.ts';
+import { MemoryWriter } from '../writer/memory-writer.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const SESSION_ID = 'b3dbab57-8da8-40c9-86e8-11aadc1881e8';

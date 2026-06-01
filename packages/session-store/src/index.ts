@@ -1,12 +1,9 @@
-export { makeDefaultSessionRecord } from './decoder.ts';
-export { FileProjectScanner } from './file-project-scanner.ts';
-export { FileReader } from './file-reader.ts';
-export { FileWriter } from './file-writer.ts';
-export { JsonlFileReader } from './jsonl-file-reader.ts';
-export { JsonlFileWriter } from './jsonl-file-writer.ts';
-export { JsonlProjectScanner } from './jsonl-project-scanner.ts';
-export { MemoryReader, MemoryWriter } from './memory.ts';
-export { decodeProjectDir, encodeProjectDir } from './project-dir.ts';
+export { makeDefaultSessionRecord } from './jsonl/decoder.ts';
+export { FileReader } from './reader/file-reader.ts';
+export { JsonlFileReader } from './reader/jsonl-file-reader.ts';
+export { MemoryReader } from './reader/memory-reader.ts';
+export { FileProjectScanner } from './scanner/file-project-scanner.ts';
+export { JsonlProjectScanner } from './scanner/jsonl-project-scanner.ts';
 export type {
   ExportableProject,
   ExportableSession,
@@ -25,3 +22,6 @@ export type {
   SessionSummary,
   SessionWriter,
 } from './types.ts';
+export { FileWriter } from './writer/file-writer.ts';
+export { JsonlFileWriter } from './writer/jsonl-file-writer.ts';
+export { MemoryWriter } from './writer/memory-writer.ts';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeProjectDir, encodeProjectDir } from '../project-dir.ts';
+import { decodeProjectDir, encodeProjectDir } from '../scanner/project-dir.ts';
 
 describe('decodeProjectDir', () => {
   it('decodes encoded path back to absolute path', () => {

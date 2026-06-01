@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { RootGuardFilesystem } from '@code-quest/filesystem';
 import { FakeFilesystem } from '@code-quest/test-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { JsonlProjectScanner } from '../jsonl-project-scanner.ts';
+import { JsonlProjectScanner } from '../scanner/jsonl-project-scanner.ts';
 import { SessionMigrator } from '../session-migrator.ts';
 import type { ProjectScanner, ProjectSummary } from '../types.ts';
 

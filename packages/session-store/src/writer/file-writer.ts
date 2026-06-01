@@ -1,5 +1,5 @@
 import type { Filesystem } from '@code-quest/filesystem';
-import type { SessionData, SessionWriter } from './types.ts';
+import type { SessionData, SessionWriter } from '../types.ts';
 
 export abstract class FileWriter implements SessionWriter {
   protected readonly outputPath: string;

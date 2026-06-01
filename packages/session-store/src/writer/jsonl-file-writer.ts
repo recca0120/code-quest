@@ -1,6 +1,6 @@
-import { encodeEvent } from './encoder.ts';
+import { encodeEvent } from '../jsonl/encoder.ts';
+import type { SessionData } from '../types.ts';
 import { FileWriter } from './file-writer.ts';
-import type { SessionData } from './types.ts';
 
 function enrichLine(raw: string, sessionId: string, cwd: string): string | null {
   try {

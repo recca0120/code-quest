@@ -1,5 +1,5 @@
 import type { Filesystem } from '@code-quest/filesystem';
-import type { SessionData, SessionReader } from './types.ts';
+import type { SessionData, SessionReader } from '../types.ts';
 
 export abstract class FileReader implements SessionReader {
   protected readonly path: string;

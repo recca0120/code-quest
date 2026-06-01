@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { FakeFilesystem } from '@code-quest/test-kit';
 import { describe, expect, it } from 'vitest';
-import { JsonlProjectScanner } from '../jsonl-project-scanner.ts';
+import { JsonlProjectScanner } from '../scanner/jsonl-project-scanner.ts';
 
 const PROJECTS_DIR = '/home/.claude/projects';
 const ENCODED_DIR = '-Users-alice-myapp';

@@ -1,6 +1,6 @@
-import { decodeSession } from './decoder.ts';
+import { decodeSession } from '../jsonl/decoder.ts';
+import type { SessionData } from '../types.ts';
 import { FileReader } from './file-reader.ts';
-import type { SessionData } from './types.ts';
 
 export class JsonlFileReader extends FileReader {
   protected decode(lines: string[], sessionId: string): SessionData {

@@ -1,5 +1,5 @@
 import type { RawEvent } from '@code-quest/summoner';
-import type { SessionData, SessionRecord } from './types.ts';
+import type { SessionData, SessionRecord } from '../types.ts';
 
 export interface JsonlEntry {
   type: string;

@@ -1,7 +1,7 @@
 import { basename, extname, join } from 'node:path';
 import type { Filesystem } from '@code-quest/filesystem';
+import type { ProjectScanner, ProjectSummary, SessionSummary } from '../types.ts';
 import { decodeProjectDir } from './project-dir.ts';
-import type { ProjectScanner, ProjectSummary, SessionSummary } from './types.ts';
 
 type SessionEntry = SessionSummary & { cwd: string };
 
