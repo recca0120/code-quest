@@ -54,10 +54,10 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
         e.stopPropagation();
         onBranchClick?.();
       }}
-      className="relative z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-hover-tint hover:border-accent hover:bg-tint-10 cursor-pointer font-mono text-xs text-text-muted"
+      className="relative z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-hover-tint hover:border-accent hover:bg-tint-10 cursor-pointer font-mono text-xs text-muted"
       title="Switch branch"
     >
-      <span aria-hidden="true" className="text-text-subtle text-xs">
+      <span aria-hidden="true" className="text-subtle text-xs">
         ⎇
       </span>
       <span>{label}</span>
@@ -73,7 +73,7 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
         e.stopPropagation();
         onMoreActions?.();
       }}
-      className="relative z-10 shrink-0 px-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
+      className="relative z-10 shrink-0 px-1 text-muted hover:text-text opacity-0 group-hover:opacity-100"
     >
       ⋯
     </button>
@@ -87,7 +87,7 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
         'group relative flex items-center gap-1.5 px-2 py-1 text-xs rounded border-l-2',
         active
           ? 'border-accent bg-hover-tint text-text'
-          : 'border-transparent text-text-muted hover:bg-hover-tint hover:text-text',
+          : 'border-transparent text-muted hover:bg-hover-tint hover:text-text',
         className,
       )}
     >

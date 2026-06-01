@@ -49,7 +49,7 @@ export function renderMenuTrailing(state?: FeatureState, opts?: TrailingOpts): R
   }
   if (state.kind === 'select') {
     return (
-      <span role="status" aria-label="select-current" className="font-mono text-xs text-text-muted">
+      <span role="status" aria-label="select-current" className="font-mono text-xs text-muted">
         {state.currentValue}
       </span>
     );

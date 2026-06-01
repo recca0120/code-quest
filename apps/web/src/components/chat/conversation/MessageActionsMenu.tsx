@@ -23,7 +23,7 @@ export function MessageActionsMenu({ items }: MessageActionsMenuProps): React.JS
           type="button"
           aria-label="Message actions"
           title="Message actions"
-          className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-full border border-border text-text-muted hover:text-text hover:bg-hover-tint transition-opacity cursor-pointer"
+          className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-full border border-border text-muted hover:text-text hover:bg-hover-tint transition-opacity cursor-pointer"
         >
           <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
         </button>

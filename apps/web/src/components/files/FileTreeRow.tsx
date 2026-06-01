@@ -129,7 +129,7 @@ export const FileTreeRow: React.ForwardRefExoticComponent<
           aria-label={`git-mark-${data.path}`}
           className={cn(
             'ml-2 font-mono text-xs px-1 rounded bg-hover-tint',
-            GIT_MARK_CLASS[gitMark] ?? 'text-text-muted',
+            GIT_MARK_CLASS[gitMark] ?? 'text-muted',
           )}
         >
           {gitMark}

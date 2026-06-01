@@ -58,7 +58,7 @@ function ModifiedFileItem({
         />
         {file.path}
         {versionCount > 1 && (
-          <span className="ml-auto text-xs text-text-muted bg-surface rounded-lg px-1.5 py-0.5">
+          <span className="ml-auto text-xs text-muted bg-surface rounded-lg px-1.5 py-0.5">
             {versionCount} versions
           </span>
         )}
@@ -106,7 +106,7 @@ export function ModifiedFilesPanel({
       className="border border-border rounded-lg p-2 space-y-1"
       aria-label="modified-files-panel"
     >
-      <div className="text-sm font-semibold text-text-muted mb-1">
+      <div className="text-sm font-semibold text-muted mb-1">
         {pluralize(files.length, 'file')} modified
       </div>
       {files.map((file) => (

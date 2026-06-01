@@ -67,7 +67,7 @@ function formatAuthMethod(
 function AccountRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center text-xs py-1">
-      <span className="text-text-muted/60">{label}</span>
+      <span className="text-muted/60">{label}</span>
       <span className="text-text">{value}</span>
     </div>
   );
@@ -98,7 +98,7 @@ function UsageBarRow({
           style={{ width: `${pct}%` }}
         />
       </div>
-      {resetText && <div className="text-xs text-text-muted/60">Resets {resetText}</div>}
+      {resetText && <div className="text-xs text-muted/60">Resets {resetText}</div>}
     </div>
   );
 }
@@ -140,7 +140,7 @@ export function AccountUsageDialog({
             </Dialog.Title>
             <Dialog.Close
               aria-label="close"
-              className="text-text-muted hover:text-text transition-colors text-lg leading-none"
+              className="text-muted hover:text-text transition-colors text-lg leading-none"
             >
               ✕
             </Dialog.Close>
@@ -149,7 +149,7 @@ export function AccountUsageDialog({
           <div className="space-y-4">
             {/* ACCOUNT section */}
             <div className="space-y-1">
-              <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
+              <h4 className="text-xs font-semibold text-muted/60 uppercase tracking-wider mb-2">
                 Account
               </h4>
               {model && <AccountRow label="Model" value={model} />}
@@ -167,7 +167,7 @@ export function AccountUsageDialog({
             {/* SESSION section */}
             {stats && (stats.costUsd != null || stats.numTurns != null) && (
               <div className="space-y-1">
-                <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-semibold text-muted/60 uppercase tracking-wider mb-2">
                   Session
                 </h4>
                 {stats.costUsd != null && (
@@ -190,10 +190,10 @@ export function AccountUsageDialog({
             {/* CONTEXT section */}
             {contextUsage?.categories && (
               <div className="space-y-2">
-                <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider">
+                <h4 className="text-xs font-semibold text-muted/60 uppercase tracking-wider">
                   Context ({contextUsage.percentage ?? 0}% used)
                 </h4>
-                <div className="text-xs text-text-muted mb-1">
+                <div className="text-xs text-muted mb-1">
                   {formatTokens(contextUsage.totalTokens ?? 0)} /{' '}
                   {formatTokens(contextUsage.maxTokens ?? 0)} tokens
                 </div>
@@ -201,7 +201,7 @@ export function AccountUsageDialog({
                   .filter((c) => c.name !== FREE_SPACE_CATEGORY)
                   .map((cat) => (
                     <div key={cat.name} className="flex justify-between text-xs">
-                      <span className="text-text-muted/60">{cat.name}</span>
+                      <span className="text-muted/60">{cat.name}</span>
                       <span className="text-text tabular-nums">{formatTokens(cat.tokens)}</span>
                     </div>
                   ))}
@@ -210,11 +210,11 @@ export function AccountUsageDialog({
 
             {/* QUOTA section */}
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider">
+              <h4 className="text-xs font-semibold text-muted/60 uppercase tracking-wider">
                 Quota
               </h4>
               {authMethod && authMethod !== 'claudeai' && !usage ? (
-                <p className="text-xs text-text-muted italic">
+                <p className="text-xs text-muted italic">
                   Usage tracking is only available for Claude AI subscribers.
                 </p>
               ) : usage ? (
@@ -234,12 +234,12 @@ export function AccountUsageDialog({
                   );
                 })
               ) : (
-                <p className="text-xs text-text-muted">Loading usage data…</p>
+                <p className="text-xs text-muted">Loading usage data…</p>
               )}
               {authMethod === 'claudeai' && (
                 <button
                   type="button"
-                  className="text-xs text-text-muted text-left bg-transparent border-none p-0 mt-1 cursor-pointer hover:underline"
+                  className="text-xs text-muted text-left bg-transparent border-none p-0 mt-1 cursor-pointer hover:underline"
                   onClick={() => openUrl(manageUrl)}
                 >
                   Manage usage on claude.ai

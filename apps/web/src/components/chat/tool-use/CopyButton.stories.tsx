@@ -57,7 +57,7 @@ export const Standalone: Story = {
       <CopyButton
         {...args}
         text="Hello, world!"
-        className="p-1 rounded text-text-muted hover:text-text hover:bg-surface-hover cursor-pointer"
+        className="p-1 rounded text-muted hover:text-text hover:bg-surface-hover cursor-pointer"
         title="Copy greeting"
       />
     </div>

@@ -17,7 +17,7 @@ export function ToolGroupSummary({
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors w-full text-left"
+      className="flex items-center gap-1.5 text-xs text-muted hover:text-text cursor-pointer select-none transition-colors w-full text-left"
     >
       <span className="flex items-center gap-1 flex-wrap">
         {chips.length === 0 ? (

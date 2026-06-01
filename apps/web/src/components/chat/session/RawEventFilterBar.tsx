@@ -44,7 +44,7 @@ export function RawEventFilterBar({
               type="button"
               onClick={onClick}
               className={cn(
-                'text-2xs font-mono text-text-faint bg-transparent border-0 cursor-pointer p-0 tracking-wider transition-colors duration-100',
+                'text-2xs font-mono text-faint bg-transparent border-0 cursor-pointer p-0 tracking-wider transition-colors duration-100',
                 hoverCls,
               )}
             >
@@ -85,7 +85,7 @@ export function RawEventFilterBar({
               <span
                 className={cn(
                   'text-2xs font-mono transition-colors duration-150 relative whitespace-nowrap max-w-18 overflow-hidden text-ellipsis',
-                  active ? 'text-accent' : 'text-text-dim',
+                  active ? 'text-accent' : 'text-dim',
                 )}
               >
                 {entry.type}
@@ -93,7 +93,7 @@ export function RawEventFilterBar({
               <span
                 className={cn(
                   'text-2xs font-mono relative transition-colors duration-150',
-                  active ? 'text-accent/60' : 'text-text-faint',
+                  active ? 'text-accent/60' : 'text-faint',
                 )}
               >
                 {entry.count}

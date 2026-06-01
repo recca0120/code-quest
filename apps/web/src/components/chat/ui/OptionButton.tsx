@@ -24,10 +24,7 @@ export function OptionButton({
       )}
     >
       <span
-        className={cn(
-          'w-4 text-center shrink-0',
-          selected ? 'text-selected-text' : 'text-text-muted',
-        )}
+        className={cn('w-4 text-center shrink-0', selected ? 'text-selected-text' : 'text-muted')}
       >
         {index}
       </span>

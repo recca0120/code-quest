@@ -11,7 +11,7 @@ import {
 const Row = ({ children, label }: { children: React.ReactNode; label: string }) => (
   <div className="flex items-center gap-3">
     {children}
-    <span className="text-xs text-text-muted">{label}</span>
+    <span className="text-xs text-muted">{label}</span>
   </div>
 );
 

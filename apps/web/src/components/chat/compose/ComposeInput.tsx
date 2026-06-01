@@ -59,7 +59,7 @@ function FileAttachmentChip({
       <button
         type="button"
         onClick={() => onRemove(index)}
-        className="text-text-muted hover:text-text leading-none"
+        className="text-muted hover:text-text leading-none"
         aria-label={`Remove ${file.name}`}
       >
         ✕
@@ -92,7 +92,7 @@ function historyCycleDown(ref: InputHistory): string {
 }
 
 const TEXTAREA_BASE_CLASS =
-  'w-full bg-transparent text-text pl-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
+  'w-full bg-transparent text-text pl-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-muted overflow-hidden [grid-area:1/1]';
 
 function isSpeechSupported(): boolean {
   return (

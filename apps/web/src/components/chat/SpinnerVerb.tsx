@@ -223,7 +223,7 @@ export function SpinnerVerb({
       />
       <span
         ref={metaRef}
-        className="text-xs text-text-muted font-mono ml-1"
+        className="text-xs text-muted font-mono ml-1"
         role="status"
         aria-label="spinner-meta"
       />

@@ -85,7 +85,7 @@ function GroupRow({
           onClick={() => setExpanded((v) => !v)}
           className={cn(
             'flex items-center gap-1.5 flex-1 bg-transparent border-0 text-left p-0 text-xs font-mono cursor-pointer',
-            agg === 'none' ? 'text-text-muted' : 'text-text',
+            agg === 'none' ? 'text-muted' : 'text-text',
           )}
         >
           <span>{feature.label}</span>
@@ -118,7 +118,7 @@ function GroupRow({
               <span
                 className={cn(
                   'text-xs font-mono shrink-0 w-36 overflow-hidden text-ellipsis whitespace-nowrap',
-                  item.on ? 'text-text' : 'text-text-muted',
+                  item.on ? 'text-text' : 'text-muted',
                 )}
               >
                 {item.label}
@@ -126,7 +126,7 @@ function GroupRow({
               <span
                 role="note"
                 aria-label={`type-sample-${item.value}`}
-                className="text-xs font-mono text-text-muted flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                className="text-xs font-mono text-muted flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
               >
                 {item.preview ?? ''}
               </span>

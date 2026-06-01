@@ -36,14 +36,14 @@ export function ArchiveChangeDialog({
     >
       <DialogContent title="Archive change" size="md">
         <div className="flex flex-col gap-3">
-          <p className="text-xs text-text-muted">
+          <p className="text-xs text-muted">
             Archive <span className="font-mono text-text">{name}</span>?
           </p>
-          <p className="text-xs text-text-dim leading-relaxed">
+          <p className="text-xs text-dim leading-relaxed">
             This moves the change to <InlineCode subtle>openspec/changes/archive/</InlineCode> and
             (unless you tick the box below) propagates its delta specs into the main specs tree.
           </p>
-          <label className="flex items-start gap-2 text-xs text-text-muted">
+          <label className="flex items-start gap-2 text-xs text-muted">
             <input
               type="checkbox"
               checked={skipSpecs}

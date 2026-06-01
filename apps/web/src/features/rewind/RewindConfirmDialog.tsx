@@ -44,7 +44,7 @@ export function RewindConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
       <DialogContent title={title} hideTitleDivider className="w-112 max-w-[90vw]">
-        <div className="mb-3 flex flex-col gap-2 text-sm text-text-muted">{children}</div>
+        <div className="mb-3 flex flex-col gap-2 text-sm text-muted">{children}</div>
         <div className="flex flex-col gap-1">
           <NumberedButton
             ref={confirmRef}
@@ -89,10 +89,7 @@ const NumberedButton = forwardRef<HTMLButtonElement, NumberedButtonProps>(
           : 'text-text hover:bg-hover-tint',
       )}
     >
-      <span
-        aria-hidden="true"
-        className={cn('shrink-0', variant === 'secondary' && 'text-text-muted')}
-      >
+      <span aria-hidden="true" className={cn('shrink-0', variant === 'secondary' && 'text-muted')}>
         {shortcut}
       </span>
       <span className={variant === 'primary' ? 'font-semibold' : undefined}>{label}</span>

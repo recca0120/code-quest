@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { copyToClipboard } from '@/utils/clipboard';
 
 export const HOVER_COPY_BASE =
-  'p-1 rounded text-text-muted hover:text-text hover:bg-surface-hover opacity-0 transition-opacity cursor-pointer';
+  'p-1 rounded text-muted hover:text-text hover:bg-surface-hover opacity-0 transition-opacity cursor-pointer';
 
 const COPY_SUCCESS_DURATION_MS = 2000;
 

@@ -47,7 +47,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps): React.JS
                   'px-4 py-2 text-left text-xs font-mono cursor-pointer transition-colors',
                   activeSection === section
                     ? 'bg-accent/10 text-accent font-semibold'
-                    : 'text-text-subtle hover:text-text hover:bg-hover-tint',
+                    : 'text-subtle hover:text-text hover:bg-hover-tint',
                 )}
               >
                 {section}
@@ -56,7 +56,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps): React.JS
           </nav>
 
           <div className="flex-1 overflow-y-auto p-4">
-            <p className="text-xs text-text-muted mb-4">
+            <p className="text-xs text-muted mb-4">
               Changes apply instantly and are saved automatically.
             </p>
             {activeSection === 'Theme' && <ThemeSection />}

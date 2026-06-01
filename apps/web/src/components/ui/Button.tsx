@@ -19,9 +19,9 @@ const BASE = cn(
 
 const VARIANTS: Record<Variant, string> = {
   primary: 'bg-accent text-selected-text hover:bg-accent/80',
-  secondary: cn(controlBorder, 'text-text-muted hover:text-text hover:tint-5'),
+  secondary: cn(controlBorder, 'text-muted hover:text-text hover:tint-5'),
   danger: 'bg-danger text-selected-text hover:bg-danger/80',
-  ghost: 'text-text-muted hover:text-text hover:tint-5',
+  ghost: 'text-muted hover:text-text hover:tint-5',
   success: 'bg-success text-selected-text hover:bg-success/80',
   warning: 'bg-warning text-selected-text hover:bg-warning/80',
   info: 'bg-button text-selected-text hover:bg-button/80',

@@ -31,10 +31,10 @@ export function SideQuestionDialog({
         className="max-w-150 w-full p-0 overflow-hidden mt-[15vh] top-0 translate-y-0"
       >
         <div className="px-4 pt-4 pb-2 border-b border-border">
-          <p className="text-xs text-text-muted font-mono truncate">/btw {question}</p>
+          <p className="text-xs text-muted font-mono truncate">/btw {question}</p>
         </div>
         <div className="px-4 py-3 max-h-[55vh] overflow-y-auto text-sm">
-          {loading && <p className="text-text-muted">Thinking…</p>}
+          {loading && <p className="text-muted">Thinking…</p>}
           {!loading && error && <p className="text-danger">{error}</p>}
           {!loading && answer !== null && <MarkdownContent content={answer} />}
         </div>

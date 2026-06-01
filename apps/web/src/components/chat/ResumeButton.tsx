@@ -25,7 +25,7 @@ export function ResumeButton({ onResumed }: ResumeButtonProps): React.JSX.Elemen
         <IconButton
           title="Session history"
           aria-label="Session history"
-          className="text-text-muted hover:text-text"
+          className="text-muted hover:text-text"
         >
           <ClockIcon className="w-4 h-4" aria-hidden="true" />
         </IconButton>

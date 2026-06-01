@@ -45,7 +45,7 @@ export function ChoicePills({
             'text-xs font-mono font-bold rounded-sm px-1.5 py-0.5 border cursor-pointer',
             opt.value === currentValue
               ? 'bg-accent text-selected-text border-accent'
-              : 'text-text-muted border-border hover:text-text',
+              : 'text-muted border-border hover:text-text',
             focusRing,
           )}
         >

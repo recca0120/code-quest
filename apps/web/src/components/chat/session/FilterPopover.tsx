@@ -51,7 +51,7 @@ function FilterCheckboxItem({
       <span
         className={cn(
           'flex-1 text-xs font-mono transition-colors z-sticky',
-          checked ? 'text-text' : 'text-text-dim',
+          checked ? 'text-text' : 'text-dim',
         )}
       >
         {label}
@@ -59,7 +59,7 @@ function FilterCheckboxItem({
       <span
         className={cn(
           'text-xs tabular-nums font-mono transition-colors z-sticky',
-          checked ? 'text-accent/70' : 'text-text-faint',
+          checked ? 'text-accent/70' : 'text-faint',
         )}
       >
         {entry.count}
@@ -115,7 +115,7 @@ export function FilterPopover({
   return (
     <div className="min-w-50 max-h-80 flex flex-col overflow-hidden rounded-lg border border-floating-border floating-popover-sm">
       <div className="flex items-center gap-1.5 px-2.5 pt-2 pb-1.5 border-b border-border/60">
-        <SearchIcon className="w-3 h-3 text-text-dim" />
+        <SearchIcon className="w-3 h-3 text-dim" />
         <input
           type="text"
           value={search}
@@ -138,7 +138,7 @@ export function FilterPopover({
             variant="ghost"
             aria-label="Clear all"
             onClick={clearAll}
-            className="font-semibold tracking-wider uppercase text-text-muted hover:text-text bg-hover-tint hover:bg-surface-hover border border-floating-border-subtle px-1.5 py-0.5"
+            className="font-semibold tracking-wider uppercase text-muted hover:text-text bg-hover-tint hover:bg-surface-hover border border-floating-border-subtle px-1.5 py-0.5"
           >
             None
           </Button>
@@ -157,7 +157,7 @@ export function FilterPopover({
           />
         ))}
         {visible.length === 0 && (
-          <div className="p-3 text-center text-xs text-text-dim italic">No matches</div>
+          <div className="p-3 text-center text-xs text-dim italic">No matches</div>
         )}
       </div>
     </div>

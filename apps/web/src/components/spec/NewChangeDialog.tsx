@@ -58,7 +58,7 @@ export function NewChangeDialog({
     >
       <DialogContent title="New OpenSpec change" size="md">
         <div className="flex flex-col gap-3">
-          <label className="text-xs text-text-muted" htmlFor="new-change-name">
+          <label className="text-xs text-muted" htmlFor="new-change-name">
             Change name (slug)
             <TextField
               id="new-change-name"
@@ -77,10 +77,10 @@ export function NewChangeDialog({
               className="mt-1 w-full"
             />
           </label>
-          <p className="text-xs text-text-dim">
+          <p className="text-xs text-dim">
             Runs <InlineCode subtle>openspec change new &lt;name&gt;</InlineCode>.
           </p>
-          {error && <p className="text-xs text-warn">{error}</p>}
+          {error && <p className="text-xs text-warning">{error}</p>}
           <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel

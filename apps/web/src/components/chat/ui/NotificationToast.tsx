@@ -89,7 +89,7 @@ export function NotificationToast({
         <Button
           variant="ghost"
           size="xs"
-          className="rounded-md text-sm font-medium bg-hover-tint text-text-muted hover:bg-surface-hover"
+          className="rounded-md text-sm font-medium bg-hover-tint text-muted hover:bg-surface-hover"
           onClick={onDismiss}
         >
           Dismiss

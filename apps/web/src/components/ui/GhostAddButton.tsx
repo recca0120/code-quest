@@ -14,7 +14,7 @@ export function GhostAddButton({
       {...rest}
       className={cn(
         'text-xs rounded border border-dashed border-border',
-        'text-text-muted hover:text-text hover:border-accent',
+        'text-muted hover:text-text hover:border-accent',
         'transition-colors cursor-pointer',
         className,
       )}

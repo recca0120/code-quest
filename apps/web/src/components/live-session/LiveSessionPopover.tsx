@@ -47,11 +47,11 @@ export function LiveSessionPopover({
               {projectLabel}
               {cwdLabel}
             </span>
-            <span className="ml-auto text-xs uppercase tracking-wide text-text-dim">
+            <span className="ml-auto text-xs uppercase tracking-wide text-dim">
               {session.state}
             </span>
           </div>
-          {session.title && <div className="text-xs text-text-muted truncate">{session.title}</div>}
+          {session.title && <div className="text-xs text-muted truncate">{session.title}</div>}
           <div className="flex gap-2 pt-2 border-t border-border">
             <Popover.Close asChild>
               <Button size="xs" variant="primary" onClick={() => onOpen(session.channelId)}>

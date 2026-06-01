@@ -164,7 +164,7 @@ export function ToolPermissionCard({
 
             {/* Collapsible details */}
             {hasInput && (
-              <div className="text-xs text-text-muted mb-1.5">
+              <div className="text-xs text-muted mb-1.5">
                 <details>
                   <summary className="cursor-pointer select-none inline-flex items-center gap-1">
                     <span>Details</span>

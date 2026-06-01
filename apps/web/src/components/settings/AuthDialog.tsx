@@ -41,7 +41,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps): React.JSX.Elemen
       <DialogContent title={providerConfig?.brand.loginTitle ?? 'Login to Claude'}>
         {auth.status === 'idle' && (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-muted">
               Login to {providerConfig?.brand.name ?? 'Claude'} to use your account. An active
               session is required.
             </p>
@@ -52,12 +52,12 @@ export function AuthDialog({ open, onClose }: AuthDialogProps): React.JSX.Elemen
         )}
 
         {auth.status === 'waiting' && (
-          <p className="text-sm text-text-muted animate-pulse">Connecting...</p>
+          <p className="text-sm text-muted animate-pulse">Connecting...</p>
         )}
 
         {auth.status === 'code' && (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-text-muted">Open the URL below and authorize access:</p>
+            <p className="text-sm text-muted">Open the URL below and authorize access:</p>
             {auth.authUrl && (
               <a
                 href={auth.authUrl}
@@ -69,7 +69,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps): React.JSX.Elemen
               </a>
             )}
             <div className="flex flex-col gap-2 mt-2">
-              <label htmlFor="auth-code" className="text-xs text-text-muted">
+              <label htmlFor="auth-code" className="text-xs text-muted">
                 Authorization Code
               </label>
               <TextField
@@ -79,7 +79,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps): React.JSX.Elemen
                 onChange={setCode}
                 placeholder="Paste code here"
               />
-              <label htmlFor="auth-state" className="text-xs text-text-muted">
+              <label htmlFor="auth-state" className="text-xs text-muted">
                 State (if provided)
               </label>
               <TextField

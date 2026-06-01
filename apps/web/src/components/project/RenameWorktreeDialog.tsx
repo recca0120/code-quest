@@ -46,7 +46,7 @@ export function RenameWorktreeDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent title="Rename branch" size="md">
         <div className="flex flex-col gap-3">
-          <label className="text-xs text-text-muted">
+          <label className="text-xs text-muted">
             New branch name
             <input
               type="text"
@@ -62,7 +62,7 @@ export function RenameWorktreeDialog({
               className="mt-1 w-full px-2 py-1 rounded border border-border bg-bg/40 text-sm text-text font-mono"
             />
           </label>
-          {error && <p className="text-xs text-warn">{error}</p>}
+          {error && <p className="text-xs text-warning">{error}</p>}
           <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel

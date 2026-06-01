@@ -152,7 +152,7 @@ describe('PaletteMessageList', () => {
     renderList({ messages: [msg('1', 'A')], sourceLabels });
     const header = screen.getByRole('heading', { level: 3, name: 'source-header' });
     expect(header.className).toMatch(/border-b/);
-    expect(header.className).toMatch(/text-text-muted/);
+    expect(header.className).toMatch(/text-muted/);
   });
 
   it('section headers do not affect button count (keyboard nav unbroken)', () => {

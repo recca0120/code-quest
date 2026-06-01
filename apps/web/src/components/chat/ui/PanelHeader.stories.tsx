@@ -26,10 +26,10 @@ export const WithActions: Story = {
     title: 'Terminal',
     actions: (
       <div className="flex gap-2">
-        <button type="button" className="text-text-muted hover:text-text text-xs">
+        <button type="button" className="text-muted hover:text-text text-xs">
           Clear
         </button>
-        <button type="button" className="text-text-muted hover:text-text text-xs">
+        <button type="button" className="text-muted hover:text-text text-xs">
           ✕
         </button>
       </div>

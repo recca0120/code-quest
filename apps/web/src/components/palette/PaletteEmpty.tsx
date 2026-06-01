@@ -7,7 +7,7 @@ interface PaletteEmptyProps {
 export function PaletteEmpty({ query }: PaletteEmptyProps): React.JSX.Element {
   const hasQuery = query.trim().length > 0;
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-10 font-mono text-xs text-text-muted">
+    <div className="flex flex-col items-center justify-center gap-2 py-10 font-mono text-xs text-muted">
       <span className="text-2xl opacity-50">∅</span>
       {hasQuery ? (
         <span>

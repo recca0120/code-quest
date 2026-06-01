@@ -61,7 +61,7 @@ function annotateLines(lines: string[]): AnnotatedLine[] {
       return { cls: 'text-accent', diffType: 'header', gutter: '  ', text: line };
     }
     if (line.startsWith('---') || line.startsWith('+++')) {
-      return { cls: 'text-text-muted', diffType: 'header', gutter: '  ', text: line };
+      return { cls: 'text-muted', diffType: 'header', gutter: '  ', text: line };
     }
     if (line.startsWith('+')) {
       const gutter = String(newLine++).padStart(PAD);
@@ -100,7 +100,7 @@ function DiffFileHeader({
       aria-label="diff-filename"
     >
       <div className="flex items-center gap-2">
-        <span className="text-xs font-mono text-text-muted">{fileName}</span>
+        <span className="text-xs font-mono text-muted">{fileName}</span>
         {lines && (
           <span className="flex items-center gap-1">
             <span className="text-success font-mono text-xs">+{insertions}</span>

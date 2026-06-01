@@ -354,8 +354,8 @@ export const MessageList: React.ForwardRefExoticComponent<
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-7">
             <span className="text-4xl text-assistant">✦</span>
-            <span className="text-lg font-medium text-text-bright">Code Quest</span>
-            <span className="text-sm text-text-muted">How can I help you today?</span>
+            <span className="text-lg font-medium text-bright">Code Quest</span>
+            <span className="text-sm text-muted">How can I help you today?</span>
           </div>
         ) : (
           <section aria-label="message-content-wrapper" className="px-4 pt-5 pb-32">
@@ -401,7 +401,7 @@ export const MessageList: React.ForwardRefExoticComponent<
           type="button"
           aria-label="Scroll to bottom"
           onClick={scrollToBottom}
-          className="absolute bottom-4 right-4 z-float w-8 h-8 rounded-full bg-surface-hover text-text-muted hover:text-text flex items-center justify-center shadow-floating cursor-pointer transition-colors"
+          className="absolute bottom-4 right-4 z-float w-8 h-8 rounded-full bg-surface-hover text-muted hover:text-text flex items-center justify-center shadow-floating cursor-pointer transition-colors"
         >
           ↓
         </button>

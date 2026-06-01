@@ -25,12 +25,12 @@ export function ArchiveWorktreeConfirmDialog({
           <p>
             Archive <span className="font-mono font-semibold">{branch}</span>?
           </p>
-          <p className="text-xs text-text-muted">
+          <p className="text-xs text-muted">
             Removes the worktree directory but keeps the branch ref. You can re-add it later with{' '}
             <code>git worktree add</code>.
           </p>
           {dirty && (
-            <p className="text-xs text-warn">
+            <p className="text-xs text-warning">
               Worktree has uncommitted changes. Force-archive will discard them.
             </p>
           )}

@@ -29,7 +29,7 @@ export function SearchBar({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted focus:outline-none"
+          className="flex-1 bg-transparent text-sm text-text placeholder:text-muted focus:outline-none"
         />
         {searchQuery && (
           <InlineAction aria-label="Clear search" onClick={() => setSearchQuery('')}>

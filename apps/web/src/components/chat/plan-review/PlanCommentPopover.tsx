@@ -98,7 +98,7 @@ export function PlanCommentPopover({
         >
           {selectedText && (
             <>
-              <div className="text-xs text-text-muted mb-1 truncate" title={selectedText}>
+              <div className="text-xs text-muted mb-1 truncate" title={selectedText}>
                 &ldquo;
                 {selectedText.length > MAX_QUOTE_LENGTH
                   ? `${selectedText.slice(0, MAX_QUOTE_LENGTH)}...`

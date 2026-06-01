@@ -22,7 +22,7 @@ export function SpeechInputButton({
   return (
     <div className={cn('relative flex items-center', className)}>
       {interimText && (
-        <span className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 text-xs italic text-text-muted bg-surface border border-border rounded px-2 py-1 whitespace-nowrap max-w-50 truncate pointer-events-none">
+        <span className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 text-xs italic text-muted bg-surface border border-border rounded px-2 py-1 whitespace-nowrap max-w-50 truncate pointer-events-none">
           {interimText}
         </span>
       )}
@@ -30,7 +30,7 @@ export function SpeechInputButton({
         aria-label={isListening ? 'Stop mic' : 'Start mic'}
         title={isListening ? 'Stop recording' : 'Start voice input'}
         onClick={onToggle}
-        className="relative text-text-muted hover:text-text-bright"
+        className="relative text-muted hover:text-bright"
       >
         {isListening ? (
           <span className="relative flex h-3 w-3">

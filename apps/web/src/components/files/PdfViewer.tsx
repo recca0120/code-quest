@@ -37,7 +37,7 @@ function Controls({ page, numPages, scale, onPrev, onNext, onZoomOut, onZoomIn }
       >
         ←
       </Button>
-      <span className="text-sm text-text-muted">
+      <span className="text-sm text-muted">
         {page} / {numPages}
       </span>
       <Button
@@ -59,7 +59,7 @@ function Controls({ page, numPages, scale, onPrev, onNext, onZoomOut, onZoomIn }
       >
         −
       </Button>
-      <span className="text-sm text-text-muted w-12 text-center">{Math.round(scale * 100)}%</span>
+      <span className="text-sm text-muted w-12 text-center">{Math.round(scale * 100)}%</span>
       <Button
         variant="secondary"
         size="sm"

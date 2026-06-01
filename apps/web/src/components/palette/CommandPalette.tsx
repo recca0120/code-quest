@@ -275,7 +275,7 @@ export function CommandPalette(): React.ReactNode {
                 'px-4 py-2 text-xs font-mono font-semibold uppercase tracking-wider border-b-2 cursor-pointer transition-colors',
                 activeTab === tab.id
                   ? 'border-accent text-accent'
-                  : 'border-transparent text-text-subtle',
+                  : 'border-transparent text-subtle',
               )}
             >
               {tab.label}
@@ -322,12 +322,12 @@ export function CommandPalette(): React.ReactNode {
         </div>
 
         <div className="border-t border-floating-border-subtle px-4 py-1.5 flex gap-4 shrink-0">
-          <span className="text-xs font-mono text-text-faint tracking-wider">
+          <span className="text-xs font-mono text-faint tracking-wider">
             {q
               ? `${messageResults.length} result${messageResults.length === 1 ? '' : 's'}`
               : `${visibleMessages.length} messages`}
           </span>
-          <span className="text-xs font-mono text-text-faint tracking-wider ml-auto">
+          <span className="text-xs font-mono text-faint tracking-wider ml-auto">
             ↑↓ navigate · ↵ jump · esc close
           </span>
         </div>

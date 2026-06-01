@@ -72,7 +72,7 @@ function OptionItem({
       </div>
       <div>
         <div className="text-text">{label}</div>
-        {description && <div className="text-text-muted text-xs">{description}</div>}
+        {description && <div className="text-muted text-xs">{description}</div>}
       </div>
     </div>
   );
@@ -181,7 +181,7 @@ export function QuestionContent({
               onClick={() => setActiveTab(i)}
               className={cn(
                 'text-xs font-medium bg-transparent border-0 border-b-2 cursor-pointer px-0.5 py-1 min-w-0 truncate',
-                isActive ? 'text-text border-accent' : 'text-text-muted border-transparent',
+                isActive ? 'text-text border-accent' : 'text-muted border-transparent',
               )}
             >
               {q.header}

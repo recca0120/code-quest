@@ -43,7 +43,7 @@ function AllowedContent({
       <p className="text-sm text-text">
         Delete worktree <span className="font-semibold">{branch}</span>?
       </p>
-      <p className="text-xs text-text-muted">
+      <p className="text-xs text-muted">
         This runs <code>git worktree remove</code>. The worktree folder will be deleted.
       </p>
       <div className="flex justify-end gap-2">

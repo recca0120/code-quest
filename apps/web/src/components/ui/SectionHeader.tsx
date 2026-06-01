@@ -10,8 +10,8 @@ interface SectionHeaderProps {
 const BASE = 'px-4 pt-2 pb-1 m-0 text-xs font-mono font-bold tracking-widest uppercase';
 
 const VARIANT_CLASS: Record<NonNullable<SectionHeaderProps['variant']>, string> = {
-  default: 'text-text-dim',
-  prominent: 'text-text-muted border-b border-border',
+  default: 'text-dim',
+  prominent: 'text-muted border-b border-border',
 };
 
 export function SectionHeader({

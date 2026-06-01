@@ -91,8 +91,8 @@ export function TabBar({
                       'flex items-center gap-2 px-3 h-full text-xs cursor-pointer shrink-0',
                       'border-r border-border border-b-2 border-b-transparent',
                       tab.sessionId === activeTabId
-                        ? 'text-text-bright bg-bg border-b-accent'
-                        : 'text-text-muted hover:text-text hover:bg-hover-tint',
+                        ? 'text-bright bg-bg border-b-accent'
+                        : 'text-muted hover:text-text hover:bg-hover-tint',
                     )}
                     onClick={() => onSelectTab(tab.sessionId)}
                     title={tab.worktree?.path}
@@ -105,7 +105,7 @@ export function TabBar({
                       <span
                         role="note"
                         aria-label="tab-scope-tag"
-                        className="font-mono text-2xs text-text-subtle"
+                        className="font-mono text-2xs text-subtle"
                       >
                         {tab.projectName}/{tab.worktree.branch ?? tab.worktree.name}
                       </span>
@@ -115,7 +115,7 @@ export function TabBar({
                     <span data-provider-slot="" />
                     <button
                       type="button"
-                      className="ml-1 text-text-subtle hover:text-danger hover:bg-danger/10 px-0.5 rounded text-xs"
+                      className="ml-1 text-subtle hover:text-danger hover:bg-danger/10 px-0.5 rounded text-xs"
                       onClick={(e) => {
                         e.stopPropagation();
                         setConfirmingId(tab.sessionId);
@@ -133,7 +133,7 @@ export function TabBar({
             <IconButton
               onClick={onNewTab}
               aria-label="New tab"
-              className="text-text-muted hover:text-text hover:tint-5 shrink-0"
+              className="text-muted hover:text-text hover:tint-5 shrink-0"
             >
               +
             </IconButton>
@@ -143,7 +143,7 @@ export function TabBar({
               onClick={onOpenHistory}
               aria-label="Session history"
               title="Session history"
-              className="text-text-muted hover:text-text hover:tint-5 shrink-0 ml-auto"
+              className="text-muted hover:text-text hover:tint-5 shrink-0 ml-auto"
             >
               ☰
             </IconButton>
@@ -157,7 +157,7 @@ export function TabBar({
         }}
       >
         <DialogContent title="Close Session">
-          <p className="text-sm text-text-muted mb-4">
+          <p className="text-sm text-muted mb-4">
             Are you sure you want to close this session? The CLI process will be terminated.
           </p>
           <div className="flex justify-end gap-2">

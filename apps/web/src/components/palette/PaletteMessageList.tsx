@@ -81,7 +81,7 @@ export function PaletteMessageList({
                 >
                   {label}
                 </span>
-                <span className="text-xs font-mono text-text-muted leading-normal overflow-hidden line-clamp-2">
+                <span className="text-xs font-mono text-muted leading-normal overflow-hidden line-clamp-2">
                   {previewParts.map((part, i) => {
                     const key = `${i}-${part.match ? 'm' : 't'}`;
                     return part.match ? (

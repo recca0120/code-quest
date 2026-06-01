@@ -11,8 +11,8 @@ interface InlineActionProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>
 const BASE = 'text-xs cursor-pointer transition-all';
 
 const VARIANTS: Record<Variant, string> = {
-  default: 'text-text-muted hover:text-accent',
-  muted: 'text-text-muted hover:text-text',
+  default: 'text-muted hover:text-accent',
+  muted: 'text-muted hover:text-text',
   accent: 'text-accent hover:text-accent/80',
   danger: 'text-danger hover:text-danger/80',
   success: 'text-success hover:text-success/80',

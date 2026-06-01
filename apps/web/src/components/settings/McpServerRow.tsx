@@ -75,7 +75,7 @@ export function McpServerRow({
             'text-xs px-2 py-0.5 rounded border transition-colors',
             s.enabled
               ? 'border-success/30 text-success hover:bg-success/10'
-              : 'border-border text-text-muted hover:bg-hover-tint',
+              : 'border-border text-muted hover:bg-hover-tint',
           )}
         >
           {s.enabled ? 'On' : 'Off'}
@@ -211,15 +211,13 @@ function McpToolsList({
   return (
     <section aria-label={`tools-${serverName}`} className="px-6 pb-3">
       {tools.length === 0 ? (
-        <p className="text-xs text-text-muted">No tools</p>
+        <p className="text-xs text-muted">No tools</p>
       ) : (
         <ul className="space-y-1">
           {tools.map((tool) => (
             <li key={tool.name} className="text-xs">
               <span className="font-mono text-text">{tool.name}</span>
-              {tool.description && (
-                <span className="ml-1 text-text-muted">— {tool.description}</span>
-              )}
+              {tool.description && <span className="ml-1 text-muted">— {tool.description}</span>}
             </li>
           ))}
         </ul>

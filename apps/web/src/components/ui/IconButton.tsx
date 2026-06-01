@@ -26,7 +26,7 @@ export function IconButton({
     <button
       ref={ref}
       type={type}
-      className={cn(BOX, variant === 'tinted' && 'text-text-bright hover:tint-5', className)}
+      className={cn(BOX, variant === 'tinted' && 'text-bright hover:tint-5', className)}
       {...rest}
     >
       {children}

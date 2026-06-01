@@ -146,7 +146,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
                   onClick={() => onSelect(b)}
                   className={cn('flex items-center gap-2', isCursor && 'bg-hover-tint')}
                 >
-                  <span className="w-3 text-text-subtle">{isCurrent ? '✓' : ''}</span>
+                  <span className="w-3 text-subtle">{isCurrent ? '✓' : ''}</span>
                   <span className="truncate">{b}</span>
                 </MenuItem>
               </Popover.Close>
@@ -158,7 +158,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
               role="menuitem"
               data-kind="create-from-filter"
               onClick={() => onCreateBranch(trimmedFilter)}
-              className="flex items-center gap-2 py-2 text-text-muted hover:text-text"
+              className="flex items-center gap-2 py-2 text-muted hover:text-text"
             >
               <span className="w-3">+</span>
               <span>
@@ -167,7 +167,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
             </MenuItem>
           </Popover.Close>
         ) : (
-          <div className="px-3 py-2 text-xs text-text-muted">No match</div>
+          <div className="px-3 py-2 text-xs text-muted">No match</div>
         )}
       </section>
       {onCreateBranch && (
@@ -178,7 +178,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
               role="menuitem"
               data-kind="create-new"
               onClick={() => onCreateBranch()}
-              className="flex items-center gap-2 text-text-muted hover:text-text"
+              className="flex items-center gap-2 text-muted hover:text-text"
             >
               <span className="w-3">+</span>
               <span>New branch (worktree)…</span>

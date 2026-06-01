@@ -21,7 +21,7 @@ const RawEventRow = memo(function RawEventRow({ index, event }: { index: number;
   const evtType = getEventType(event);
   return (
     <details className="border-b border-border">
-      <summary className="px-4 py-2 cursor-pointer text-xs text-text-muted hover:text-text">
+      <summary className="px-4 py-2 cursor-pointer text-xs text-muted hover:text-text">
         Event #{index + 1}
         {evtType ? ` — ${evtType}` : ''}
       </summary>
@@ -140,7 +140,7 @@ export function RawEventPanel({
                   userScrolledRef.current = false;
                   scrollToBottom();
                 }}
-                className={cn('text-text-muted hover:text-text', autoScroll && 'text-accent')}
+                className={cn('text-muted hover:text-text', autoScroll && 'text-accent')}
               >
                 ⤓
               </IconButton>
@@ -149,7 +149,7 @@ export function RawEventPanel({
               <IconButton
                 title="Refresh"
                 onClick={handleRefresh}
-                className="text-text-muted hover:text-text"
+                className="text-muted hover:text-text"
               >
                 ↻
               </IconButton>
@@ -162,12 +162,12 @@ export function RawEventPanel({
                   seenTypesRef.current = new Set();
                   setVisibleTypes(new Set());
                 }}
-                className="text-text-muted hover:text-text"
+                className="text-muted hover:text-text"
               >
                 ⌀
               </IconButton>
             )}
-            <IconButton title="Close" onClick={onClose} className="text-text-muted hover:text-text">
+            <IconButton title="Close" onClick={onClose} className="text-muted hover:text-text">
               ✕
             </IconButton>
           </div>
@@ -186,9 +186,9 @@ export function RawEventPanel({
         />
       )}
       <div className="flex-1 min-h-0 relative">
-        {loading && <div className="px-4 py-8 text-center text-text-muted text-sm">Loading...</div>}
+        {loading && <div className="px-4 py-8 text-center text-muted text-sm">Loading...</div>}
         {!loading && events.length === 0 && (
-          <div className="px-4 py-8 text-center text-text-muted text-sm">
+          <div className="px-4 py-8 text-center text-muted text-sm">
             {onSubscribe ? 'Waiting for events…' : 'No events. Click ↻ to fetch.'}
           </div>
         )}

@@ -88,7 +88,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
 
       <div className="relative z-raised text-text">
         <div className="flex items-center gap-1.5 mb-2 px-1">
-          <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-text-muted shrink-0" />
+          <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-muted shrink-0" />
           <span className="text-sm font-bold">Plan Review</span>
           {planComments.length > 0 && (
             <span className="text-xs text-accent font-normal ml-1">
@@ -108,7 +108,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
         )}
 
         {allowedPrompts && allowedPrompts.length > 0 && (
-          <div className="text-xs text-text-muted px-1 mb-2">
+          <div className="text-xs text-muted px-1 mb-2">
             <span className="font-medium">Requested permissions: </span>
             {allowedPrompts.map((p) => {
               const label = String(p.prompt ?? p.tool ?? JSON.stringify(p));
