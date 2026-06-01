@@ -28,6 +28,7 @@ function stubStore(overrides: Partial<RawEventRepository> = {}): RawEventReposit
     async hasUserEcho() {
       return false;
     },
+    async appendBatch() {},
     async *streamBySession() {},
     async deleteBySession() {},
     ...overrides,

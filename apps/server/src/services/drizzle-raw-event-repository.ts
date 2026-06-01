@@ -95,6 +95,18 @@ export class DrizzleRawEventStore implements RawEventRepository {
     return rowId;
   }
 
+  async appendBatch(events: RawEvent[]): Promise<void> {
+    for (const event of events) {
+      await this.db.insert(this.table).values({
+        id: uuidv7(),
+        sessionId: event.sessionId,
+        dir: event.direction,
+        raw: event.raw,
+        createdAt: new Date(event.timestamp).toISOString(),
+      });
+    }
+  }
+
   async getPreview(sessionId: string): Promise<SessionPreview> {
     // Last 10 'out' rows because not every out event is an assistant message (init, status, etc.).
     const [lastOutRaw, firstInRaw] = await Promise.all([

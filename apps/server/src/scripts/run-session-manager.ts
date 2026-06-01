@@ -35,15 +35,14 @@ async function main() {
   const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 
   const projectsDir = join(homedir(), '.claude', 'projects');
-  const scanFs = new RootGuardFilesystem(new LocalFilesystem(), [projectsDir]);
-  const source = new JsonlProjectScanner(scanFs, projectsDir);
+  const guardedFs = new RootGuardFilesystem(new LocalFilesystem(), [projectsDir]);
+  const source = new JsonlProjectScanner(guardedFs, projectsDir);
   const target = new DbProjectScanner(rawEventService, sessionStore);
   const scanner = new SessionMigrator(source, target);
 
-  const writeFs = new LocalFilesystem();
   const reader = new DbSessionReader(rawEventService, sessionStore);
   const writer = new DbSessionWriter(rawEventService, sessionStore);
-  await new SessionManager(scanner, reader, writer, writeFs).run();
+  await new SessionManager(scanner, reader, writer, guardedFs).run();
 }
 
 const SILENT_EXIT_PATTERNS = ['force closed', 'ExitPromptError'];

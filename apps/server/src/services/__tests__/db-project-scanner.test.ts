@@ -1,12 +1,12 @@
 import type { ProjectScanner } from '@code-quest/session-store';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { createTestContainer } from '../../test/create-test-container.ts';
+import { TYPES } from '../../types.ts';
 import { DbProjectScanner } from '../db-project-scanner.ts';
 import type { RawEventStore } from '../raw-event-store.ts';
 import type { SessionRecord, SessionStore } from '../session-store.ts';
 
-function makeSession(
-  overrides: Partial<SessionRecord & { cwd: string | null }> = {},
-): SessionRecord {
+function makeSession(overrides: Partial<SessionRecord> = {}): SessionRecord {
   return {
     id: 'sess-1',
     channelId: 'ch',
@@ -19,87 +19,88 @@ function makeSession(
     role: 'default',
     createdAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
-  } as SessionRecord;
-}
-
-function mockSessionStore(sessions: SessionRecord[] = []): SessionStore {
-  return {
-    list: vi.fn(async () => ({ sessions, total: sessions.length })),
-    getById: vi.fn(async (id) => sessions.find((s) => s.id === id) ?? null),
-    upsert: vi.fn(async () => {}),
-    deleteById: vi.fn(async () => {}),
-  } as unknown as SessionStore;
-}
-
-function mockRawEventStore(count = 0): RawEventStore {
-  return {
-    countBySession: vi.fn(async () => count),
-  } as unknown as RawEventStore;
+  };
 }
 
 describe('DbProjectScanner', () => {
   let sessionStore: SessionStore;
   let rawEventStore: RawEventStore;
-  let list: ProjectScanner;
+  let scanner: ProjectScanner;
 
-  beforeEach(() => {
-    sessionStore = mockSessionStore([
-      makeSession({ id: 'sess-1', projectRoot: '/project-a' }),
-      makeSession({ id: 'sess-2', projectRoot: '/project-a' }),
-      makeSession({ id: 'sess-3', projectRoot: '/project-b' }),
-    ]);
-    rawEventStore = mockRawEventStore(5);
-    list = new DbProjectScanner(rawEventStore, sessionStore);
+  beforeEach(async () => {
+    const container = createTestContainer();
+    sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+    rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
+
+    await sessionStore.upsert(makeSession({ id: 'sess-1', projectRoot: '/project-a' }));
+    await sessionStore.upsert(makeSession({ id: 'sess-2', projectRoot: '/project-a' }));
+    await sessionStore.upsert(makeSession({ id: 'sess-3', projectRoot: '/project-b' }));
+
+    scanner = new DbProjectScanner(rawEventStore, sessionStore);
   });
 
   describe('scanProjects', () => {
     it('groups sessions by projectRoot', async () => {
-      const projects = await list.scanProjects();
+      const projects = await scanner.scanProjects();
       expect(projects).toHaveLength(2);
-      const a = projects.find((p) => p.cwd === '/project-a');
-      expect(a?.sessions).toHaveLength(2);
+      expect(projects.find((p) => p.cwd === '/project-a')?.sessions).toHaveLength(2);
       expect(projects.find((p) => p.cwd === '/project-b')?.sessions).toHaveLength(1);
     });
 
     it('each session summary has sessionId and createdAt', async () => {
-      const projects = await list.scanProjects();
+      const projects = await scanner.scanProjects();
       const projectA = projects.find((p) => p.cwd === '/project-a');
-      const session = projectA?.sessions[0];
-      expect(session?.sessionId).toBe('sess-1');
-      expect(session?.createdAt).toBe('2026-01-01T00:00:00.000Z');
-      const session2 = projectA?.sessions[1];
-      expect(session2?.sessionId).toBe('sess-2');
-      expect(session2?.createdAt).toBe('2026-01-01T00:00:00.000Z');
+      expect(projectA?.sessions.map((s) => s.sessionId)).toContain('sess-1');
+      expect(projectA?.sessions.map((s) => s.sessionId)).toContain('sess-2');
+      expect(projectA?.sessions[0]?.createdAt).toBe('2026-01-01T00:00:00.000Z');
     });
 
     it('returns empty array when no sessions', async () => {
-      list = new DbProjectScanner(rawEventStore, mockSessionStore([]));
-      expect(await list.scanProjects()).toEqual([]);
+      const emptyContainer = createTestContainer();
+      const emptyScanner = new DbProjectScanner(
+        emptyContainer.get<RawEventStore>(TYPES.RawEventStore),
+        emptyContainer.get<SessionStore>(TYPES.SessionStore),
+      );
+      expect(await emptyScanner.scanProjects()).toEqual([]);
     });
 
     it('skips sessions with empty projectRoot', async () => {
-      list = new DbProjectScanner(
-        rawEventStore,
-        mockSessionStore([makeSession({ id: 'no-root', projectRoot: '' })]),
+      const emptyContainer = createTestContainer();
+      const store = emptyContainer.get<SessionStore>(TYPES.SessionStore);
+      await store.upsert(makeSession({ id: 'no-root', projectRoot: '' }));
+      const emptyScanner = new DbProjectScanner(
+        emptyContainer.get<RawEventStore>(TYPES.RawEventStore),
+        store,
       );
-      expect(await list.scanProjects()).toEqual([]);
+      expect(await emptyScanner.scanProjects()).toEqual([]);
     });
   });
 
   describe('hasSession', () => {
     it('returns true when session exists in store', async () => {
-      expect(await list.hasSession('sess-1')).toBe(true);
+      expect(await scanner.hasSession('sess-1')).toBe(true);
     });
 
     it('returns false when session does not exist', async () => {
-      expect(await list.hasSession('unknown')).toBe(false);
+      expect(await scanner.hasSession('unknown')).toBe(false);
     });
   });
 
   describe('countEvents', () => {
-    it('delegates to rawEventStore.countBySession', async () => {
-      expect(await list.countEvents('sess-1')).toBe(5);
-      expect(rawEventStore.countBySession).toHaveBeenCalledWith('sess-1');
+    it('returns event count from rawEventStore', async () => {
+      await rawEventStore.appendEvent({
+        sessionId: 'sess-1',
+        direction: 'out',
+        raw: '{}',
+        timestamp: 0,
+      });
+      await rawEventStore.appendEvent({
+        sessionId: 'sess-1',
+        direction: 'out',
+        raw: '{}',
+        timestamp: 1,
+      });
+      expect(await scanner.countEvents('sess-1')).toBe(2);
     });
   });
 });

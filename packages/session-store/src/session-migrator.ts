@@ -77,37 +77,33 @@ export class SessionMigrator {
   }
 
   async scanExportable(): Promise<ExportableProject[]> {
-    const dbProjects = await this.target.scanProjects();
-    if (dbProjects.length === 0) return [];
+    const [targetProjects, sourceProjects] = await Promise.all([
+      this.target.scanProjects(),
+      this.source.scanProjects(),
+    ]);
+    if (targetProjects.length === 0) return [];
 
-    const projects = await Promise.all(
-      dbProjects.map(async (p) => {
-        const sessions = await this.buildExportableSessions(p);
+    const exportedIds = new Set(sourceProjects.flatMap((p) => p.sessions.map((s) => s.sessionId)));
+
+    return targetProjects
+      .map((p) => {
+        const sessions = p.sessions.map((s) => {
+          const filePath = s.filePath ?? '';
+          return {
+            session: s,
+            filePath,
+            status: (filePath && exportedIds.has(s.sessionId)
+              ? 'EXPORTED'
+              : 'NOT_EXPORTED') as ExportStatus,
+          };
+        });
         return {
           cwd: p.cwd,
           sessions,
           notExportedCount: sessions.filter((s) => s.status === 'NOT_EXPORTED').length,
         };
-      }),
-    );
-
-    return projects.filter((p) => p.sessions.length > 0);
-  }
-
-  private async buildExportableSessions(project: ProjectSummary): Promise<ExportableSession[]> {
-    return Promise.all(
-      project.sessions.map(async (s) => {
-        const filePath = s.filePath ?? '';
-        const exists = filePath
-          ? await this.source.hasSession(s.sessionId).catch(() => false)
-          : false;
-        return {
-          session: s,
-          filePath,
-          status: exists ? 'EXPORTED' : 'NOT_EXPORTED',
-        };
-      }),
-    );
+      })
+      .filter((p) => p.sessions.length > 0);
   }
 
   private getImportStatus(session: SessionSummary, targetCount: number): ImportStatus {

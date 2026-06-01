@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { MemoryReader } from '../reader/memory-reader.ts';
 import { Transfer } from '../transfer.ts';
-import type { SessionData, SessionReader, SessionWriter } from '../types.ts';
+import type { SessionData } from '../types.ts';
+import { MemoryWriter } from '../writer/memory-writer.ts';
 
 function makeSessionData(): SessionData {
   return {
@@ -23,35 +25,39 @@ function makeSessionData(): SessionData {
 describe('Transfer', () => {
   it('reads from reader and writes to writer with same sessionId', async () => {
     const data = makeSessionData();
-    const reader: SessionReader = { read: vi.fn(async () => data) };
-    const writer: SessionWriter = { write: vi.fn(async () => {}) };
+    const reader = new MemoryReader(new Map([['sess-1', data]]));
+    const writer = new MemoryWriter();
 
     await new Transfer(reader, writer).run('sess-1');
 
-    expect(reader.read).toHaveBeenCalledWith('sess-1');
-    expect(writer.write).toHaveBeenCalledWith('sess-1', data);
+    expect(writer.data.get('sess-1')).toEqual(data);
   });
 
   it('propagates reader error', async () => {
-    const reader: SessionReader = {
-      read: vi.fn(async () => {
+    const reader: MemoryReader = new MemoryReader(new Map());
+    const writer = new MemoryWriter();
+    // MemoryReader returns default for unknown session — simulate error via subclass
+    const throwingReader = {
+      async read(): Promise<SessionData> {
         throw new Error('read failed');
-      }),
+      },
     };
-    const writer: SessionWriter = { write: vi.fn(async () => {}) };
 
-    await expect(new Transfer(reader, writer).run('sess-1')).rejects.toThrow('read failed');
-    expect(writer.write).not.toHaveBeenCalled();
+    await expect(new Transfer(throwingReader, writer).run('sess-1')).rejects.toThrow('read failed');
+    expect(writer.data.size).toBe(0);
   });
 
   it('propagates writer error', async () => {
-    const reader: SessionReader = { read: vi.fn(async () => makeSessionData()) };
-    const writer: SessionWriter = {
-      write: vi.fn(async () => {
+    const data = makeSessionData();
+    const reader = new MemoryReader(new Map([['sess-1', data]]));
+    const throwingWriter = {
+      async write(): Promise<void> {
         throw new Error('write failed');
-      }),
+      },
     };
 
-    await expect(new Transfer(reader, writer).run('sess-1')).rejects.toThrow('write failed');
+    await expect(new Transfer(reader, throwingWriter).run('sess-1')).rejects.toThrow(
+      'write failed',
+    );
   });
 });

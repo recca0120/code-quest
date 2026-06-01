@@ -27,6 +27,10 @@ export class RawEventStore {
     return this.eventStore.append(event, id);
   }
 
+  appendEvents(events: RawEvent[]): Promise<void> {
+    return this.eventStore.appendBatch(events);
+  }
+
   appendDelta(entry: RawDeltaEntry): Promise<void> {
     return this.deltaStore.append(entry);
   }

@@ -54,6 +54,7 @@ export interface RawEventRepository {
    * so downstream references (e.g. raw_deltas.parent_id) remain consistent.
    */
   append(event: RawEvent, id?: string): Promise<string>;
+  appendBatch(events: RawEvent[]): Promise<void>;
   getBySession(sessionId: string): Promise<RawEvent[]>;
   getPreview(sessionId: string): Promise<SessionPreview>;
   /**

@@ -96,15 +96,14 @@ function hasSessionFields(
 export function decodeSession(lines: string[], sessionId: string): SessionData {
   const decoder = new JsonlDecoder(sessionId);
   let record: SessionRecord | null = null;
-  const events = lines.flatMap((l) => {
+  const events: RawEvent[] = [];
+  for (const l of lines) {
     const entry = parseLine(l);
-    if (!entry) return [];
-    if (!record && hasSessionFields(entry)) {
-      record = buildSessionRecord(entry);
-    }
+    if (!entry) continue;
+    if (!record && hasSessionFields(entry)) record = buildSessionRecord(entry);
     const e = decoder.readLine(l, entry);
-    return e ? [e] : [];
-  });
+    if (e) events.push(e);
+  }
   return { events, record: record ?? makeDefaultSessionRecord(sessionId) };
 }
 

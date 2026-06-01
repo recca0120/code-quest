@@ -13,6 +13,10 @@ export class CompositeRawEventStore
     return rowId;
   }
 
+  async appendBatch(events: RawEvent[]): Promise<void> {
+    await this.fanOut('raw event appendBatch', (s) => s.appendBatch(events));
+  }
+
   getBySession(sessionId: string): Promise<RawEvent[]> {
     return this.primary.getBySession(sessionId);
   }

@@ -16,6 +16,6 @@ export class DbSessionWriter implements SessionWriter {
     if (await this.rawEventService.hasEvents(sessionId)) return;
 
     await this.sessionStore.upsert(data.record);
-    await Promise.all(data.events.map((event) => this.rawEventService.appendEvent(event)));
+    await this.rawEventService.appendEvents(data.events);
   }
 }
