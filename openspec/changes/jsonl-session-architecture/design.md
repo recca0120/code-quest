@@ -4,56 +4,63 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    jsonl-codec                          │
+│               @code-quest/session-store                 │
 │                                                         │
-│  interface JsonlReader                                  │
-│    read(sessionId): Promise<SessionData>                │
+│  types.ts                                               │
+│    SessionReader / SessionWriter / SessionData          │
+│    ProjectScanner / ProjectSummary / SessionSummary     │
+│    SessionRecord                                        │
 │                                                         │
-│  interface JsonlWriter                                  │
-│    write(sessionId, data): Promise<void>                │
+│  reader/                                                │
+│    FileReader (abstract)  implements SessionReader      │
+│      └── Filesystem                                     │
+│    JsonlFileReader extends FileReader                   │
+│    MemoryReader   implements SessionReader              │
 │                                                         │
-│  interface ProjectList                                  │
-│    scanProjects(): Promise<ProjectSummary[]>            │
-│    hasSession(sessionId): Promise<boolean>              │
-│    countEvents(sessionId): Promise<number>              │
+│  writer/                                                │
+│    FileWriter (abstract)  implements SessionWriter      │
+│      └── Filesystem                                     │
+│    JsonlFileWriter extends FileWriter                   │
+│    MemoryWriter   implements SessionWriter              │
 │                                                         │
-│  Converter(reader, writer)                              │
-│    convert(sessionId): Promise<void>                    │
+│  scanner/                                               │
+│    FileProjectScanner (abstract) implements ProjectScanner │
+│      └── Filesystem                                     │
+│    JsonlProjectScanner extends FileProjectScanner       │
 │                                                         │
-│  JsonlFileReader  implements JsonlReader                │
-│    └── Filesystem                                       │
+│  jsonl/                                                 │
+│    decoder.ts  (parseLine, parseLines, decodeSession)   │
+│    encoder.ts  (encodeEvent)                            │
 │                                                         │
-│  JsonlFileWriter  implements JsonlWriter                │
-│    └── Filesystem                                       │
+│  Transfer(reader: SessionReader, writer: SessionWriter) │
+│    run(sessionId): Promise<void>                        │
 │                                                         │
-│  JsonlProjectScanner  implements ProjectList            │
-│    └── Filesystem                                       │
+│  SessionMigrator(source: ProjectScanner, target: ProjectScanner) │
+│    scanProjects(): Promise<ProjectInfo[]>               │
+│    resolveImportStatuses(): Promise<ImportStatusEntry[]>│
+│    scanExportable(): Promise<ExportableProject[]>       │
 └─────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────┐
-│                      server                             │
+│                   @code-quest/server                    │
 │                                                         │
-│  JsonlDbReader  implements JsonlReader                  │
-│    ├── RawEventService                                  │
+│  DbSessionReader  implements SessionReader              │
+│    ├── RawEventStore                                    │
 │    └── SessionStore                                     │
 │                                                         │
-│  JsonlDbWriter  implements JsonlWriter                  │
-│    ├── RawEventService                                  │
+│  DbSessionWriter  implements SessionWriter              │
+│    ├── RawEventStore  (appendBatch — sequential inserts)│
 │    └── SessionStore                                     │
 │                                                         │
-│  DbProjectList  implements ProjectList      ← new       │
-│    ├── RawEventService                                  │
+│  DbProjectScanner  implements ProjectScanner            │
+│    ├── RawEventStore                                    │
 │    └── SessionStore                                     │
-│                                                         │
-│  SessionScanner                                         │
-│    ├── filesystemList: ProjectList                      │
-│    └── dbList: ProjectList                              │
 │                                                         │
 │  SessionManager                                         │
-│    ├── scanner: SessionScanner                          │
-│    ├── dbReader: JsonlReader                            │
-│    ├── dbWriter: JsonlWriter                            │
-│    └── filesystem: Filesystem                           │
+│    ├── scanner: SessionMigrator                         │
+│    ├── reader: SessionReader                            │
+│    ├── writer: SessionWriter                            │
+│    └── filesystem: Filesystem  (RootGuardFilesystem)   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -61,23 +68,25 @@
 
 **import（filesystem → DB）:**
 ```
-new Converter(
-  new JsonlFileReader(jsonlPath, filesystem),
+new Transfer(
+  new JsonlFileReader(filePath, guardedFs),
   dbWriter
-).convert(sessionId)
+).run(sessionId)
 ```
 
 **export（DB → filesystem）:**
 ```
-new Converter(
+new Transfer(
   dbReader,
-  new JsonlFileWriter(outputPath, filesystem)
-).convert(sessionId)
+  new JsonlFileWriter(outputPath, guardedFs)
+).run(sessionId)
 ```
 
 ### 關鍵決策
 
-- `Converter` 放在 `jsonl-codec`，只依賴兩個 interface，可在任何環境使用
-- `ProjectList.countEvents()` 用於 `resolveImportStatuses` 的 import threshold 計算
-- `JsonlFileReader`/`JsonlFileWriter` constructor 持有 path（構建時決定），不在 read/write 時傳入
-- `SessionManager` 每次操作時建立 `Converter` 實例（per-operation），不持有固定 converter
+- `Transfer` 放在 `session-store`，只依賴兩個 interface，環境無關
+- `FileReader`/`FileWriter`/`FileProjectScanner` 用 template method 抽出共用骨架，concrete 只實作 codec 部分
+- `SessionMigrator.scanExportable()` 呼叫 `source.scanProjects()` 一次（建 Set），不對每個 session 呼叫 `hasSession`
+- `DbSessionWriter.write()` 用 `appendBatch`（sequential inserts）取代 N 個並發 `appendEvent`
+- import/export 兩側共用同一個 `RootGuardFilesystem` 實例（`guardedFs`）
+- `SessionSummary.filePath`（原 `jsonlPath`）：命名不綁定格式

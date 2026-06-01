@@ -1,39 +1,35 @@
 ## Tasks
 
-### jsonl-codec — 新增 interface 與 class
+### session-store — 核心抽象與實作
 
-- [ ] 新增 `ProjectList` interface（`scanProjects`, `hasSession`, `countEvents`）
-- [ ] 新增 `Converter` class（`constructor(reader, writer)`, `convert(sessionId)`）
-- [ ] `JsonlProjectScanner` 實作 `ProjectList` interface
-- [ ] 新增 `ProjectList` / `Converter` 到 `index.ts` export
+- [x] `ProjectScanner` interface（原 `ProjectList`）
+- [x] `Transfer` class（原 `Converter`），`run()` 取代 `convert()`
+- [x] `FileReader` abstract class，implements `SessionReader`
+- [x] `FileWriter` abstract class，implements `SessionWriter`
+- [x] `JsonlFileReader` extends `FileReader`
+- [x] `JsonlFileWriter` extends `FileWriter`
+- [x] `MemoryReader` / `MemoryWriter`（拆自 `memory.ts`）
+- [x] `FileProjectScanner` abstract class，implements `ProjectScanner`
+- [x] `JsonlProjectScanner` extends `FileProjectScanner`
+- [x] 目錄結構：`reader/`、`writer/`、`scanner/`、`jsonl/`
+- [x] `SessionRecord`（原 `JsonlSessionRecord`），`filePath`（原 `jsonlPath`）
 
-### server — 新增 DbProjectList
+### server — DB 實作
 
-- [ ] 新增 `DbProjectList implements ProjectList`（依賴 `RawEventService` + `SessionStore`）
-- [ ] `scanProjects()` — 從 `SessionStore.list()` 組成 `ProjectSummary[]`
-- [ ] `hasSession(sessionId)` — 從 `SessionStore.getById()` 判斷
-- [ ] `countEvents(sessionId)` — 從 `RawEventService.countBySession()`
-- [ ] 補齊 `DbProjectList` 測試
+- [x] `DbProjectScanner implements ProjectScanner`（原 `DbProjectList`）
+- [x] `DbSessionReader` / `DbSessionWriter`
+- [x] `RawEventRepository.appendBatch()` + `RawEventStore.appendEvents()`
+- [x] `DbSessionWriter` 改用 `appendBatch`（sequential inserts）
 
-### server — 重構 SessionScanner
+### server — SessionMigrator / SessionManager
 
-- [ ] 移除 `RawEventService`、`SessionStore`、`writer`、`reader` 依賴
-- [ ] constructor 改為 `(filesystemList: ProjectList, dbList: ProjectList)`
-- [ ] `scanProjects()` 改用 `filesystemList` + `dbList.hasSession()`
-- [ ] `resolveImportStatuses()` 改用 `dbList.countEvents()`
-- [ ] `scanExportable()` 改用 `dbList.scanProjects()` + `filesystemList.hasSession()`
-- [ ] 移除 `importSession()`、`exportSession()`（移至 SessionManager）
-- [ ] 更新 `SessionScanner` 測試
-
-### server — 重構 SessionManager
-
-- [ ] constructor 加入 `dbReader: JsonlReader`、`dbWriter: JsonlWriter`、`filesystem: Filesystem`
-- [ ] 新增 `importSession(jsonlPath)` — 用 `Converter(FileReader, dbWriter).convert()`
-- [ ] 新增 `exportSession(sessionId, outputPath)` — 用 `Converter(dbReader, FileWriter).convert()`
-- [ ] `runImport()` / `runExport()` 改呼叫 `this.importSession()` / `this.exportSession()`
-- [ ] 更新 `session-manager.entry.ts` 組裝新依賴
+- [x] `SessionMigrator`（原 `SessionScanner`），constructor `(source, target: ProjectScanner)`
+- [x] `scanExportable()` 改為一次 `source.scanProjects()` 取代 N 次 `hasSession`
+- [x] `SessionManager`：持有 reader、writer、filesystem、scanner
+- [x] import/export 共用 `guardedFs`（`RootGuardFilesystem`）
 
 ### 收尾
 
-- [ ] 移除 `JsonlDbReader`、`JsonlDbWriter` 若已被 `DbProjectList` 完全取代（視情況）
-- [ ] 全部測試通過
+- [x] 移除所有 `vi.fn()` mock，改用 `MemoryReader/Writer`、`StubProjectScanner`、in-memory DB
+- [x] 移除 `decodeProjectDir`/`encodeProjectDir` 的 public export（無外部 consumer）
+- [x] 全部測試通過
