@@ -39,4 +39,24 @@ describe('AssistantTurnContent', () => {
     render(<AssistantTurnContent message={makeAssistantTurn('Hello world')} />);
     expect(screen.getByLabelText('truncated-inner')).toHaveAttribute('data-expanded', 'true');
   });
+
+  it('passes estimatedTokens to ThinkingBlock when streaming', () => {
+    const message: AssistantTurn = {
+      id: '1',
+      type: 'assistant_turn',
+      role: 'assistant',
+      content: '',
+      blocks: [
+        {
+          id: 'b1',
+          type: 'thinking',
+          content: 'plan',
+          isStreaming: true,
+          estimatedTokens: 800,
+        },
+      ],
+    } as unknown as AssistantTurn;
+    render(<AssistantTurnContent message={message} />);
+    expect(screen.getByText('· 800 tokens')).toBeInTheDocument();
+  });
 });

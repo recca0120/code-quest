@@ -6,7 +6,7 @@ export function RewindBody({ forked = false }: { forked?: boolean }): React.JSX.
         The code <strong className="font-semibold text-text">has not changed</strong>, so no code
         will be restored.
       </p>
-      <p className="text-text-muted/70">
+      <p className="text-muted/70">
         ⓘ Rewinding does not affect files edited manually or via bash.
       </p>
     </>

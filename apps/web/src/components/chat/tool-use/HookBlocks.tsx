@@ -13,7 +13,7 @@ export function HookStartedContent({
   hookEvent?: string;
 }): React.JSX.Element {
   return (
-    <StatusLine icon={renderIcon('hook_started')} className="text-text-muted">
+    <StatusLine icon={renderIcon('hook_started')} className="text-muted">
       <span>Running hook: {content}</span>
       {hookEvent ? <span className="text-subtle">({hookEvent})</span> : null}
     </StatusLine>
@@ -29,7 +29,7 @@ export function HookResponseContent({
 }): React.JSX.Element {
   if (!output)
     return (
-      <StatusLine icon={renderIcon('hook_response')} className="text-text-muted">
+      <StatusLine icon={renderIcon('hook_response')} className="text-muted">
         <span>Hook done: {content}</span>
       </StatusLine>
     );

@@ -100,6 +100,30 @@ describe('ThinkingBlock', () => {
     expect(screen.getByText('Thinking...')).toBeInTheDocument();
   });
 
+  it('shows token count when isStreaming and estimatedTokens > 0', () => {
+    render(
+      <ThinkingBlock blockId="test-block" content="..." isStreaming={true} estimatedTokens={500} />,
+    );
+    expect(screen.getByText('· 500 tokens')).toBeInTheDocument();
+  });
+
+  it('does not show token count when not streaming', () => {
+    render(
+      <ThinkingBlock
+        blockId="test-block"
+        content="..."
+        isStreaming={false}
+        estimatedTokens={500}
+      />,
+    );
+    expect(screen.queryByText(/tokens/)).toBeNull();
+  });
+
+  it('does not show token count when estimatedTokens is undefined', () => {
+    render(<ThinkingBlock blockId="test-block" content="..." isStreaming={true} />);
+    expect(screen.queryByText(/tokens/)).toBeNull();
+  });
+
   it('collapses on second click', async () => {
     const { container } = render(
       <ThinkingBlock blockId="test-block" content="I need to analyze this code..." />,

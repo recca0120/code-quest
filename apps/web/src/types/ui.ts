@@ -147,6 +147,7 @@ export interface Block {
   model?: string;
   partialInput?: string;
   isStreaming?: boolean;
+  estimatedTokens?: number;
   durationMs?: number | null;
   budget_tokens?: number;
   citations?: Array<{ url?: string; title?: string; citedText?: string }>;

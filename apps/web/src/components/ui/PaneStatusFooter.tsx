@@ -9,7 +9,7 @@ export function PaneStatusFooter({ children }: { children: ReactNode }): React.J
     <div
       role="status"
       aria-label="pane-status-footer"
-      className="shrink-0 border-t border-border px-3 py-1.5 text-2xs font-mono text-text-dim flex items-center gap-2"
+      className="shrink-0 border-t border-border px-3 py-1.5 text-2xs font-mono text-dim flex items-center gap-2"
     >
       {children}
     </div>

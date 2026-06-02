@@ -11,7 +11,7 @@ const meta: Meta<typeof MentionDropdown> = {
       <div className="bg-bg text-text w-2xl p-4 flex flex-col gap-1">
         <Story />
         {/* Simulated compose input to give the dropdown spatial context */}
-        <div className="rounded-xl bg-surface border border-border px-3 py-2 text-sm text-text-muted">
+        <div className="rounded-xl bg-surface border border-border px-3 py-2 text-sm text-muted">
           @
         </div>
       </div>

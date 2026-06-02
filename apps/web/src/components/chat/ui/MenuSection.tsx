@@ -24,14 +24,14 @@ function MenuItemRow({
       onClick={() => onSelect(item)}
       onMouseEnter={() => onHover(item.id)}
       className={cn(
-        'text-left px-3 py-1 w-full flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed',
+        'text-left px-3 py-1 w-full flex items-center justify-between disabled:text-muted disabled:cursor-not-allowed',
         isActive ? 'bg-selected text-selected-text' : 'text-text hover:tint-10',
       )}
     >
       <span className="flex items-center gap-1.5">
         {item.label}
         {item.description && (
-          <span className="font-mono text-xs text-text-muted">{item.description}</span>
+          <span className="font-mono text-xs text-muted">{item.description}</span>
         )}
       </span>
       {item.trailing && <span>{item.trailing}</span>}

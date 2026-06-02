@@ -39,9 +39,9 @@ function ModelOptionButton({
     >
       <div>
         <div className="text-text font-medium">{displayName}</div>
-        <div className="text-text-muted text-xs mt-0.5 opacity-70">{subLabel}</div>
+        <div className="text-muted text-xs mt-0.5 opacity-70">{subLabel}</div>
       </div>
-      {isSelected && <span className="text-text-muted shrink-0 ml-3">✓</span>}
+      {isSelected && <span className="text-muted shrink-0 ml-3">✓</span>}
     </button>
   );
 }

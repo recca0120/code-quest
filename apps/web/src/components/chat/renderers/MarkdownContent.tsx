@@ -75,7 +75,7 @@ const components: Components = {
   },
   thead({ children }) {
     return (
-      <thead className="bg-surface-hover border-b border-border text-text-bright">{children}</thead>
+      <thead className="bg-surface-hover border-b border-border text-bright">{children}</thead>
     );
   },
   th({ children, style }) {

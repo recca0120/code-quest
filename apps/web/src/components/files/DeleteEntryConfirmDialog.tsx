@@ -40,7 +40,7 @@ export function DeleteEntryConfirmDialog({
       <DialogContent title="Delete" size="md">
         <div className="flex flex-col gap-3">
           <p className="text-sm text-text">{message}</p>
-          <p className="text-xs text-text-dim">This cannot be undone.</p>
+          <p className="text-xs text-dim">This cannot be undone.</p>
           <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel

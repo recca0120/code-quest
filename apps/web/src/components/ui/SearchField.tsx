@@ -39,7 +39,7 @@ export function SearchField({
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className="flex-1 bg-transparent border-none outline-none text-base font-mono text-text-bright"
+        className="flex-1 bg-transparent border-none outline-none text-base font-mono text-bright"
       />
       {trailing}
     </div>

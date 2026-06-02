@@ -11,7 +11,7 @@ interface InitOptionsDialogProps {
   initial?: InitOptions;
 }
 
-const LABEL_CLASS = 'flex flex-col gap-1 text-xs text-text-muted';
+const LABEL_CLASS = 'flex flex-col gap-1 text-xs text-muted';
 
 const HOOK_DEFS = [
   { key: 'captureBaseline', label: 'captureBaseline (PreToolUse)', section: 'PreToolUse' },
@@ -108,7 +108,7 @@ export function InitOptionsDialog({
             open={showAdvanced}
             onToggle={(e) => setShowAdvanced((e.target as HTMLDetailsElement).open)}
           >
-            <summary className="cursor-pointer text-xs text-text-muted hover:text-text select-none py-1">
+            <summary className="cursor-pointer text-xs text-muted hover:text-text select-none py-1">
               Advanced
             </summary>
             <div className="flex flex-col gap-3 mt-2">
@@ -139,9 +139,9 @@ export function InitOptionsDialog({
                 />
               </label>
               <fieldset className="flex flex-col gap-1">
-                <legend className="text-xs text-text-muted mb-1">Hooks</legend>
+                <legend className="text-xs text-muted mb-1">Hooks</legend>
                 {HOOK_DEFS.map(({ key, label }) => (
-                  <label key={key} className="flex items-center gap-2 text-xs text-text-muted">
+                  <label key={key} className="flex items-center gap-2 text-xs text-muted">
                     <input
                       type="checkbox"
                       checked={hooks[key]}

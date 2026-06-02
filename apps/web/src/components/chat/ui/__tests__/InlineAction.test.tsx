@@ -11,7 +11,7 @@ describe('InlineAction', () => {
 
   it('defaults to default variant (muted base, accent hover)', () => {
     render(<InlineAction onClick={() => {}}>X</InlineAction>);
-    expect(screen.getByRole('button').className).toMatch(/text-text-muted/);
+    expect(screen.getByRole('button').className).toMatch(/text-muted/);
   });
 
   it('variant="muted" uses muted color with text hover', () => {
@@ -20,7 +20,7 @@ describe('InlineAction', () => {
         X
       </InlineAction>,
     );
-    expect(screen.getByRole('button').className).toMatch(/text-text-muted/);
+    expect(screen.getByRole('button').className).toMatch(/text-muted/);
   });
 
   it('variant="accent" uses accent color', () => {

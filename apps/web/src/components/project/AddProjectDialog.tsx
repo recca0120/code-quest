@@ -42,13 +42,13 @@ export function AddProjectDialog({
           <button
             type="button"
             aria-label="Close"
-            className="absolute top-3 right-3 p-1 text-text-muted hover:text-text hover:bg-hover-tint rounded"
+            className="absolute top-3 right-3 p-1 text-muted hover:text-text hover:bg-hover-tint rounded"
           >
             <XIcon className="w-4 h-4" />
           </button>
         </DialogClose>
         {selectedPath && (
-          <div className="-mx-4 px-4 py-1.5 text-xs text-text-muted truncate border-b border-border bg-bg/30 mb-2">
+          <div className="-mx-4 px-4 py-1.5 text-xs text-muted truncate border-b border-border bg-bg/30 mb-2">
             {selectedPath}
           </div>
         )}

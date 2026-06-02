@@ -61,7 +61,7 @@ function McpReadOnlyList({ servers }: { servers: McpServerInfo[] }) {
   return (
     <>
       {servers.length === 0 ? (
-        <p className="text-xs text-text-muted py-4 text-center">No running MCP servers.</p>
+        <p className="text-xs text-muted py-4 text-center">No running MCP servers.</p>
       ) : (
         <ul className="my-2">
           {servers.map((s) => (
@@ -79,7 +79,7 @@ function McpReadOnlyList({ servers }: { servers: McpServerInfo[] }) {
           ))}
         </ul>
       )}
-      <div className="text-xs text-text-muted mt-4">
+      <div className="text-xs text-muted mt-4">
         You can use the <InlineCode>claude mcp add</InlineCode> command-line tool to configure
         system-wide or private servers.
         <br />
@@ -87,7 +87,7 @@ function McpReadOnlyList({ servers }: { servers: McpServerInfo[] }) {
           href="https://code.claude.com/docs/en/mcp"
           target="_blank"
           rel="noreferrer"
-          className="text-text-muted hover:underline"
+          className="text-muted hover:underline"
         >
           Learn more
         </a>
@@ -108,12 +108,12 @@ function McpGroupedList({
   return (
     <>
       {groups.length === 0 ? (
-        <p className="text-xs text-text-muted py-4 text-center">No MCP servers configured.</p>
+        <p className="text-xs text-muted py-4 text-center">No MCP servers configured.</p>
       ) : (
         <div className="my-2">
           {groups.map(([scope, group]) => (
             <div key={scope}>
-              <div className="text-xs font-semibold text-text-muted pb-1 pt-2 first:pt-0">
+              <div className="text-xs font-semibold text-muted pb-1 pt-2 first:pt-0">
                 {scopeLabel(scope, mcpScopes)} ({group.length})
               </div>
               {group.map((s) => (
@@ -140,7 +140,7 @@ function McpGroupedList({
           href="https://code.claude.com/docs/en/mcp"
           target="_blank"
           rel="noreferrer"
-          className="text-xs text-text-muted hover:underline"
+          className="text-xs text-muted hover:underline"
         >
           Learn more about MCP
         </a>
@@ -342,7 +342,7 @@ export function ManageMcpDialog({
           </span>
           <DialogClose
             aria-label="Close"
-            className="p-1 text-text-muted hover:text-text hover:bg-hover-tint rounded"
+            className="p-1 text-muted hover:text-text hover:bg-hover-tint rounded"
           >
             <XIcon className="w-4 h-4" />
           </DialogClose>

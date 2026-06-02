@@ -288,15 +288,13 @@ export function CommandMenu({
                 onChange={(e) => setFilter(e.target.value)}
                 onKeyDown={handleFilterKeyDown}
                 placeholder="Filter actions..."
-                className="w-full bg-input text-text placeholder:text-text-muted outline-none rounded px-3 py-2 text-sm"
+                className="w-full bg-input text-text placeholder:text-muted outline-none rounded px-3 py-2 text-sm"
               />
             )}
           </div>
           <div className="overflow-y-auto overflow-x-hidden pb-2 max-h-[calc(50vh-44px)] flex flex-col gap-0.5">
             {flatItems.length === 0 ? (
-              <div className="px-3 py-2 text-center text-text-muted text-sm">
-                No matching commands
-              </div>
+              <div className="px-3 py-2 text-center text-muted text-sm">No matching commands</div>
             ) : (
               [
                 { label: 'Context', items: filteredContext, isFirst: true, visible: true },

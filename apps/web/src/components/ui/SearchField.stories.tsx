@@ -27,7 +27,7 @@ export const WithTrailing: Story = {
   args: {
     value: '',
     placeholder: 'Search…',
-    trailing: <span className="text-xs text-text-muted font-mono">⌘K</span>,
+    trailing: <span className="text-xs text-muted font-mono">⌘K</span>,
   },
 };
 

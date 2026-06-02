@@ -29,7 +29,7 @@ export function CitationsPanel({ citations }: CitationsPanelProps): React.ReactN
             {label}
           </a>
         ) : (
-          <span key={key} className="text-text-muted">
+          <span key={key} className="text-muted">
             {label}
           </span>
         );

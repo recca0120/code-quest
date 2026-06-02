@@ -25,13 +25,13 @@ export function HeaderBar({ title, children }: HeaderBarProps): React.JSX.Elemen
   return (
     <header className="flex items-center gap-3 px-4 h-11 bg-surface border-b border-border text-xs shrink-0">
       {model && (
-        <span className="text-xs px-1.5 py-0.5 rounded bg-tint-10 text-text-muted">
+        <span className="text-xs px-1.5 py-0.5 rounded bg-tint-10 text-muted">
           {shortModelName(model, availableModels)}
         </span>
       )}
       {isThinkingActive(thinkingLevel) && (
         <span
-          className="text-xs px-1.5 py-0.5 rounded bg-tint-10 text-text-muted"
+          className="text-xs px-1.5 py-0.5 rounded bg-tint-10 text-muted"
           title={`Thinking: ${thinkingLevel}`}
         >
           {thinkingLevelLabel(thinkingLevel)}

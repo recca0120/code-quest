@@ -94,7 +94,7 @@ export function FilePreviewModal({
             </div>
           )}
           {state.kind === 'pdf' ? (
-            <Suspense fallback={<div className="text-sm text-text-muted">Loading…</div>}>
+            <Suspense fallback={<div className="text-sm text-muted">Loading…</div>}>
               <PdfViewer data={state.data} className="flex-1 min-h-0" />
             </Suspense>
           ) : (
@@ -144,13 +144,13 @@ function PreviewBody({
   viewMode: 'preview' | 'raw';
 }) {
   if (state.kind === 'loading') {
-    return <div className="text-sm text-text-muted">Loading…</div>;
+    return <div className="text-sm text-muted">Loading…</div>;
   }
   if (state.kind === 'too-large') {
-    return <div className="text-sm text-text-muted">File too large to preview (over 500 KB).</div>;
+    return <div className="text-sm text-muted">File too large to preview (over 500 KB).</div>;
   }
   if (state.kind === 'error') {
-    return <div className="text-sm text-warn">{state.message}</div>;
+    return <div className="text-sm text-warning">{state.message}</div>;
   }
   if (isMarkdown && viewMode === 'preview') {
     return (
@@ -174,9 +174,7 @@ function PreviewBody({
           {lines.map((line, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: line order is fixed for this static render
             <tr key={i}>
-              <td className="text-text-dim text-right pr-3 pl-2 select-none w-10 align-top">
-                {i + 1}
-              </td>
+              <td className="text-dim text-right pr-3 pl-2 select-none w-10 align-top">{i + 1}</td>
               <td className="whitespace-pre pr-2 align-top">{line || ' '}</td>
             </tr>
           ))}

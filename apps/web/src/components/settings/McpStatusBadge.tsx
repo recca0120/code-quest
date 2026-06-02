@@ -8,9 +8,9 @@ const STATUS_BADGE_CLASS: Partial<Record<McpStatus, string>> = {
   failed: 'bg-danger text-selected-text',
   error: 'bg-danger text-selected-text',
   'needs-auth': 'bg-warning text-bg',
-  connecting: 'bg-border text-text-muted',
-  disabled: 'tint-10 text-text-muted',
-  disconnected: 'tint-10 text-text-muted',
+  connecting: 'bg-border text-muted',
+  disabled: 'tint-10 text-muted',
+  disconnected: 'tint-10 text-muted',
 };
 
 const STATUS_ICON: Partial<Record<McpStatus, string>> = {
@@ -30,7 +30,7 @@ const STATUS_LABEL: Partial<Record<McpStatus, string>> = {
   disabled: 'Disabled',
 };
 
-const DEFAULT_CLASS = 'bg-border text-text-muted';
+const DEFAULT_CLASS = 'bg-border text-muted';
 
 interface McpStatusBadgeProps {
   status: McpStatus;

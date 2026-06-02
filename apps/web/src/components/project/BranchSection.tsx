@@ -64,15 +64,15 @@ function UpstreamBadge({
   hasUpstream?: boolean;
 }) {
   if (hasUpstream === false) {
-    return <span className="text-xs text-text-dim">(no upstream)</span>;
+    return <span className="text-xs text-dim">(no upstream)</span>;
   }
   const a = ahead ?? 0;
   const b = behind ?? 0;
   if (a === 0 && b === 0) {
-    return <span className="text-xs text-text-dim">up to date</span>;
+    return <span className="text-xs text-dim">up to date</span>;
   }
   return (
-    <span className="text-xs font-mono text-text-muted">
+    <span className="text-xs font-mono text-muted">
       {a > 0 && <span className="mr-1">↑{a}</span>}
       {b > 0 && <span>↓{b}</span>}
     </span>

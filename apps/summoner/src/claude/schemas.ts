@@ -490,6 +490,7 @@ export const streamEventSchema: Loose<{
         type: z.string().optional(),
         text: z.string().optional(),
         thinking: z.string().optional(),
+        estimated_tokens: z.number().optional(),
         partial_json: z.string().optional(),
         citation: z.unknown().optional(),
         citations: z.array(z.unknown()).optional(),

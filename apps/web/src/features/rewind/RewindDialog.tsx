@@ -53,7 +53,7 @@ function RewindOption({ item, index, focusIndex, now, onSelect, onFocus }: Rewin
       )}
     >
       <span className="truncate mr-3">{item.promptText}</span>
-      <span className="text-xs text-text-muted whitespace-nowrap">
+      <span className="text-xs text-muted whitespace-nowrap">
         {formatRelativeDate(new Date(item.message.timestamp), now)}
       </span>
     </button>
@@ -130,10 +130,10 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps): R
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent title="Rewind to…" hideTitleDivider className="w-130 max-w-[90vw]">
         {items.length === 0 ? (
-          <p className="text-sm text-text-muted py-4 text-center">No messages to rewind to yet.</p>
+          <p className="text-sm text-muted py-4 text-center">No messages to rewind to yet.</p>
         ) : (
           <>
-            <p className="text-sm text-text-muted mb-3">
+            <p className="text-sm text-muted mb-3">
               Select a message to restore code and fork the conversation from that point.
             </p>
             <div
@@ -156,7 +156,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps): R
                 />
               ))}
             </div>
-            <p className="text-xs text-text-muted mt-3">
+            <p className="text-xs text-muted mt-3">
               <Kbd>↑</Kbd> <Kbd>↓</Kbd> to navigate · <Kbd>Enter</Kbd> to select · <Kbd>Esc</Kbd> to
               close
             </p>

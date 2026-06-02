@@ -63,10 +63,10 @@ export function NewEntryDialog({
     >
       <DialogContent title={title} size="md">
         <div className="flex flex-col gap-3">
-          <p className="text-xs text-text-dim">
+          <p className="text-xs text-dim">
             In <span className="font-mono text-text">{parentLabel}</span>
           </p>
-          <label className="text-xs text-text-muted" htmlFor="new-entry-name">
+          <label className="text-xs text-muted" htmlFor="new-entry-name">
             Name
             <TextField
               id="new-entry-name"
@@ -84,7 +84,7 @@ export function NewEntryDialog({
               className="mt-1 w-full"
             />
           </label>
-          {error && <p className="text-xs text-warn">{error}</p>}
+          {error && <p className="text-xs text-warning">{error}</p>}
           <DialogFooter>
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel

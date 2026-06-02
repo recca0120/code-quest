@@ -94,12 +94,20 @@ function onTextChunk(state: ChannelState, content: string): ChannelState {
   }));
 }
 
-function onThinkingChunk(state: ChannelState, content: string): ChannelState {
+function onThinkingChunk(
+  state: ChannelState,
+  chunk: { content: string; estimatedTokens?: number },
+): ChannelState {
+  const { content, estimatedTokens } = chunk;
   const { state: s, turn } = ensureStreamingTurn(state);
   const lastThinking = findLastBlock(turn.blocks, 'thinking');
   if (lastThinking) {
     return updateTurn(s, turn.id, (t) =>
-      updateLastBlock(t, 'thinking', (b) => ({ ...b, content: b.content + content })),
+      updateLastBlock(t, 'thinking', (b) => {
+        const nextTokens =
+          estimatedTokens != null ? (b.estimatedTokens ?? 0) + estimatedTokens : b.estimatedTokens;
+        return { ...b, content: b.content + content, estimatedTokens: nextTokens };
+      }),
     );
   }
   return updateTurn(s, turn.id, (t) => ({
@@ -111,6 +119,7 @@ function onThinkingChunk(state: ChannelState, content: string): ChannelState {
         type: 'thinking',
         content,
         isStreaming: true,
+        estimatedTokens,
       },
     ],
   }));
@@ -157,7 +166,7 @@ function onStreamChunk(state: ChannelState, p: Payload<'stream:chunk'>): Channel
     case 'text':
       return onTextChunk(state, chunk.content);
     case 'thinking':
-      return onThinkingChunk(state, chunk.content);
+      return onThinkingChunk(state, chunk);
     case 'input_json':
       return onInputJsonChunk(state, chunk.content);
     case 'citations':

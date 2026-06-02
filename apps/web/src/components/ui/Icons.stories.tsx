@@ -28,7 +28,7 @@ const ICONS = [
 const Gallery = (): React.JSX.Element => (
   <div className="flex flex-col gap-6 bg-bg text-text p-6">
     <section>
-      <h3 className="text-xs text-text-muted mb-3">Icons (w-6 h-6)</h3>
+      <h3 className="text-xs text-muted mb-3">Icons (w-6 h-6)</h3>
       <div className="grid grid-cols-4 gap-4">
         {ICONS.map(({ name, Icon }) => (
           <div key={name} className="flex items-center gap-2">
@@ -40,7 +40,7 @@ const Gallery = (): React.JSX.Element => (
     </section>
 
     <section>
-      <h3 className="text-xs text-text-muted mb-3">Size variants (PlusIcon)</h3>
+      <h3 className="text-xs text-muted mb-3">Size variants (PlusIcon)</h3>
       <div className="flex items-end gap-4">
         <PlusIcon className="w-3 h-3" />
         <PlusIcon className="w-4 h-4" />
@@ -51,7 +51,7 @@ const Gallery = (): React.JSX.Element => (
     </section>
 
     <section>
-      <h3 className="text-xs text-text-muted mb-3">BorderedIconButton</h3>
+      <h3 className="text-xs text-muted mb-3">BorderedIconButton</h3>
       <div className="flex gap-2 items-center">
         <BorderedIconButton label="Delete" onClick={fn()} danger>
           <TrashIcon className="w-4 h-4" />

@@ -15,9 +15,9 @@ const CONFIRM_WINDOW_MS = 3000;
 const KIND_CLASS = {
   add: 'text-success bg-success/10',
   del: 'text-danger bg-danger/10',
-  hunk: 'text-text-muted bg-bg/40',
-  header: 'text-text-muted',
-  meta: 'text-text-dim',
+  hunk: 'text-muted bg-bg/40',
+  header: 'text-muted',
+  meta: 'text-dim',
   context: 'text-text',
 } as const;
 
@@ -63,7 +63,7 @@ export function DiffModal({
       <DialogContent title={`${file.path}  +${file.added} -${file.removed}`} size="lg">
         <div className="flex flex-col gap-3">
           {file.isBinary ? (
-            <div className="text-sm text-text-muted">Binary file changed.</div>
+            <div className="text-sm text-muted">Binary file changed.</div>
           ) : (
             <pre className="text-xs bg-bg/40 border border-border rounded p-2 overflow-auto max-h-dialog-body font-mono leading-relaxed">
               {lines.map((line, i) => (
@@ -76,7 +76,7 @@ export function DiffModal({
                 </div>
               ))}
               {truncated && (
-                <div className="text-warn pt-2">
+                <div className="text-warning pt-2">
                   Diff truncated ({file.lines.length} lines). Open externally to view full.
                 </div>
               )}

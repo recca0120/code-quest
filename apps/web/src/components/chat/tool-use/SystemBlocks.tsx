@@ -27,7 +27,7 @@ const CONTROL_RESPONSE_STYLES = [
 
 const CONTROL_RESPONSE_DEFAULT = {
   icon: '↩',
-  colorClass: 'text-text-muted tint-5 border-l-text-muted',
+  colorClass: 'text-muted tint-5 border-l-text-muted',
 };
 
 export function PendingActionContent({ content }: { content: string }): React.ReactNode {
@@ -99,14 +99,14 @@ export function SlashCommandResultContent({ content }: { content: string }): Rea
   if (!content.includes('\n')) {
     const short = content.replace(SET_MODEL_PREFIX, 'Switched to ');
     return (
-      <div className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-surface-hover rounded-full px-2.5 py-1">
+      <div className="inline-flex items-center gap-1.5 text-xs text-muted bg-surface-hover rounded-full px-2.5 py-1">
         <span>✓</span>
         <span>{short}</span>
       </div>
     );
   }
   return (
-    <div className="text-sm text-text-muted">
+    <div className="text-sm text-muted">
       <MarkdownContent content={content} />
     </div>
   );
@@ -126,7 +126,7 @@ export function RateLimitContent({
         {content}
       </span>
       {rateLimitInfo && (
-        <span className="ml-2 text-xs text-text-muted flex items-center gap-2">
+        <span className="ml-2 text-xs text-muted flex items-center gap-2">
           {rateLimitInfo.rateLimitType ? <span>{String(rateLimitInfo.rateLimitType)}</span> : null}
           {rateLimitInfo.resetsAt ? (
             <span>resets {new Date(Number(rateLimitInfo.resetsAt)).toLocaleTimeString()}</span>
@@ -151,7 +151,7 @@ export function TaskStartedContent({
   taskType?: string;
 }): React.ReactNode {
   return (
-    <StatusLine icon={renderIcon('task_started')} className="text-text-muted">
+    <StatusLine icon={renderIcon('task_started')} className="text-muted">
       <span>{content}</span>
       {taskType != null && (
         <Badge variant="accent" mono>
@@ -239,7 +239,7 @@ export function DocumentContent({
 }
 
 export function RedactedThinkingContent(): React.ReactNode {
-  return <div className="text-xs text-text-muted italic">Thinking (redacted)</div>;
+  return <div className="text-xs text-muted italic">Thinking (redacted)</div>;
 }
 
 export function ContentBlockStart({ blockType }: { blockType?: string }): React.ReactNode {

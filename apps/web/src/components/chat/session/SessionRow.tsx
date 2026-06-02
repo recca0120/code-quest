@@ -105,14 +105,14 @@ export function SessionRow({
         </span>
       )}
       <span className="flex items-center gap-1 shrink-0 ml-2">
-        <span className="text-xs text-text-muted">{formatRelativeDate(s.createdAt)}</span>
+        <span className="text-xs text-muted">{formatRelativeDate(s.createdAt)}</span>
         {(onRename || onDelete) && (
           <span className="hidden group-hover:flex items-center gap-1">
             {onRename && (
               <IconButton
                 title="Rename"
                 onClick={handleRenameStart}
-                className="text-text-muted hover:text-text"
+                className="text-muted hover:text-text"
               >
                 ✏
               </IconButton>
@@ -121,7 +121,7 @@ export function SessionRow({
               <IconButton
                 title="Delete"
                 onClick={handleDelete}
-                className="text-text-muted hover:text-danger"
+                className="text-muted hover:text-danger"
               >
                 🗑
               </IconButton>

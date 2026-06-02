@@ -62,7 +62,7 @@ export function ChatView({ title, onToggleRight, rightPane }: ChatViewProps): Re
 
   if (!channelId) {
     return (
-      <div className="flex flex-1 items-center justify-center text-text-muted text-sm">
+      <div className="flex flex-1 items-center justify-center text-muted text-sm">
         No active session — click + to create a new tab
       </div>
     );
@@ -79,7 +79,7 @@ export function ChatView({ title, onToggleRight, rightPane }: ChatViewProps): Re
               variant="plain"
               aria-label="Toggle right pane"
               onClick={onToggleRight}
-              className="w-7 h-7 text-text-muted hover:text-text hover:bg-hover-tint"
+              className="w-7 h-7 text-muted hover:text-text hover:bg-hover-tint"
             >
               <RectangleGroupIcon className="w-4 h-4" />
             </IconButton>

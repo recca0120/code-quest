@@ -10,8 +10,12 @@
   --font-sans: "Outfit", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 
+  /* Body text size — rem cascade off html font-size axis (sm/md/lg).
+   * text-xs is promoted to 0.875rem so sm-mode body stays readable (≥12px). */
+  --text-xs: 0.875rem; /* 14px at md(16px base); 12.25px sm; 15.75px lg */
+
   /* Sub-xs text size — for uppercase tracked chip badges (Ready/Archive)
-   * and section-heading labels. Body text stays at text-xs (12px). */
+   * and section-heading labels. */
   --text-2xs: 0.625rem; /* 10px */
 
   /* Z-index tiers — use semantic names so stacking intent is explicit */
@@ -48,7 +52,6 @@
   --color-code-block: #1e1e1e;
   --color-input-bg: #3c3c3c;
   --color-input-overlay: rgba(0, 0, 0, 0.2);
-  --color-tool-bg: #1a1a1a;
   --color-success-bg: #1a1f1a;
   --color-warning-bg: #201f1a;
   --color-danger-bg: #201a1a;
@@ -61,7 +64,6 @@
 
   /* Claude brand */
   --color-claude-clay-orange: #c6613f;
-  --color-claude-orange: #d97757;
 
   /* RGB-split for alpha composition — only for inline `style` rgba() or
      mode-aware shadow indirection. For className use the `bg-X/N` opacity
@@ -102,9 +104,9 @@
   /* Info color (e.g. git info indicators) */
   --color-info: #3b82f6;
 
-  /* Short-name aliases — forward to canonical tokens so both spellings work.
-   * New code should prefer the short form (text-muted, bg-input, text-warn). */
-  --color-warn: var(--color-warning);
+  /* Short-name aliases — canonical short forms for common text tokens.
+   * Use these (text-muted, text-dim, text-subtle, text-faint, text-bright, bg-input)
+   * in preference to the longer text-text-* spellings. */
   --color-input: var(--color-input-bg);
   --color-muted: var(--color-text-muted);
   --color-dim: var(--color-text-dim);
@@ -181,8 +183,6 @@
   --color-text-subtle: #6a6a6e;
   --color-text-faint: #3a3a3e;
   --color-text-dim: #4a4a4e;
-  /* --color-tool-bg and --color-claude-orange stay @theme-only — currently unused,
-     Tailwind tree-shakes from :root; re-add here when a consumer class lands. */
 }
 
 /* Light theme — VS Code Light+ palette. Contrast target: WCAG AA (≥ 4.5:1 body text).
@@ -231,9 +231,9 @@
   --color-accent-glow: rgba(198, 97, 63, 0.1);
   --color-row-active-bg: rgba(198, 97, 63, 0.12);
   --color-accent-mark-bg: rgba(198, 97, 63, 0.25);
-  --color-text-subtle: #8a8a8a;
-  --color-text-faint: #b5b5b5;
-  --color-text-dim: #9c9c9c;
+  --color-text-subtle: #767676; /* WCAG AA 4.5:1 on white */
+  --color-text-faint: #b5b5b5; /* decorative only — intentionally low contrast */
+  --color-text-dim: #808080; /* ~3.95:1 — weakest semantic text */
   --color-info: #2563eb;
 }
 
@@ -333,19 +333,6 @@
 
 @utility animate-slide-up {
   animation: slideUp 0.15s ease-out;
-}
-
-@utility animate-slide-in-from-left {
-  animation: slideInFromLeft 0.2s ease-out;
-}
-
-@keyframes slideInFromLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
 }
 
 @keyframes fadeIn {

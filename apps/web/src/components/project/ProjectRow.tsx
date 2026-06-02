@@ -66,7 +66,7 @@ export function ProjectRow({
             type="button"
             aria-label={`${expanded ? 'Collapse' : 'Expand'} ${project.name}`}
             onClick={() => toggleExpanded(project.cwd)}
-            className="shrink-0 p-0.5 text-text-muted hover:text-text"
+            className="shrink-0 p-0.5 text-muted hover:text-text"
           >
             {expanded ? (
               <ChevronDownIcon className="w-3.5 h-3.5" />

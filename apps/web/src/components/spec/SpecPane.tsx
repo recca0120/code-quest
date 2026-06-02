@@ -137,7 +137,7 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
                         type="button"
                         aria-label={`Archive ${c.name}`}
                         onClick={() => setArchiveTarget(c.name)}
-                        className="shrink-0 px-1.5 py-px rounded border border-border text-text-muted hover:border-danger hover:text-danger font-mono text-2xs uppercase cursor-pointer"
+                        className="shrink-0 px-1.5 py-px rounded border border-border text-muted hover:border-danger hover:text-danger font-mono text-2xs uppercase cursor-pointer"
                       >
                         Archive
                       </button>
@@ -159,7 +159,7 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
               })}
             </ul>
           ) : (
-            <div className="text-text-dim text-xs px-1">No active changes</div>
+            <div className="text-dim text-xs px-1">No active changes</div>
           )}
         </Section>
         <Section title="Specs" scope="project">
@@ -175,7 +175,7 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
                     className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-hover-tint rounded"
                     onClick={() => setOpen({ kind: 'spec', name: s.capability })}
                   >
-                    <span aria-hidden className="text-text-dim text-xs">
+                    <span aria-hidden className="text-dim text-xs">
                       ▸
                     </span>
                     <span className="font-mono text-xs">{s.capability}</span>
@@ -184,7 +184,7 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
               ))}
             </ul>
           ) : (
-            <div className="text-text-dim text-xs px-1">No specs</div>
+            <div className="text-dim text-xs px-1">No specs</div>
           )}
         </Section>
       </div>
@@ -230,7 +230,7 @@ function Section({
     <div className="mb-3">
       <SectionLabel as="h3" className="px-1 mb-1 flex items-baseline gap-1">
         <span>{title}</span>
-        {scope && <span className="text-xs text-text-dim normal-case">({scope})</span>}
+        {scope && <span className="text-xs text-dim normal-case">({scope})</span>}
         {action && <span className="ml-auto">{action}</span>}
       </SectionLabel>
       {children}

@@ -10,7 +10,7 @@ const meta: Meta<typeof ModifiedFilesPanel> = {
     (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text w-2xl p-4 flex flex-col gap-2">
         {/* Simulated compose box to show spatial context */}
-        <div className="rounded-xl bg-surface border border-border px-3 py-2 text-sm text-text-muted">
+        <div className="rounded-xl bg-surface border border-border px-3 py-2 text-sm text-muted">
           Type a message...
         </div>
         <Story />

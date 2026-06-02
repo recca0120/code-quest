@@ -5,15 +5,15 @@ const Gallery = (): React.JSX.Element => (
   <div className="flex flex-col gap-4 bg-bg text-text p-6">
     <div className="flex items-center gap-3">
       <FileIcon className="w-5 h-5" />
-      <span className="text-xs text-text-muted">FileIcon (DocumentIcon)</span>
+      <span className="text-xs text-muted">FileIcon (DocumentIcon)</span>
     </div>
     <div className="flex items-center gap-3">
       <FolderIcon className="w-5 h-5" />
-      <span className="text-xs text-text-muted">FolderIcon</span>
+      <span className="text-xs text-muted">FolderIcon</span>
     </div>
     <div className="flex items-center gap-3">
       <AddContextIcon className="w-5 h-5" />
-      <span className="text-xs text-text-muted">AddContextIcon (custom)</span>
+      <span className="text-xs text-muted">AddContextIcon (custom)</span>
     </div>
   </div>
 );

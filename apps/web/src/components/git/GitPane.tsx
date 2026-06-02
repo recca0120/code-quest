@@ -50,7 +50,7 @@ const STATUS_LABEL: Record<string, { mark: string; cls: string }> = {
 };
 
 function statusFor(s: string): { mark: string; cls: string } {
-  return STATUS_LABEL[s] ?? { mark: s.slice(0, 1) || '·', cls: 'text-text-muted' };
+  return STATUS_LABEL[s] ?? { mark: s.slice(0, 1) || '·', cls: 'text-muted' };
 }
 
 export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
@@ -178,7 +178,7 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   }
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center flex-1 gap-2 text-text-muted">
+      <div className="flex flex-col items-center justify-center flex-1 gap-2 text-muted">
         <Spinner className="w-5 h-5" />
         <span className="text-sm">Loading…</span>
       </div>
@@ -290,7 +290,7 @@ function ChangedFiles({
   onPick: (path: string, status: string) => void;
 }) {
   if (files.length === 0) {
-    return <div className="text-text-muted text-xs px-1">No changes</div>;
+    return <div className="text-muted text-xs px-1">No changes</div>;
   }
   return (
     <ul className="flex flex-col">

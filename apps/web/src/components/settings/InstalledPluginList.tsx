@@ -2,6 +2,7 @@ import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/s
 import { useState } from 'react';
 import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { useChannelConfig } from '@/contexts/channel';
+import { formatTokens } from '@/utils/format-number';
 import { Button } from '../ui/Button.tsx';
 import { GroupHeader } from '../ui/GroupHeader.tsx';
 import { BorderedIconButton, TrashIcon } from '../ui/Icons.tsx';
@@ -14,8 +15,7 @@ function pluginDisplayName(id: string): string {
 }
 
 function formatInstallCount(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k installs`;
-  return `${n} installs`;
+  return `${formatTokens(n)} installs`;
 }
 
 interface InstalledPluginListProps {
@@ -63,7 +63,7 @@ export function InstalledPluginList({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search plugins…"
-          className="w-full border border-border bg-input text-text placeholder:text-text-muted rounded-md px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full border border-border bg-input text-text placeholder:text-muted rounded-md px-3 py-2 text-sm outline-none focus:border-accent"
         />
       </div>
 
@@ -180,15 +180,13 @@ function AvailablePluginCard({
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-text font-medium text-sm">{plugin.name}</span>
             {plugin.installCount != null && plugin.installCount > 0 && (
-              <span className="text-text-muted text-xs">
-                {formatInstallCount(plugin.installCount)}
-              </span>
+              <span className="text-muted text-xs">{formatInstallCount(plugin.installCount)}</span>
             )}
           </div>
           {plugin.description && (
-            <p className="text-text-muted text-xs m-0 mb-1">{plugin.description}</p>
+            <p className="text-muted text-xs m-0 mb-1">{plugin.description}</p>
           )}
-          <div className="flex items-center gap-1.5 text-xs text-text-muted">
+          <div className="flex items-center gap-1.5 text-xs text-muted">
             <span>from {plugin.marketplaceName}</span>
             {isOfficial && (
               <span title={`Official ${brandName} Code marketplace`} className="text-button">
@@ -211,7 +209,7 @@ function AvailablePluginCard({
       </div>
       {isSelected && (
         <div className="mt-2 border-t border-border pt-2">
-          <p className="text-xs text-text-muted mb-2">
+          <p className="text-xs text-muted mb-2">
             Make sure you trust a plugin before installing. {brandCompany} does not control what MCP
             servers, files, or other software are included in plugins.
           </p>
@@ -223,7 +221,7 @@ function AvailablePluginCard({
               className="w-full text-left px-2.5 py-2 rounded border border-border mb-1 hover:bg-bg transition-colors"
             >
               <div className="text-sm font-medium text-text">{label}</div>
-              <div className="text-xs text-text-muted">{desc}</div>
+              <div className="text-xs text-muted">{desc}</div>
             </button>
           ))}
           <InlineAction className="mt-1" onClick={onCancel}>

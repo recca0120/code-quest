@@ -218,7 +218,7 @@ export function ComposeToolbar({
           />
 
           {showContextUsage && (
-            <span className="text-text-muted shrink-0 flex items-center gap-0.5">
+            <span className="text-muted shrink-0 flex items-center gap-0.5">
               {isContextCompressed ? (
                 'compact'
               ) : (

@@ -64,11 +64,11 @@ export function TopScopeSwitcher({
           className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-surface hover:border-accent text-text text-xs font-medium"
           aria-haspopup="listbox"
         >
-          <FolderIcon className="w-3.5 h-3.5 text-text-muted" />
+          <FolderIcon className="w-3.5 h-3.5 text-muted" />
           <span className="truncate max-w-50">
             {active ? displayName(active) : 'No project selected'}
           </span>
-          <ChevronDownIcon className="w-3.5 h-3.5 text-text-muted" />
+          <ChevronDownIcon className="w-3.5 h-3.5 text-muted" />
         </button>
       </Popover.Trigger>
 
@@ -97,7 +97,7 @@ export function TopScopeSwitcher({
 
             <div className="flex-1 overflow-auto py-1">
               {pinned.length === 0 && recent.length === 0 ? (
-                <div className="px-3 py-4 text-sm text-text-muted text-center">No matches</div>
+                <div className="px-3 py-4 text-sm text-muted text-center">No matches</div>
               ) : null}
 
               {pinned.length > 0 && (
@@ -164,7 +164,7 @@ function ScopeItem({
         active ? 'text-accent bg-accent/10 hover:bg-accent/10' : '',
       )}
     >
-      <FolderIcon className="w-3.5 h-3.5 shrink-0 text-text-muted" />
+      <FolderIcon className="w-3.5 h-3.5 shrink-0 text-muted" />
       <span className="truncate flex-1">{displayName(project)}</span>
     </MenuItem>
   );

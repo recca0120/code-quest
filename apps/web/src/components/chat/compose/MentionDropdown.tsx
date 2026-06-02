@@ -61,7 +61,7 @@ function FileResultItem({
         isActive ? 'bg-selected text-selected-text' : 'hover:tint-5',
       )}
     >
-      <div className="w-5 h-5 flex items-center justify-center text-text-muted opacity-60 shrink-0">
+      <div className="w-5 h-5 flex items-center justify-center text-muted opacity-60 shrink-0">
         <TypeIcon type={file.type} />
       </div>
       {file.type === 'file' ? (
@@ -75,7 +75,7 @@ function FileResultItem({
             />
           </span>
           {directoryPath && (
-            <span className="text-xs font-mono text-text-muted truncate">{directoryPath}</span>
+            <span className="text-xs font-mono text-muted truncate">{directoryPath}</span>
           )}
         </>
       ) : (
@@ -148,10 +148,10 @@ export function MentionDropdown({
     >
       <div className="max-h-75 overflow-y-auto py-0.5">
         {hasFileSearch && searchStatus === 'loading' && (
-          <div className="px-3 py-2 text-xs text-text-muted text-center">Searching…</div>
+          <div className="px-3 py-2 text-xs text-muted text-center">Searching…</div>
         )}
         {hasFileSearch && searchStatus === 'done' && fileResults.length === 0 && (
-          <div className="px-3 py-2 text-xs text-text-muted text-center">No files found</div>
+          <div className="px-3 py-2 text-xs text-muted text-center">No files found</div>
         )}
         {!hasFileSearch &&
           filteredSuggestions.length > 0 &&

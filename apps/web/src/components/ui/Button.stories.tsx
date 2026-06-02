@@ -31,7 +31,7 @@ export const Matrix: Story = {
     <div className="flex flex-col gap-3">
       {(['primary', 'secondary', 'danger', 'ghost'] as const).map((variant) => (
         <div key={variant} className="flex gap-2 items-center">
-          <span className="text-xs text-text-muted w-20">{variant}</span>
+          <span className="text-xs text-muted w-20">{variant}</span>
           <Button variant={variant} size="xs">
             xs
           </Button>
@@ -52,7 +52,7 @@ export const LightMatrix: Story = {
     <div className="flex flex-col gap-3">
       {(['primary', 'secondary', 'danger', 'ghost'] as const).map((variant) => (
         <div key={variant} className="flex gap-2 items-center">
-          <span className="text-xs text-text-muted w-20">{variant}</span>
+          <span className="text-xs text-muted w-20">{variant}</span>
           <Button variant={variant}>button</Button>
         </div>
       ))}

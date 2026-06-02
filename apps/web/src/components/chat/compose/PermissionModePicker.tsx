@@ -87,7 +87,7 @@ export function PermissionModePicker({
         <button
           type="button"
           title={(permissionById[mode] ?? DEFAULT_MODE).title}
-          className="permission-mode-btn text-xs text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-sm hover:tint-5"
+          className="permission-mode-btn text-xs text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-sm hover:tint-5"
         >
           <span className="w-4 h-4 shrink-0">
             {PERMISSION_MODE_ICONS[mode as keyof typeof PERMISSION_MODE_ICONS] ??
@@ -107,7 +107,7 @@ export function PermissionModePicker({
           className="z-modal"
         >
           <FloatingCard className="w-80 max-w-[calc(100vw-2rem)] py-1 px-0">
-            <div className="px-3 py-1.5 text-xs text-text-muted flex items-center justify-between">
+            <div className="px-3 py-1.5 text-xs text-muted flex items-center justify-between">
               <span className="font-semibold">Modes</span>
               <span className="opacity-60 flex items-center gap-1">
                 <kbd className="tint-10 rounded px-1 text-xs">⇧</kbd> +{' '}
@@ -152,7 +152,7 @@ export function PermissionModePicker({
                   }}
                   title="Click to cycle effort level"
                 >
-                  <span className="text-xs text-text-muted flex items-center gap-2">
+                  <span className="text-xs text-muted flex items-center gap-2">
                     <span className="w-5 h-5 shrink-0">
                       <EffortIcon />
                     </span>

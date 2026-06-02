@@ -21,7 +21,7 @@ export function CollapsibleBlock({
       <Collapsible.Trigger asChild>
         <button
           type="button"
-          className="group flex items-center gap-2 cursor-pointer select-none text-sm text-text-muted hover:text-text transition-colors"
+          className="group flex items-center gap-2 cursor-pointer select-none text-sm text-muted hover:text-text transition-colors"
         >
           {header}
           <ChevronRightIcon

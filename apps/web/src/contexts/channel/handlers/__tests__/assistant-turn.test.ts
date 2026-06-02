@@ -118,6 +118,39 @@ describe('AssistantTurn live streaming lifecycle', () => {
     expect(lastBlock(state).content).toBe('Let me think...');
   });
 
+  it('thinking chunk accumulates estimatedTokens', () => {
+    let state = initialChannelState('ch');
+    state = onMessageStart(state, {
+      channelId: 'ch',
+      model: 'claude-opus-4-6',
+      messageId: 'msg_1',
+      usage: { inputTokens: 100 },
+    });
+    state = onBlockStart(state, { channelId: 'ch', index: 0, blockType: 'thinking' });
+    state = onChunk(state, {
+      channelId: 'ch',
+      chunk: { kind: 'thinking', content: 'A', estimatedTokens: 30 },
+    });
+    state = onChunk(state, {
+      channelId: 'ch',
+      chunk: { kind: 'thinking', content: 'B', estimatedTokens: 20 },
+    });
+    expect(lastBlock(state).estimatedTokens).toBe(50);
+  });
+
+  it('thinking chunk without estimatedTokens leaves estimatedTokens undefined', () => {
+    let state = initialChannelState('ch');
+    state = onMessageStart(state, {
+      channelId: 'ch',
+      model: 'claude-opus-4-6',
+      messageId: 'msg_1',
+      usage: { inputTokens: 100 },
+    });
+    state = onBlockStart(state, { channelId: 'ch', index: 0, blockType: 'thinking' });
+    state = onChunk(state, { channelId: 'ch', chunk: { kind: 'thinking', content: 'hi' } });
+    expect(lastBlock(state).estimatedTokens).toBeUndefined();
+  });
+
   it('input_json chunk appends partialInput to the correct tool_use block', () => {
     let state = initialChannelState('ch');
     state = onMessageStart(state, {

@@ -72,7 +72,7 @@ export function TaskChecklist({
       {lines.map((line) => {
         if (!isTaskLine(line)) {
           return (
-            <div key={line.lineIndex} className="text-text-muted">
+            <div key={line.lineIndex} className="text-muted">
               {line.text || ' '}
             </div>
           );
@@ -94,7 +94,7 @@ export function TaskChecklist({
               onCheckedChange={() => void toggle(line.lineIndex)}
               className="mt-0.5"
             />
-            <span className={line.checked ? 'text-text-dim line-through' : 'text-text'}>
+            <span className={line.checked ? 'text-dim line-through' : 'text-text'}>
               {line.text}
             </span>
           </label>

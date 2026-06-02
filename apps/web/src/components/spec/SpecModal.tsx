@@ -88,8 +88,10 @@ export function SpecModal({ cwd, kind, name, onClose }: SpecModalProps): React.J
             </Tabs.List>
           )}
           <div className="text-sm bg-bg/40 border border-border rounded p-3 overflow-auto max-h-dialog-body leading-relaxed">
-            {state.kind === 'loading' && <span className="text-text-muted text-xs">Loading…</span>}
-            {state.kind === 'error' && <span className="text-warn text-xs">{state.message}</span>}
+            {state.kind === 'loading' && <span className="text-muted text-xs">Loading…</span>}
+            {state.kind === 'error' && (
+              <span className="text-warning text-xs">{state.message}</span>
+            )}
             {state.kind === 'ready' &&
               (kind === 'change' && active === 'tasks' ? (
                 <TaskChecklist

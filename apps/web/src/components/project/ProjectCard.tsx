@@ -99,7 +99,7 @@ export function ProjectCard({
                 type="button"
                 className={cn(
                   'flex items-center gap-1.5 px-2 py-1.5 text-xs w-full min-w-0 text-left',
-                  active ? 'text-text' : 'text-text-muted group-hover:text-text',
+                  active ? 'text-text' : 'text-muted group-hover:text-text',
                   actions && cwd ? 'pr-12' : '',
                 )}
                 title={cwd ?? label}
@@ -108,9 +108,7 @@ export function ProjectCard({
                 <FolderIcon className="w-4 h-4 shrink-0" />
                 <span className="truncate flex-1 font-medium">{label}</span>
                 {worktreeCount && worktreeCount > 0 ? (
-                  <span className="shrink-0 font-mono text-xs text-text-subtle">
-                    {worktreeCount}wt
-                  </span>
+                  <span className="shrink-0 font-mono text-xs text-subtle">{worktreeCount}wt</span>
                 ) : null}
               </button>
               {actions && cwd ? (
@@ -122,7 +120,7 @@ export function ProjectCard({
                     onClick={handleTogglePin}
                     className={cn(
                       'shrink-0 p-0.5 rounded hover:text-text',
-                      pinned ? 'text-accent' : 'text-text-muted opacity-0 group-hover:opacity-100',
+                      pinned ? 'text-accent' : 'text-muted opacity-0 group-hover:opacity-100',
                     )}
                   >
                     {pinned ? (
@@ -138,7 +136,7 @@ export function ProjectCard({
                         aria-label="More actions"
                         title="More"
                         onClick={(e) => e.stopPropagation()}
-                        className="shrink-0 px-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
+                        className="shrink-0 px-1 text-muted hover:text-text opacity-0 group-hover:opacity-100"
                       >
                         ⋯
                       </button>

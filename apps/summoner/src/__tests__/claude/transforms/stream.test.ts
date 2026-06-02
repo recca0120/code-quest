@@ -52,6 +52,29 @@ describe('transform — stream events', () => {
     });
   });
 
+  it('passes estimated_tokens from thinking_delta into chunk payload', () => {
+    const raw = JSON.stringify({
+      type: 'stream_event',
+      event: {
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'thinking_delta', thinking: 'plan', estimated_tokens: 42 },
+      },
+      session_id: 'x',
+      uuid: 'u',
+    });
+    expect(toClientMessage(raw)).toMatchObject({
+      name: 'stream:chunk',
+      payload: { chunk: { kind: 'thinking', content: 'plan', estimatedTokens: 42 } },
+    });
+  });
+
+  it('omits estimatedTokens when thinking_delta has no estimated_tokens', () => {
+    const result = toClientMessage(s.thinkingDelta('hmm'));
+    const chunk = (result as { payload: { chunk: Record<string, unknown> } }).payload.chunk;
+    expect(chunk.estimatedTokens).toBeUndefined();
+  });
+
   it('converts message_stop to stream:end', () => {
     expect(toClientMessage(s.messageStop())).toMatchObject({ name: 'stream:end', payload: {} });
   });

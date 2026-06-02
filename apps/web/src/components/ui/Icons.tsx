@@ -72,9 +72,7 @@ export function BorderedIconButton({
       onClick={onClick}
       className={cn(
         'p-1.5 rounded border border-border transition-colors disabled:opacity-40',
-        danger
-          ? 'text-text-muted hover:text-danger hover:border-danger'
-          : 'text-subtle hover:text-text',
+        danger ? 'text-muted hover:text-danger hover:border-danger' : 'text-subtle hover:text-text',
       )}
     >
       {children}

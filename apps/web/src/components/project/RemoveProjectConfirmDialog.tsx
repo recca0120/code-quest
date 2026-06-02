@@ -43,7 +43,7 @@ function AllowedContent({
       <p className="text-sm text-text">
         Remove <span className="font-semibold">{projectName}</span> from your project list?
       </p>
-      <p className="text-xs text-text-muted">
+      <p className="text-xs text-muted">
         The folder on disk is <span className="font-semibold">not</span> deleted — only the project
         entry in code-quest.
       </p>

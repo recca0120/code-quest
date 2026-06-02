@@ -28,7 +28,7 @@ export function SubagentChildren({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="text-xs text-subtle hover:text-text-muted cursor-pointer select-none flex items-center gap-1 py-0.5"
+          className="text-xs text-subtle hover:text-muted cursor-pointer select-none flex items-center gap-1 py-0.5"
         >
           <RotatableChevron open={expanded} />
           <span>{pluralize(messages.length, 'subagent message')}</span>

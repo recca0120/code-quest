@@ -61,7 +61,7 @@ export function SessionHistory({
           onKeyDown={handleKeyDown}
           placeholder="Search sessions..."
           className={cn(
-            'w-full bg-bg border border-border rounded px-2 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-accent',
+            'w-full bg-bg border border-border rounded px-2 py-1.5 text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent',
             focusRing,
           )}
         />
@@ -71,9 +71,9 @@ export function SessionHistory({
         aria-label="Sessions"
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
       >
-        {loading && <div className="px-3 py-8 text-center text-text-muted text-sm">Loading...</div>}
+        {loading && <div className="px-3 py-8 text-center text-muted text-sm">Loading...</div>}
         {!loading && filtered.length === 0 && (
-          <div className="px-3 py-8 text-center text-text-muted text-sm">No sessions</div>
+          <div className="px-3 py-8 text-center text-muted text-sm">No sessions</div>
         )}
         {filtered.map((s, i) => (
           <SessionRow

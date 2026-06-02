@@ -44,7 +44,7 @@ export function ToolUseHeader({
   return (
     <>
       <span className="inline-flex items-center">{icon}</span>
-      <span className="font-semibold text-text-bright">{name}</span>
+      <span className="font-semibold text-bright">{name}</span>
       {detail && <span className="opacity-70 truncate max-w-72">{detail}</span>}
       {range && <span className="opacity-50 text-xs">{range}</span>}
       {badge}

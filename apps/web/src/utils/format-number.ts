@@ -6,3 +6,8 @@ export function formatTokens(n: number): string {
   if (n >= THOUSAND) return `${(n / THOUSAND).toFixed(1)}k`;
   return String(n);
 }
+
+export function formatTokenCount(n: number): string | null {
+  if (n <= 0) return null;
+  return `${formatTokens(n)} tokens`;
+}
