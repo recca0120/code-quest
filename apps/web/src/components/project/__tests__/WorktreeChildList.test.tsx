@@ -96,6 +96,38 @@ describe('WorktreeChildList', () => {
     expect(capturedPending).toMatchObject({ channelId: 'sess-1' });
   });
 
+  it('clicking worktree session uses projectRoot (not worktree cwd) for activation', async () => {
+    const { Wrapper, summoner } = makeWrapper();
+
+    let capturedPending: { channelId: string; cwd: string } | null = null;
+    function NavSpy() {
+      const state = useNavigationState();
+      capturedPending = state.pendingActivateChannel;
+      return null;
+    }
+
+    render(
+      <Wrapper>
+        <NavSpy />
+        <WorktreeChildList worktrees={worktrees} projectCwd="/repo" />
+      </Wrapper>,
+    );
+
+    // Session belongs to a worktree (cwd = worktree path, NOT project root)
+    act(() => {
+      summoner.claude().pushSessionState('sess-wt', 'idle', {
+        projectRoot: '/repo',
+        cwd: '/repo/.claude/worktrees/feat-x',
+      });
+    });
+
+    const sessionBtn = await screen.findByLabelText('Session: sess-wt');
+    await userEvent.setup().click(sessionBtn);
+
+    // Must pass projectRoot, not worktree cwd, so TabProvider can match
+    expect(capturedPending).toMatchObject({ channelId: 'sess-wt', cwd: '/repo' });
+  });
+
   it('shows dropdown on desktop when [⋯] clicked', async () => {
     setupMatchMedia(1280); // desktop
     const { Wrapper } = makeWrapper();
