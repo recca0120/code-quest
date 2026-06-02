@@ -2,6 +2,7 @@ import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/s
 import { useState } from 'react';
 import { InlineAction } from '@/components/chat/ui/InlineAction';
 import { useChannelConfig } from '@/contexts/channel';
+import { formatTokens } from '@/utils/format-number';
 import { Button } from '../ui/Button.tsx';
 import { GroupHeader } from '../ui/GroupHeader.tsx';
 import { BorderedIconButton, TrashIcon } from '../ui/Icons.tsx';
@@ -14,8 +15,7 @@ function pluginDisplayName(id: string): string {
 }
 
 function formatInstallCount(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k installs`;
-  return `${n} installs`;
+  return `${formatTokens(n)} installs`;
 }
 
 interface InstalledPluginListProps {

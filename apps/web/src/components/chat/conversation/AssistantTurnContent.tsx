@@ -51,6 +51,7 @@ export function AssistantTurnContent({
           budgetTokens={block.budget_tokens}
           durationMs={block.durationMs}
           isStreaming={block.isStreaming}
+          estimatedTokens={block.estimatedTokens}
           blockId={block.id}
         />
       );

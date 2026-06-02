@@ -24,7 +24,15 @@ function handleContentBlockDelta(
     case 'thinking_delta':
       return {
         name: 'stream:chunk',
-        payload: { chunk: { kind: 'thinking', content: delta.thinking ?? '' }, ...parent },
+        payload: {
+          chunk: {
+            kind: 'thinking',
+            content: delta.thinking ?? '',
+            estimatedTokens:
+              typeof delta.estimated_tokens === 'number' ? delta.estimated_tokens : undefined,
+          },
+          ...parent,
+        },
       };
     case 'input_json_delta':
       return {

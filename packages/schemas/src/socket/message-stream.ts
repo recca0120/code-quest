@@ -11,12 +11,14 @@ export const streamChunkSchema: z.ZodObject<
     }>;
     content: z.ZodString;
     citations: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
+    estimatedTokens: z.ZodOptional<z.ZodNumber>;
   },
   z.core.$strip
 > = z.object({
   kind: z.enum(['text', 'thinking', 'input_json', 'citations', 'signature']),
   content: z.string(),
   citations: z.array(z.unknown()).optional(),
+  estimatedTokens: z.number().optional(),
 });
 export type StreamChunk = z.infer<typeof streamChunkSchema>;
 
@@ -36,6 +38,7 @@ export const streamChunkPayloadSchema: z.ZodObject<
         }>;
         content: z.ZodString;
         citations: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
+        estimatedTokens: z.ZodOptional<z.ZodNumber>;
       },
       z.core.$strip
     >;
