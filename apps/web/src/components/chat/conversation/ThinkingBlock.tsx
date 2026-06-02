@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useSmoothedValue } from '@/hooks/useSmoothedValue.ts';
 import { formatTokenCount } from '@/utils/format-number';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
@@ -43,25 +44,26 @@ export function ThinkingBlock({
   estimatedTokens,
   blockId,
 }: ThinkingBlockProps): React.ReactNode {
+  const label = thinkingLabel(isStreaming, durationMs, budgetTokens);
+  const header = useMemo(
+    () => (
+      <ToolUseHeader
+        icon={null}
+        name={label}
+        badge={
+          isStreaming && estimatedTokens ? (
+            <ThinkingTokenCount estimate={estimatedTokens} />
+          ) : undefined
+        }
+      />
+    ),
+    [label, isStreaming, estimatedTokens],
+  );
+
   if (!content.trim()) return null;
 
-  const label = thinkingLabel(isStreaming, durationMs, budgetTokens);
-
   return (
-    <BlockCollapsible
-      blockId={blockId}
-      header={
-        <ToolUseHeader
-          icon={null}
-          name={label}
-          badge={
-            isStreaming && estimatedTokens ? (
-              <ThinkingTokenCount estimate={estimatedTokens} />
-            ) : undefined
-          }
-        />
-      }
-    >
+    <BlockCollapsible blockId={blockId} header={header}>
       <div className="pl-3 border-l-2 border-border-subtle text-sm text-subtle">
         <MarkdownContent content={content} />
       </div>

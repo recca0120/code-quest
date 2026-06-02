@@ -8,7 +8,6 @@ export function formatTokens(n: number): string {
 }
 
 export function formatTokenCount(n: number): string | null {
-  if (!n || n <= 0) return null;
-  if (n >= THOUSAND) return `${(n / THOUSAND).toFixed(1)}k tokens`;
-  return `${n} tokens`;
+  if (n <= 0) return null;
+  return `${formatTokens(n)} tokens`;
 }

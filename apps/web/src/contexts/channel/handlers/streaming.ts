@@ -96,9 +96,9 @@ function onTextChunk(state: ChannelState, content: string): ChannelState {
 
 function onThinkingChunk(
   state: ChannelState,
-  content: string,
-  estimatedTokens?: number,
+  chunk: { content: string; estimatedTokens?: number },
 ): ChannelState {
+  const { content, estimatedTokens } = chunk;
   const { state: s, turn } = ensureStreamingTurn(state);
   const lastThinking = findLastBlock(turn.blocks, 'thinking');
   if (lastThinking) {
@@ -166,7 +166,7 @@ function onStreamChunk(state: ChannelState, p: Payload<'stream:chunk'>): Channel
     case 'text':
       return onTextChunk(state, chunk.content);
     case 'thinking':
-      return onThinkingChunk(state, chunk.content, chunk.estimatedTokens);
+      return onThinkingChunk(state, chunk);
     case 'input_json':
       return onInputJsonChunk(state, chunk.content);
     case 'citations':
