@@ -206,51 +206,14 @@ describe('GitPane', () => {
     expect(screen.getByRole('button', { name: /copy path/i })).toBeInTheDocument();
   });
 
-  it('clicking the switch affordance opens BranchPopover with available branches', async () => {
-    const user = userEvent.setup();
-    const { summoner, Wrapper } = setup();
-    summoner.git()!.setBranch('main');
-    summoner.git()!.setProjectRoot('/repo');
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
-    await screen.findAllByText(/main/).then((els) => els[0]);
-
-    await user.click(screen.getByRole('button', { name: /switch branch/i }));
-
-    const menu = await screen.findByRole('menu');
-    expect(menu).toBeInTheDocument();
-    // `main` is listed (FakeGit seeds it by default).
-    const main = await screen.findAllByText('main');
-    expect(main.length).toBeGreaterThan(0);
-  });
-
-  it('selecting a branch from the popover triggers git checkout', async () => {
-    const user = userEvent.setup();
-    const { summoner, Wrapper } = setup();
-    summoner.git()!.setBranch('main');
-    summoner.git()!.setProjectRoot('/repo');
-    const checkoutSpy = vi.spyOn(summoner.git()!, 'checkout');
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
-    await screen.findAllByText(/main/).then((els) => els[0]);
-
-    await user.click(screen.getByRole('button', { name: /switch branch/i }));
-    // Wait for popover to render branch list
-    const items = await screen.findAllByRole('menuitem');
-    // Click 'main' item (the only branch seeded by FakeGit)
-    const mainItem = items.find((el) => el.textContent?.includes('main'));
-    if (!mainItem) throw new Error('main branch item not found');
-    await user.click(mainItem);
-
-    expect(checkoutSpy).toHaveBeenCalledWith('/repo', 'main');
-  });
-
-  it('renders three labeled sections: Branch, Changes, Actions', async () => {
+  it('renders two labeled sections: Changes, Actions (Branch section removed)', async () => {
     const { summoner, Wrapper } = setup();
     summoner.git()!.setBranch('main');
     summoner.git()!.setClean(false);
     summoner.git()!.setChangedFiles([{ status: 'M', file: 'a.ts' }]);
     render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
-    await screen.findAllByText(/main/).then((els) => els[0]);
-    expect(screen.getByRole('heading', { name: 'Branch' })).toBeInTheDocument();
+    await screen.findByText(/1 change/);
+    expect(screen.queryByRole('button', { name: /switch branch/i })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Changes/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Actions' })).toBeInTheDocument();
   });

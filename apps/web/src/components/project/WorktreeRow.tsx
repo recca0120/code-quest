@@ -1,5 +1,5 @@
 import type { WorktreeInfo } from '@code-quest/git';
-import { forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import type { HTMLAttributes, ReactElement, ReactNode } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { cn } from '@/utils/cn';
@@ -12,9 +12,11 @@ interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
   /** Count of uncommitted changes (from `git status`). >0 triggers the warning dot. */
   changes: number;
   onSelect: () => void;
+  /** Called when the [+] "Open new chat" button is clicked. */
+  onOpenNewChat?: () => void;
   /** Called when the branch badge is clicked (keyboard or mouse). */
   onBranchClick?: () => void;
-  /** Called when the ⋯ "More actions" button is clicked. */
+  /** Called when the ⋯ "More actions" button is clicked (mobile: opens BottomSheet). */
   onMoreActions?: () => void;
   /**
    * Parent-supplied wrapper that renders the branch badge as a Radix
@@ -22,28 +24,28 @@ interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
    * a plain element that calls `onBranchClick` on activation.
    */
   wrapBranchTrigger?: (child: ReactElement) => ReactNode;
-  /** Same as `wrapBranchTrigger` but for the ⋯ button (DropdownMenu.Trigger). */
+  /**
+   * Parent-supplied wrapper that renders the ⋯ button as a Radix
+   * trigger (e.g. `DropdownMenu.Trigger asChild`). Desktop only.
+   * When omitted, the button calls `onMoreActions` directly.
+   */
   wrapMoreTrigger?: (child: ReactElement) => ReactNode;
 }
 
-export const WorktreeRow: React.ForwardRefExoticComponent<
-  WorktreeRowProps & React.RefAttributes<HTMLDivElement>
-> = forwardRef<HTMLDivElement, WorktreeRowProps>(function WorktreeRow(
-  {
-    worktree,
-    active,
-    liveSessions,
-    changes,
-    onSelect,
-    onBranchClick,
-    onMoreActions,
-    wrapBranchTrigger,
-    wrapMoreTrigger,
-    className,
-    ...rest
-  },
-  ref,
-) {
+export function WorktreeRow({
+  worktree,
+  active,
+  liveSessions,
+  changes,
+  onSelect,
+  onOpenNewChat,
+  onBranchClick,
+  onMoreActions,
+  wrapBranchTrigger,
+  wrapMoreTrigger,
+  className,
+  ...rest
+}: WorktreeRowProps): React.JSX.Element {
   const label = worktree.branch ?? worktree.name;
 
   const branchBadge = (
@@ -64,24 +66,8 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
     </button>
   );
 
-  const moreButton = (
-    <button
-      type="button"
-      aria-label="More actions"
-      title="More"
-      onClick={(e) => {
-        e.stopPropagation();
-        onMoreActions?.();
-      }}
-      className="relative z-10 shrink-0 px-1 text-muted hover:text-text opacity-0 group-hover:opacity-100"
-    >
-      ⋯
-    </button>
-  );
-
   return (
     <div
-      ref={ref}
       {...rest}
       className={cn(
         'group relative flex items-center gap-1.5 px-2 py-1 text-xs rounded border-l-2',
@@ -120,7 +106,38 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
           title={pluralize(changes, 'change')}
         />
       )}
-      {wrapMoreTrigger ? wrapMoreTrigger(moreButton) : moreButton}
+      {onOpenNewChat && (
+        <button
+          type="button"
+          aria-label="Open new chat"
+          title="Open new chat"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenNewChat();
+          }}
+          className="relative z-10 shrink-0 px-1 text-muted hover:text-text opacity-0 group-hover:opacity-100"
+        >
+          +
+        </button>
+      )}
+      {(onMoreActions || wrapMoreTrigger) &&
+        (() => {
+          const moreBtn = (
+            <button
+              type="button"
+              aria-label="More actions"
+              title="More"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoreActions?.();
+              }}
+              className="relative z-10 shrink-0 px-1 text-muted hover:text-text opacity-0 group-hover:opacity-100"
+            >
+              ⋯
+            </button>
+          );
+          return wrapMoreTrigger ? wrapMoreTrigger(moreBtn) : moreBtn;
+        })()}
     </div>
   );
-});
+}

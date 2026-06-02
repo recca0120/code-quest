@@ -1,5 +1,5 @@
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { DrawerAside } from '@/components/ui/DrawerAside';
@@ -15,7 +15,6 @@ import { NO_FORM } from '@/utils/hotkey-options';
 import { CommandPalette } from '../palette/CommandPalette.tsx';
 import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { ProjectTree } from '../project/ProjectTree.tsx';
-import { TopScopeSwitcher } from '../project/TopScopeSwitcher.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
 import { TabContainer } from './TabContainer.tsx';
 import { WorkspaceTopbar } from './WorkspaceTopbar.tsx';
@@ -69,6 +68,7 @@ function WorkspaceLayoutInner() {
   }, [registerActions]);
   const { projects, activeProjectCwd } = useProjectState();
   const { sessions, sessionsMap } = useSession();
+  const { selectedWorktreeCwd } = useNavigationState();
   const { addProject, setActiveProject } = useProjectActions();
   const { isMobile, isDesktop } = useBreakpoint();
   const [leftOpen, setLeftOpen] = useState(() => isDesktop);
@@ -87,9 +87,7 @@ function WorkspaceLayoutInner() {
     if (s) setActiveProject(s.projectRoot);
   }
 
-  function onToggleLeft() {
-    setLeftOpen((v) => !v);
-  }
+  const onToggleLeft = useCallback(() => setLeftOpen((v) => !v), []);
   const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
 
   return (
@@ -112,14 +110,7 @@ function WorkspaceLayoutInner() {
             onToggleLeft={onToggleLeft}
             sessions={sessions}
             onActivateSession={handleActivateSession}
-          >
-            <TopScopeSwitcher
-              projects={projects}
-              activeProjectCwd={activeProjectCwd}
-              onSelect={setActiveProject}
-              onAddProject={() => setDialogOpen(true)}
-            />
-          </WorkspaceTopbar>
+          />
           <div className="relative flex flex-1 overflow-hidden">
             {leftOpen && (
               <button
@@ -150,11 +141,23 @@ function WorkspaceLayoutInner() {
             </DrawerAside>
 
             <main className="flex flex-1 min-w-0 h-full">
-              <ProjectsTabContainer
-                projects={projects}
-                activeProjectCwd={activeProjectCwd}
-                sessions={sessions}
-              />
+              {projects.map((project) => (
+                <section
+                  key={project.cwd}
+                  aria-label={project.cwd === activeProjectCwd ? 'project-container' : undefined}
+                  className={cn(
+                    project.cwd === activeProjectCwd ? 'flex flex-1 min-w-0 h-full' : 'hidden',
+                  )}
+                >
+                  <TabProvider
+                    sessions={sessions.filter((s) => s.projectRoot === project.cwd)}
+                    cwd={project.cwd}
+                    selectedCwd={selectedWorktreeCwd[project.cwd] ?? undefined}
+                  >
+                    <TabContainer projectCwd={project.cwd} onToggleLeft={onToggleLeft} />
+                  </TabProvider>
+                </section>
+              ))}
             </main>
           </div>
         </>
@@ -166,37 +169,6 @@ function WorkspaceLayoutInner() {
         addedProjectCwds={addedProjectCwds}
       />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-    </div>
-  );
-}
-
-function ProjectsTabContainer({
-  projects,
-  activeProjectCwd,
-  sessions,
-}: {
-  projects: ReturnType<typeof useProjectState>['projects'];
-  activeProjectCwd: string | null;
-  sessions: ReturnType<typeof useSession>['sessions'];
-}) {
-  const { selectedWorktreeCwd } = useNavigationState();
-  return (
-    <div className="flex flex-1 min-w-0 h-full">
-      {projects.map((project) => (
-        <section
-          key={project.cwd}
-          aria-label={project.cwd === activeProjectCwd ? 'project-container' : undefined}
-          className={cn(project.cwd === activeProjectCwd ? 'flex flex-1 min-w-0 h-full' : 'hidden')}
-        >
-          <TabProvider
-            sessions={sessions.filter((s) => s.projectRoot === project.cwd)}
-            cwd={project.cwd}
-            selectedCwd={selectedWorktreeCwd[project.cwd] ?? undefined}
-          >
-            <TabContainer projectCwd={project.cwd} />
-          </TabProvider>
-        </section>
-      ))}
     </div>
   );
 }

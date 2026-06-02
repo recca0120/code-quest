@@ -17,7 +17,7 @@ interface Props {
   /** Open the command palette / search. */
   onOpenSearch?: () => void;
   /** The rest of the topbar contents (currently the TopScopeSwitcher). */
-  children: ReactNode;
+  children?: ReactNode;
   /** Live sessions for the inline pill list. */
   sessions?: SessionStateSummary[];
   /** Activate a live session by its channelId. */

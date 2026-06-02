@@ -18,8 +18,8 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
     const project = await addProject({ path: '/projects', dirName: 'app' });
     await project.launchSession();
 
-    // Sanity: 1 tab.
-    expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
+    // Sanity: chat panel is active.
+    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
 
     // Act: right-click the ProjectCard (in the sidebar — disambiguates from
     // the TopScopeSwitcher trigger which also shows project name).
@@ -47,6 +47,6 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: /new worktree/i })).not.toBeInTheDocument();
     });
-    expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
+    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 });

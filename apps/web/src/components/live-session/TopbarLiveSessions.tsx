@@ -1,6 +1,6 @@
 import type { SessionStateSummary } from '@code-quest/schemas';
 import { toast } from 'sonner';
-import { StatusDot } from '@/components/ui/StatusDot';
+import { type DotColor, StatusDot } from '@/components/ui/StatusDot';
 import { basename } from '@/utils/basename';
 import { LiveSessionPopover } from './LiveSessionPopover.tsx';
 
@@ -8,7 +8,6 @@ const MAX_VISIBLE = 5;
 
 const LIVE_STATES = new Set(['busy', 'launching', 'idle']);
 
-type DotColor = 'success' | 'warning' | 'muted' | 'danger';
 const DOT_COLOR: Record<string, { color: DotColor; pulse?: boolean }> = {
   busy: { color: 'success', pulse: true },
   launching: { color: 'warning', pulse: true },

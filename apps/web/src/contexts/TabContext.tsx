@@ -45,7 +45,8 @@ interface TabActionsValue {
   replaceTab: (oldChannelId: string, newChannelId: string) => void;
 }
 
-const TabActionsContext = createContext<TabActionsValue | null>(null);
+const TabActionsContext: React.Context<TabActionsValue | null> =
+  createContext<TabActionsValue | null>(null);
 
 export function useTabActions(): TabActionsValue {
   const ctx = useContext(TabActionsContext);

@@ -17,7 +17,6 @@ import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import { cn } from '@/utils/cn';
 import { type DiffFile, parseUnifiedDiff } from '@/utils/parse-unified-diff';
-import { BranchSection } from '../project/BranchSection.tsx';
 import { ActionButton } from '../ui/ActionButton.tsx';
 import { CommandHint } from '../ui/CommandHint.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
@@ -55,23 +54,12 @@ function statusFor(s: string): { mark: string; cls: string } {
 
 export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   const { socket } = useSocket();
-  const { checkout, discardFile, fetch, listBranches, pull, refetchGitStatus } = useGitActions();
+  const { discardFile, fetch, pull, refetchGitStatus } = useGitActions();
   const data = useGitStatus(cwd);
   function refetch() {
     return refetchGitStatus(cwd);
   }
   const [diffFile, setDiffFile] = useState<DiffFile | null>(null);
-  const [branchPopoverOpen, setBranchPopoverOpen] = useState(false);
-  const [branches, setBranches] = useState<string[]>([]);
-
-  async function handleBranchOpenChange(open: boolean) {
-    setBranchPopoverOpen(open);
-    if (open) {
-      const res = await listBranches(cwd);
-      setBranches(Array.isArray(res) ? res : []);
-    }
-  }
-
   async function stageAll() {
     const result: GitAddResult = await rpcParsed(socket, gitAddResultSchema, EVENTS.git.add, {
       cwd,
@@ -200,18 +188,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   return (
     <section className="flex flex-col h-full" aria-label="git-pane">
       <div className="flex-1 min-h-0 overflow-auto">
-        <BranchSection
-          status={status}
-          branches={branches}
-          popoverOpen={branchPopoverOpen}
-          onPopoverOpenChange={handleBranchOpenChange}
-          onSelectBranch={async (branch) => {
-            const res = await checkout(cwd, branch);
-            if (!res.ok) toast.error(`Checkout failed: ${res.error}`);
-            else toast.success(`Switched to ${res.branch}`);
-          }}
-        />
-
         {/* Changes section — flows naturally; pane scrolls as one. */}
         <section className="px-3 py-2 border-b border-border text-sm">
           <div className="flex items-center justify-between mb-1">

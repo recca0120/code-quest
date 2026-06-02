@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findWorktreeByCwd } from '../TabContainer.tsx';
+import { findWorktreeByCwd } from '@/utils/worktree.ts';
 
 const listing = {
   '/projects/app': [

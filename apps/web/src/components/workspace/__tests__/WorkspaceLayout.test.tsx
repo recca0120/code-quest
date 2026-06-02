@@ -38,15 +38,9 @@ describe('WorkspaceLayout — with project', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('renders two tabs with CSS show/hide', async () => {
-    const { user } = await setup();
-    await user.click(screen.getByLabelText('New tab'));
-    expect(screen.getAllByLabelText(/^Close /)).toHaveLength(2);
-  });
-
-  it('renders TabBar above workspace panels', async () => {
+  it('TabBar is not rendered — tab switching is via sidebar session rows', async () => {
     await setup();
-    expect(screen.getByRole('tablist', { name: 'tab-bar' })).toBeInTheDocument();
+    expect(screen.queryByRole('tablist', { name: 'tab-bar' })).not.toBeInTheDocument();
   });
 
   it('sidebar shows project list by default', async () => {
@@ -54,40 +48,24 @@ describe('WorkspaceLayout — with project', () => {
     expect(screen.getByRole('heading', { name: /Projects/i })).toBeInTheDocument();
   });
 
-  it('close tab removes tab from UI', async () => {
-    const { user } = await setup();
-    await user.click(screen.getByLabelText('New tab'));
-    const closeButtons = screen.getAllByLabelText(/^Close /);
-    expect(closeButtons).toHaveLength(2);
-    await user.click(closeButtons[1]!);
-    await user.click(screen.getByRole('button', { name: /close/i }));
-    expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
-  });
-
-  it('shows empty state after closing last tab', async () => {
-    const { user } = await setup();
-    await user.click(screen.getByLabelText(/^Close /));
-    await user.click(screen.getByRole('button', { name: /close/i }));
-    expect(screen.queryByPlaceholderText(/Esc to focus/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/No open sessions/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /New Session/ })).toBeInTheDocument();
+  it('shows empty state when no sessions open', async () => {
+    await renderWithWorkspace();
+    // No project yet — empty state for project
+    expect(screen.getByRole('button', { name: 'Add Project' })).toBeInTheDocument();
   });
 });
 
 describe('WorkspaceLayout — multi-project', () => {
-  it('second project creates separate tab group', async () => {
+  it('second project can be added and shows its chat', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
-    expect(screen.getAllByLabelText(/^Close /).length).toBe(1);
-    await result.user.click(screen.getByLabelText('New tab'));
-    expect(screen.getAllByLabelText(/^Close /).length).toBe(2);
+    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('renders per-project tabs when project has sessions', async () => {
+  it('renders chat panel when project has sessions', async () => {
     await setup();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
-    expect(screen.getAllByLabelText(/^Close /).length).toBe(1);
   });
 
   it('switching project keeps both tab groups mounted', async () => {

@@ -55,12 +55,10 @@ describe('renderWithWorkspace', () => {
     // CLI responds
     await emitAssistantTurn(claude, 'ok');
 
-    // Tab title shows in UI (from first user message) — scope to chat tab bar
-    // since RightPane also renders tabs (Files/Git/Spec).
-    const tabBar = await screen.findByRole('tablist', { name: 'tab-bar' });
+    // Session title shows in breadcrumb bar after first user message.
+    const breadcrumb = await screen.findByLabelText('chat-breadcrumb');
     const { within } = await import('@testing-library/react');
-    const tab = await within(tabBar).findByRole('tab', { selected: true });
-    expect(tab).toHaveTextContent('fix the login page');
+    expect(within(breadcrumb).getByText('fix the login page')).toBeInTheDocument();
 
     // DB has CLI-generated title
     const sessionStore = container.get<{
