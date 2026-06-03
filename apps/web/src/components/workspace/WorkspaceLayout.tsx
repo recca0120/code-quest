@@ -19,6 +19,13 @@ import { SettingsDialog } from '../settings/SettingsDialog.tsx';
 import { TabContainer } from './TabContainer.tsx';
 import { WorkspaceTopbar } from './WorkspaceTopbar.tsx';
 
+const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
+  path_not_found: (p) => `Path not found: ${p}`,
+  path_not_directory: (p) => `Not a directory: ${p}`,
+};
+
+const EMPTY_SESSIONS: never[] = [];
+
 function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   const isBusy = sessions.some((s) => s.state === 'busy');
   useEffect(() => {
@@ -66,11 +73,6 @@ function WorkspaceLayoutInner() {
   const { addProject, setActiveProject } = useProjectActions();
   const { isMobile, isDesktop } = useBreakpoint();
   const [leftOpen, setLeftOpen] = useState(() => isDesktop);
-
-  const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
-    path_not_found: (p) => `Path not found: ${p}`,
-    path_not_directory: (p) => `Not a directory: ${p}`,
-  };
 
   async function handleAddProject(cwd: string) {
     const res = await addProject(cwd);
@@ -163,7 +165,7 @@ function WorkspaceLayoutInner() {
                   )}
                 >
                   <TabProvider
-                    sessions={sessionsByProject.get(project.cwd) ?? []}
+                    sessions={sessionsByProject.get(project.cwd) ?? EMPTY_SESSIONS}
                     cwd={project.cwd}
                     selectedCwd={selectedWorktreeCwd[project.cwd] ?? undefined}
                   >

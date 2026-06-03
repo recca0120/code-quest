@@ -66,6 +66,15 @@
 
 ---
 
+## 17. Project card 點擊只展開不收合
+
+- [ ] 17.1 撰寫失敗測試：點擊已展開 project card → worktree 列表維持展開（不收合）
+- [ ] 17.2 撰寫失敗測試：點擊未展開 project card → worktree 列表展開
+- [ ] 17.3 `ProjectRow.tsx` 的 `ProjectCard.onSelect` 改用 `setExpanded(project.cwd, true)`（只展開）；chevron 繼續用 `toggleExpanded`
+- [ ] 17.4 確認所有測試通過
+
+---
+
 ## 11. Worktree 名稱截斷（Post-implementation Polish A）
 
 - [x] 11.1 `apps/web/src/utils/mid-truncate.ts` 實作 `midTruncate(str, maxLen = 22): string`：短名不截斷，長名取前 14 + `…` + 後 6

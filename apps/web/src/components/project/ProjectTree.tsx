@@ -1,5 +1,6 @@
 import type { Project } from '@/contexts/ProjectContext';
 import { GroupHeader } from '../ui/GroupHeader.tsx';
+import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { ProjectRow } from './ProjectRow.tsx';
 import { splitPinnedRecent } from './project-utils.ts';
 
@@ -17,9 +18,20 @@ export function ProjectTree({
   const { pinned, recent } = splitPinnedRecent(projects);
   const showRecentHeader = pinned.length > 0 && recent.length > 0;
 
+  function renderGroup(group: Project[]) {
+    return group.map((p) => (
+      <ProjectRow
+        key={p.cwd}
+        project={p}
+        active={p.cwd === activeProjectCwd}
+        onSelect={() => onSelectProject(p.cwd)}
+      />
+    ));
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <h3 className="flex items-center justify-between px-4 pt-2 pb-1 text-xs font-mono font-bold tracking-widest uppercase text-dim">
+      <SectionHeader className="flex items-center justify-between">
         Projects
         <button
           type="button"
@@ -30,26 +42,12 @@ export function ProjectTree({
         >
           +
         </button>
-      </h3>
+      </SectionHeader>
       <div className="flex-1 overflow-auto px-2">
         {pinned.length > 0 && <GroupHeader>Pinned</GroupHeader>}
-        {pinned.map((p) => (
-          <ProjectRow
-            key={p.cwd}
-            project={p}
-            active={p.cwd === activeProjectCwd}
-            onSelect={() => onSelectProject(p.cwd)}
-          />
-        ))}
+        {renderGroup(pinned)}
         {showRecentHeader && <GroupHeader>Recent</GroupHeader>}
-        {recent.map((p) => (
-          <ProjectRow
-            key={p.cwd}
-            project={p}
-            active={p.cwd === activeProjectCwd}
-            onSelect={() => onSelectProject(p.cwd)}
-          />
-        ))}
+        {renderGroup(recent)}
       </div>
     </div>
   );

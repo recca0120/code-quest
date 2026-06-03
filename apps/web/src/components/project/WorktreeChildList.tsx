@@ -1,11 +1,12 @@
 import type { WorktreeInfo } from '@code-quest/git';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useGitActions } from '@/contexts/GitContext';
 import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { copyToClipboard } from '@/utils/clipboard';
 import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover.tsx';
 import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog.tsx';
@@ -50,14 +51,11 @@ export function WorktreeChildList({
 
   const closeDialog = () => setDialog(null);
 
-  const openWorktreeInChat = useCallback(
-    (pCwd: string, wCwd: string, forceNew = false) => {
-      setActiveProject(pCwd);
-      setSelectedWorktree(pCwd, wCwd);
-      requestOpenWorktree(pCwd, wCwd, forceNew);
-    },
-    [setActiveProject, setSelectedWorktree, requestOpenWorktree],
-  );
+  const openWorktreeInChat = (pCwd: string, wCwd: string, forceNew = false) => {
+    setActiveProject(pCwd);
+    setSelectedWorktree(pCwd, wCwd);
+    requestOpenWorktree(pCwd, wCwd, forceNew);
+  };
 
   const selectWorktree = (pCwd: string, wCwd: string) => {
     setActiveProject(pCwd);
@@ -101,20 +99,24 @@ export function WorktreeChildList({
   }, [sessions]);
   // liveCountByPath is still needed for onDelete (activeCount in RemoveWorktreeConfirmDialog)
 
+  function buildCallbacks(wt: WorktreeInfo) {
+    return {
+      onOpenHere: () => openWorktreeInChat(projectCwd, wt.path),
+      onOpenInNewChat: () => openWorktreeInChat(projectCwd, wt.path, true),
+      onOpenPastSession: () => setDialog({ kind: 'resume', wt }),
+      onSwitchBranch: () => void fetchAndOpenBranchPopover(wt, true),
+      onCopyPath: () => void copyToClipboard(wt.path),
+      onRename: () => setDialog({ kind: 'rename', wt }),
+      onArchive: () => setDialog({ kind: 'archive', wt, dirty: false }),
+      onDelete: () =>
+        setDialog({ kind: 'remove', wt, activeCount: liveCountByPath.get(wt.path) ?? 0 }),
+    };
+  }
+
   return (
     <div className="ml-5 border-l border-border pl-2">
       {worktrees.map((wt) => {
-        const menuCallbacks = {
-          onOpenHere: () => openWorktreeInChat(projectCwd, wt.path),
-          onOpenInNewChat: () => openWorktreeInChat(projectCwd, wt.path, true),
-          onOpenPastSession: () => setDialog({ kind: 'resume', wt }),
-          onSwitchBranch: () => void fetchAndOpenBranchPopover(wt, true),
-          onCopyPath: () => void navigator.clipboard?.writeText(wt.path),
-          onRename: () => setDialog({ kind: 'rename', wt }),
-          onArchive: () => setDialog({ kind: 'archive', wt, dirty: false }),
-          onDelete: () =>
-            setDialog({ kind: 'remove', wt, activeCount: liveCountByPath.get(wt.path) ?? 0 }),
-        };
+        const menuCallbacks = buildCallbacks(wt);
         return (
           <div key={wt.name}>
             <WorktreeContextMenu {...menuCallbacks}>
@@ -215,20 +217,7 @@ export function WorktreeChildList({
         <WorktreeBottomSheet
           wt={bottomSheetWt}
           onClose={() => setBottomSheetWt(null)}
-          onOpenHere={() => openWorktreeInChat(projectCwd, bottomSheetWt.path)}
-          onOpenInNewChat={() => openWorktreeInChat(projectCwd, bottomSheetWt.path, true)}
-          onOpenPastSession={() => setDialog({ kind: 'resume', wt: bottomSheetWt })}
-          onSwitchBranch={() => void fetchAndOpenBranchPopover(bottomSheetWt, true)}
-          onCopyPath={() => void navigator.clipboard?.writeText(bottomSheetWt.path)}
-          onRename={() => setDialog({ kind: 'rename', wt: bottomSheetWt })}
-          onArchive={() => setDialog({ kind: 'archive', wt: bottomSheetWt, dirty: false })}
-          onDelete={() =>
-            setDialog({
-              kind: 'remove',
-              wt: bottomSheetWt,
-              activeCount: liveCountByPath.get(bottomSheetWt.path) ?? 0,
-            })
-          }
+          {...buildCallbacks(bottomSheetWt)}
         />
       )}
     </div>

@@ -12,6 +12,8 @@ interface ChatBreadcrumbProps {
   actions?: ReactNode;
 }
 
+const BTN_CLASS = 'w-7 h-7 text-muted hover:text-text hover:bg-hover-tint';
+
 export function ChatBreadcrumb({
   projectName,
   branch,
@@ -20,8 +22,6 @@ export function ChatBreadcrumb({
   onToggleRight,
   actions,
 }: ChatBreadcrumbProps): React.JSX.Element {
-  const btnClass = 'w-7 h-7 text-muted hover:text-text hover:bg-hover-tint';
-
   return (
     // biome-ignore lint/a11y/useAriaPropsSupportedByRole: header has implicit banner role; aria-label needed for test queries
     <header
@@ -33,7 +33,7 @@ export function ChatBreadcrumb({
           variant="plain"
           aria-label="Toggle left sidebar"
           onClick={onToggleLeft}
-          className={btnClass}
+          className={BTN_CLASS}
         >
           <Bars3Icon className="w-4 h-4" />
         </IconButton>
@@ -59,7 +59,7 @@ export function ChatBreadcrumb({
           variant="plain"
           aria-label="Toggle right pane"
           onClick={onToggleRight}
-          className={btnClass}
+          className={BTN_CLASS}
         >
           <RectangleGroupIcon className="w-4 h-4" />
         </IconButton>

@@ -6,6 +6,7 @@ import { NavigationActionsContext } from '@/contexts/NavigationContext';
 import { ProjectActionsContext } from '@/contexts/ProjectContext';
 import { SessionStateContext } from '@/contexts/SessionContext';
 import { basename } from '@/utils/basename';
+import { copyToClipboard } from '@/utils/clipboard';
 import { cn } from '@/utils/cn';
 import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover.tsx';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog.tsx';
@@ -60,7 +61,7 @@ export function ProjectCard({
   const menuCallbacks: ProjectMenuCallbacks = {
     onSelectResume: () => setOpenDialog('resume'),
     onSelectCreateWorktree: () => setOpenDialog('worktree'),
-    onCopyPath: cwd ? () => void navigator.clipboard?.writeText(cwd) : undefined,
+    onCopyPath: cwd ? () => void copyToClipboard(cwd) : undefined,
     onSelectRename: actions && cwd ? () => setOpenDialog('rename') : undefined,
     onSelectRemove: actions && cwd ? () => setOpenDialog('remove') : undefined,
     onSelectInitRepo: onSelectInitRepo,

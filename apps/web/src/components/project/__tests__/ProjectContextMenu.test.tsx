@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppInitStateContext } from '@/contexts/AppInitContext';
-import { ProjectDropdownMenu } from '../ProjectContextMenu.tsx';
+import { buildProjectMenuItems, ProjectDropdownMenu } from '../ProjectContextMenu.tsx';
 
 /** Provide a minimal AppInitState with worktree capability enabled. */
 function WithWorktreeCapability({ children }: { children: ReactNode }) {
@@ -115,5 +115,56 @@ describe('ProjectContextMenu', () => {
       await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
       expect(onSelectCreateWorktree).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('buildProjectMenuItems — pure function', () => {
+  const baseCallbacks = { onSelectResume: vi.fn() };
+
+  it('always includes "Open past session…" as first item', () => {
+    const items = buildProjectMenuItems(baseCallbacks, { worktree: false });
+    expect(items[0]).toMatchObject({ key: 'resume', label: 'Open past session…' });
+  });
+
+  it('omits "Create Worktree…" when capability is false', () => {
+    const items = buildProjectMenuItems(
+      { ...baseCallbacks, onSelectCreateWorktree: vi.fn() },
+      { worktree: false },
+    );
+    expect(items.find((i) => i.key === 'worktree')).toBeUndefined();
+  });
+
+  it('includes "Create Worktree…" when capability is true and handler is provided', () => {
+    const items = buildProjectMenuItems(
+      { ...baseCallbacks, onSelectCreateWorktree: vi.fn() },
+      { worktree: true },
+    );
+    expect(items.find((i) => i.key === 'worktree')).toMatchObject({ label: 'Create Worktree…' });
+  });
+
+  it('omits optional items when handlers are not provided', () => {
+    const items = buildProjectMenuItems(baseCallbacks, { worktree: false });
+    const keys = items.map((i) => i.key);
+    expect(keys).toEqual(['resume']);
+  });
+
+  it('includes all optional items when all handlers are provided', () => {
+    const items = buildProjectMenuItems(
+      {
+        onSelectResume: vi.fn(),
+        onSelectCreateWorktree: vi.fn(),
+        onSelectRename: vi.fn(),
+        onSelectRemove: vi.fn(),
+        onCopyPath: vi.fn(),
+      },
+      { worktree: true },
+    );
+    expect(items.map((i) => i.key)).toEqual([
+      'resume',
+      'worktree',
+      'copy-path',
+      'rename',
+      'remove',
+    ]);
   });
 });

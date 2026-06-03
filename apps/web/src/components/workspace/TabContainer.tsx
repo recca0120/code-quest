@@ -1,4 +1,3 @@
-import type { WorktreeInfo } from '@code-quest/git';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
 import { memo, useCallback, useEffect, useState } from 'react';
@@ -13,22 +12,10 @@ import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext'
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
+import { findWorktreeByCwd } from '@/utils/worktree';
 import { ChatView } from '../chat/ChatView.tsx';
 import { RightPane } from './RightPane.tsx';
 import { TabBar } from './TabBar.tsx';
-
-export function findWorktreeByCwd(
-  listing: Record<string, WorktreeInfo[] | 'not_a_repo'>,
-  cwd: string | undefined,
-): { worktree: WorktreeInfo; projectCwd: string } | null {
-  if (!cwd) return null;
-  for (const [projectCwd, entry] of Object.entries(listing)) {
-    if (!Array.isArray(entry)) continue;
-    const match = entry.find((w) => w.path === cwd && w.path !== projectCwd);
-    if (match) return { worktree: match, projectCwd };
-  }
-  return null;
-}
 
 interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode'> {
   channelId: string;

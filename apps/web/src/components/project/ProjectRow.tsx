@@ -82,10 +82,8 @@ export function ProjectRow({
             pinned={project.pinned}
             active={active}
             onSelect={() => {
-              // Clicking project row = toggle expand for git projects;
-              // also call through parent onSelect so active-project logic runs.
               onSelect();
-              if (!nonGit) toggleExpanded(project.cwd);
+              if (!nonGit) setExpanded(project.cwd, true);
             }}
             onSelectInitRepo={
               nonGit

@@ -31,14 +31,13 @@ export function BottomSheet({
           <div className="flex justify-center pt-2 pb-1">
             <div className="w-10 h-1 rounded-full bg-border" aria-hidden />
           </div>
-          {title && (
-            <div className="px-4 py-2 border-b border-border">
-              <RadixDialog.Title className="text-sm font-medium text-text">
-                {title}
-              </RadixDialog.Title>
-            </div>
-          )}
-          {!title && <RadixDialog.Title className="sr-only">bottom-sheet</RadixDialog.Title>}
+          <RadixDialog.Title
+            className={
+              title ? 'px-4 py-2 border-b border-border text-sm font-medium text-text' : 'sr-only'
+            }
+          >
+            {title ?? 'bottom-sheet'}
+          </RadixDialog.Title>
           <div className="flex flex-col py-1 overflow-y-auto max-h-[70vh]">{children}</div>
         </RadixDialog.Content>
       </RadixDialog.Portal>

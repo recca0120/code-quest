@@ -17,8 +17,10 @@ export interface ProjectMenuCallbacks {
   onCopyPath?: () => void;
 }
 
-function useItemList(callbacks: ProjectMenuCallbacks): MenuItem[] {
-  const capabilities = useContext(AppInitStateContext)?.capabilities ?? { worktree: false };
+export function buildProjectMenuItems(
+  callbacks: ProjectMenuCallbacks,
+  capabilities: { worktree: boolean },
+): MenuItem[] {
   const items: MenuItem[] = [
     { key: 'resume', label: 'Open past session…', onSelect: callbacks.onSelectResume },
   ];
@@ -47,6 +49,11 @@ function useItemList(callbacks: ProjectMenuCallbacks): MenuItem[] {
       separatorBefore: true,
     });
   return items;
+}
+
+function useItemList(callbacks: ProjectMenuCallbacks): MenuItem[] {
+  const capabilities = useContext(AppInitStateContext)?.capabilities ?? { worktree: false };
+  return buildProjectMenuItems(callbacks, capabilities);
 }
 
 interface DropdownProps extends ProjectMenuCallbacks {

@@ -72,6 +72,26 @@ TabBar SHALL 顯示於 chat area 頂部。sidebar session list 與 TabBar 共存
 
 ---
 
+### Requirement: Project row 點擊只展開，不收合
+
+點擊 Project card（非 chevron 區域）SHALL 只展開 worktree 列表，不收合。收合操作僅限 chevron 按鈕。
+
+#### Scenario: 點擊已展開的 Project 不收合
+- **WHEN** project worktree 列表已展開
+- **AND** 使用者點擊 Project card（非 chevron）
+- **THEN** worktree 列表維持展開狀態（不收合）；active project 更新
+
+#### Scenario: 點擊未展開的 Project 展開列表
+- **WHEN** project worktree 列表未展開
+- **AND** 使用者點擊 Project card
+- **THEN** worktree 列表展開；active project 更新
+
+#### Scenario: Chevron 仍可 toggle
+- **WHEN** 使用者點擊 chevron 按鈕
+- **THEN** 展開/收合狀態切換（toggle）
+
+---
+
 ### Requirement: session history 入口
 
 SessionHistoryPopover 入口保留在 sidebar worktree context menu（"Open past session…"）。
