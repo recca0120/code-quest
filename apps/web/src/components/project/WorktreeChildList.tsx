@@ -6,6 +6,7 @@ import { useNavigationActions, useNavigationState } from '@/contexts/NavigationC
 import { useProjectActions } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover.tsx';
 import { BottomSheet, BottomSheetItem } from '../ui/BottomSheet.tsx';
 import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog.tsx';
@@ -23,6 +24,7 @@ type Dialog =
   | { kind: 'remove'; wt: WorktreeInfo; activeCount: number }
   | { kind: 'rename'; wt: WorktreeInfo }
   | { kind: 'archive'; wt: WorktreeInfo; dirty: boolean }
+  | { kind: 'resume'; wt: WorktreeInfo }
   | { kind: 'create' }
   | null;
 
@@ -35,7 +37,8 @@ export function WorktreeChildList({
 }): React.JSX.Element {
   const { sessions } = useSession();
   const { setActiveProject } = useProjectActions();
-  const { requestOpenWorktree, setSelectedWorktree } = useNavigationActions();
+  const { requestOpenWorktree, setSelectedWorktree, requestActivateChannel } =
+    useNavigationActions();
   const { selectedWorktreeCwd } = useNavigationState();
   const { removeWorktree, listBranches, checkout, status, rename } = useGitActions();
   const { isDesktop } = useBreakpoint();
@@ -46,14 +49,6 @@ export function WorktreeChildList({
   const [bottomSheetWt, setBottomSheetWt] = useState<WorktreeInfo | null>(null);
 
   const closeDialog = useCallback(() => setDialog(null), []);
-
-  const selectWorktree = useCallback(
-    (pCwd: string, wCwd: string) => {
-      setActiveProject(pCwd);
-      setSelectedWorktree(pCwd, wCwd);
-    },
-    [setActiveProject, setSelectedWorktree],
-  );
 
   const openWorktreeInChat = useCallback(
     (pCwd: string, wCwd: string, forceNew = false) => {
@@ -76,7 +71,7 @@ export function WorktreeChildList({
   // Server-sourced status (changed-file counts per worktree).
   useEffect(() => {
     let cancelled = false;
-    void (async () => {
+    async function fetchStatuses() {
       const results = await Promise.all(
         worktrees.map((wt) => status(wt.path).then((res) => ({ wt, res }))),
       );
@@ -86,7 +81,8 @@ export function WorktreeChildList({
         if ('changedFilesCount' in res) updates[wt.path] = res.changedFilesCount;
       }
       setChangesByPath((prev) => ({ ...prev, ...updates }));
-    })();
+    }
+    void fetchStatuses();
     return () => {
       cancelled = true;
     };
@@ -101,23 +97,29 @@ export function WorktreeChildList({
     return m;
   }, [sessions]);
 
+  // Helper: run an action then close the BottomSheet.
+  function sheetAction(fn: () => void) {
+    return () => {
+      fn();
+      setBottomSheetWt(null);
+    };
+  }
+
   return (
     <div className="ml-5 border-l border-border pl-2">
       {worktrees.map((wt) => {
         const menuCallbacks = {
           onOpenHere: () => openWorktreeInChat(projectCwd, wt.path),
           onOpenInNewChat: () => openWorktreeInChat(projectCwd, wt.path, true),
+          onOpenPastSession: () => setDialog({ kind: 'resume', wt }),
+          onSwitchBranch: () => void handleBranchPopoverOpen(wt, true),
           onCopyPath: () => {
             void navigator.clipboard?.writeText(wt.path);
           },
           onRename: () => setDialog({ kind: 'rename', wt }),
           onArchive: () => setDialog({ kind: 'archive', wt, dirty: false }),
           onDelete: () =>
-            setDialog({
-              kind: 'remove',
-              wt,
-              activeCount: liveCountByPath.get(wt.path) ?? 0,
-            }),
+            setDialog({ kind: 'remove', wt, activeCount: liveCountByPath.get(wt.path) ?? 0 }),
         };
         return (
           <div key={wt.name}>
@@ -127,7 +129,10 @@ export function WorktreeChildList({
                 active={selectedWorktreeCwd[projectCwd] === wt.path}
                 liveSessions={liveCountByPath.get(wt.path) ?? 0}
                 changes={changesByPath[wt.path] ?? 0}
-                onSelect={() => selectWorktree(projectCwd, wt.path)}
+                onSelect={() => {
+                  setActiveProject(projectCwd);
+                  setSelectedWorktree(projectCwd, wt.path);
+                }}
                 onOpenNewChat={() => openWorktreeInChat(projectCwd, wt.path, true)}
                 wrapBranchTrigger={(badge) => (
                   <BranchPopover
@@ -209,6 +214,17 @@ export function WorktreeChildList({
       {dialog?.kind === 'create' && (
         <CreateWorktreeDialog open cwd={projectCwd} onClose={closeDialog} />
       )}
+      {dialog?.kind === 'resume' && (
+        <SessionHistoryPopover
+          cwd={dialog.wt.path}
+          onClose={closeDialog}
+          onResumed={(spawnedId, picked) => {
+            requestActivateChannel(picked.cwd ?? dialog.wt.path, spawnedId);
+            setActiveProject(projectCwd);
+            closeDialog();
+          }}
+        />
+      )}
       {bottomSheetWt && (
         <BottomSheet
           open
@@ -216,47 +232,46 @@ export function WorktreeChildList({
           onClose={() => setBottomSheetWt(null)}
         >
           <BottomSheetItem
-            onClick={() => {
-              openWorktreeInChat(projectCwd, bottomSheetWt.path, true);
-              setBottomSheetWt(null);
-            }}
+            onClick={sheetAction(() => openWorktreeInChat(projectCwd, bottomSheetWt.path, true))}
           >
             Open new chat
           </BottomSheetItem>
           <BottomSheetItem
-            onClick={() => {
-              setDialog({ kind: 'rename', wt: bottomSheetWt });
-              setBottomSheetWt(null);
-            }}
+            onClick={sheetAction(() => setDialog({ kind: 'resume', wt: bottomSheetWt }))}
+          >
+            Open past session…
+          </BottomSheetItem>
+          <BottomSheetItem
+            onClick={sheetAction(() => void handleBranchPopoverOpen(bottomSheetWt, true))}
+          >
+            Switch branch…
+          </BottomSheetItem>
+          <BottomSheetItem
+            onClick={sheetAction(() => setDialog({ kind: 'rename', wt: bottomSheetWt }))}
           >
             Rename
           </BottomSheetItem>
           <BottomSheetItem
-            onClick={() => {
-              setDialog({ kind: 'archive', wt: bottomSheetWt, dirty: false });
-              setBottomSheetWt(null);
-            }}
+            onClick={sheetAction(() =>
+              setDialog({ kind: 'archive', wt: bottomSheetWt, dirty: false }),
+            )}
           >
             Archive
           </BottomSheetItem>
           <BottomSheetItem
             variant="destructive"
-            onClick={() => {
+            onClick={sheetAction(() =>
               setDialog({
                 kind: 'remove',
                 wt: bottomSheetWt,
                 activeCount: liveCountByPath.get(bottomSheetWt.path) ?? 0,
-              });
-              setBottomSheetWt(null);
-            }}
+              }),
+            )}
           >
             Delete
           </BottomSheetItem>
           <BottomSheetItem
-            onClick={() => {
-              void navigator.clipboard?.writeText(bottomSheetWt.path);
-              setBottomSheetWt(null);
-            }}
+            onClick={sheetAction(() => void navigator.clipboard?.writeText(bottomSheetWt.path))}
           >
             Copy path
           </BottomSheetItem>

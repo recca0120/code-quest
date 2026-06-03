@@ -1,35 +1,12 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { type ComponentType, type ReactNode, useContext } from 'react';
+import { type ReactNode, useContext } from 'react';
 import { AppInitStateContext } from '@/contexts/AppInitContext';
-import { menuContentClass as MENU_CONTENT_CLASS } from '../ui/MenuContent.tsx';
-import { dangerMenuItemClass, menuItemClass } from '../ui/MenuItem.tsx';
-
-type MenuItem = {
-  key: string;
-  label: ReactNode;
-  onSelect: () => void;
-  danger?: boolean;
-  separatorBefore?: boolean;
-};
-
-type ItemProps = { onSelect: () => void; className: string; children: ReactNode };
-type SeparatorProps = { className: string };
-
-function renderItems(
-  items: MenuItem[],
-  Item: ComponentType<ItemProps>,
-  Separator: ComponentType<SeparatorProps>,
-) {
-  return items.map((item) => (
-    <div key={item.key}>
-      {item.separatorBefore && <Separator className="my-1 border-t border-border" />}
-      <Item onSelect={item.onSelect} className={item.danger ? dangerMenuItemClass : menuItemClass}>
-        {item.label}
-      </Item>
-    </div>
-  ));
-}
+import {
+  menuContentClass as MENU_CONTENT_CLASS,
+  type MenuItem,
+  renderMenuItems,
+} from '../ui/MenuContent.tsx';
 
 export interface ProjectMenuCallbacks {
   onSelectResume: () => void;
@@ -37,35 +14,31 @@ export interface ProjectMenuCallbacks {
   onSelectRename?: () => void;
   onSelectRemove?: () => void;
   onSelectInitRepo?: () => void;
+  onCopyPath?: () => void;
 }
 
-function useItemList(callbacks: ProjectMenuCallbacks) {
+function useItemList(callbacks: ProjectMenuCallbacks): MenuItem[] {
   const capabilities = useContext(AppInitStateContext)?.capabilities ?? { worktree: false };
-  const items: Array<{
-    key: string;
-    label: ReactNode;
-    onSelect: () => void;
-    danger?: boolean;
-    separatorBefore?: boolean;
-  }> = [{ key: 'resume', label: 'Resume session…', onSelect: callbacks.onSelectResume }];
-  if (capabilities.worktree && callbacks.onSelectCreateWorktree) {
+  const items: MenuItem[] = [
+    { key: 'resume', label: 'Open past session…', onSelect: callbacks.onSelectResume },
+  ];
+  if (capabilities.worktree && callbacks.onSelectCreateWorktree)
     items.push({
       key: 'worktree',
       label: 'Create Worktree…',
       onSelect: callbacks.onSelectCreateWorktree,
     });
-  }
-  if (callbacks.onSelectInitRepo) {
+  if (callbacks.onSelectInitRepo)
     items.push({
       key: 'init',
       label: 'Initialize as git repo',
       onSelect: callbacks.onSelectInitRepo,
     });
-  }
-  if (callbacks.onSelectRename) {
+  if (callbacks.onCopyPath)
+    items.push({ key: 'copy-path', label: 'Copy path', onSelect: callbacks.onCopyPath });
+  if (callbacks.onSelectRename)
     items.push({ key: 'rename', label: 'Rename…', onSelect: callbacks.onSelectRename });
-  }
-  if (callbacks.onSelectRemove) {
+  if (callbacks.onSelectRemove)
     items.push({
       key: 'remove',
       label: 'Remove…',
@@ -73,7 +46,6 @@ function useItemList(callbacks: ProjectMenuCallbacks) {
       danger: true,
       separatorBefore: true,
     });
-  }
   return items;
 }
 
@@ -93,7 +65,7 @@ export function ProjectDropdownMenu({ trigger, ...callbacks }: DropdownProps): R
           collisionPadding={8}
           className={MENU_CONTENT_CLASS}
         >
-          {renderItems(items, DropdownMenu.Item, DropdownMenu.Separator)}
+          {renderMenuItems(items, DropdownMenu.Item, DropdownMenu.Separator)}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -118,7 +90,7 @@ export function ProjectContextMenu({
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className={MENU_CONTENT_CLASS}>
-          {renderItems(items, ContextMenu.Item, ContextMenu.Separator)}
+          {renderMenuItems(items, ContextMenu.Item, ContextMenu.Separator)}
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>

@@ -48,6 +48,22 @@ export function WorktreeRow({
 }: WorktreeRowProps): React.JSX.Element {
   const label = worktree.branch ?? worktree.name;
 
+  const moreBtn =
+    onMoreActions || wrapMoreTrigger ? (
+      <button
+        type="button"
+        aria-label="More actions"
+        title="More"
+        onClick={(e) => {
+          e.stopPropagation();
+          onMoreActions?.();
+        }}
+        className="relative z-10 shrink-0 px-1 text-muted hover:text-text lg:opacity-0 lg:group-hover:opacity-100"
+      >
+        ⋯
+      </button>
+    ) : null;
+
   const branchBadge = (
     <button
       type="button"
@@ -56,13 +72,13 @@ export function WorktreeRow({
         e.stopPropagation();
         onBranchClick?.();
       }}
-      className="relative z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-hover-tint hover:border-accent hover:bg-tint-10 cursor-pointer font-mono text-xs text-muted"
-      title="Switch branch"
+      className="relative z-10 inline-flex items-center gap-1 min-w-0 hover:text-text cursor-pointer font-mono text-xs text-muted"
+      title={label}
     >
-      <span aria-hidden="true" className="text-subtle text-xs">
+      <span aria-hidden="true" className="text-subtle text-xs shrink-0">
         ⎇
       </span>
-      <span>{label}</span>
+      <span className="truncate">{label}</span>
     </button>
   );
 
@@ -115,29 +131,12 @@ export function WorktreeRow({
             e.stopPropagation();
             onOpenNewChat();
           }}
-          className="relative z-10 shrink-0 px-1 text-muted hover:text-text opacity-0 group-hover:opacity-100"
+          className="relative z-10 shrink-0 px-1 text-muted hover:text-text lg:opacity-0 lg:group-hover:opacity-100"
         >
           +
         </button>
       )}
-      {(onMoreActions || wrapMoreTrigger) &&
-        (() => {
-          const moreBtn = (
-            <button
-              type="button"
-              aria-label="More actions"
-              title="More"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMoreActions?.();
-              }}
-              className="relative z-10 shrink-0 px-1 text-muted hover:text-text opacity-0 group-hover:opacity-100"
-            >
-              ⋯
-            </button>
-          );
-          return wrapMoreTrigger ? wrapMoreTrigger(moreBtn) : moreBtn;
-        })()}
+      {moreBtn && (wrapMoreTrigger ? wrapMoreTrigger(moreBtn) : moreBtn)}
     </div>
   );
 }

@@ -9,6 +9,12 @@ const worktree = {
   branch: 'feat/auth',
 };
 
+const longNameWorktree = {
+  name: 'worktree-agent-adf24b45165face45',
+  path: '/repo/.claude/worktrees/worktree-agent-adf24b45165face45',
+  branch: 'worktree-agent-adf24b45165face45',
+};
+
 describe('WorktreeRow', () => {
   it('renders branch name', () => {
     render(
@@ -66,6 +72,34 @@ describe('WorktreeRow', () => {
       />,
     );
     expect(screen.queryByLabelText('Open new chat')).not.toBeInTheDocument();
+  });
+
+  it('branch button has tooltip showing full name', () => {
+    render(
+      <WorktreeRow
+        worktree={longNameWorktree}
+        active={false}
+        liveSessions={0}
+        changes={0}
+        onSelect={() => {}}
+      />,
+    );
+    const btn = screen.getByLabelText(/switch branch/i);
+    expect(btn).toHaveAttribute('title', 'worktree-agent-adf24b45165face45');
+  });
+
+  it('branch button tooltip shows full name even for short names', () => {
+    render(
+      <WorktreeRow
+        worktree={worktree}
+        active={false}
+        liveSessions={0}
+        changes={0}
+        onSelect={() => {}}
+      />,
+    );
+    const btn = screen.getByLabelText(/switch branch/i);
+    expect(btn).toHaveAttribute('title', 'feat/auth');
   });
 
   it('calls onSelect when row area clicked', async () => {

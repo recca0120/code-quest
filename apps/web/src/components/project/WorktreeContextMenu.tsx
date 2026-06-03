@@ -1,55 +1,35 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import type { ComponentType, ReactNode } from 'react';
-import { menuContentClass as MENU_CONTENT_CLASS } from '../ui/MenuContent.tsx';
-import { dangerMenuItemClass, menuItemClass } from '../ui/MenuItem.tsx';
+import type { ReactNode } from 'react';
+import {
+  menuContentClass as MENU_CONTENT_CLASS,
+  type MenuItem,
+  renderMenuItems,
+} from '../ui/MenuContent.tsx';
 
 interface WorktreeMenuCallbacks {
   onOpenHere?: () => void;
   onOpenInNewChat: () => void;
+  onOpenPastSession?: () => void;
+  onSwitchBranch?: () => void;
   onCopyPath: () => void;
   onRename?: () => void;
   onArchive?: () => void;
   onDelete: () => void;
 }
 
-type MenuItem = {
-  key: string;
-  label: string;
-  onSelect: () => void;
-  danger?: boolean;
-  separatorBefore?: boolean;
-};
-
-type ItemProps = { onSelect: () => void; className: string; children: ReactNode };
-type SeparatorProps = { className: string };
-
-function renderItems(
-  items: MenuItem[],
-  Item: ComponentType<ItemProps>,
-  Separator: ComponentType<SeparatorProps>,
-) {
-  return items.map((item) => (
-    <div key={item.key}>
-      {item.separatorBefore && <Separator className="my-1 border-t border-border" />}
-      <Item onSelect={item.onSelect} className={item.danger ? dangerMenuItemClass : menuItemClass}>
-        {item.label}
-      </Item>
-    </div>
-  ));
-}
-
-function buildItems(cb: WorktreeMenuCallbacks) {
-  const items: Array<{
-    key: string;
-    label: string;
-    onSelect: () => void;
-    danger?: boolean;
-    separatorBefore?: boolean;
-  }> = [];
-  if (cb.onOpenHere)
-    items.push({ key: 'open', label: 'Open here (switch)', onSelect: cb.onOpenHere });
+function buildItems(cb: WorktreeMenuCallbacks): MenuItem[] {
+  const items: MenuItem[] = [];
+  if (cb.onOpenHere) items.push({ key: 'open', label: 'Open here', onSelect: cb.onOpenHere });
   items.push({ key: 'new-chat', label: 'Open in new chat', onSelect: cb.onOpenInNewChat });
+  if (cb.onOpenPastSession)
+    items.push({
+      key: 'past-session',
+      label: 'Open past session…',
+      onSelect: cb.onOpenPastSession,
+    });
+  if (cb.onSwitchBranch)
+    items.push({ key: 'switch-branch', label: 'Switch branch…', onSelect: cb.onSwitchBranch });
   items.push({ key: 'copy', label: 'Copy path', onSelect: cb.onCopyPath });
   if (cb.onRename) items.push({ key: 'rename', label: 'Rename…', onSelect: cb.onRename });
   if (cb.onArchive) items.push({ key: 'archive', label: 'Archive', onSelect: cb.onArchive });
@@ -88,7 +68,7 @@ export function WorktreeDropdownMenu({
           collisionPadding={8}
           className={MENU_CONTENT_CLASS}
         >
-          {renderItems(items, DropdownMenu.Item, DropdownMenu.Separator)}
+          {renderMenuItems(items, DropdownMenu.Item, DropdownMenu.Separator)}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -106,7 +86,7 @@ export function WorktreeContextMenu({ children, ...callbacks }: ContextProps): R
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className={MENU_CONTENT_CLASS}>
-          {renderItems(items, ContextMenu.Item, ContextMenu.Separator)}
+          {renderMenuItems(items, ContextMenu.Item, ContextMenu.Separator)}
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>

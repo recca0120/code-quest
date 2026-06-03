@@ -1,7 +1,5 @@
 import type { Project } from '@/contexts/ProjectContext';
-import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { GroupHeader } from '../ui/GroupHeader.tsx';
-import { SectionHeader } from '../ui/SectionHeader.tsx';
 import { ProjectRow } from './ProjectRow.tsx';
 import { splitPinnedRecent } from './project-utils.ts';
 
@@ -21,7 +19,18 @@ export function ProjectTree({
 
   return (
     <div className="flex flex-col h-full">
-      <SectionHeader>Projects</SectionHeader>
+      <h3 className="flex items-center justify-between px-4 pt-2 pb-1 text-xs font-mono font-bold tracking-widest uppercase text-dim">
+        Projects
+        <button
+          type="button"
+          aria-label="Add Project"
+          onClick={onAdd}
+          className="text-subtle hover:text-text font-normal text-base leading-none"
+          title="Add Project"
+        >
+          +
+        </button>
+      </h3>
       <div className="flex-1 overflow-auto px-2">
         {pinned.length > 0 && <GroupHeader>Pinned</GroupHeader>}
         {pinned.map((p) => (
@@ -42,9 +51,6 @@ export function ProjectTree({
           />
         ))}
       </div>
-      <GhostAddButton onClick={onAdd} className="mx-2 my-2 px-3 py-1.5 text-center">
-        + Add Project
-      </GhostAddButton>
     </div>
   );
 }

@@ -48,12 +48,6 @@ export function WorkspaceLayout(): React.JSX.Element {
   );
 }
 
-function formatAddProjectError(error: string, path: string | undefined, cwd: string): string {
-  if (error === 'path_not_found') return `Path not found: ${path ?? cwd}`;
-  if (error === 'path_not_directory') return `Not a directory: ${path ?? cwd}`;
-  return `Could not add project (${error})`;
-}
-
 function WorkspaceLayoutInner() {
   const { openPalette, registerActions } = useCommandPaletteActions();
   useHotkeys('mod+k', () => openPalette(), NO_FORM);
@@ -76,7 +70,14 @@ function WorkspaceLayoutInner() {
   async function handleAddProject(cwd: string) {
     const res = await addProject(cwd);
     if ('error' in res) {
-      toast.error(formatAddProjectError(res.error, res.path, cwd));
+      const p = res.path ?? cwd;
+      const msg =
+        res.error === 'path_not_found'
+          ? `Path not found: ${p}`
+          : res.error === 'path_not_directory'
+            ? `Not a directory: ${p}`
+            : `Could not add project (${res.error})`;
+      toast.error(msg);
       return;
     }
     setDialogOpen(false);

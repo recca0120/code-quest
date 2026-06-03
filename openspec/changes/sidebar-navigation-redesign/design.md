@@ -83,4 +83,48 @@
 
 ## Open Questions
 
-- Session history popover（`☰` 按鈕）要放哪裡？目前在 TabBar，廢除後可移至左側 sidebar 底部或 project `[⋯]` 內。
+~~Session history popover（`☰` 按鈕）要放哪裡？~~ → 已決定：移至 ChatBreadcrumb 左側 actions 區。
+
+## Post-implementation Polish（第二輪）
+
+以下為實作後觀察到的 UX 問題，列為後續修正範圍。
+
+### A. Worktree 名稱截斷
+
+**問題**：Worktree 名稱過長（如 `worktree-perf-commission-batch`、UUID 尾碼 `worktree-agent-adf24b45165face45`）導致換行，視覺混亂。
+
+**決定**：在 `WorktreeRow` 中使用「中間截斷 + tooltip」策略。
+- `midTruncate(str, maxLen = 22)` — 保留前 14 字元 + `…` + 後 6 字元
+- 短名（≤ maxLen）不截斷
+- `title={wt.name}` 提供完整名稱 tooltip
+
+### B. 移除 wt badge
+
+**問題**：`ProjectCard` 顯示 `{n}wt`（worktree 數量 badge），但左側已展開顯示所有 worktree，數量一眼可見，badge 為冗餘資訊。
+
+**決定**：移除 `worktreeCount` prop 及相關渲染。
+
+### C. Project context menu — 補 "Copy path"
+
+**問題**：Worktree context menu 有 "Copy path"，Project 沒有，不對稱。
+
+**決定**：Project context menu 加入 "Copy path"（`navigator.clipboard.writeText(cwd)`）。
+
+### D. 文字修正
+
+| 原文 | 修正 | 理由 |
+|------|------|------|
+| "Resume session…" | "Open past session…" | 行為是列出歷史 session 供選擇，不是直接恢復 |
+| "Open here (switch)" | "Open here" | "(switch)" 說明多餘，使用者已知這是切換行為 |
+
+### E. Worktree context menu — 加 "Switch branch…"
+
+**問題**：切換分支目前只能靠點 branch badge 觸發 BranchPopover，badge 小且不明顯，可發現性低。
+
+**決定**：Worktree context menu（Dropdown + BottomSheet）加入 "Switch branch…" 項目，觸發同一個 BranchPopover。
+
+### F. Archive vs Delete 語意說明
+
+**問題**：Archive 和 Delete 差異對使用者不透明（Archive = keep branch + remove directory；Delete = force remove）。
+
+**決定**：在 `ArchiveWorktreeConfirmDialog` 和 `RemoveWorktreeConfirmDialog` 的說明文字中明確標示差異。menu item 本身名稱不變。

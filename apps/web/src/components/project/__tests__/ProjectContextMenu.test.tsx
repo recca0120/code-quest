@@ -26,11 +26,11 @@ async function open() {
 }
 
 describe('ProjectContextMenu', () => {
-  it('renders the "Resume session…" item; clicking calls onSelectResume', async () => {
+  it('renders the "open past session…" item; clicking calls onSelectResume', async () => {
     const onSelectResume = vi.fn();
     render(<ProjectDropdownMenu trigger={TRIGGER} onSelectResume={onSelectResume} />);
     await open();
-    const item = await screen.findByRole('menuitem', { name: /resume session/i });
+    const item = await screen.findByRole('menuitem', { name: /open past session/i });
     await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
     expect(onSelectResume).toHaveBeenCalledTimes(1);
   });
@@ -39,7 +39,7 @@ describe('ProjectContextMenu', () => {
     it('hides Rename when onSelectRename is not provided', async () => {
       render(<ProjectDropdownMenu trigger={TRIGGER} onSelectResume={() => {}} />);
       await open();
-      await screen.findByRole('menuitem', { name: /resume session/i });
+      await screen.findByRole('menuitem', { name: /open past session/i });
       expect(screen.queryByRole('menuitem', { name: /rename/i })).not.toBeInTheDocument();
     });
 
@@ -84,7 +84,7 @@ describe('ProjectContextMenu', () => {
         />,
       );
       await open();
-      await screen.findByRole('menuitem', { name: /resume session/i });
+      await screen.findByRole('menuitem', { name: /open past session/i });
       expect(screen.queryByRole('menuitem', { name: /Create Worktree/i })).not.toBeInTheDocument();
     });
 
@@ -95,7 +95,7 @@ describe('ProjectContextMenu', () => {
         </WithWorktreeCapability>,
       );
       await open();
-      await screen.findByRole('menuitem', { name: /resume session/i });
+      await screen.findByRole('menuitem', { name: /open past session/i });
       expect(screen.queryByRole('menuitem', { name: /Create Worktree/i })).not.toBeInTheDocument();
     });
 

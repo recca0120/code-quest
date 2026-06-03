@@ -220,7 +220,7 @@ describe('ProjectTree', () => {
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(screen.getByRole('button', { name: /more actions/i }));
       // Menu opens but no Initialize option
-      await screen.findByRole('menuitem', { name: /resume session/i });
+      await screen.findByRole('menuitem', { name: /open past session/i });
       expect(screen.queryByRole('menuitem', { name: /initialize as git repo/i })).toBeNull();
     });
 
@@ -357,9 +357,9 @@ describe('ProjectTree', () => {
     });
   });
 
-  it('renders "+ Add Project" button (same as ProjectList)', () => {
+  it('"Add Project" button is in the section header (always visible, not at bottom)', () => {
     const { Wrapper } = makeWrapper();
-    const { container } = render(
+    render(
       <Wrapper>
         <ProjectTree
           projects={[]}
@@ -369,7 +369,8 @@ describe('ProjectTree', () => {
         />
       </Wrapper>,
     );
-    const btn = within(container).getByRole('button', { name: /add project/i });
-    expect(btn.textContent).toBe('+ Add Project');
+    const header = screen.getByRole('heading', { name: /projects/i });
+    const btn = within(header).getByRole('button', { name: /add project/i });
+    expect(btn).toBeInTheDocument();
   });
 });

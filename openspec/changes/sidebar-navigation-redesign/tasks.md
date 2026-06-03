@@ -51,3 +51,37 @@
 
 - [x] 10.1 左側 sidebar 底部（或 ProjectCard `[⋯]` 內）加入 "Session history" 入口，觸發原 `SessionHistoryPopover`
 - [x] 10.2 撰寫測試：點擊入口顯示 SessionHistoryPopover
+
+---
+
+## 11. Worktree 名稱截斷（Post-implementation Polish A）
+
+- [x] 11.1 `apps/web/src/utils/mid-truncate.ts` 實作 `midTruncate(str, maxLen = 22): string`：短名不截斷，長名取前 14 + `…` + 後 6
+- [x] 11.2 撰寫 `apps/web/src/utils/__tests__/mid-truncate.test.ts`：邊界條件（短名、恰好等長、長名、Unicode）
+- [x] 11.3 `WorktreeRow.tsx` 名稱 span 改用 `midTruncate(wt.name)`，加 `title={wt.name}`
+
+## 12. 移除 wt badge（Post-implementation Polish B）
+
+- [x] 12.1 `ProjectCard.tsx` 移除 `worktreeCount` prop 及 `{worktreeCount}wt` badge render
+- [x] 12.2 `ProjectRow.tsx` 移除 worktreeCount 傳遞
+- [x] 12.3 更新相關測試：移除 wt badge 的 assertion
+
+## 13. Project context menu 補 "Copy path"（Post-implementation Polish C）
+
+- [x] 13.1 `ProjectContextMenu.tsx` 的 `ProjectMenuCallbacks` 加入 `onCopyPath?: () => void`，`useItemList` 加入 "Copy path" 項目（在 Rename 前）
+- [x] 13.2 `ProjectCard.tsx` 傳入 `onCopyPath: () => navigator.clipboard?.writeText(cwd)`
+- [x] 13.3 撰寫測試：Project context menu 顯示 "Copy path"
+
+## 14. 文字修正（Post-implementation Polish D）
+
+- [x] 14.1 `ProjectContextMenu.tsx` "Resume session…" 改為 "Open past session…"
+- [x] 14.2 `WorktreeContextMenu.tsx` "Open here (switch)" 改為 "Open here"
+- [x] 14.3 更新相關測試中對應的文字 assertion
+
+## 15. Worktree context menu 加 "Switch branch…"（Post-implementation Polish E）
+
+- [x] 15.1 `WorktreeMenuCallbacks` 加入 `onSwitchBranch?: () => void`
+- [x] 15.2 `buildItems()` 在 "Open in new chat" 之後加入 "Switch branch…" 項目（條件：`onSwitchBranch` 存在）
+- [x] 15.3 `WorktreeChildList.tsx` 傳入 `onSwitchBranch: () => void handleBranchPopoverOpen(wt, true)`（復用現有 BranchPopover 邏輯）
+- [x] 15.4 `WorktreeChildList.tsx` BottomSheet 也加入 "Switch branch…" 項目
+- [x] 15.5 撰寫測試：context menu / BottomSheet 顯示 "Switch branch…"

@@ -4,16 +4,15 @@ import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useSession } from '@/contexts/SessionContext';
 import { StatusDot } from '../ui/StatusDot.tsx';
 
-function sessionDotProps(state: string): {
-  color: 'accent' | 'success' | 'danger' | 'muted';
-  pulse?: boolean;
-} {
-  if (state === 'busy' || state === 'processing' || state === 'connecting')
-    return { color: 'accent', pulse: true };
-  if (state === 'idle') return { color: 'success' };
-  if (state === 'disconnected') return { color: 'danger' };
-  return { color: 'muted' };
-}
+type DotProps = { color: 'accent' | 'success' | 'danger' | 'muted'; pulse?: boolean };
+const DOT_BY_STATE: Record<string, DotProps> = {
+  busy: { color: 'accent', pulse: true },
+  processing: { color: 'accent', pulse: true },
+  connecting: { color: 'accent', pulse: true },
+  idle: { color: 'success' },
+  disconnected: { color: 'danger' },
+};
+const DEFAULT_DOT: DotProps = { color: 'muted' };
 
 interface WorktreeSessionListProps {
   /** Path of the worktree this list is shown under. */
@@ -55,7 +54,7 @@ export function WorktreeSessionList({
   return (
     <div className="ml-3 border-l border-border pl-2 flex flex-col">
       {worktreeSessions.map((s) => {
-        const { color, pulse } = sessionDotProps(s.state);
+        const { color, pulse } = DOT_BY_STATE[s.state] ?? DEFAULT_DOT;
         const label = s.title ?? s.channelId.slice(0, 8);
         return (
           <div

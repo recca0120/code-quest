@@ -81,7 +81,6 @@ export function ProjectRow({
             cwd={project.cwd}
             pinned={project.pinned}
             active={active}
-            worktreeCount={isGit(entry) ? entry.length : undefined}
             onSelect={() => {
               // Clicking project row = toggle expand for git projects;
               // also call through parent onSelect so active-project logic runs.
