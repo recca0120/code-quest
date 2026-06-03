@@ -54,6 +54,18 @@
 
 ---
 
+## 16. TabBar 還原 + live session badge 移除
+
+- [ ] 16.1 復原 `apps/web/src/components/workspace/TabBar.tsx`（從 main 取回）
+- [ ] 16.2 復原 `apps/web/src/components/workspace/__tests__/TabBar.test.tsx`（從 main 取回）
+- [ ] 16.3 `TabContainer.tsx` 在 `Tabs.Root` 內 `<div className="flex flex-1">` 之前加回 `<TabBar>` render
+- [ ] 16.4 驗證 sidebar session list 點擊後 TabBar active tab 正確切換
+- [ ] 16.5 `WorktreeRow.tsx` 移除 `liveSessions` prop 及對應的 Badge render
+- [ ] 16.6 `WorktreeChildList.tsx` 移除 `liveCountByPath` 及傳給 `WorktreeRow` 的 `liveSessions`
+- [ ] 16.7 更新所有相關測試
+
+---
+
 ## 11. Worktree 名稱截斷（Post-implementation Polish A）
 
 - [x] 11.1 `apps/web/src/utils/mid-truncate.ts` 實作 `midTruncate(str, maxLen = 22): string`：短名不截斷，長名取前 14 + `…` + 後 6

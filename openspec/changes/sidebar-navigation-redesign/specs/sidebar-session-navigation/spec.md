@@ -20,14 +20,14 @@
 
 ### Requirement: Session row 作為 tab switcher
 
-點擊 Session row SHALL 切換 active session（等同原 TabBar 切換 tab），不重新 mount session 的 React 子樹。
+點擊 Session row SHALL 切換 active session（等同 TabBar 切換 tab），不重新 mount session 的 React 子樹。點擊後 TabBar 上對應的 tab 應變為 active。
 
 #### Scenario: 點擊 session row 切換 active
 - **WHEN** 使用者點擊非 active 的 session row
-- **THEN** chat area 切換至該 session，左側 session row 顯示 active highlight
+- **THEN** chat area 切換至該 session；TabBar 上對應 tab 變為 active highlight
 
 #### Scenario: Active session row highlight
-- **WHEN** session 為 active
+- **WHEN** session 為 active（channelId 與 TabBar active tab 相同）
 - **THEN** session row 有視覺 highlight（bg-accent/10 或等效）
 
 #### Scenario: Status dot
@@ -58,20 +58,20 @@ Worktree row SHALL 提供 `[+]` 和 `[⋯]` inline 按鈕，取代右鍵 context
 
 ---
 
-### Requirement: TabBar 廢除
+### Requirement: TabBar 保留（sidebar 與 TabBar 共存）
 
-系統 SHALL NOT 渲染 TabBar component。
+TabBar SHALL 顯示於 chat area 頂部。sidebar session list 與 TabBar 共存，兩者都可切換 active session。
 
-#### Scenario: TabBar 不存在於 DOM
+#### Scenario: TabBar 顯示於 chat 上方
 - **WHEN** workspace 渲染且有 open sessions
-- **THEN** DOM 中不存在 `role="tablist"` 且 `aria-label="tab-bar"` 的元素
+- **THEN** TabBar 顯示在 chat content 上方，列出所有 open sessions
+
+#### Scenario: Worktree row 不顯示 live session badge
+- **WHEN** worktree row 渲染
+- **THEN** WorktreeRow 不顯示 live session 數量 badge（已由 sidebar session list 呈現，badge 為冗餘資訊）
 
 ---
 
 ### Requirement: session history 入口
 
-原 TabBar 上的 session history（`☰`）入口 SHALL 移至左側 sidebar。
-
-#### Scenario: 開啟 session history
-- **WHEN** 使用者點擊 sidebar 內的 session history 按鈕
-- **THEN** 顯示 SessionHistoryPopover（行為與原 ☰ 相同）
+SessionHistoryPopover 入口保留在 sidebar worktree context menu（"Open past session…"）。

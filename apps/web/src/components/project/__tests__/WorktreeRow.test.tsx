@@ -17,15 +17,7 @@ const longNameWorktree = {
 
 describe('WorktreeRow', () => {
   it('renders branch name', () => {
-    render(
-      <WorktreeRow
-        worktree={worktree}
-        active={false}
-        liveSessions={0}
-        changes={0}
-        onSelect={() => {}}
-      />,
-    );
+    render(<WorktreeRow worktree={worktree} active={false} changes={0} onSelect={() => {}} />);
     expect(screen.getByText('feat/auth')).toBeInTheDocument();
   });
 
@@ -35,7 +27,6 @@ describe('WorktreeRow', () => {
       <WorktreeRow
         worktree={worktree}
         active={false}
-        liveSessions={0}
         changes={0}
         onSelect={() => {}}
         onMoreActions={onMoreActions}
@@ -51,7 +42,6 @@ describe('WorktreeRow', () => {
       <WorktreeRow
         worktree={worktree}
         active={false}
-        liveSessions={0}
         changes={0}
         onSelect={() => {}}
         onOpenNewChat={onOpenNewChat}
@@ -62,57 +52,27 @@ describe('WorktreeRow', () => {
   });
 
   it('does not render [+] button when onOpenNewChat not provided', () => {
-    render(
-      <WorktreeRow
-        worktree={worktree}
-        active={false}
-        liveSessions={0}
-        changes={0}
-        onSelect={() => {}}
-      />,
-    );
+    render(<WorktreeRow worktree={worktree} active={false} changes={0} onSelect={() => {}} />);
     expect(screen.queryByLabelText('Open new chat')).not.toBeInTheDocument();
   });
 
   it('branch button has tooltip showing full name', () => {
     render(
-      <WorktreeRow
-        worktree={longNameWorktree}
-        active={false}
-        liveSessions={0}
-        changes={0}
-        onSelect={() => {}}
-      />,
+      <WorktreeRow worktree={longNameWorktree} active={false} changes={0} onSelect={() => {}} />,
     );
     const btn = screen.getByLabelText(/switch branch/i);
     expect(btn).toHaveAttribute('title', 'worktree-agent-adf24b45165face45');
   });
 
   it('branch button tooltip shows full name even for short names', () => {
-    render(
-      <WorktreeRow
-        worktree={worktree}
-        active={false}
-        liveSessions={0}
-        changes={0}
-        onSelect={() => {}}
-      />,
-    );
+    render(<WorktreeRow worktree={worktree} active={false} changes={0} onSelect={() => {}} />);
     const btn = screen.getByLabelText(/switch branch/i);
     expect(btn).toHaveAttribute('title', 'feat/auth');
   });
 
   it('calls onSelect when row area clicked', async () => {
     const onSelect = vi.fn();
-    render(
-      <WorktreeRow
-        worktree={worktree}
-        active={false}
-        liveSessions={0}
-        changes={0}
-        onSelect={onSelect}
-      />,
-    );
+    render(<WorktreeRow worktree={worktree} active={false} changes={0} onSelect={onSelect} />);
     await userEvent.setup().click(screen.getByLabelText('Open worktree feat/auth'));
     expect(onSelect).toHaveBeenCalled();
   });

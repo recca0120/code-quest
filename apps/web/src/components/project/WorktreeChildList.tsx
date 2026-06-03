@@ -99,6 +99,7 @@ export function WorktreeChildList({
     }
     return m;
   }, [sessions]);
+  // liveCountByPath is still needed for onDelete (activeCount in RemoveWorktreeConfirmDialog)
 
   return (
     <div className="ml-5 border-l border-border pl-2">
@@ -120,7 +121,6 @@ export function WorktreeChildList({
               <WorktreeRow
                 worktree={wt}
                 active={selectedWorktreeCwd[projectCwd] === wt.path}
-                liveSessions={liveCountByPath.get(wt.path) ?? 0}
                 changes={changesByPath[wt.path] ?? 0}
                 onSelect={() => selectWorktree(projectCwd, wt.path)}
                 onOpenNewChat={() => openWorktreeInChat(projectCwd, wt.path, true)}

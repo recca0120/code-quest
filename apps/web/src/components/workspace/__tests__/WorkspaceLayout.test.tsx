@@ -38,14 +38,36 @@ describe('WorkspaceLayout — with project', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('TabBar is not rendered — tab switching is via sidebar session rows', async () => {
+  it('TabBar is rendered at top of chat area', async () => {
     await setup();
-    expect(screen.queryByRole('tablist', { name: 'tab-bar' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tablist', { name: 'tab-bar' })).toBeInTheDocument();
   });
 
   it('sidebar shows project list by default', async () => {
     await setup();
     expect(screen.getByRole('heading', { name: /Projects/i })).toBeInTheDocument();
+  });
+
+  it('TabBar shows multiple tabs and clicking a non-active tab switches active session', async () => {
+    const result = await renderWithWorkspace();
+    const project = await result.addProject();
+    await project.launchSession();
+    await project.launchSession();
+
+    const tabBar = screen.getByRole('tablist', { name: 'tab-bar' });
+    const allTabs = within(tabBar).getAllByRole('tab');
+    expect(allTabs).toHaveLength(2);
+
+    // Last launched is active — click the first tab
+    const activeTab = within(tabBar).getByRole('tab', { selected: true });
+    const inactiveTab = allTabs.find((t) => t !== activeTab)!;
+
+    await act(async () => {
+      inactiveTab.click();
+    });
+
+    expect(inactiveTab).toHaveAttribute('aria-selected', 'true');
+    expect(activeTab).not.toHaveAttribute('aria-selected', 'true');
   });
 
   it('shows empty state when no sessions open', async () => {

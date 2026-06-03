@@ -1,6 +1,5 @@
 import type { WorktreeInfo } from '@code-quest/git';
 import type { ReactElement, ReactNode } from 'react';
-import { Badge } from '@/components/ui/Badge';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
@@ -8,7 +7,6 @@ import { pluralize } from '@/utils/pluralize';
 interface WorktreeRowProps {
   worktree: WorktreeInfo;
   active: boolean;
-  liveSessions: number;
   /** Count of uncommitted changes (from `git status`). >0 triggers the warning dot. */
   changes: number;
   onSelect: () => void;
@@ -34,7 +32,6 @@ interface WorktreeRowProps {
 export function WorktreeRow({
   worktree,
   active,
-  liveSessions,
   changes,
   onSelect,
   onOpenNewChat,
@@ -97,17 +94,6 @@ export function WorktreeRow({
       <span className="relative z-10 flex flex-1 items-center gap-1.5 min-w-0">
         {wrapBranchTrigger ? wrapBranchTrigger(branchBadge) : branchBadge}
       </span>
-      {liveSessions > 0 && (
-        <Badge
-          variant="success"
-          role="status"
-          aria-label={pluralize(liveSessions, 'active session')}
-          className="relative z-10 gap-1 bg-success/20"
-        >
-          <StatusDot color="success" pulse />
-          {liveSessions}
-        </Badge>
-      )}
       {changes > 0 && (
         <StatusDot
           color="warning"
