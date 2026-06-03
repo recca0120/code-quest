@@ -7,13 +7,13 @@ import { useProjectActions } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover.tsx';
-import { BottomSheet, BottomSheetItem } from '../ui/BottomSheet.tsx';
 import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog.tsx';
 import { BranchPopover } from './BranchPopover.tsx';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog.tsx';
 import { RemoveWorktreeConfirmDialog } from './RemoveWorktreeConfirmDialog.tsx';
 import { RenameWorktreeDialog } from './RenameWorktreeDialog.tsx';
+import { WorktreeBottomSheet } from './WorktreeBottomSheet.tsx';
 import { WorktreeContextMenu, WorktreeDropdownMenu } from './WorktreeContextMenu.tsx';
 import { WorktreeRow } from './WorktreeRow.tsx';
 import { WorktreeSessionList } from './WorktreeSessionList.tsx';
@@ -48,7 +48,7 @@ export function WorktreeChildList({
   const [changesByPath, setChangesByPath] = useState<Record<string, number>>({});
   const [bottomSheetWt, setBottomSheetWt] = useState<WorktreeInfo | null>(null);
 
-  const closeDialog = useCallback(() => setDialog(null), []);
+  const closeDialog = () => setDialog(null);
 
   const openWorktreeInChat = useCallback(
     (pCwd: string, wCwd: string, forceNew = false) => {
@@ -59,7 +59,12 @@ export function WorktreeChildList({
     [setActiveProject, setSelectedWorktree, requestOpenWorktree],
   );
 
-  async function handleBranchPopoverOpen(wt: WorktreeInfo, open: boolean) {
+  const selectWorktree = (pCwd: string, wCwd: string) => {
+    setActiveProject(pCwd);
+    setSelectedWorktree(pCwd, wCwd);
+  };
+
+  async function fetchAndOpenBranchPopover(wt: WorktreeInfo, open: boolean) {
     if (!open) {
       setBranchPop(null);
       return;
@@ -68,7 +73,6 @@ export function WorktreeChildList({
     setBranchPop({ wt, branches: Array.isArray(res) ? res : [] });
   }
 
-  // Server-sourced status (changed-file counts per worktree).
   useEffect(() => {
     let cancelled = false;
     async function fetchStatuses() {
@@ -88,7 +92,6 @@ export function WorktreeChildList({
     };
   }, [worktrees, status]);
 
-  // Live session count per worktree path (for the badge on WorktreeRow).
   const liveCountByPath = useMemo(() => {
     const m = new Map<string, number>();
     for (const s of sessions) {
@@ -97,14 +100,6 @@ export function WorktreeChildList({
     return m;
   }, [sessions]);
 
-  // Helper: run an action then close the BottomSheet.
-  function sheetAction(fn: () => void) {
-    return () => {
-      fn();
-      setBottomSheetWt(null);
-    };
-  }
-
   return (
     <div className="ml-5 border-l border-border pl-2">
       {worktrees.map((wt) => {
@@ -112,10 +107,8 @@ export function WorktreeChildList({
           onOpenHere: () => openWorktreeInChat(projectCwd, wt.path),
           onOpenInNewChat: () => openWorktreeInChat(projectCwd, wt.path, true),
           onOpenPastSession: () => setDialog({ kind: 'resume', wt }),
-          onSwitchBranch: () => void handleBranchPopoverOpen(wt, true),
-          onCopyPath: () => {
-            void navigator.clipboard?.writeText(wt.path);
-          },
+          onSwitchBranch: () => void fetchAndOpenBranchPopover(wt, true),
+          onCopyPath: () => void navigator.clipboard?.writeText(wt.path),
           onRename: () => setDialog({ kind: 'rename', wt }),
           onArchive: () => setDialog({ kind: 'archive', wt, dirty: false }),
           onDelete: () =>
@@ -129,21 +122,16 @@ export function WorktreeChildList({
                 active={selectedWorktreeCwd[projectCwd] === wt.path}
                 liveSessions={liveCountByPath.get(wt.path) ?? 0}
                 changes={changesByPath[wt.path] ?? 0}
-                onSelect={() => {
-                  setActiveProject(projectCwd);
-                  setSelectedWorktree(projectCwd, wt.path);
-                }}
+                onSelect={() => selectWorktree(projectCwd, wt.path)}
                 onOpenNewChat={() => openWorktreeInChat(projectCwd, wt.path, true)}
                 wrapBranchTrigger={(badge) => (
                   <BranchPopover
                     trigger={badge}
                     open={branchPop?.wt.path === wt.path}
-                    onOpenChange={(o) => void handleBranchPopoverOpen(wt, o)}
+                    onOpenChange={(o) => void fetchAndOpenBranchPopover(wt, o)}
                     branches={branchPop?.wt.path === wt.path ? branchPop.branches : []}
                     current={wt.branch ?? null}
-                    onSelect={(branch) => {
-                      void checkout(wt.path, branch);
-                    }}
+                    onSelect={(branch) => void checkout(wt.path, branch)}
                     onCreateBranch={() => setDialog({ kind: 'create' })}
                   />
                 )}
@@ -199,9 +187,7 @@ export function WorktreeChildList({
           open
           branch={dialog.wt.branch ?? dialog.wt.name}
           activeSessionCount={dialog.activeCount}
-          onConfirm={() => {
-            void removeWorktree(projectCwd, dialog.wt.name, { force: true });
-          }}
+          onConfirm={() => void removeWorktree(projectCwd, dialog.wt.name, { force: true })}
           onClose={closeDialog}
         />
       )}
@@ -226,56 +212,24 @@ export function WorktreeChildList({
         />
       )}
       {bottomSheetWt && (
-        <BottomSheet
-          open
-          title={bottomSheetWt.branch ?? bottomSheetWt.name}
+        <WorktreeBottomSheet
+          wt={bottomSheetWt}
           onClose={() => setBottomSheetWt(null)}
-        >
-          <BottomSheetItem
-            onClick={sheetAction(() => openWorktreeInChat(projectCwd, bottomSheetWt.path, true))}
-          >
-            Open new chat
-          </BottomSheetItem>
-          <BottomSheetItem
-            onClick={sheetAction(() => setDialog({ kind: 'resume', wt: bottomSheetWt }))}
-          >
-            Open past session…
-          </BottomSheetItem>
-          <BottomSheetItem
-            onClick={sheetAction(() => void handleBranchPopoverOpen(bottomSheetWt, true))}
-          >
-            Switch branch…
-          </BottomSheetItem>
-          <BottomSheetItem
-            onClick={sheetAction(() => setDialog({ kind: 'rename', wt: bottomSheetWt }))}
-          >
-            Rename
-          </BottomSheetItem>
-          <BottomSheetItem
-            onClick={sheetAction(() =>
-              setDialog({ kind: 'archive', wt: bottomSheetWt, dirty: false }),
-            )}
-          >
-            Archive
-          </BottomSheetItem>
-          <BottomSheetItem
-            variant="destructive"
-            onClick={sheetAction(() =>
-              setDialog({
-                kind: 'remove',
-                wt: bottomSheetWt,
-                activeCount: liveCountByPath.get(bottomSheetWt.path) ?? 0,
-              }),
-            )}
-          >
-            Delete
-          </BottomSheetItem>
-          <BottomSheetItem
-            onClick={sheetAction(() => void navigator.clipboard?.writeText(bottomSheetWt.path))}
-          >
-            Copy path
-          </BottomSheetItem>
-        </BottomSheet>
+          onOpenHere={() => openWorktreeInChat(projectCwd, bottomSheetWt.path)}
+          onOpenInNewChat={() => openWorktreeInChat(projectCwd, bottomSheetWt.path, true)}
+          onOpenPastSession={() => setDialog({ kind: 'resume', wt: bottomSheetWt })}
+          onSwitchBranch={() => void fetchAndOpenBranchPopover(bottomSheetWt, true)}
+          onCopyPath={() => void navigator.clipboard?.writeText(bottomSheetWt.path)}
+          onRename={() => setDialog({ kind: 'rename', wt: bottomSheetWt })}
+          onArchive={() => setDialog({ kind: 'archive', wt: bottomSheetWt, dirty: false })}
+          onDelete={() =>
+            setDialog({
+              kind: 'remove',
+              wt: bottomSheetWt,
+              activeCount: liveCountByPath.get(bottomSheetWt.path) ?? 0,
+            })
+          }
+        />
       )}
     </div>
   );

@@ -67,29 +67,41 @@ function WorkspaceLayoutInner() {
   const { isMobile, isDesktop } = useBreakpoint();
   const [leftOpen, setLeftOpen] = useState(() => isDesktop);
 
+  const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
+    path_not_found: (p) => `Path not found: ${p}`,
+    path_not_directory: (p) => `Not a directory: ${p}`,
+  };
+
   async function handleAddProject(cwd: string) {
     const res = await addProject(cwd);
     if ('error' in res) {
       const p = res.path ?? cwd;
-      const msg =
-        res.error === 'path_not_found'
-          ? `Path not found: ${p}`
-          : res.error === 'path_not_directory'
-            ? `Not a directory: ${p}`
-            : `Could not add project (${res.error})`;
+      const msg = ADD_PROJECT_ERRORS[res.error]?.(p) ?? `Could not add project (${res.error})`;
       toast.error(msg);
       return;
     }
     setDialogOpen(false);
   }
 
-  function handleActivateSession(channelId: string) {
-    const s = sessionsMap.get(channelId);
-    if (s) setActiveProject(s.projectRoot);
-  }
+  const handleActivateSession = useCallback(
+    (channelId: string) => {
+      const s = sessionsMap.get(channelId);
+      if (s) setActiveProject(s.projectRoot);
+    },
+    [sessionsMap, setActiveProject],
+  );
 
   const onToggleLeft = useCallback(() => setLeftOpen((v) => !v), []);
   const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
+  const sessionsByProject = useMemo(() => {
+    const m = new Map<string, typeof sessions>();
+    for (const s of sessions) {
+      const list = m.get(s.projectRoot) ?? [];
+      list.push(s);
+      m.set(s.projectRoot, list);
+    }
+    return m;
+  }, [sessions]);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -151,7 +163,7 @@ function WorkspaceLayoutInner() {
                   )}
                 >
                   <TabProvider
-                    sessions={sessions.filter((s) => s.projectRoot === project.cwd)}
+                    sessions={sessionsByProject.get(project.cwd) ?? []}
                     cwd={project.cwd}
                     selectedCwd={selectedWorktreeCwd[project.cwd] ?? undefined}
                   >

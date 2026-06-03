@@ -7,7 +7,7 @@ import {
   renderMenuItems,
 } from '../ui/MenuContent.tsx';
 
-interface WorktreeMenuCallbacks {
+export interface WorktreeMenuCallbacks {
   onOpenHere?: () => void;
   onOpenInNewChat: () => void;
   onOpenPastSession?: () => void;
@@ -18,7 +18,7 @@ interface WorktreeMenuCallbacks {
   onDelete: () => void;
 }
 
-function buildItems(cb: WorktreeMenuCallbacks): MenuItem[] {
+export function buildWorktreeMenuItems(cb: WorktreeMenuCallbacks): MenuItem[] {
   const items: MenuItem[] = [];
   if (cb.onOpenHere) items.push({ key: 'open', label: 'Open here', onSelect: cb.onOpenHere });
   items.push({ key: 'new-chat', label: 'Open in new chat', onSelect: cb.onOpenInNewChat });
@@ -45,21 +45,12 @@ function buildItems(cb: WorktreeMenuCallbacks): MenuItem[] {
 
 interface DropdownProps extends WorktreeMenuCallbacks {
   trigger: ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  defaultOpen?: boolean;
 }
 
-export function WorktreeDropdownMenu({
-  trigger,
-  open,
-  onOpenChange,
-  defaultOpen,
-  ...callbacks
-}: DropdownProps): React.JSX.Element {
-  const items = buildItems(callbacks);
+export function WorktreeDropdownMenu({ trigger, ...callbacks }: DropdownProps): React.JSX.Element {
+  const items = buildWorktreeMenuItems(callbacks);
   return (
-    <DropdownMenu.Root open={open} onOpenChange={onOpenChange} defaultOpen={defaultOpen}>
+    <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
@@ -80,7 +71,7 @@ interface ContextProps extends WorktreeMenuCallbacks {
 }
 
 export function WorktreeContextMenu({ children, ...callbacks }: ContextProps): React.JSX.Element {
-  const items = buildItems(callbacks);
+  const items = buildWorktreeMenuItems(callbacks);
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>

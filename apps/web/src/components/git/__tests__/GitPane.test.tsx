@@ -140,7 +140,8 @@ describe('GitPane', () => {
     expect(screen.getByText('src/new.ts')).toBeInTheDocument();
   });
 
-  it('commit button label includes the changed-files count', async () => {
+  it('commit button label includes the changed-files count after expanding composer', async () => {
+    const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
     summoner.git()!.setBranch('main');
     summoner.git()!.setClean(false);
@@ -150,6 +151,7 @@ describe('GitPane', () => {
     ]);
     render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
     await screen.findAllByText(/main/).then((els) => els[0]);
+    await user.click(screen.getByRole('button', { name: /commit message/i }));
     expect(screen.getByRole('button', { name: 'Commit 2' })).toBeInTheDocument();
   });
 
@@ -189,6 +191,47 @@ describe('GitPane', () => {
       await screen.findByRole('dialog');
 
       expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
+    });
+  });
+
+  describe('per-file discard in file list', () => {
+    it('shows discard button on hover for a modified file', async () => {
+      const user = userEvent.setup();
+      const { summoner, Wrapper } = setup();
+      summoner.git()!.setBranch('main');
+      summoner.git()!.setClean(false);
+      summoner.git()!.setChangedFiles([{ status: 'M', file: 'src/foo.ts' }]);
+      render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+      await screen.findByText('src/foo.ts');
+      await user.hover(screen.getByText('src/foo.ts'));
+      expect(screen.getByRole('button', { name: /discard src\/foo\.ts/i })).toBeInTheDocument();
+    });
+
+    it('does not show discard button for untracked (??) files', async () => {
+      const user = userEvent.setup();
+      const { summoner, Wrapper } = setup();
+      summoner.git()!.setBranch('main');
+      summoner.git()!.setClean(false);
+      summoner.git()!.setChangedFiles([{ status: '??', file: 'src/new.ts' }]);
+      render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+      await screen.findByText('src/new.ts');
+      await user.hover(screen.getByText('src/new.ts'));
+      expect(
+        screen.queryByRole('button', { name: /discard src\/new\.ts/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('per-file discard: single click calls discardFile immediately (no confirm)', async () => {
+      const user = userEvent.setup();
+      const { summoner, Wrapper } = setup();
+      summoner.git()!.setBranch('main');
+      summoner.git()!.setClean(false);
+      summoner.git()!.setChangedFiles([{ status: 'M', file: 'src/foo.ts' }]);
+      render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+      await screen.findByText('src/foo.ts');
+      await user.hover(screen.getByText('src/foo.ts'));
+      await user.click(screen.getByRole('button', { name: /discard src\/foo\.ts/i }));
+      expect(summoner.git()!.discardedFiles).toEqual(['src/foo.ts']);
     });
   });
 

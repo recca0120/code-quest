@@ -8,12 +8,14 @@ import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
 import { ChatView } from '../chat/ChatView.tsx';
 import { RightPane } from './RightPane.tsx';
 
 interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode'> {
   channelId: string;
+  projectName: string;
   rightOpen: boolean;
   onToggleLeft?: () => void;
   onToggleRight: () => void;
@@ -23,6 +25,7 @@ function TabContent({
   channelId,
   cwd,
   title,
+  projectName,
   mode,
   rightOpen,
   onToggleLeft,
@@ -42,6 +45,7 @@ function TabContent({
     >
       <ChatView
         title={title}
+        projectName={projectName}
         onToggleLeft={onToggleLeft}
         onToggleRight={cwd ? onToggleRight : undefined}
         rightPane={
@@ -66,6 +70,7 @@ export const TabContainer: React.FC<{ projectCwd: string; onToggleLeft?: () => v
 
     const isThisActive = projectCwd === activeProjectCwd;
     const activeTabCwd = activeTabId ? (tabs[activeTabId]?.cwd ?? null) : null;
+    const projectName = basename(projectCwd);
 
     useEffect(() => {
       if (!isThisActive) return;
@@ -115,6 +120,7 @@ export const TabContainer: React.FC<{ projectCwd: string; onToggleLeft?: () => v
                 channelId={id}
                 cwd={meta.cwd}
                 title={meta.title}
+                projectName={projectName}
                 mode={meta.mode}
                 rightOpen={rightOpen}
                 onToggleLeft={onToggleLeft}

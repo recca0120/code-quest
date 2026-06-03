@@ -1,5 +1,4 @@
-import type { SessionStateSummary } from '@code-quest/schemas';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useSession } from '@/contexts/SessionContext';
 import { StatusDot } from '../ui/StatusDot.tsx';
@@ -33,21 +32,12 @@ export function WorktreeSessionList({
     [sessions, worktreePath, projectCwd],
   );
 
-  const handleSelect = useCallback(
-    (s: SessionStateSummary) => {
-      // Use projectRoot (= TabProvider's cwd), not s.cwd (= worktree path).
-      requestActivateChannel(s.projectRoot, s.channelId);
-    },
-    [requestActivateChannel],
-  );
+  // Use projectRoot (= TabProvider's cwd), not s.cwd (= worktree path).
+  const handleSelect = (s: { projectRoot: string; channelId: string }) =>
+    requestActivateChannel(s.projectRoot, s.channelId);
 
-  const handleClose = useCallback(
-    (channelId: string) => {
-      closeSession(channelId);
-      // TabProvider's sessions-diff effect handles removeTab automatically.
-    },
-    [closeSession],
-  );
+  // TabProvider's sessions-diff effect handles removeTab automatically.
+  const handleClose = (channelId: string) => closeSession(channelId);
 
   if (worktreeSessions.length === 0) return null;
 

@@ -1,11 +1,11 @@
 import type { WorktreeInfo } from '@code-quest/git';
-import type { HTMLAttributes, ReactElement, ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
 
-interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
+interface WorktreeRowProps {
   worktree: WorktreeInfo;
   active: boolean;
   liveSessions: number;
@@ -14,14 +14,13 @@ interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
   onSelect: () => void;
   /** Called when the [+] "Open new chat" button is clicked. */
   onOpenNewChat?: () => void;
-  /** Called when the branch badge is clicked (keyboard or mouse). */
-  onBranchClick?: () => void;
   /** Called when the ⋯ "More actions" button is clicked (mobile: opens BottomSheet). */
   onMoreActions?: () => void;
+  className?: string;
   /**
    * Parent-supplied wrapper that renders the branch badge as a Radix
    * trigger (e.g. `Popover.Trigger asChild`). When omitted, the badge is
-   * a plain element that calls `onBranchClick` on activation.
+   * a plain element.
    */
   wrapBranchTrigger?: (child: ReactElement) => ReactNode;
   /**
@@ -39,12 +38,10 @@ export function WorktreeRow({
   changes,
   onSelect,
   onOpenNewChat,
-  onBranchClick,
   onMoreActions,
   wrapBranchTrigger,
   wrapMoreTrigger,
   className,
-  ...rest
 }: WorktreeRowProps): React.JSX.Element {
   const label = worktree.branch ?? worktree.name;
 
@@ -70,7 +67,6 @@ export function WorktreeRow({
       aria-label={`Switch branch (currently ${label})`}
       onClick={(e) => {
         e.stopPropagation();
-        onBranchClick?.();
       }}
       className="relative z-10 inline-flex items-center gap-1 min-w-0 hover:text-text cursor-pointer font-mono text-xs text-muted"
       title={label}
@@ -84,7 +80,6 @@ export function WorktreeRow({
 
   return (
     <div
-      {...rest}
       className={cn(
         'group relative flex items-center gap-1.5 px-2 py-1 text-xs rounded border-l-2',
         active

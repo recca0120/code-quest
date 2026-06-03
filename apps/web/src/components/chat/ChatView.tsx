@@ -6,7 +6,6 @@ import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useTabActions } from '@/contexts/TabContext';
 import { useChannelStore } from '@/stores/ChannelStoreContext';
-import { basename } from '@/utils/basename';
 import { NO_FORM } from '@/utils/hotkey-options';
 import { resumeRoute } from '@/utils/resume-route';
 import { ChannelOverlays } from './ChannelOverlays.tsx';
@@ -19,6 +18,7 @@ import { WorktreeBanner } from './WorktreeBanner.tsx';
 
 interface ChatViewProps {
   title?: string;
+  projectName?: string;
   onToggleLeft?: () => void;
   onToggleRight?: () => void;
   rightPane?: React.ReactNode;
@@ -26,6 +26,7 @@ interface ChatViewProps {
 
 export function ChatView({
   title,
+  projectName,
   onToggleLeft,
   onToggleRight,
   rightPane,
@@ -34,7 +35,6 @@ export function ChatView({
   const messages = useChannelStore((s) => s.messages);
   const { worktree } = useChannelConfig();
   const { activeProjectCwd } = useProjectState();
-  const projectName = activeProjectCwd ? basename(activeProjectCwd) : undefined;
   const { focusTextarea } = useChannelComposeActions();
   useHotkeys('/', focusTextarea, NO_FORM);
   const { setActiveProject } = useProjectActions();

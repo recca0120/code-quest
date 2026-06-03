@@ -1,4 +1,4 @@
-import type { GitAddResult, GitCommitResult, GitFileChange, GitPushResult } from '@code-quest/git';
+import type { GitFileChange } from '@code-quest/git';
 import type { ClientToServerEvents } from '@code-quest/schemas';
 import {
   EVENTS,
@@ -56,26 +56,21 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   const { socket } = useSocket();
   const { discardFile, fetch, pull, refetchGitStatus } = useGitActions();
   const data = useGitStatus(cwd);
-  function refetch() {
-    return refetchGitStatus(cwd);
-  }
+  const refetch = () => refetchGitStatus(cwd);
   const [diffFile, setDiffFile] = useState<DiffFile | null>(null);
+
   async function stageAll() {
-    const result: GitAddResult = await rpcParsed(socket, gitAddResultSchema, EVENTS.git.add, {
-      cwd,
-    });
+    const result = await rpcParsed(socket, gitAddResultSchema, EVENTS.git.add, { cwd });
     if ('error' in result) toast.error(`Stage failed: ${result.error}`);
     else toast.success('Staged all changes');
     await refetch();
   }
 
   async function commit(message: string) {
-    const result: GitCommitResult = await rpcParsed(
-      socket,
-      gitCommitResultSchema,
-      EVENTS.git.commit,
-      { cwd, message },
-    );
+    const result = await rpcParsed(socket, gitCommitResultSchema, EVENTS.git.commit, {
+      cwd,
+      message,
+    });
     if ('error' in result) {
       if (result.error === 'nothing-to-commit') {
         toast('Nothing to commit. Stage first.');
@@ -111,9 +106,7 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   }
 
   async function push() {
-    const result: GitPushResult = await rpcParsed(socket, gitPushResultSchema, EVENTS.git.push, {
-      cwd,
-    });
+    const result = await rpcParsed(socket, gitPushResultSchema, EVENTS.git.push, { cwd });
     if ('error' in result) {
       if (result.error === 'no-upstream') toast('No upstream — set one with git push -u');
       else if (result.error === 'rejected') toast('Push rejected (non-FF). Pull first.');
@@ -147,6 +140,16 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
     );
   }
 
+  async function handleDiscard(filePath: string, onSuccess: () => void) {
+    const result = await discardFile(cwd, filePath);
+    if ('error' in result) {
+      toast.error(`Discard failed: ${result.error}`);
+      return;
+    }
+    toast.success(`Discarded ${filePath}`);
+    onSuccess();
+  }
+
   // ── Early returns (must follow ALL hook calls above) ──
   if (data && 'notARepo' in data) {
     return (
@@ -173,8 +176,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
     );
   }
 
-  // After the early returns above, `data` is the success branch — drop the
-  // dead defensive narrowing.
   const status = data;
   const hasChanges = !status.isClean;
   const changedCount = status.changedFiles.length;
@@ -188,7 +189,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   return (
     <section className="flex flex-col h-full" aria-label="git-pane">
       <div className="flex-1 min-h-0 overflow-auto">
-        {/* Changes section — flows naturally; pane scrolls as one. */}
         <section className="px-3 py-2 border-b border-border text-sm">
           <div className="flex items-center justify-between mb-1">
             <h4 className="section-label m-0">Changes ({changedCount})</h4>
@@ -203,13 +203,16 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
               </ActionButton>
             )}
           </div>
-          <ChangedFiles files={status.changedFiles} onPick={openDiff} />
+          <ChangedFiles
+            files={status.changedFiles}
+            onPick={openDiff}
+            onDiscard={(filePath) => void handleDiscard(filePath, refetch)}
+          />
           {hasChanges && (
             <CommitComposer onCommit={(msg) => void commit(msg)} count={changedCount} />
           )}
         </section>
 
-        {/* Actions section — sits right under Changes content, not pinned. */}
         <section className="px-3 py-2">
           <h4 className="section-label m-0 mb-1">Actions</h4>
           <div className="flex gap-2 text-xs">
@@ -244,47 +247,68 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
           file={diffFile}
           onClose={() => setDiffFile(null)}
           canDiscard={canDiscardDiffFile}
-          onDiscard={async () => {
-            const result = await discardFile(cwd, diffFile.path);
-            if ('error' in result) toast.error(`Discard failed: ${result.error}`);
-            else {
-              toast.success(`Discarded ${diffFile.path}`);
-              setDiffFile(null);
-            }
-          }}
+          onDiscard={() => void handleDiscard(diffFile.path, () => setDiffFile(null))}
         />
       )}
     </section>
   );
 }
 
+function FileRow({
+  file,
+  onPick,
+  onDiscard,
+}: {
+  file: GitFileChange;
+  onPick: (path: string, status: string) => void;
+  onDiscard?: (path: string) => void;
+}) {
+  const { mark, cls } = statusFor(file.status);
+  const canDiscard = file.status !== '??';
+  return (
+    <li className="group relative flex items-center">
+      <button
+        type="button"
+        className="flex flex-1 items-center gap-2 min-w-0 text-left px-1 py-0.5 hover:bg-hover-tint rounded"
+        onClick={() => onPick(file.file, file.status)}
+      >
+        <span className={cn('font-mono w-4 text-xs shrink-0', cls)}>{mark}</span>
+        <span className="font-mono text-xs truncate">{file.file}</span>
+      </button>
+      {onDiscard && canDiscard && (
+        <button
+          type="button"
+          aria-label={`Discard ${file.file}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDiscard(file.file);
+          }}
+          className="shrink-0 px-1 text-subtle hover:text-danger opacity-0 group-hover:opacity-100"
+        >
+          ×
+        </button>
+      )}
+    </li>
+  );
+}
+
 function ChangedFiles({
   files,
   onPick,
+  onDiscard,
 }: {
   files: GitFileChange[];
   onPick: (path: string, status: string) => void;
+  onDiscard?: (path: string) => void;
 }) {
   if (files.length === 0) {
     return <div className="text-muted text-xs px-1">No changes</div>;
   }
   return (
     <ul className="flex flex-col">
-      {files.map((f) => {
-        const { mark, cls } = statusFor(f.status);
-        return (
-          <li key={f.file}>
-            <button
-              type="button"
-              className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-hover-tint rounded"
-              onClick={() => onPick(f.file, f.status)}
-            >
-              <span className={cn('font-mono w-4 text-xs', cls)}>{mark}</span>
-              <span className="font-mono text-xs truncate">{f.file}</span>
-            </button>
-          </li>
-        );
-      })}
+      {files.map((f) => (
+        <FileRow key={f.file} file={f} onPick={onPick} onDiscard={onDiscard} />
+      ))}
     </ul>
   );
 }

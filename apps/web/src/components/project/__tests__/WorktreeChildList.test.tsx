@@ -66,7 +66,7 @@ describe('WorktreeChildList', () => {
     );
     const moreBtn = screen.getByLabelText('More actions');
     await userEvent.setup({ pointerEventsCheck: 0 }).click(moreBtn);
-    expect(await screen.findByText('Open new chat')).toBeInTheDocument();
+    expect(await screen.findByText('Open in new chat')).toBeInTheDocument();
     expect(screen.getByText('Archive')).toBeInTheDocument();
   });
 

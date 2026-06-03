@@ -10,7 +10,7 @@ interface CommitComposerProps {
 }
 
 export function CommitComposer({ onCommit, count }: CommitComposerProps): React.JSX.Element {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const subjectRef = useRef<HTMLInputElement>(null);
@@ -62,6 +62,9 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps): React.
         placeholder="Body (optional)"
         rows={3}
         onChange={(e) => setBody(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit();
+        }}
         className="px-2 py-1 rounded border border-border bg-surface text-xs font-mono resize-none"
       />
       <div className="flex justify-end gap-2 mt-1">
