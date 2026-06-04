@@ -16,6 +16,12 @@ interface WorktreeRowProps {
   onMoreActions?: () => void;
   className?: string;
   /**
+   * Parent-supplied wrapper that renders the branch badge as a Radix
+   * trigger (e.g. `Popover.Trigger asChild`). When omitted, the badge is
+   * a plain element.
+   */
+  wrapBranchTrigger?: (child: ReactElement) => ReactNode;
+  /**
    * Parent-supplied wrapper that renders the ⋯ button as a Radix
    * trigger (e.g. `DropdownMenu.Trigger asChild`). Desktop only.
    * When omitted, the button calls `onMoreActions` directly.
@@ -30,6 +36,7 @@ export function WorktreeRow({
   onSelect,
   onOpenNewChat,
   onMoreActions,
+  wrapBranchTrigger,
   wrapMoreTrigger,
   className,
 }: WorktreeRowProps): React.JSX.Element {
@@ -52,15 +59,20 @@ export function WorktreeRow({
     ) : null;
 
   const branchBadge = (
-    <span
-      className="relative z-10 inline-flex items-center gap-1 min-w-0 font-mono text-xs text-muted"
+    <button
+      type="button"
+      aria-label={`Switch branch (currently ${label})`}
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+      className="relative z-10 inline-flex items-center gap-1 min-w-0 hover:text-text cursor-pointer font-mono text-xs text-muted"
       title={label}
     >
       <span aria-hidden="true" className="text-subtle text-xs shrink-0">
         ⎇
       </span>
       <span className="truncate">{label}</span>
-    </span>
+    </button>
   );
 
   return (
@@ -79,7 +91,9 @@ export function WorktreeRow({
         onClick={onSelect}
         className="absolute inset-0"
       />
-      <span className="relative z-10 flex flex-1 items-center gap-1.5 min-w-0">{branchBadge}</span>
+      <span className="relative z-10 flex flex-1 items-center gap-1.5 min-w-0">
+        {wrapBranchTrigger ? wrapBranchTrigger(branchBadge) : branchBadge}
+      </span>
       {changes > 0 && (
         <StatusDot
           color="warning"

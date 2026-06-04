@@ -10,6 +10,7 @@ import { copyToClipboard } from '@/utils/clipboard';
 import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover.tsx';
 import { GhostAddButton } from '../ui/GhostAddButton.tsx';
 import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog.tsx';
+import { BranchPopover } from './BranchPopover.tsx';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog.tsx';
 import { RemoveWorktreeConfirmDialog } from './RemoveWorktreeConfirmDialog.tsx';
 import { RenameWorktreeDialog } from './RenameWorktreeDialog.tsx';
@@ -39,10 +40,11 @@ export function WorktreeChildList({
   const { requestOpenWorktree, setSelectedWorktree, requestActivateChannel, recordLastWorktree } =
     useNavigationActions();
   const { lastTabByWorktree, selectedWorktreeCwd } = useNavigationState();
-  const { removeWorktree, status, rename } = useGitActions();
+  const { removeWorktree, listBranches, checkout, status, rename } = useGitActions();
   const { isDesktop } = useBreakpoint();
 
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [branchPop, setBranchPop] = useState<{ wt: WorktreeInfo; branches: string[] } | null>(null);
   const [changesByPath, setChangesByPath] = useState<Record<string, number>>({});
   const [bottomSheetWt, setBottomSheetWt] = useState<WorktreeInfo | null>(null);
 
@@ -61,6 +63,15 @@ export function WorktreeChildList({
     const lastTab = lastTabByWorktree[wCwd];
     if (lastTab) requestActivateChannel(pCwd, lastTab);
   };
+
+  async function fetchAndOpenBranchPopover(wt: WorktreeInfo, open: boolean) {
+    if (!open) {
+      setBranchPop(null);
+      return;
+    }
+    const res = await listBranches(projectCwd);
+    setBranchPop({ wt, branches: Array.isArray(res) ? res : [] });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -95,6 +106,7 @@ export function WorktreeChildList({
       onOpenHere: () => openWorktreeInChat(projectCwd, wt.path),
       onOpenInNewChat: () => openWorktreeInChat(projectCwd, wt.path, true),
       onOpenPastSession: () => setDialog({ kind: 'resume', wt }),
+      onSwitchBranch: () => void fetchAndOpenBranchPopover(wt, true),
       onCopyPath: () => void copyToClipboard(wt.path),
       onRename: () => setDialog({ kind: 'rename', wt }),
       onArchive: () => setDialog({ kind: 'archive', wt, dirty: false }),
@@ -116,6 +128,17 @@ export function WorktreeChildList({
                 changes={changesByPath[wt.path] ?? 0}
                 onSelect={() => selectWorktree(projectCwd, wt.path)}
                 onOpenNewChat={() => openWorktreeInChat(projectCwd, wt.path, true)}
+                wrapBranchTrigger={(badge) => (
+                  <BranchPopover
+                    trigger={badge}
+                    open={branchPop?.wt.path === wt.path}
+                    onOpenChange={(o) => void fetchAndOpenBranchPopover(wt, o)}
+                    branches={branchPop?.wt.path === wt.path ? branchPop.branches : []}
+                    current={wt.branch ?? null}
+                    onSelect={(branch) => void checkout(wt.path, branch)}
+                    onCreateBranch={() => setDialog({ kind: 'create' })}
+                  />
+                )}
                 wrapMoreTrigger={
                   isDesktop
                     ? (btn) => <WorktreeDropdownMenu trigger={btn} {...menuCallbacks} />

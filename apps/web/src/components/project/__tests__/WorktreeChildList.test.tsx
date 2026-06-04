@@ -107,7 +107,7 @@ describe('WorktreeChildList', () => {
     expect(await screen.findByText('Open past session…')).toBeInTheDocument();
   });
 
-  it('does NOT show "Switch branch…" in desktop dropdown (worktrees are branch-locked)', async () => {
+  it('shows "Switch branch…" in desktop dropdown', async () => {
     setupMatchMedia(1280);
     const { Wrapper } = makeWrapper();
     render(
@@ -116,8 +116,7 @@ describe('WorktreeChildList', () => {
       </Wrapper>,
     );
     await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByLabelText('More actions'));
-    await screen.findByRole('menuitem', { name: /open in new chat/i });
-    expect(screen.queryByRole('menuitem', { name: /switch branch/i })).not.toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: /switch branch/i })).toBeInTheDocument();
   });
 
   describe('navigation memory', () => {
@@ -187,7 +186,7 @@ describe('WorktreeChildList', () => {
     });
   });
 
-  it('does NOT show "Switch branch…" in mobile BottomSheet (worktrees are branch-locked)', async () => {
+  it('shows "Switch branch…" in mobile BottomSheet', async () => {
     setupMatchMedia(375);
     const { Wrapper } = makeWrapper();
     render(
@@ -196,7 +195,6 @@ describe('WorktreeChildList', () => {
       </Wrapper>,
     );
     await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByLabelText('More actions'));
-    await screen.findByText('Open in new chat');
-    expect(screen.queryByText('Switch branch…')).not.toBeInTheDocument();
+    expect(await screen.findByText('Switch branch…')).toBeInTheDocument();
   });
 });
