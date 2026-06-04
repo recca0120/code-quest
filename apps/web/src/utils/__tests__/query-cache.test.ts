@@ -117,6 +117,21 @@ describe('createQueryCache', () => {
     expect(store.hasSubscribers('/a')).toBe(false);
   });
 
+  describe('evict', () => {
+    it('removes the cached entry for the given key', () => {
+      const cache = createQueryCache({ fetch: async () => 'val', idPrefix: 'test' });
+      cache.set('key1', 'value');
+      expect(cache.get('key1')).toBe('value');
+      cache.evict('key1');
+      expect(cache.get('key1')).toBeUndefined();
+    });
+
+    it('is a no-op for a key that does not exist', () => {
+      const cache = createQueryCache({ fetch: async () => 'val', idPrefix: 'test' });
+      expect(() => cache.evict('nonexistent')).not.toThrow();
+    });
+  });
+
   it('subscribe logs error with key context when initial fetch rejects', async () => {
     const { store, fetchFn } = createStore();
     const error = new Error('network fail');

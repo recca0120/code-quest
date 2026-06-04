@@ -13,6 +13,7 @@ interface QueryCache<R> {
   refetchIfSubscribed: (key: string) => Promise<void>;
   hasSubscribers: (key: string) => boolean;
   setFetch: (fn: (key: string) => Promise<R>) => void;
+  evict: (key: string) => void;
 }
 
 export function createQueryCache<R>({
@@ -51,6 +52,9 @@ export function createQueryCache<R>({
     hasSubscribers: (key) => emitter.hasSubscribers(key),
     setFetch: (fn) => {
       currentFetch = fn;
+    },
+    evict: (key) => {
+      cache.delete(key);
     },
   };
 }
