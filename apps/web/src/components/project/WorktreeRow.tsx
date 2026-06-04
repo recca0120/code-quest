@@ -4,6 +4,35 @@ import { StatusDot } from '@/components/ui/StatusDot';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
 
+type RowActionButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  'aria-label': string;
+};
+function RowActionButton({
+  'aria-label': ariaLabel,
+  onClick,
+  children,
+  className,
+  ...rest
+}: RowActionButtonProps) {
+  return (
+    <button
+      {...rest}
+      type="button"
+      aria-label={ariaLabel}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.(e);
+      }}
+      className={cn(
+        'relative z-10 shrink-0 px-1 text-muted hover:text-text lg:opacity-0 lg:group-hover:opacity-100',
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 interface WorktreeRowProps {
   worktree: WorktreeInfo;
   active: boolean;
@@ -44,18 +73,15 @@ export function WorktreeRow({
 
   const moreBtn =
     onMoreActions || wrapMoreTrigger ? (
-      <button
-        type="button"
+      <RowActionButton
         aria-label="More actions"
         title="More"
-        onClick={(e) => {
-          e.stopPropagation();
+        onClick={() => {
           onMoreActions?.();
         }}
-        className="relative z-10 shrink-0 px-1 text-muted hover:text-text lg:opacity-0 lg:group-hover:opacity-100"
       >
         ⋯
-      </button>
+      </RowActionButton>
     ) : null;
 
   const branchBadge = (
@@ -104,18 +130,15 @@ export function WorktreeRow({
         />
       )}
       {onOpenNewChat && (
-        <button
-          type="button"
+        <RowActionButton
           aria-label="Open new chat"
           title="Open new chat"
-          onClick={(e) => {
-            e.stopPropagation();
+          onClick={() => {
             onOpenNewChat();
           }}
-          className="relative z-10 shrink-0 px-1 text-muted hover:text-text lg:opacity-0 lg:group-hover:opacity-100"
         >
           +
-        </button>
+        </RowActionButton>
       )}
       {moreBtn && (wrapMoreTrigger ? wrapMoreTrigger(moreBtn) : moreBtn)}
     </div>

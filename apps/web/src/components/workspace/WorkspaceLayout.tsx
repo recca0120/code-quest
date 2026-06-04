@@ -1,5 +1,6 @@
+import type { SessionStateSummary } from '@code-quest/schemas';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { DrawerAside } from '@/components/ui/DrawerAside';
@@ -24,7 +25,7 @@ const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
   path_not_directory: (p) => `Not a directory: ${p}`,
 };
 
-const EMPTY_SESSIONS: never[] = [];
+const EMPTY_SESSIONS: SessionStateSummary[] = [];
 
 function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   const isBusy = sessions.some((s) => s.state === 'busy');
@@ -85,15 +86,14 @@ function WorkspaceLayoutInner() {
     setDialogOpen(false);
   }
 
-  const handleActivateSession = useCallback(
-    (channelId: string) => {
-      const s = sessionsMap.get(channelId);
-      if (s) setActiveProject(s.projectRoot);
-    },
-    [sessionsMap, setActiveProject],
-  );
+  function handleActivateSession(channelId: string) {
+    const s = sessionsMap.get(channelId);
+    if (s) setActiveProject(s.projectRoot);
+  }
 
-  const onToggleLeft = useCallback(() => setLeftOpen((v) => !v), []);
+  function onToggleLeft() {
+    setLeftOpen((v) => !v);
+  }
   const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
   const sessionsByProject = useMemo(() => {
     const m = new Map<string, typeof sessions>();

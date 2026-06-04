@@ -1,5 +1,5 @@
 import type { WorktreeInfo } from '@code-quest/git';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useGitActions } from '@/contexts/GitContext';
 import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
@@ -92,15 +92,6 @@ export function WorktreeChildList({
     };
   }, [worktrees, status]);
 
-  const liveCountByPath = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const s of sessions) {
-      if (s.cwd && s.state !== 'exited') m.set(s.cwd, (m.get(s.cwd) ?? 0) + 1);
-    }
-    return m;
-  }, [sessions]);
-  // liveCountByPath is still needed for onDelete (activeCount in RemoveWorktreeConfirmDialog)
-
   function buildCallbacks(wt: WorktreeInfo) {
     return {
       onOpenHere: () => openWorktreeInChat(projectCwd, wt.path),
@@ -111,7 +102,11 @@ export function WorktreeChildList({
       onRename: () => setDialog({ kind: 'rename', wt }),
       onArchive: () => setDialog({ kind: 'archive', wt, dirty: false }),
       onDelete: () =>
-        setDialog({ kind: 'remove', wt, activeCount: liveCountByPath.get(wt.path) ?? 0 }),
+        setDialog({
+          kind: 'remove',
+          wt,
+          activeCount: sessions.filter((s) => s.cwd === wt.path && s.state !== 'exited').length,
+        }),
     };
   }
 
@@ -120,100 +115,50 @@ export function WorktreeChildList({
       {worktrees.map((wt) => {
         const menuCallbacks = buildCallbacks(wt);
         return (
-          <div key={wt.name}>
-            <WorktreeContextMenu {...menuCallbacks}>
-              <WorktreeRow
-                worktree={wt}
-                active={selectedWorktreeCwd[projectCwd] === wt.path}
-                changes={changesByPath[wt.path] ?? 0}
-                onSelect={() => selectWorktree(projectCwd, wt.path)}
-                onOpenNewChat={() => openWorktreeInChat(projectCwd, wt.path, true)}
-                wrapBranchTrigger={(badge) => (
-                  <BranchPopover
-                    trigger={badge}
-                    open={branchPop?.wt.path === wt.path}
-                    onOpenChange={(o) => void fetchAndOpenBranchPopover(wt, o)}
-                    branches={branchPop?.wt.path === wt.path ? branchPop.branches : []}
-                    current={wt.branch ?? null}
-                    onSelect={(branch) => void checkout(wt.path, branch)}
-                    onCreateBranch={() => setDialog({ kind: 'create' })}
-                  />
-                )}
-                wrapMoreTrigger={
-                  isDesktop
-                    ? (btn) => <WorktreeDropdownMenu trigger={btn} {...menuCallbacks} />
-                    : undefined
-                }
-                onMoreActions={isDesktop ? undefined : () => setBottomSheetWt(wt)}
-              />
-            </WorktreeContextMenu>
-          </div>
+          <WorktreeContextMenu key={wt.name} {...menuCallbacks}>
+            <WorktreeRow
+              worktree={wt}
+              active={selectedWorktreeCwd[projectCwd] === wt.path}
+              changes={changesByPath[wt.path] ?? 0}
+              onSelect={() => selectWorktree(projectCwd, wt.path)}
+              onOpenNewChat={() => openWorktreeInChat(projectCwd, wt.path, true)}
+              wrapBranchTrigger={(badge) => (
+                <BranchPopover
+                  trigger={badge}
+                  open={branchPop?.wt.path === wt.path}
+                  onOpenChange={(o) => void fetchAndOpenBranchPopover(wt, o)}
+                  branches={branchPop?.wt.path === wt.path ? branchPop.branches : []}
+                  current={wt.branch ?? null}
+                  onSelect={(branch) => void checkout(wt.path, branch)}
+                  onCreateBranch={() => setDialog({ kind: 'create' })}
+                />
+              )}
+              wrapMoreTrigger={
+                isDesktop
+                  ? (btn) => <WorktreeDropdownMenu trigger={btn} {...menuCallbacks} />
+                  : undefined
+              }
+              onMoreActions={isDesktop ? undefined : () => setBottomSheetWt(wt)}
+            />
+          </WorktreeContextMenu>
         );
       })}
-      {dialog?.kind === 'rename' && (
-        <RenameWorktreeDialog
-          open
-          currentBranch={dialog.wt.branch ?? dialog.wt.name}
-          onSubmit={async (newName) => {
-            const result = await rename(dialog.wt.path, newName);
-            if ('error' in result) toast.error(`Rename failed: ${result.error}`);
-            else toast.success(`Renamed to ${result.branch}`);
-            closeDialog();
-          }}
-          onClose={closeDialog}
-        />
-      )}
-      {dialog?.kind === 'archive' && (
-        <ArchiveWorktreeConfirmDialog
-          open
-          branch={dialog.wt.branch ?? dialog.wt.name}
-          dirty={dialog.dirty}
-          onConfirm={async ({ force }) => {
-            const result = await removeWorktree(projectCwd, dialog.wt.name, { force });
-            if ('error' in result) {
-              if (result.error === 'dirty') {
-                setDialog({ kind: 'archive', wt: dialog.wt, dirty: true });
-                return;
-              }
-              toast.error(`Archive failed: ${result.error}`);
-              closeDialog();
-              return;
-            }
-            toast.success(`Archived ${dialog.wt.name}`);
-            closeDialog();
-          }}
-          onClose={closeDialog}
-        />
-      )}
-      {dialog?.kind === 'remove' && (
-        <RemoveWorktreeConfirmDialog
-          open
-          branch={dialog.wt.branch ?? dialog.wt.name}
-          activeSessionCount={dialog.activeCount}
-          onConfirm={() => void removeWorktree(projectCwd, dialog.wt.name, { force: true })}
-          onClose={closeDialog}
-        />
-      )}
+      <WorktreeDialogs
+        dialog={dialog}
+        onClose={closeDialog}
+        projectCwd={projectCwd}
+        onSetDialog={setDialog}
+        onRemoveWorktree={removeWorktree}
+        onRename={rename}
+        onRequestActivateChannel={requestActivateChannel}
+        onSetActiveProject={setActiveProject}
+      />
       <GhostAddButton
         onClick={() => setDialog({ kind: 'create' })}
         className="my-1 ml-2 px-2 py-1 text-left"
       >
         + New worktree…
       </GhostAddButton>
-      {dialog?.kind === 'create' && (
-        <CreateWorktreeDialog open cwd={projectCwd} onClose={closeDialog} />
-      )}
-      {dialog?.kind === 'resume' && (
-        <SessionHistoryPopover
-          cwd={dialog.wt.path}
-          onClose={closeDialog}
-          onResumed={(spawnedId, picked) => {
-            requestActivateChannel(picked.cwd ?? dialog.wt.path, spawnedId);
-            setActiveProject(projectCwd);
-            closeDialog();
-          }}
-        />
-      )}
       {bottomSheetWt && (
         <WorktreeBottomSheet
           wt={bottomSheetWt}
@@ -222,5 +167,88 @@ export function WorktreeChildList({
         />
       )}
     </div>
+  );
+}
+
+function WorktreeDialogs({
+  dialog,
+  onClose,
+  projectCwd,
+  onSetDialog,
+  onRemoveWorktree,
+  onRename,
+  onRequestActivateChannel,
+  onSetActiveProject,
+}: {
+  dialog: Dialog;
+  onClose: () => void;
+  projectCwd: string;
+  onSetDialog: (d: Dialog) => void;
+  onRemoveWorktree: ReturnType<typeof useGitActions>['removeWorktree'];
+  onRename: ReturnType<typeof useGitActions>['rename'];
+  onRequestActivateChannel: ReturnType<typeof useNavigationActions>['requestActivateChannel'];
+  onSetActiveProject: ReturnType<typeof useProjectActions>['setActiveProject'];
+}) {
+  return (
+    <>
+      {dialog?.kind === 'rename' && (
+        <RenameWorktreeDialog
+          open
+          currentBranch={dialog.wt.branch ?? dialog.wt.name}
+          onSubmit={async (newName) => {
+            const result = await onRename(dialog.wt.path, newName);
+            if ('error' in result) toast.error(`Rename failed: ${result.error}`);
+            else toast.success(`Renamed to ${result.branch}`);
+            onClose();
+          }}
+          onClose={onClose}
+        />
+      )}
+      {dialog?.kind === 'archive' && (
+        <ArchiveWorktreeConfirmDialog
+          open
+          branch={dialog.wt.branch ?? dialog.wt.name}
+          dirty={dialog.dirty}
+          onConfirm={async ({ force }) => {
+            const result = await onRemoveWorktree(projectCwd, dialog.wt.name, { force });
+            if ('error' in result) {
+              if (result.error === 'dirty') {
+                onSetDialog({ kind: 'archive', wt: dialog.wt, dirty: true });
+                return;
+              }
+              toast.error(`Archive failed: ${result.error}`);
+              onClose();
+              return;
+            }
+            toast.success(`Archived ${dialog.wt.name}`);
+            onClose();
+          }}
+          onClose={onClose}
+        />
+      )}
+      {dialog?.kind === 'remove' && (
+        <RemoveWorktreeConfirmDialog
+          open
+          branch={dialog.wt.branch ?? dialog.wt.name}
+          activeSessionCount={dialog.activeCount}
+          onConfirm={() => void onRemoveWorktree(projectCwd, dialog.wt.name, { force: true })}
+          onClose={onClose}
+        />
+      )}
+      {dialog?.kind === 'create' && (
+        <CreateWorktreeDialog open cwd={projectCwd} onClose={onClose} />
+      )}
+      {dialog?.kind === 'resume' && (
+        <SessionHistoryPopover
+          cwd={dialog.wt.path}
+          onClose={onClose}
+          onResumed={(spawnedId, picked) => {
+            onRequestActivateChannel(picked.cwd ?? dialog.wt.path, spawnedId);
+            onSetActiveProject(projectCwd);
+            onClose();
+          }}
+        />
+      )}
+    </>
   );
 }

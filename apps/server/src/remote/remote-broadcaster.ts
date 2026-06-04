@@ -39,7 +39,7 @@ export class RemoteBroadcaster implements Broadcaster {
       subs.delete(subscriberId);
       if (subs.size === 0) {
         this.subscribers.delete(cwd);
-        void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd });
+        void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd }).catch(() => {});
       }
     };
   }
@@ -48,7 +48,7 @@ export class RemoteBroadcaster implements Broadcaster {
     this.offSnapshot?.();
     this.offSnapshot = null;
     for (const cwd of this.subscribers.keys()) {
-      void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd });
+      void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd }).catch(() => {});
     }
     this.subscribers.clear();
   }

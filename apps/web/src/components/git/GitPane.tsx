@@ -1,42 +1,19 @@
 import type { GitFileChange } from '@code-quest/git';
-import type { ClientToServerEvents } from '@code-quest/schemas';
-import {
-  EVENTS,
-  gitAddResultSchema,
-  gitCommitResultSchema,
-  gitDiffByCwdResultSchema,
-  gitPushResultSchema,
-} from '@code-quest/schemas';
 import { useState } from 'react';
-import { toast } from 'sonner';
-import type { ZodType } from 'zod';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useGitActions, useGitStatus } from '@/contexts/GitContext';
-import { useSocket } from '@/contexts/SocketContext';
-import type { TypedSocket } from '@/socket/client';
-import { rpc } from '@/socket/rpc';
 import { cn } from '@/utils/cn';
-import { type DiffFile, parseUnifiedDiff } from '@/utils/parse-unified-diff';
+import type { DiffFile } from '@/utils/parse-unified-diff';
 import { ActionButton } from '../ui/ActionButton.tsx';
 import { CommandHint } from '../ui/CommandHint.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
 import { Spinner } from '../ui/Spinner.tsx';
 import { CommitComposer } from './CommitComposer.tsx';
 import { DiffModal } from './DiffModal.tsx';
+import { useGitPaneActions } from './useGitPaneActions.ts';
 
 interface GitPaneProps {
   cwd: string;
-}
-
-async function rpcParsed<T, E extends keyof ClientToServerEvents>(
-  socket: TypedSocket,
-  schema: ZodType<T>,
-  event: E,
-  ...args: Parameters<ClientToServerEvents[E]> extends [...infer P, infer _Cb] ? P : never
-): Promise<T | { error: string }> {
-  // biome-ignore lint/suspicious/noExplicitAny: rpc generic constraints can't express this call pattern without an escape hatch
-  const raw = await (rpc as any)(socket, event, ...args);
-  return schema.safeParse(raw).data ?? { error: 'Invalid response' };
 }
 
 const STATUS_LABEL: Record<string, { mark: string; cls: string }> = {
@@ -53,102 +30,15 @@ function statusFor(s: string): { mark: string; cls: string } {
 }
 
 export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
-  const { socket } = useSocket();
-  const { discardFile, fetch, pull, refetchGitStatus } = useGitActions();
+  const { refetchGitStatus } = useGitActions();
   const data = useGitStatus(cwd);
   const refetch = () => refetchGitStatus(cwd);
   const [diffFile, setDiffFile] = useState<DiffFile | null>(null);
 
-  async function stageAll() {
-    const result = await rpcParsed(socket, gitAddResultSchema, EVENTS.git.add, { cwd });
-    if ('error' in result) toast.error(`Stage failed: ${result.error}`);
-    else toast.success('Staged all changes');
-    await refetch();
-  }
-
-  async function commit(message: string) {
-    const result = await rpcParsed(socket, gitCommitResultSchema, EVENTS.git.commit, {
-      cwd,
-      message,
-    });
-    if ('error' in result) {
-      if (result.error === 'nothing-to-commit') {
-        toast('Nothing to commit. Stage first.');
-      } else {
-        toast.error(`Commit failed: ${result.error}`);
-      }
-      return;
-    }
-    toast.success(`Committed ${result.hash.slice(0, 7)}`);
-    await refetch();
-  }
-
-  async function runFetch() {
-    const result = await fetch(cwd);
-    if ('error' in result) toast.error(`Fetch failed: ${result.error}`);
-    else toast.success('Fetched');
-  }
-
-  async function runPull() {
-    const result = await pull(cwd);
-    if ('error' in result) {
-      if (result.error === 'non-ff') {
-        toast('Pull rejected (non-FF). Run `git pull --rebase` manually.');
-      } else if (result.error === 'no-upstream') {
-        toast('No upstream — set one with `git push -u`');
-      } else {
-        toast.error(`Pull failed: ${result.error}`);
-      }
-      return;
-    }
-    toast.success(result.fastForwarded ? 'Pulled' : 'Already up to date');
-    await refetch();
-  }
-
-  async function push() {
-    const result = await rpcParsed(socket, gitPushResultSchema, EVENTS.git.push, { cwd });
-    if ('error' in result) {
-      if (result.error === 'no-upstream') toast('No upstream — set one with git push -u');
-      else if (result.error === 'rejected') toast('Push rejected (non-FF). Pull first.');
-      else toast.error(`Push failed: ${result.error}`);
-      return;
-    }
-    toast.success('Pushed');
-  }
-
-  async function openDiff(filePath: string, fileStatus: string) {
-    const response = await rpc(socket, EVENTS.git.diff, { cwd, filePath, status: fileStatus });
-    const parsed = gitDiffByCwdResultSchema.safeParse(response);
-    if (!parsed.success) {
-      toast.error('Diff unavailable: invalid response');
-      return;
-    }
-    if ('error' in parsed.data) {
-      toast.error(`Diff failed: ${parsed.data.error}`);
-      return;
-    }
-    const files = parseUnifiedDiff(parsed.data.diff);
-    const match = files.find((f) => f.path === filePath);
-    setDiffFile(
-      match ?? {
-        path: filePath,
-        isBinary: false,
-        added: 0,
-        removed: 0,
-        lines: [{ kind: 'meta', text: 'No diff available.' }],
-      },
-    );
-  }
-
-  async function handleDiscard(filePath: string, onSuccess: () => void) {
-    const result = await discardFile(cwd, filePath);
-    if ('error' in result) {
-      toast.error(`Discard failed: ${result.error}`);
-      return;
-    }
-    toast.success(`Discarded ${filePath}`);
-    onSuccess();
-  }
+  const { stageAll, commit, runFetch, runPull, push, openDiff, handleDiscard } = useGitPaneActions(
+    cwd,
+    { onDiffOpen: setDiffFile },
+  );
 
   // ── Early returns (must follow ALL hook calls above) ──
   if (data && 'notARepo' in data) {

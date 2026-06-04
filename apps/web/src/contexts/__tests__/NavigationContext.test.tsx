@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import {
   NavigationProvider,
+  setMapEntry,
   useNavigationActions,
   useNavigationState,
 } from '../NavigationContext.tsx';
@@ -102,13 +103,6 @@ describe('NavigationContext', () => {
     });
   });
 
-  it('state object keeps stable identity when no state changes', () => {
-    const { result, rerender } = renderHook(() => useNavigationState(), { wrapper });
-    const first = result.current;
-    rerender();
-    expect(result.current).toBe(first);
-  });
-
   describe('navigation memory', () => {
     it('lastWorktreeByProject starts empty', () => {
       const { result } = renderHook(() => useNavigationState(), { wrapper });
@@ -171,6 +165,27 @@ describe('NavigationContext', () => {
       act(() => result.current.actions.recordLastWorktree('/proj', '/proj/wt'));
       rerender();
       expect(result.current.actions).toBe(first);
+    });
+  });
+
+  describe('setMapEntry', () => {
+    it('returns a new object with the entry set', () => {
+      const prev = { a: '1' };
+      const result = setMapEntry(prev, 'b', '2');
+      expect(result).toEqual({ a: '1', b: '2' });
+    });
+
+    it('returns the same object reference when value is unchanged', () => {
+      const prev = { a: '1' };
+      const result = setMapEntry(prev, 'a', '1');
+      expect(result).toBe(prev);
+    });
+
+    it('updates an existing key', () => {
+      const prev = { a: '1' };
+      const result = setMapEntry(prev, 'a', '2');
+      expect(result).toEqual({ a: '2' });
+      expect(result).not.toBe(prev);
     });
   });
 

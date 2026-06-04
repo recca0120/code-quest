@@ -1,5 +1,8 @@
-import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
-import { ProjectStateContext } from './ProjectContext.tsx';
+import { createContext, type ReactNode, useContext, useState } from 'react';
+
+export function setMapEntry<T>(prev: Record<string, T>, key: string, value: T): Record<string, T> {
+  return prev[key] === value ? prev : { ...prev, [key]: value };
+}
 
 /** Intent: tell a TabProvider scoped to `cwd` to activate `channelId` once it
  *  appears in that provider's tabs. Set by flows that spawn a channel
@@ -60,19 +63,6 @@ export function useNavigationActions(): NavigationActions {
   return ctx;
 }
 
-export function useActiveCwd(): string | null {
-  const navState = useContext(NavigationStateContext);
-  const projectState = useContext(ProjectStateContext);
-
-  if (navState?.activeCwd) return navState.activeCwd;
-
-  const activeProjectCwd = projectState?.activeProjectCwd ?? null;
-  if (activeProjectCwd && navState?.selectedWorktreeCwd[activeProjectCwd]) {
-    return navState.selectedWorktreeCwd[activeProjectCwd] ?? null;
-  }
-  return activeProjectCwd;
-}
-
 export function NavigationProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [pendingActivateChannel, setPendingActivateChannel] =
     useState<PendingActivateChannel | null>(null);
@@ -92,13 +82,9 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
     clearPendingOpenWorktree: () => setPendingOpenWorktree(null),
     setActiveCwd,
     recordLastWorktree: (projectCwd, worktreeCwd) =>
-      setLastWorktreeByProject((prev) =>
-        prev[projectCwd] === worktreeCwd ? prev : { ...prev, [projectCwd]: worktreeCwd },
-      ),
+      setLastWorktreeByProject((prev) => setMapEntry(prev, projectCwd, worktreeCwd)),
     recordLastTab: (worktreeCwd, channelId) =>
-      setLastTabByWorktree((prev) =>
-        prev[worktreeCwd] === channelId ? prev : { ...prev, [worktreeCwd]: channelId },
-      ),
+      setLastTabByWorktree((prev) => setMapEntry(prev, worktreeCwd, channelId)),
     setSelectedWorktree: (projectCwd, worktreeCwd) => {
       setSelectedWorktreeCwdState((prev) => {
         if (worktreeCwd === null) {
@@ -112,24 +98,14 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
     },
   }));
 
-  const state = useMemo<NavigationState>(
-    () => ({
-      pendingActivateChannel,
-      pendingOpenWorktree,
-      selectedWorktreeCwd,
-      activeCwd,
-      lastWorktreeByProject,
-      lastTabByWorktree,
-    }),
-    [
-      pendingActivateChannel,
-      pendingOpenWorktree,
-      selectedWorktreeCwd,
-      activeCwd,
-      lastWorktreeByProject,
-      lastTabByWorktree,
-    ],
-  );
+  const state: NavigationState = {
+    pendingActivateChannel,
+    pendingOpenWorktree,
+    selectedWorktreeCwd,
+    activeCwd,
+    lastWorktreeByProject,
+    lastTabByWorktree,
+  };
 
   return (
     <NavigationStateContext.Provider value={state}>

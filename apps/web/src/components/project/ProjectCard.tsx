@@ -89,6 +89,7 @@ export function ProjectCard({
         <ProjectContextMenu disabled={!cwd} {...menuCallbacks}>
           <Popover.Anchor asChild>
             <div
+              data-active={active}
               className={cn(
                 'group relative my-0.5 rounded',
                 active ? 'bg-accent/10' : 'hover:bg-hover-tint',
@@ -113,6 +114,7 @@ export function ProjectCard({
                     type="button"
                     aria-label={pinned ? 'Unpin' : 'Pin'}
                     title={pinned ? 'Unpin' : 'Pin'}
+                    data-pinned={pinned}
                     onClick={handleTogglePin}
                     className={cn(
                       'shrink-0 p-0.5 rounded hover:text-text',

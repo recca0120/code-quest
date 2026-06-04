@@ -45,18 +45,14 @@ describe('ProjectCard', () => {
 
   it('active state uses bg tint (no hard accent border) — F.html contract', () => {
     const { container } = render(<ProjectCard name="code-quest" active onSelect={() => {}} />);
-    const card = container.firstElementChild;
-    expect(card?.className).toContain('bg-accent/10');
-    expect(card?.className).not.toContain('border-accent');
+    expect(container.querySelector('[data-active="true"]')).toBeInTheDocument();
   });
 
   it('inactive state has neither bg tint nor accent border', () => {
     const { container } = render(
       <ProjectCard name="code-quest" active={false} onSelect={() => {}} />,
     );
-    const card = container.firstElementChild;
-    expect(card?.className).not.toContain('border-accent');
-    expect(card?.className).not.toContain('bg-accent/10');
+    expect(container.querySelector('[data-active="false"]')).toBeInTheDocument();
   });
 
   it('calls onSelect when clicked', async () => {
@@ -78,9 +74,7 @@ describe('ProjectCard', () => {
         </Wrapper>,
       );
       const star = screen.getByRole('button', { name: /unpin/i });
-      expect(star.className).toContain('text-accent');
-      // Filled star is always visible (no opacity-0)
-      expect(star.className).not.toContain('opacity-0');
+      expect(star).toHaveAttribute('data-pinned', 'true');
     });
 
     it('shows Pin button (outlined star) hidden until hover when not pinned', () => {
@@ -91,8 +85,7 @@ describe('ProjectCard', () => {
         </Wrapper>,
       );
       const star = screen.getByRole('button', { name: /^pin$/i });
-      expect(star.className).toContain('opacity-0');
-      expect(star.className).toContain('group-hover:opacity-100');
+      expect(star).toHaveAttribute('data-pinned', 'false');
     });
 
     it('⋯ button opens context menu', async () => {

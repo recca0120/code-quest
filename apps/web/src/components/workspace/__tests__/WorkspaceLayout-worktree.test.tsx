@@ -1,7 +1,7 @@
 import type { CreateWorktreeResponse } from '@code-quest/schemas';
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import { FakeGit } from '@code-quest/test-kit';
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
@@ -38,9 +38,7 @@ describe('WorkspaceLayout worktree grouping', () => {
 
     // Chat panel stays showing the original session — no new session spawned.
     // (User opens chat by clicking the worktree [+] button in the sidebar.)
-    await waitFor(() => {
-      // Allow microtasks to flush so any unintended tab creation would land.
-    });
+    await act(async () => {});
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 });

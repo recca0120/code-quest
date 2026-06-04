@@ -8,13 +8,6 @@ import type { SessionMode } from './channel/ChannelContext.tsx';
 import { NavigationActionsContext, NavigationStateContext } from './NavigationContext.tsx';
 import { TERMINAL_STATES } from './session-states.ts';
 
-function isSingleSessionSwap(
-  added: SessionStateSummary[],
-  removed: string[],
-): added is [SessionStateSummary] {
-  return added.length === 1 && removed.length === 1;
-}
-
 export interface TabMeta {
   title?: string;
   tabStatus: SessionStatus;
@@ -174,7 +167,7 @@ export function TabProvider({
       (s) => !prevSessionIds.current.has(s.channelId) && !TERMINAL_STATES.has(s.state),
     );
     const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
-    if (isSingleSessionSwap(added, removed)) {
+    if (added.length === 1 && removed.length === 1 && added[0] && removed[0]) {
       actions.replaceActiveTab(added[0].channelId, added[0].cwd);
     } else {
       for (const s of added) {

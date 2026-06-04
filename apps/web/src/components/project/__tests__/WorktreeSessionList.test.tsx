@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { useNavigationState } from '@/contexts/NavigationContext';
@@ -38,9 +38,9 @@ describe('WorktreeSessionList', () => {
         .pushSessionState('sess-gone', 'exited', { projectRoot: '/repo', cwd: '/repo' });
     });
     // Wait briefly then confirm it never appeared
-    await new Promise((r) => setTimeout(r, 50));
-    await new Promise((r) => setTimeout(r, 10));
-    expect(screen.queryByLabelText('Session: sess-gone')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByLabelText('Session: sess-gone')).not.toBeInTheDocument(),
+    );
   });
 
   it('session rows have no active highlight (sidebar is nav-only, not state display)', () => {
@@ -106,7 +106,6 @@ describe('WorktreeSessionList', () => {
         .pushSessionState('sess-1', 'exited', { projectRoot: '/repo', cwd: '/repo' });
     });
 
-    await new Promise((r) => setTimeout(r, 10));
-    expect(screen.queryByLabelText('Session: sess-1')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByLabelText('Session: sess-1')).not.toBeInTheDocument());
   });
 });

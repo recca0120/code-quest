@@ -12,7 +12,6 @@ import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext'
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
-import { filterTabsByWorktree } from '@/utils/tab-filter';
 import { findWorktreeByCwd } from '@/utils/worktree';
 import { ChatView } from '../chat/ChatView.tsx';
 import { RightPane } from './RightPane.tsx';
@@ -119,7 +118,8 @@ export const TabContainer: React.FC<{ projectCwd: string; onToggleLeft?: () => v
         projectName: found ? basename(found.projectCwd) : undefined,
       };
     });
-    const openTabs = filterTabsByWorktree(allTabs, selectedWorktreeCwd[projectCwd]);
+    const worktreeFilter = selectedWorktreeCwd[projectCwd];
+    const openTabs = worktreeFilter ? allTabs.filter((t) => t.cwd === worktreeFilter) : allTabs;
 
     if (tabEntries.length === 0) {
       return (

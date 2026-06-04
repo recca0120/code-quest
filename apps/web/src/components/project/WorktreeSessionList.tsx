@@ -32,13 +32,6 @@ export function WorktreeSessionList({
     [sessions, worktreePath, projectCwd],
   );
 
-  // Use projectRoot (= TabProvider's cwd), not s.cwd (= worktree path).
-  const handleSelect = (s: { projectRoot: string; channelId: string }) =>
-    requestActivateChannel(s.projectRoot, s.channelId);
-
-  // TabProvider's sessions-diff effect handles removeTab automatically.
-  const handleClose = (channelId: string) => closeSession(channelId);
-
   if (worktreeSessions.length === 0) return null;
 
   return (
@@ -54,7 +47,7 @@ export function WorktreeSessionList({
             <button
               type="button"
               aria-label={`Session: ${label}`}
-              onClick={() => handleSelect(s)}
+              onClick={() => requestActivateChannel(s.projectRoot, s.channelId)}
               className="absolute inset-0"
             />
             <StatusDot color={color} pulse={pulse} className="relative z-10 shrink-0" />
@@ -64,7 +57,7 @@ export function WorktreeSessionList({
               aria-label={`Close session: ${label}`}
               onClick={(e) => {
                 e.stopPropagation();
-                handleClose(s.channelId);
+                closeSession(s.channelId);
               }}
               className="relative z-10 shrink-0 px-0.5 rounded text-subtle hover:text-danger opacity-0 group-hover:opacity-100"
             >
