@@ -56,18 +56,18 @@ describe('WorktreeRow', () => {
     expect(screen.queryByLabelText('Open new chat')).not.toBeInTheDocument();
   });
 
-  it('branch button has tooltip showing full name', () => {
+  it('branch badge has tooltip showing full name', () => {
     render(
       <WorktreeRow worktree={longNameWorktree} active={false} changes={0} onSelect={() => {}} />,
     );
-    const btn = screen.getByLabelText(/switch branch/i);
-    expect(btn).toHaveAttribute('title', 'worktree-agent-adf24b45165face45');
+    const badge = screen.getByTitle('worktree-agent-adf24b45165face45');
+    expect(badge).toBeInTheDocument();
   });
 
-  it('branch button tooltip shows full name even for short names', () => {
+  it('branch badge tooltip shows full name even for short names', () => {
     render(<WorktreeRow worktree={worktree} active={false} changes={0} onSelect={() => {}} />);
-    const btn = screen.getByLabelText(/switch branch/i);
-    expect(btn).toHaveAttribute('title', 'feat/auth');
+    const badge = screen.getByTitle('feat/auth');
+    expect(badge).toBeInTheDocument();
   });
 
   it('calls onSelect when row area clicked', async () => {

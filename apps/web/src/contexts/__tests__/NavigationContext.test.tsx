@@ -109,6 +109,71 @@ describe('NavigationContext', () => {
     expect(result.current).toBe(first);
   });
 
+  describe('navigation memory', () => {
+    it('lastWorktreeByProject starts empty', () => {
+      const { result } = renderHook(() => useNavigationState(), { wrapper });
+      expect(result.current.lastWorktreeByProject).toEqual({});
+    });
+
+    it('recordLastWorktree stores the worktree for the project', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      act(() => {
+        result.current.actions.recordLastWorktree('/proj', '/proj/wt-feat');
+      });
+      expect(result.current.state.lastWorktreeByProject).toEqual({ '/proj': '/proj/wt-feat' });
+    });
+
+    it('recordLastWorktree updates when called again for same project', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      act(() => result.current.actions.recordLastWorktree('/proj', '/proj/wt-a'));
+      act(() => result.current.actions.recordLastWorktree('/proj', '/proj/wt-b'));
+      expect(result.current.state.lastWorktreeByProject['/proj']).toBe('/proj/wt-b');
+    });
+
+    it('lastTabByWorktree starts empty', () => {
+      const { result } = renderHook(() => useNavigationState(), { wrapper });
+      expect(result.current.lastTabByWorktree).toEqual({});
+    });
+
+    it('recordLastTab stores the channelId for the worktree', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      act(() => {
+        result.current.actions.recordLastTab('/proj/wt-feat', 'ch-abc');
+      });
+      expect(result.current.state.lastTabByWorktree).toEqual({ '/proj/wt-feat': 'ch-abc' });
+    });
+
+    it('recordLastTab updates when called again for same worktree', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      act(() => result.current.actions.recordLastTab('/proj/wt', 'ch-1'));
+      act(() => result.current.actions.recordLastTab('/proj/wt', 'ch-2'));
+      expect(result.current.state.lastTabByWorktree['/proj/wt']).toBe('ch-2');
+    });
+
+    it('actions keep stable identity after recordLastWorktree', () => {
+      const { result, rerender } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      const first = result.current.actions;
+      act(() => result.current.actions.recordLastWorktree('/proj', '/proj/wt'));
+      rerender();
+      expect(result.current.actions).toBe(first);
+    });
+  });
+
   describe('pendingOpenWorktree', () => {
     it('requestOpenWorktree sets intent with forceNew default false', () => {
       const { result } = renderHook(

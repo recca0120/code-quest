@@ -46,7 +46,7 @@
     "diff": "^9.0.0",
     "fuse.js": "^7.3.0",
     "mermaid": "^11.15.0",
-    "pdfjs-dist": "^5.7.284",
+    "pdfjs-dist": "5.4.296",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-error-boundary": "^6.1.1",

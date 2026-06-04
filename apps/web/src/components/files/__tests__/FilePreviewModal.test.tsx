@@ -122,6 +122,43 @@ describe('FilePreviewModal', () => {
     });
   });
 
+  describe('image preview', () => {
+    it('renders <img> for image files', async () => {
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/photo.png', 'fake-png');
+      render(<FilePreviewModal path="/repo/photo.png" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      const img = await screen.findByRole('img');
+      expect(img).toBeInTheDocument();
+      expect(img).toHaveAttribute('src', expect.stringMatching(/^data:image\/png;base64,/));
+    });
+
+    it('does not show Preview/Raw toggle for image files', async () => {
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/photo.png', 'fake-png');
+      render(<FilePreviewModal path="/repo/photo.png" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      await screen.findByRole('img');
+      expect(screen.queryByRole('button', { name: /preview/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /raw/i })).not.toBeInTheDocument();
+    });
+
+    it('Mention works when viewing an image', async () => {
+      const user = userEvent.setup();
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/photo.png', 'fake-png');
+      const onMention = vi.fn();
+      render(<FilePreviewModal path="/repo/photo.png" onClose={vi.fn()} onMention={onMention} />, {
+        wrapper: Wrapper,
+      });
+      await screen.findByRole('img');
+      await user.click(screen.getByRole('button', { name: /mention/i }));
+      expect(onMention).toHaveBeenCalledWith('/repo/photo.png');
+    });
+  });
+
   describe('markdown preview toggle', () => {
     it('renders .md file as markdown by default', async () => {
       const { summoner, Wrapper } = setup();

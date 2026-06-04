@@ -11,7 +11,6 @@ export interface WorktreeMenuCallbacks {
   onOpenHere?: () => void;
   onOpenInNewChat: () => void;
   onOpenPastSession?: () => void;
-  onSwitchBranch?: () => void;
   onCopyPath: () => void;
   onRename?: () => void;
   onArchive?: () => void;
@@ -28,8 +27,6 @@ export function buildWorktreeMenuItems(cb: WorktreeMenuCallbacks): MenuItem[] {
       label: 'Open past session…',
       onSelect: cb.onOpenPastSession,
     });
-  if (cb.onSwitchBranch)
-    items.push({ key: 'switch-branch', label: 'Switch branch…', onSelect: cb.onSwitchBranch });
   items.push({ key: 'copy', label: 'Copy path', onSelect: cb.onCopyPath });
   if (cb.onRename) items.push({ key: 'rename', label: 'Rename…', onSelect: cb.onRename });
   if (cb.onArchive) items.push({ key: 'archive', label: 'Archive', onSelect: cb.onArchive });

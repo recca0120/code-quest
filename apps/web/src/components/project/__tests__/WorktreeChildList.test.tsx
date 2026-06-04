@@ -2,7 +2,7 @@ import type { WorktreeInfo } from '@code-quest/git';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { useNavigationState } from '@/contexts/NavigationContext';
+import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
 import { createTestWrapper } from '@/test/create-test-wrapper';
 import { setupMatchMedia } from '@/test/fake-match-media';
 import { WorktreeChildList } from '../WorktreeChildList.tsx';
@@ -70,79 +70,6 @@ describe('WorktreeChildList', () => {
     expect(screen.getByText('Archive')).toBeInTheDocument();
   });
 
-  it('shows session row for active session in worktree', async () => {
-    const { Wrapper, summoner } = makeWrapper();
-    render(
-      <Wrapper>
-        <WorktreeChildList worktrees={[worktrees[0]!]} projectCwd="/repo" />
-      </Wrapper>,
-    );
-    act(() => {
-      summoner.claude().pushSessionState('sess-1', 'idle', { projectRoot: '/repo', cwd: '/repo' });
-    });
-    // Session without title falls back to first 8 chars of channelId
-    expect(await screen.findByLabelText('Session: sess-1')).toBeInTheDocument();
-  });
-
-  it('clicking session row triggers requestActivateChannel via NavigationContext', async () => {
-    const { Wrapper, summoner } = makeWrapper();
-
-    let capturedPending: { channelId: string; cwd: string } | null = null;
-    function NavSpy() {
-      const state = useNavigationState();
-      capturedPending = state.pendingActivateChannel;
-      return null;
-    }
-
-    render(
-      <Wrapper>
-        <NavSpy />
-        <WorktreeChildList worktrees={[worktrees[0]!]} projectCwd="/repo" />
-      </Wrapper>,
-    );
-
-    act(() => {
-      summoner.claude().pushSessionState('sess-1', 'idle', { projectRoot: '/repo', cwd: '/repo' });
-    });
-
-    const sessionBtn = await screen.findByLabelText('Session: sess-1');
-    await userEvent.setup().click(sessionBtn);
-
-    expect(capturedPending).toMatchObject({ channelId: 'sess-1' });
-  });
-
-  it('clicking worktree session uses projectRoot (not worktree cwd) for activation', async () => {
-    const { Wrapper, summoner } = makeWrapper();
-
-    let capturedPending: { channelId: string; cwd: string } | null = null;
-    function NavSpy() {
-      const state = useNavigationState();
-      capturedPending = state.pendingActivateChannel;
-      return null;
-    }
-
-    render(
-      <Wrapper>
-        <NavSpy />
-        <WorktreeChildList worktrees={worktrees} projectCwd="/repo" />
-      </Wrapper>,
-    );
-
-    // Session belongs to a worktree (cwd = worktree path, NOT project root)
-    act(() => {
-      summoner.claude().pushSessionState('sess-wt', 'idle', {
-        projectRoot: '/repo',
-        cwd: '/repo/.claude/worktrees/feat-x',
-      });
-    });
-
-    const sessionBtn = await screen.findByLabelText('Session: sess-wt');
-    await userEvent.setup().click(sessionBtn);
-
-    // Must pass projectRoot, not worktree cwd, so TabProvider can match
-    expect(capturedPending).toMatchObject({ channelId: 'sess-wt', cwd: '/repo' });
-  });
-
   it('shows dropdown on desktop when [⋯] clicked', async () => {
     setupMatchMedia(1280); // desktop
     const { Wrapper } = makeWrapper();
@@ -180,7 +107,7 @@ describe('WorktreeChildList', () => {
     expect(await screen.findByText('Open past session…')).toBeInTheDocument();
   });
 
-  it('shows "Switch branch…" in desktop dropdown', async () => {
+  it('does NOT show "Switch branch…" in desktop dropdown (worktrees are branch-locked)', async () => {
     setupMatchMedia(1280);
     const { Wrapper } = makeWrapper();
     render(
@@ -189,10 +116,78 @@ describe('WorktreeChildList', () => {
       </Wrapper>,
     );
     await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByLabelText('More actions'));
-    expect(await screen.findByRole('menuitem', { name: /switch branch/i })).toBeInTheDocument();
+    await screen.findByRole('menuitem', { name: /open in new chat/i });
+    expect(screen.queryByRole('menuitem', { name: /switch branch/i })).not.toBeInTheDocument();
   });
 
-  it('shows "Switch branch…" in mobile BottomSheet', async () => {
+  describe('navigation memory', () => {
+    it('clicking worktree row records lastWorktreeByProject', async () => {
+      const { Wrapper } = makeWrapper();
+      let state: ReturnType<typeof useNavigationState> | null = null;
+      function NavSpy() {
+        state = useNavigationState();
+        return null;
+      }
+      render(
+        <Wrapper>
+          <NavSpy />
+          <WorktreeChildList worktrees={worktrees} projectCwd="/repo" />
+        </Wrapper>,
+      );
+      await userEvent
+        .setup({ pointerEventsCheck: 0 })
+        .click(screen.getByLabelText('Open worktree feat/x'));
+      expect(state!.lastWorktreeByProject['/repo']).toBe('/repo/.claude/worktrees/feat-x');
+    });
+
+    it('clicking worktree row with remembered tab restores it via requestActivateChannel', async () => {
+      const { Wrapper } = makeWrapper();
+      let actions: ReturnType<typeof useNavigationActions> | null = null;
+      let state: ReturnType<typeof useNavigationState> | null = null;
+      function NavSpy() {
+        state = useNavigationState();
+        actions = useNavigationActions();
+        return null;
+      }
+      render(
+        <Wrapper>
+          <NavSpy />
+          <WorktreeChildList worktrees={worktrees} projectCwd="/repo" />
+        </Wrapper>,
+      );
+      // record a previous tab for feat-x worktree
+      act(() => actions!.recordLastTab('/repo/.claude/worktrees/feat-x', 'ch-remembered'));
+
+      await userEvent
+        .setup({ pointerEventsCheck: 0 })
+        .click(screen.getByLabelText('Open worktree feat/x'));
+      expect(state!.pendingActivateChannel).toMatchObject({
+        cwd: '/repo',
+        channelId: 'ch-remembered',
+      });
+    });
+
+    it('clicking worktree row with no remembered tab does not trigger requestActivateChannel', async () => {
+      const { Wrapper } = makeWrapper();
+      let state: ReturnType<typeof useNavigationState> | null = null;
+      function NavSpy() {
+        state = useNavigationState();
+        return null;
+      }
+      render(
+        <Wrapper>
+          <NavSpy />
+          <WorktreeChildList worktrees={worktrees} projectCwd="/repo" />
+        </Wrapper>,
+      );
+      await userEvent
+        .setup({ pointerEventsCheck: 0 })
+        .click(screen.getByLabelText('Open worktree feat/x'));
+      expect(state!.pendingActivateChannel).toBeNull();
+    });
+  });
+
+  it('does NOT show "Switch branch…" in mobile BottomSheet (worktrees are branch-locked)', async () => {
     setupMatchMedia(375);
     const { Wrapper } = makeWrapper();
     render(
@@ -201,6 +196,7 @@ describe('WorktreeChildList', () => {
       </Wrapper>,
     );
     await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByLabelText('More actions'));
-    expect(await screen.findByText('Switch branch…')).toBeInTheDocument();
+    await screen.findByText('Open in new chat');
+    expect(screen.queryByText('Switch branch…')).not.toBeInTheDocument();
   });
 });

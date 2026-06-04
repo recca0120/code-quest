@@ -5,13 +5,14 @@ import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ChannelProvider } from '@/contexts/channel';
 import { useGitState } from '@/contexts/GitContext';
-import { useNavigationActions } from '@/contexts/NavigationContext';
+import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
+import { filterTabsByWorktree } from '@/utils/tab-filter';
 import { findWorktreeByCwd } from '@/utils/worktree';
 import { ChatView } from '../chat/ChatView.tsx';
 import { RightPane } from './RightPane.tsx';
@@ -68,7 +69,8 @@ export const TabContainer: React.FC<{ projectCwd: string; onToggleLeft?: () => v
     const { setActiveTab, removeTab, createNewTab } = useTabActions();
     const { closeSession } = useSession();
     const { listing } = useGitState();
-    const { setActiveCwd } = useNavigationActions();
+    const { setActiveCwd, recordLastTab } = useNavigationActions();
+    const { selectedWorktreeCwd } = useNavigationState();
     const { activeProjectCwd } = useProjectState();
     const { isDesktop } = useBreakpoint();
     const [rightOpen, setRightOpen] = useState(() => isDesktop);
@@ -97,11 +99,18 @@ export const TabContainer: React.FC<{ projectCwd: string; onToggleLeft?: () => v
       removeTab(id);
     };
 
+    const handleSelectTab = (id: string) => {
+      setActiveTab(id);
+      const cwd = tabs[id]?.cwd;
+      if (cwd) recordLastTab(cwd, id);
+    };
+
     const tabEntries = Object.entries(tabs);
-    const openTabs = tabEntries.map(([id, meta]) => {
+    const allTabs = tabEntries.map(([id, meta]) => {
       const found = findWorktreeByCwd(listing, meta.cwd);
       return {
         sessionId: id,
+        cwd: meta.cwd,
         title: meta.title,
         status: meta.tabStatus,
         worktree: found
@@ -110,6 +119,7 @@ export const TabContainer: React.FC<{ projectCwd: string; onToggleLeft?: () => v
         projectName: found ? basename(found.projectCwd) : undefined,
       };
     });
+    const openTabs = filterTabsByWorktree(allTabs, selectedWorktreeCwd[projectCwd]);
 
     if (tabEntries.length === 0) {
       return (
@@ -125,14 +135,14 @@ export const TabContainer: React.FC<{ projectCwd: string; onToggleLeft?: () => v
     return (
       <Tabs.Root
         value={activeTabId ?? undefined}
-        onValueChange={setActiveTab}
+        onValueChange={handleSelectTab}
         className="flex flex-col flex-1 min-w-0"
         aria-label="tab-container-root"
       >
         <TabBar
           tabs={openTabs}
           activeTabId={activeTabId}
-          onSelectTab={setActiveTab}
+          onSelectTab={handleSelectTab}
           onCloseTab={handleCloseTab}
           onNewTab={() => createNewTab()}
         />

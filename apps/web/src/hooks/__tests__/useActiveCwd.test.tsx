@@ -18,6 +18,8 @@ function NavigationStub({
         pendingOpenWorktree: null,
         selectedWorktreeCwd: {},
         activeCwd,
+        lastWorktreeByProject: {},
+        lastTabByWorktree: {},
       }}
     >
       {children}
