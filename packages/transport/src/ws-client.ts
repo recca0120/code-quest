@@ -157,19 +157,22 @@ export class WsClient implements AgentTransport {
   // ── Internals ──
 
   private async handleIncomingRequest(id: string, event: string, data: unknown): Promise<void> {
-    // If the socket closed between receiving the request and sending the response,
-    // sendNow silently no-ops — the server's pending request will time out naturally.
+    const ws = this.ws;
     if (!this.isOpen()) return;
     const handler = this.requestHandlers.get(event);
     if (!handler) {
       this.sendNow({ kind: 'response', id, ok: false, error: `Unknown method: ${event}` });
       return;
     }
+    // Capture ws before await so we don't send a response on a reconnected socket.
+    // If ws has changed (disconnect + reconnect), the server's original pending
+    // request lives on the old RpcChannel and will be rejected by handleClose().
     try {
       const result = await handler(data);
-      if (this.isOpen()) this.sendNow({ kind: 'response', id, ok: true, data: result });
+      if (this.ws === ws && this.isOpen())
+        this.sendNow({ kind: 'response', id, ok: true, data: result });
     } catch (err) {
-      if (this.isOpen())
+      if (this.ws === ws && this.isOpen())
         this.sendNow({
           kind: 'response',
           id,
