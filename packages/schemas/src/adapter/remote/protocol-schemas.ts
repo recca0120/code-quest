@@ -105,7 +105,10 @@ export const fsListParamsSchema: z.ZodObject<
   pattern: z.string(),
 });
 
-export const fsReadParamsSchema = z.object({
+export const fsReadParamsSchema: z.ZodObject<
+  { file: z.ZodString; cwd: z.ZodOptional<z.ZodString>; maxBytes: z.ZodOptional<z.ZodNumber> },
+  z.core.$strip
+> = z.object({
   file: z.string(),
   cwd: z.string().optional(),
   maxBytes: z.number().optional(),
@@ -135,7 +138,15 @@ export const fsBrowseDirectoriesResponseSchema: z.ZodObject<
   entries: z.array(directoryEntrySchema),
 });
 
-export const fsBrowseEntriesResponseSchema = z.object({
+export const fsBrowseEntriesResponseSchema: z.ZodObject<
+  {
+    directories: z.ZodArray<typeof directoryEntrySchema>;
+    files: z.ZodArray<
+      z.ZodObject<{ name: z.ZodString; path: z.ZodString; size: z.ZodNumber }, z.core.$strip>
+    >;
+  },
+  z.core.$strip
+> = z.object({
   directories: z.array(directoryEntrySchema),
   files: z.array(fileEntrySchema),
 });
@@ -169,7 +180,20 @@ export const fsStatKindResponseSchema: z.ZodObject<
   kind: fsEntryTypeSchema.nullable(),
 });
 
-export const fsReadFileResponseSchema = z.union([
+export const fsReadFileResponseSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<
+      {
+        content: z.ZodString;
+        contentType: z.ZodString;
+        encoding: z.ZodEnum<{ 'utf-8': 'utf-8'; base64: 'base64' }>;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<{ tooLarge: z.ZodLiteral<true> }, z.core.$strip>,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([
   z.object({ content: z.string(), contentType: z.string(), encoding: z.enum(['utf-8', 'base64']) }),
   z.object({ tooLarge: z.literal(true) }),
   z.object({ error: z.string() }),

@@ -112,7 +112,10 @@ export class LocalOpenspec implements Openspec {
     const dir = OPENSPEC_KIND_DIR[kind];
     const file = ARTIFACT_FILENAME[artifact];
     const path = `${cwd}/openspec/${dir}/${name}/${file}`;
-    return this.fs.readFileAbsolute(path);
+    const result = await this.fs.readFile(path);
+    if ('error' in result) return { error: result.error };
+    if ('tooLarge' in result) return { error: 'File too large' };
+    return { content: result.content };
   }
 
   async changeNew(cwd: string, name: string): Promise<OpenspecChangeNewResult> {
@@ -148,8 +151,9 @@ export class LocalOpenspec implements Openspec {
   ): Promise<OpenspecToggleTaskResult> {
     if (!isSlug(name)) return { error: 'invalid-name' };
     const path = `${cwd}/openspec/${OPENSPEC_KIND_DIR.change}/${name}/tasks.md`;
-    const read = await this.fs.readFileAbsolute(path);
+    const read = await this.fs.readFile(path);
     if ('error' in read) return { error: read.error };
+    if ('tooLarge' in read) return { error: 'File too large' };
     const lines = read.content.split('\n');
     if (lineIndex < 0 || lineIndex >= lines.length) {
       return { error: 'line-out-of-range' };

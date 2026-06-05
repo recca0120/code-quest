@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 
 interface EventSocket {
-  on(event: string, fn: (...args: unknown[]) => void): unknown;
-  off(event: string, fn: (...args: unknown[]) => void): unknown;
+  // biome-ignore lint/suspicious/noExplicitAny: bypass socket.io event-name contravariance
+  on(event: any, fn: (...args: unknown[]) => void): unknown;
+  // biome-ignore lint/suspicious/noExplicitAny: bypass socket.io event-name contravariance
+  off(event: any, fn: (...args: unknown[]) => void): unknown;
 }
 
 interface DirtyStore<R> {
@@ -11,7 +13,7 @@ interface DirtyStore<R> {
   refetchIfSubscribed(cwd: string): Promise<void>;
 }
 
-export function useDirtyQueryCache<S, R>(
+export function useDirtyQueryCache<S extends EventSocket, R>(
   socket: S | null,
   store: DirtyStore<R>,
   fetchFactory: (socket: S | null) => (cwd: string) => Promise<R>,
@@ -25,7 +27,6 @@ export function useDirtyQueryCache<S, R>(
 
   useEffect(() => {
     if (!socket) return;
-    const s = socket as unknown as EventSocket;
     const onDirty = (payload: unknown) => {
       const cwd = extractCwd(payload);
       if (!cwd) return;
@@ -36,9 +37,9 @@ export function useDirtyQueryCache<S, R>(
         void store.refetchIfSubscribed(cwd);
       }
     };
-    s.on(dirtyEvent, onDirty);
+    socket.on(dirtyEvent, onDirty);
     return () => {
-      s.off(dirtyEvent, onDirty);
+      socket.off(dirtyEvent, onDirty);
     };
   }, [socket, store, dirtyEvent, extractCwd, extractSnapshot]);
 }

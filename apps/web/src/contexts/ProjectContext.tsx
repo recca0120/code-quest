@@ -60,8 +60,9 @@ interface ProjectActions {
   removeProject: (cwd: string) => Promise<ProjectMutationResult>;
 }
 
-export const ProjectStateContext: React.Context<ProjectState | null> =
-  createContext<ProjectState | null>(null);
+const ProjectStateContext: React.Context<ProjectState | null> = createContext<ProjectState | null>(
+  null,
+);
 export const ProjectActionsContext: React.Context<ProjectActions | null> =
   createContext<ProjectActions | null>(null);
 

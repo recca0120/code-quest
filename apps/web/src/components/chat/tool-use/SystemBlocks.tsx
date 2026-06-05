@@ -1,4 +1,5 @@
 import type { ChatStats } from '@code-quest/schemas';
+import { imageDataUri } from '@code-quest/utils';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
 import { Expandable } from '@/components/chat/ui/Expandable';
 import { StatusLine } from '@/components/chat/ui/StatusLine';
@@ -193,7 +194,7 @@ export function StreamlinedToolSummaryContent({ content }: { content: string }):
 
 export function ImageContent({ source }: { source?: ImageMeta['source'] }): React.ReactNode {
   if (!source?.data || source.type !== 'base64') return null;
-  const dataUrl = `data:${source.media_type ?? 'image/png'};base64,${source.data}`;
+  const dataUrl = imageDataUri(source.media_type ?? 'image/png', source.data);
   return (
     <div className="my-2">
       <img
@@ -219,8 +220,8 @@ export function DocumentContent({
     if (!source?.data) return;
     const dataUrl =
       source.type === 'base64'
-        ? `data:${source.media_type ?? 'application/octet-stream'};base64,${source.data}`
-        : `data:${source.media_type ?? 'text/plain'};base64,${btoa(source.data)}`;
+        ? imageDataUri(source.media_type ?? 'application/octet-stream', source.data)
+        : imageDataUri(source.media_type ?? 'text/plain', btoa(source.data));
     const a = document.createElement('a');
     a.href = dataUrl;
     a.download = title;

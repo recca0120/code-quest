@@ -1,6 +1,6 @@
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -12,9 +12,16 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 const SCALE_STEP = 0.25;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 2.0;
-const INITIAL_BASE_WIDTH = 560;
 
-interface ControlsProps {
+function Controls({
+  page,
+  numPages,
+  scale,
+  onPrev,
+  onNext,
+  onZoomOut,
+  onZoomIn,
+}: {
   page: number;
   numPages: number;
   scale: number;
@@ -22,9 +29,7 @@ interface ControlsProps {
   onNext: () => void;
   onZoomOut: () => void;
   onZoomIn: () => void;
-}
-
-function Controls({ page, numPages, scale, onPrev, onNext, onZoomOut, onZoomIn }: ControlsProps) {
+}) {
   return (
     <div className="flex items-center gap-3 flex-shrink-0">
       <Button
@@ -79,12 +84,18 @@ export function PdfViewer({
   data: string;
   className?: string;
 }): React.JSX.Element {
+  const [file, setFile] = useState<string | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [scale, setScale] = useState(1.0);
-  const [baseWidth, setBaseWidth] = useState(INITIAL_BASE_WIDTH);
+  const [baseWidth, setBaseWidth] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = viewportRef.current;
+    if (el) setBaseWidth(el.getBoundingClientRect().width);
+  }, []);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -115,70 +126,77 @@ export function PdfViewer({
     const el = viewportRef.current;
     if (!el) return;
     el.style.cursor = 'grab';
+    let onMouseMove: ((ev: MouseEvent) => void) | null = null;
+    let onMouseUp: (() => void) | null = null;
     const onMouseDown = (e: MouseEvent) => {
       e.preventDefault();
       el.style.cursor = 'grabbing';
-
       const start = {
         x: e.clientX,
         y: e.clientY,
         scrollLeft: el.scrollLeft,
         scrollTop: el.scrollTop,
       };
-
-      const onMouseMove = (ev: MouseEvent) => {
+      onMouseMove = (ev: MouseEvent) => {
         el.scrollLeft = start.scrollLeft + (start.x - ev.clientX);
         el.scrollTop = start.scrollTop + (start.y - ev.clientY);
       };
-      const onMouseUp = () => {
+      onMouseUp = () => {
         el.style.cursor = 'grab';
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+        if (onMouseMove) document.removeEventListener('mousemove', onMouseMove);
+        if (onMouseUp) document.removeEventListener('mouseup', onMouseUp);
+        onMouseMove = null;
+        onMouseUp = null;
       };
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
     };
     el.addEventListener('mousedown', onMouseDown);
-    return () => el.removeEventListener('mousedown', onMouseDown);
+    return () => {
+      el.removeEventListener('mousedown', onMouseDown);
+      if (onMouseMove) document.removeEventListener('mousemove', onMouseMove);
+      if (onMouseUp) document.removeEventListener('mouseup', onMouseUp);
+    };
   }, []);
 
-  const file = useMemo(() => {
+  useEffect(() => {
     const binary = atob(data);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    setFile(url);
+    return () => URL.revokeObjectURL(url);
   }, [data]);
-
-  useEffect(() => {
-    return () => URL.revokeObjectURL(file);
-  }, [file]);
   const onPrev = () => setPage((p) => p - 1);
   const onNext = () => setPage((p) => p + 1);
   const onZoomOut = () => setScale((s) => Math.max(MIN_SCALE, s - SCALE_STEP));
   const onZoomIn = () => setScale((s) => Math.min(MAX_SCALE, s + SCALE_STEP));
+  const controlProps = { page, numPages, scale, onPrev, onNext, onZoomOut, onZoomIn };
 
   return (
     <div className={cn('flex flex-col gap-2 min-h-0', className)}>
-      <Controls {...{ page, numPages, scale, onPrev, onNext, onZoomOut, onZoomIn }} />
+      <Controls {...controlProps} />
       <section
         ref={viewportRef}
         aria-label="PDF viewport"
         className="overflow-auto flex-1 min-h-0 select-none"
       >
         {loadError && <div className="text-sm text-warning p-2">{loadError}</div>}
-        <Document
-          file={file}
-          onLoadSuccess={({ numPages: n }) => {
-            setNumPages(n);
-            setLoadError(null);
-          }}
-          onLoadError={(err) => setLoadError(err.message)}
-          className="border border-border rounded overflow-hidden w-fit"
-        >
-          <Page pageNumber={page} width={baseWidth * scale} />
-        </Document>
+        {baseWidth > 0 && file && (
+          <Document
+            file={file}
+            onLoadSuccess={({ numPages: n }) => {
+              setNumPages(n);
+              setLoadError(null);
+            }}
+            onLoadError={(err) => setLoadError(err.message)}
+            className="border border-border rounded overflow-hidden w-fit"
+          >
+            <Page pageNumber={page} width={baseWidth * scale} />
+          </Document>
+        )}
       </section>
-      <Controls {...{ page, numPages, scale, onPrev, onNext, onZoomOut, onZoomIn }} />
+      <Controls {...controlProps} />
     </div>
   );
 }

@@ -295,8 +295,8 @@ describe('LocalOpenspec', () => {
       seedTasks(fs, '- [ ] one\n- [ ] two\n');
       const result = await reader.toggleTask('/repo', 'add-foo', 1);
       expect(result).toEqual({ ok: true, checked: true });
-      const read = await fs.readFileAbsolute('/repo/openspec/changes/add-foo/tasks.md');
-      if ('error' in read) throw new Error(read.error);
+      const read = await fs.readFile('/repo/openspec/changes/add-foo/tasks.md');
+      if ('error' in read || 'tooLarge' in read) throw new Error('unexpected result');
       expect(read.content).toBe('- [ ] one\n- [x] two\n');
     });
 
@@ -305,8 +305,8 @@ describe('LocalOpenspec', () => {
       seedTasks(fs, '- [x] done\n');
       const result = await reader.toggleTask('/repo', 'add-foo', 0);
       expect(result).toEqual({ ok: true, checked: false });
-      const read = await fs.readFileAbsolute('/repo/openspec/changes/add-foo/tasks.md');
-      if ('error' in read) throw new Error(read.error);
+      const read = await fs.readFile('/repo/openspec/changes/add-foo/tasks.md');
+      if ('error' in read || 'tooLarge' in read) throw new Error('unexpected result');
       expect(read.content).toBe('- [ ] done\n');
     });
 
