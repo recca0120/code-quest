@@ -5,6 +5,22 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: '' }));
 
+// Simulate ResizeObserver firing with a fixed width so baseWidth > 0
+vi.stubGlobal(
+  'ResizeObserver',
+  class {
+    private cb: ResizeObserverCallback;
+    constructor(cb: ResizeObserverCallback) {
+      this.cb = cb;
+    }
+    observe(_el: Element) {
+      this.cb([{ contentRect: { width: 600 } } as ResizeObserverEntry], this);
+    }
+    unobserve() {}
+    disconnect() {}
+  },
+);
+
 vi.mock('react-pdf', () => ({
   Document: ({
     onLoadSuccess,

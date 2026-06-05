@@ -40,7 +40,7 @@ describe('FsHandler', () => {
   it('browseEntries returns directories and files for a path', async () => {
     const { request } = makeHandler();
     const result = await request(REMOTE_METHODS.fs.browseEntries, { path: '/repo/src' });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       directories: [],
       files: [
         { name: 'index.ts', path: '/repo/src/index.ts' },
@@ -49,10 +49,10 @@ describe('FsHandler', () => {
     });
   });
 
-  it('readFileAbsolute returns file content', async () => {
+  it('readFile returns file content', async () => {
     const { request } = makeHandler();
-    const result = await request(REMOTE_METHODS.fs.readFileAbsolute, {
-      absolutePath: '/repo/src/index.ts',
+    const result = await request(REMOTE_METHODS.fs.read, {
+      file: '/repo/src/index.ts',
     });
     expect((result as Record<string, unknown>).content).toBe('export {}');
     expect((result as Record<string, unknown>).encoding).toBe('utf-8');
@@ -65,7 +65,7 @@ describe('FsHandler', () => {
       content: 'new content',
     });
     expect(result).toEqual({ ok: true });
-    const readResult = await fs.readFileAbsolute('/repo/src/index.ts');
+    const readResult = await fs.readFile('/repo/src/index.ts');
     expect((readResult as Record<string, unknown>).content).toBe('new content');
   });
 
@@ -131,10 +131,10 @@ describe('FsHandler', () => {
   it('read returns file content relative to cwd', async () => {
     const { request } = makeHandler();
     const result = await request(REMOTE_METHODS.fs.read, {
+      file: 'index.ts',
       cwd: '/repo/src',
-      filePath: 'index.ts',
     });
-    expect(result).toEqual({ content: 'export {}' });
+    expect(result).toMatchObject({ content: 'export {}' });
   });
 
   it('exists returns true for an existing file', async () => {

@@ -1,10 +1,12 @@
 export type DirectoryEntry = { name: string; path: string };
+export type FileEntry = { name: string; path: string; size: number };
 export type FileResult = { path: string; name: string; type: 'file' | 'directory' };
 export type FileKind = 'file' | 'directory';
-export type ReadFileResult = { content: string } | { error: string };
-export type ReadFileAbsoluteResult =
+export type ReadFileResult =
   | { content: string; contentType: string; encoding: 'utf-8' | 'base64' }
+  | { tooLarge: true }
   | { error: string };
+export type ReadFileOpts = { cwd?: string; maxBytes?: number };
 export type WriteFileResult = { ok: true } | { error: string };
 export type FsMutationResult = { ok: true } | { error: string };
 
@@ -22,8 +24,8 @@ export interface Filesystem {
   browseEntries(
     path?: string,
     opts?: { showHidden?: boolean },
-  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }>;
-  readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult>;
+  ): Promise<{ directories: DirectoryEntry[]; files: FileEntry[] }>;
+  readFile(file: string, opts?: ReadFileOpts): Promise<ReadFileResult>;
   readLines(absolutePath: string): AsyncIterable<string>;
   writeFile(absolutePath: string, content: string): Promise<WriteFileResult>;
   create(absolutePath: string, kind: FileKind): Promise<FsMutationResult>;
@@ -32,7 +34,6 @@ export interface Filesystem {
   copy(from: string, to: string): Promise<FsMutationResult>;
   move(from: string, to: string): Promise<FsMutationResult>;
   listFiles(cwd: string, pattern: string): Promise<FileResult[]>;
-  readFile(cwd: string, filePath: string): Promise<ReadFileResult>;
   exists(path: string): Promise<boolean>;
   isDirectory(path: string): Promise<boolean>;
   statKind(path: string): Promise<FileKind | null>;

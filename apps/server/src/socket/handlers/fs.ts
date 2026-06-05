@@ -55,7 +55,7 @@ export function create({
 
   const handleRead = createFsHandler(
     fsReadPayloadSchema,
-    async ({ path }) => fs.readFileAbsolute(path),
+    async ({ file, cwd, maxBytes }) => fs.readFile(file, { cwd, maxBytes }),
     'fs:read',
     { error: 'Read failed' },
   );

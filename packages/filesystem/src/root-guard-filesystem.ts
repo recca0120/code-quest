@@ -2,11 +2,12 @@ import { basename, resolve } from 'node:path';
 import { isPathWithin } from './is-path-within.ts';
 import type {
   DirectoryEntry,
+  FileEntry,
   FileKind,
   FileResult,
   Filesystem,
   FsMutationResult,
-  ReadFileAbsoluteResult,
+  ReadFileOpts,
   ReadFileResult,
   WriteFileResult,
 } from './types.ts';
@@ -45,20 +46,23 @@ export class RootGuardFilesystem implements Filesystem {
   async browseEntries(
     path?: string,
     opts?: { showHidden?: boolean },
-  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
+  ): Promise<{ directories: DirectoryEntry[]; files: FileEntry[] }> {
     if (!path) return { directories: this.rootEntries(), files: [] };
     this.guard(path);
     return this.filesystem.browseEntries(path, opts);
   }
 
-  async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
-    if (!this.isWithin(cwd)) return { error: 'Path traversal not allowed' };
-    return this.filesystem.readFile(cwd, filePath);
-  }
-
-  async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    this.guard(absolutePath);
-    return this.filesystem.readFileAbsolute(absolutePath);
+  async readFile(file: string, opts?: ReadFileOpts): Promise<ReadFileResult> {
+    if (opts?.cwd) {
+      // Guard the cwd against allowed roots; traversal within cwd is enforced
+      // by LocalFilesystem.readFile via its own isPathWithin(cwd, resolved) check.
+      // Do not weaken or remove that inner check — it is the only barrier against
+      // `../../outside` style escapes when cwd is valid.
+      if (!this.isWithin(opts.cwd)) return { error: 'Path traversal not allowed' };
+    } else {
+      this.guard(file);
+    }
+    return this.filesystem.readFile(file, opts);
   }
 
   async *readLines(absolutePath: string): AsyncIterable<string> {

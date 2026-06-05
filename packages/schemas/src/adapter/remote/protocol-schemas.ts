@@ -67,13 +67,6 @@ export const fsBrowseEntriesParamsSchema: z.ZodObject<
   showHidden: z.boolean().optional(),
 });
 
-export const fsReadFileAbsoluteParamsSchema: z.ZodObject<
-  { absolutePath: z.ZodString },
-  z.core.$strip
-> = z.object({
-  absolutePath: z.string(),
-});
-
 export const fsWriteFileAbsoluteParamsSchema: z.ZodObject<
   { absolutePath: z.ZodString; content: z.ZodString },
   z.core.$strip
@@ -113,11 +106,12 @@ export const fsListParamsSchema: z.ZodObject<
 });
 
 export const fsReadParamsSchema: z.ZodObject<
-  { cwd: z.ZodString; filePath: z.ZodString },
+  { file: z.ZodString; cwd: z.ZodOptional<z.ZodString>; maxBytes: z.ZodOptional<z.ZodNumber> },
   z.core.$strip
 > = z.object({
-  cwd: z.string(),
-  filePath: z.string(),
+  file: z.string(),
+  cwd: z.string().optional(),
+  maxBytes: z.number().optional(),
 });
 
 const pathParamSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object({
@@ -135,6 +129,8 @@ export const fsStatKindParamsSchema: typeof pathParamSchema = pathParamSchema;
 const directoryEntrySchema: z.ZodObject<{ name: z.ZodString; path: z.ZodString }, z.core.$strip> =
   z.object({ name: z.string(), path: z.string() });
 
+const fileEntrySchema = z.object({ name: z.string(), path: z.string(), size: z.number() });
+
 export const fsBrowseDirectoriesResponseSchema: z.ZodObject<
   { entries: z.ZodArray<typeof directoryEntrySchema> },
   z.core.$strip
@@ -145,12 +141,14 @@ export const fsBrowseDirectoriesResponseSchema: z.ZodObject<
 export const fsBrowseEntriesResponseSchema: z.ZodObject<
   {
     directories: z.ZodArray<typeof directoryEntrySchema>;
-    files: z.ZodArray<typeof directoryEntrySchema>;
+    files: z.ZodArray<
+      z.ZodObject<{ name: z.ZodString; path: z.ZodString; size: z.ZodNumber }, z.core.$strip>
+    >;
   },
   z.core.$strip
 > = z.object({
   directories: z.array(directoryEntrySchema),
-  files: z.array(directoryEntrySchema),
+  files: z.array(fileEntrySchema),
 });
 
 const fileResultSchema: z.ZodObject<
@@ -182,7 +180,7 @@ export const fsStatKindResponseSchema: z.ZodObject<
   kind: fsEntryTypeSchema.nullable(),
 });
 
-export const fsReadFileAbsoluteResponseSchema: z.ZodUnion<
+export const fsReadFileResponseSchema: z.ZodUnion<
   readonly [
     z.ZodObject<
       {
@@ -192,19 +190,14 @@ export const fsReadFileAbsoluteResponseSchema: z.ZodUnion<
       },
       z.core.$strip
     >,
+    z.ZodObject<{ tooLarge: z.ZodLiteral<true> }, z.core.$strip>,
     z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
   ]
 > = z.union([
   z.object({ content: z.string(), contentType: z.string(), encoding: z.enum(['utf-8', 'base64']) }),
+  z.object({ tooLarge: z.literal(true) }),
   z.object({ error: z.string() }),
 ]);
-
-export const fsReadFileResponseSchema: z.ZodUnion<
-  readonly [
-    z.ZodObject<{ content: z.ZodString }, z.core.$strip>,
-    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
-  ]
-> = z.union([z.object({ content: z.string() }), z.object({ error: z.string() })]);
 
 // ── Git responses ──
 

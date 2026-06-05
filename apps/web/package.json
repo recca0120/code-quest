@@ -20,8 +20,11 @@
     "test-storybook:ci": "concurrently -k -s first -n SB,TEST -c magenta,blue \"http-server storybook-static --port 6006 --silent\" \"wait-on -t 60000 tcp:6006 && test-storybook --url http://127.0.0.1:6006\""
   },
   "dependencies": {
+    "@code-quest/filesystem": "workspace:*",
+    "@code-quest/git": "workspace:*",
     "@code-quest/schemas": "workspace:*",
     "@code-quest/transport": "workspace:*",
+    "@code-quest/utils": "workspace:*",
     "@headless-tree/core": "^1.6.3",
     "@headless-tree/react": "^1.6.3",
     "@heroicons/react": "^2.2.0",
@@ -38,6 +41,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-visually-hidden": "^1.2.4",
     "@tanstack/react-virtual": "^3.13.24",
+    "@use-gesture/react": "^10.3.1",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "ansi-to-react": "^6.2.6",
@@ -64,10 +68,7 @@
     "use-debounce": "^10.1.1",
     "usehooks-ts": "^3.1.1",
     "zod": "^4.4.3",
-    "zustand": "^5.0.13",
-    "@code-quest/filesystem": "workspace:*",
-    "@code-quest/git": "workspace:*",
-    "@code-quest/utils": "workspace:*"
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@code-quest/server": "workspace:*",

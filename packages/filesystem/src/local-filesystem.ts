@@ -8,12 +8,13 @@ import { glob } from 'glob';
 import { isPathWithin } from './is-path-within.ts';
 import type {
   DirectoryEntry,
+  FileEntry,
   FileKind,
   FileResult,
   Filesystem,
   FsMutationResult,
   MinimalLogger,
-  ReadFileAbsoluteResult,
+  ReadFileOpts,
   ReadFileResult,
   WriteFileResult,
 } from './types.ts';
@@ -62,7 +63,7 @@ export class LocalFilesystem implements Filesystem {
   async browseEntries(
     path?: string,
     opts?: { showHidden?: boolean },
-  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
+  ): Promise<{ directories: DirectoryEntry[]; files: FileEntry[] }> {
     if (!path) return { directories: [], files: [] };
     return this.readBrowseEntries(path, opts?.showHidden ?? false);
   }
@@ -70,13 +71,13 @@ export class LocalFilesystem implements Filesystem {
   private async readBrowseEntries(
     path: string,
     showHidden: boolean,
-  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
+  ): Promise<{ directories: DirectoryEntry[]; files: FileEntry[] }> {
     const validated = resolve(path);
 
     try {
       const entries = await readdir(validated, { withFileTypes: true });
       const directories: DirectoryEntry[] = [];
-      const files: DirectoryEntry[] = [];
+      const fileNames: string[] = [];
       for (const entry of entries) {
         if (entry.isSymbolicLink()) continue;
         if (!showHidden && entry.name.startsWith('.')) continue;
@@ -84,9 +85,16 @@ export class LocalFilesystem implements Filesystem {
           if (BROWSE_IGNORED.has(entry.name)) continue;
           directories.push({ name: entry.name, path: join(validated, entry.name) });
         } else if (entry.isFile()) {
-          files.push({ name: entry.name, path: join(validated, entry.name) });
+          fileNames.push(entry.name);
         }
       }
+      const files: FileEntry[] = await Promise.all(
+        fileNames.map(async (name) => {
+          const filePath = join(validated, name);
+          const { size } = await stat(filePath);
+          return { name, path: filePath, size };
+        }),
+      );
       directories.sort((a, b) => a.name.localeCompare(b.name));
       files.sort((a, b) => a.name.localeCompare(b.name));
       return { directories, files };
@@ -110,24 +118,6 @@ export class LocalFilesystem implements Filesystem {
       return this.listDirectory(pattern, entry.files, entry.dirs);
     }
     return this.fuzzySearch(pattern.toLowerCase(), entry);
-  }
-
-  // ── readFileAbsolute ──
-
-  async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    const validated = resolve(absolutePath);
-    const { contentType, encoding } = mimeForPath(absolutePath);
-    try {
-      if (encoding === 'base64') {
-        const buffer = await readFile(validated);
-        return { content: buffer.toString('base64'), contentType, encoding };
-      }
-      const content = await readFile(validated, 'utf-8');
-      return { content, contentType, encoding };
-    } catch (err) {
-      this.logger.debug({ err }, '[LocalFilesystem] readFileAbsolute failed');
-      return { error: `File not found: ${absolutePath}` };
-    }
   }
 
   // ── readLines ──
@@ -212,18 +202,32 @@ export class LocalFilesystem implements Filesystem {
 
   // ── readFile ──
 
-  async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
-    const resolvedCwd = resolve(cwd);
-    const absolute = resolve(resolvedCwd, normalize(filePath));
-    if (!isPathWithin(resolvedCwd, absolute)) {
-      return { error: 'Path traversal not allowed' };
+  async readFile(file: string, opts?: ReadFileOpts): Promise<ReadFileResult> {
+    let absolute: string;
+    if (opts?.cwd) {
+      const resolvedCwd = resolve(opts.cwd);
+      absolute = resolve(resolvedCwd, normalize(file));
+      if (!isPathWithin(resolvedCwd, absolute)) {
+        return { error: 'Path traversal not allowed' };
+      }
+    } else {
+      absolute = resolve(file);
     }
+    const { contentType, encoding } = mimeForPath(absolute);
     try {
+      if (opts?.maxBytes !== undefined) {
+        const { size } = await stat(absolute);
+        if (size > opts.maxBytes) return { tooLarge: true };
+      }
+      if (encoding === 'base64') {
+        const buffer = await readFile(absolute);
+        return { content: buffer.toString('base64'), contentType, encoding };
+      }
       const content = await readFile(absolute, 'utf-8');
-      return { content };
+      return { content, contentType, encoding };
     } catch (err) {
       this.logger.debug({ err }, '[LocalFilesystem] readFile failed');
-      return { error: `File not found: ${filePath}` };
+      return { error: `File not found: ${file}` };
     }
   }
 

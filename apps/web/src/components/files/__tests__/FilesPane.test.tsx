@@ -25,7 +25,7 @@ describe('FilesPane', () => {
     expect(screen.queryByRole('treeitem', { name: 'repo' })).toBeNull();
   });
 
-  it('plain click on a file opens preview modal', async () => {
+  it('plain click on a file opens preview drawer (tree stays visible)', async () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
     render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
@@ -33,6 +33,21 @@ describe('FilesPane', () => {
     await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
 
     expect(await screen.findByRole('button', { name: /mention/i })).toBeInTheDocument();
+    // tree stays in DOM (aria-hidden by dialog, but not removed)
+    expect(screen.getByRole('tree', { hidden: true })).toBeInTheDocument();
+  });
+
+  it('closing drawer returns focus to tree without removing it', async () => {
+    const user = userEvent.setup();
+    const { Wrapper } = setup();
+    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+
+    await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
+    await screen.findByRole('button', { name: /mention/i });
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('button', { name: /mention/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('tree')).toBeInTheDocument();
   });
 
   it('shows "Path outside allowed roots" when cwd is outside fsRoots', async () => {
@@ -72,7 +87,7 @@ describe('FilesPane', () => {
     expect(screen.queryByRole('treeitem', { name: 'A-only.md' })).toBeNull();
   });
 
-  it('Cmd/Meta+click on a file fires onMention without opening modal', async () => {
+  it('Cmd/Meta+click on a file fires onMention without opening drawer', async () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
     const onMention = vi.fn();
@@ -83,6 +98,47 @@ describe('FilesPane', () => {
     await user.keyboard('{/Meta}');
 
     expect(onMention).toHaveBeenCalledWith('/repo/README.md');
-    expect(screen.queryByRole('button', { name: /^mention$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows file content in drawer after clicking a file', async () => {
+    const user = userEvent.setup();
+    const { Wrapper } = setup();
+    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+
+    await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
+
+    expect(await screen.findByRole('heading', { name: /hi/i })).toBeInTheDocument();
+  });
+
+  it('shows too-large message when server returns tooLarge', async () => {
+    const user = userEvent.setup();
+    const { summoner, Wrapper } = setup();
+    summoner.filesystem().addFile('/repo/huge.txt', 'x'.repeat(2 * 1024 * 1024 + 1));
+    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+
+    await user.click(await screen.findByRole('treeitem', { name: 'huge.txt' }));
+
+    expect(await screen.findByText(/too large/i)).toBeInTheDocument();
+  });
+
+  it('resets viewMode to preview when a new file is opened', async () => {
+    const user = userEvent.setup();
+    const { summoner, Wrapper } = setup();
+    summoner.filesystem().addFile('/repo/other.md', '# Other');
+    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+
+    // open README.md and switch to raw
+    await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
+    await screen.findByRole('heading', { name: /hi/i });
+    await user.click(screen.getByRole('button', { name: /raw/i }));
+    expect(screen.queryByRole('heading', { name: /hi/i })).not.toBeInTheDocument();
+
+    // close drawer
+    await user.keyboard('{Escape}');
+
+    // open other.md — should be back to preview
+    await user.click(await screen.findByRole('treeitem', { name: 'other.md' }));
+    expect(await screen.findByRole('heading', { name: 'Other' })).toBeInTheDocument();
   });
 });

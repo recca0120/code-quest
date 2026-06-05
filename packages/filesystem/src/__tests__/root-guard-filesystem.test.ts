@@ -47,7 +47,7 @@ describe('RootGuardFilesystem', () => {
       const guarded = new RootGuardFilesystem(inner, [ROOT]);
       const result = await guarded.browseEntries(ROOT);
       expect(result.directories).toEqual([{ name: 'sub', path: join(ROOT, 'sub') }]);
-      expect(result.files).toEqual([{ name: 'file.txt', path: join(ROOT, 'file.txt') }]);
+      expect(result.files).toEqual([{ name: 'file.txt', path: join(ROOT, 'file.txt'), size: 5 }]);
     });
 
     it('throws PathOutsideRootsError when path is outside roots', async () => {
@@ -57,34 +57,34 @@ describe('RootGuardFilesystem', () => {
   });
 
   describe('readFile', () => {
-    it('delegates to inner when cwd is within roots', async () => {
+    it('delegates to inner for absolute path within roots', async () => {
+      const inner = new FakeFilesystem();
+      inner.addFile(join(ROOT, 'file.txt'), 'hello');
+      const guarded = new RootGuardFilesystem(inner, [ROOT]);
+      const result = await guarded.readFile(join(ROOT, 'file.txt'));
+      expect(result).toMatchObject({ content: 'hello' });
+    });
+
+    it('delegates to inner for relative path within roots', async () => {
       const inner = new FakeFilesystem();
       inner.addFile(join(ROOT, 'file.txt'), 'content');
       const guarded = new RootGuardFilesystem(inner, [ROOT]);
-      expect(await guarded.readFile(ROOT, 'file.txt')).toEqual({ content: 'content' });
+      expect(await guarded.readFile('file.txt', { cwd: ROOT })).toMatchObject({
+        content: 'content',
+      });
+    });
+
+    it('throws PathOutsideRootsError for absolute path outside roots', async () => {
+      const { guarded } = makeGuarded();
+      await expect(guarded.readFile(join(OTHER, 'file.txt'))).rejects.toThrow(
+        PathOutsideRootsError,
+      );
     });
 
     it('returns error when cwd is outside roots', async () => {
       const { guarded } = makeGuarded();
-      const result = await guarded.readFile(OTHER, 'file.txt');
+      const result = await guarded.readFile('file.txt', { cwd: OTHER });
       expect(result).toEqual({ error: 'Path traversal not allowed' });
-    });
-  });
-
-  describe('readFileAbsolute', () => {
-    it('delegates to inner when path is within roots', async () => {
-      const inner = new FakeFilesystem();
-      inner.addFile(join(ROOT, 'file.txt'), 'hello');
-      const guarded = new RootGuardFilesystem(inner, [ROOT]);
-      const result = await guarded.readFileAbsolute(join(ROOT, 'file.txt'));
-      expect(result).toMatchObject({ content: 'hello' });
-    });
-
-    it('throws PathOutsideRootsError when path is outside roots', async () => {
-      const { guarded } = makeGuarded();
-      await expect(guarded.readFileAbsolute(join(OTHER, 'file.txt'))).rejects.toThrow(
-        PathOutsideRootsError,
-      );
     });
   });
 

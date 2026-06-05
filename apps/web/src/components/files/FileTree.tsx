@@ -18,11 +18,9 @@ const ITEM_CLS =
 const DANGER_CLS =
   'w-full px-3 py-1 text-left text-sm text-danger data-[highlighted]:bg-danger/10 outline-none cursor-pointer';
 
-interface EntryItem {
-  name: string;
-  path: string;
-  kind: 'directory' | 'file';
-}
+type EntryItem =
+  | { name: string; path: string; kind: 'directory' }
+  | { name: string; path: string; kind: 'file'; size: number };
 
 export function FileTree({
   rootCwd,
@@ -42,7 +40,7 @@ export function FileTree({
   /** Map<absolute-path, git-status-mark> — render badge per matching file. */
   gitMarks?: Map<string, string>;
   onSelect?: (path: string) => void;
-  onActivate?: (path: string, event: MouseEvent) => void;
+  onActivate?: (file: EntryItem, event: MouseEvent) => void;
   onHighlight?: (path: string) => void;
   highlightedPath?: string | null;
   /** Absolute paths that should render as visually disabled and ignore
@@ -142,14 +140,14 @@ export function FileTree({
     isItemFolder: (item) => item.getItemData().kind === 'directory',
     createLoadingItemData: () => ({ name: 'Loading...', path: '', kind: 'directory' }),
     dataLoader: {
-      getItem: (itemId) => ({
-        name: basename(itemId),
-        path: itemId,
+      getItem: (itemId): EntryItem => {
+        const kind = kindByPathRef.current.get(itemId) ?? 'directory';
         // Default 'directory' for unknowns (root, not-yet-visited) — once
         // a parent has been expanded we cache the actual kind so file
         // leaves stop lying about isItemFolder.
-        kind: kindByPathRef.current.get(itemId) ?? 'directory',
-      }),
+        if (kind === 'file') return { name: basename(itemId), path: itemId, kind: 'file', size: 0 };
+        return { name: basename(itemId), path: itemId, kind: 'directory' };
+      },
       getChildrenWithData: async (itemId) => {
         const path = itemId === 'root' ? rootCwd : itemId;
         const result = await browseEntries(path, { showHidden });
@@ -229,7 +227,7 @@ export function FileTree({
               }
               item.getProps().onClick?.(e);
               onHighlight?.(data.path);
-              if (isFile && data.path) onActivate?.(data.path, e);
+              if (isFile && data.path) onActivate?.(data, e);
             }}
             onDoubleClick={() => {
               if (isDisabled) return;

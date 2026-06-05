@@ -4,11 +4,12 @@ export { RemoteFilesystem } from './remote-filesystem.ts';
 export { RootGuardFilesystem } from './root-guard-filesystem.ts';
 export type {
   DirectoryEntry,
+  FileEntry,
   FileKind,
   FileResult,
   Filesystem,
   FsMutationResult,
-  ReadFileAbsoluteResult,
+  ReadFileOpts,
   ReadFileResult,
   WriteFileResult,
 } from './types.ts';

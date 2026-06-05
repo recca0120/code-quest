@@ -43,9 +43,16 @@ describe('FakeFilesystem', () => {
       const result = await fs.browseEntries('/repo');
       expect(result.directories).toEqual([{ name: 'src', path: '/repo/src' }]);
       expect(result.files).toEqual([
-        { name: 'package.json', path: '/repo/package.json' },
-        { name: 'README.md', path: '/repo/README.md' },
+        { name: 'package.json', path: '/repo/package.json', size: 2 },
+        { name: 'README.md', path: '/repo/README.md', size: 4 },
       ]);
+    });
+
+    it('file size reflects content byte length', async () => {
+      const fs = new FakeFilesystem();
+      fs.addFile('/repo/big.txt', 'a'.repeat(1000));
+      const { files } = await fs.browseEntries('/repo');
+      expect(files[0]?.size).toBe(1000);
     });
 
     it('returns roots as directories with empty files when no path', async () => {
@@ -87,24 +94,28 @@ describe('FakeFilesystem', () => {
     it('reads an existing file', async () => {
       const fs = new FakeFilesystem();
       fs.addFile('/app/index.ts', 'export {}');
-      expect(await fs.readFile('/app', 'index.ts')).toEqual({ content: 'export {}' });
+      expect(await fs.readFile('index.ts', { cwd: '/app' })).toMatchObject({
+        content: 'export {}',
+      });
     });
 
     it('returns error for non-existent file', async () => {
       const fs = new FakeFilesystem();
-      expect(await fs.readFile('/app', 'nope.ts')).toEqual({ error: 'File not found: nope.ts' });
+      expect(await fs.readFile('nope.ts', { cwd: '/app' })).toEqual({
+        error: 'File not found: nope.ts',
+      });
     });
 
     it('rejects path traversal via prefix-similar directory', async () => {
       const fs = new FakeFilesystem();
       fs.addFile('/foobar/secret.txt', 'secret');
-      const result = await fs.readFile('/foo', '../foobar/secret.txt');
+      const result = await fs.readFile('../foobar/secret.txt', { cwd: '/foo' });
       expect('error' in result).toBe(true);
     });
 
     it('rejects path traversal via ../..', async () => {
       const fs = new FakeFilesystem();
-      const result = await fs.readFile('/app', '../../etc/passwd');
+      const result = await fs.readFile('../../etc/passwd', { cwd: '/app' });
       expect('error' in result).toBe(true);
     });
   });
@@ -140,7 +151,7 @@ describe('FakeFilesystem', () => {
     it('creates files with content', async () => {
       const fs = new FakeFilesystem();
       fs.fromTree('/root', { 'readme.md': '# Hello' });
-      const result = await fs.readFileAbsolute('/root/readme.md');
+      const result = await fs.readFile('/root/readme.md');
       expect(result).toMatchObject({ content: '# Hello' });
     });
 
@@ -155,7 +166,7 @@ describe('FakeFilesystem', () => {
           },
         },
       });
-      const result = await fs.readFileAbsolute('/repo/openspec/changes/add-foo/tasks.md');
+      const result = await fs.readFile('/repo/openspec/changes/add-foo/tasks.md');
       expect(result).toMatchObject({ content: '- [ ] task' });
     });
 
@@ -187,7 +198,7 @@ describe('FakeFilesystem', () => {
       it('creates an empty file at a new path', async () => {
         const fs = setup();
         expect(await fs.create('/repo/new.ts', 'file')).toEqual({ ok: true });
-        expect(await fs.readFileAbsolute('/repo/new.ts')).toMatchObject({ content: '' });
+        expect(await fs.readFile('/repo/new.ts')).toMatchObject({ content: '' });
       });
 
       it('creates a directory at a new path', async () => {
@@ -221,7 +232,7 @@ describe('FakeFilesystem', () => {
         const fs = setup();
         expect(await fs.rename('/repo/foo.ts', '/repo/bar.ts')).toEqual({ ok: true });
         expect(await fs.exists('/repo/foo.ts')).toBe(false);
-        expect(await fs.readFileAbsolute('/repo/bar.ts')).toMatchObject({
+        expect(await fs.readFile('/repo/bar.ts')).toMatchObject({
           content: 'export const foo = 1;\n',
         });
       });
@@ -237,7 +248,7 @@ describe('FakeFilesystem', () => {
       it('copies a file', async () => {
         const fs = setup();
         expect(await fs.copy('/repo/foo.ts', '/repo/foo-copy.ts')).toEqual({ ok: true });
-        expect(await fs.readFileAbsolute('/repo/foo-copy.ts')).toMatchObject({
+        expect(await fs.readFile('/repo/foo-copy.ts')).toMatchObject({
           content: 'export const foo = 1;\n',
         });
         expect(await fs.exists('/repo/foo.ts')).toBe(true);
@@ -246,7 +257,7 @@ describe('FakeFilesystem', () => {
       it('copies a directory recursively', async () => {
         const fs = setup();
         expect(await fs.copy('/repo/src', '/repo/src-copy')).toEqual({ ok: true });
-        expect(await fs.readFileAbsolute('/repo/src-copy/inner.ts')).toMatchObject({
+        expect(await fs.readFile('/repo/src-copy/inner.ts')).toMatchObject({
           content: 'inner',
         });
       });
@@ -262,7 +273,7 @@ describe('FakeFilesystem', () => {
         const fs = setup();
         expect(await fs.move('/repo/foo.ts', '/repo/src/foo.ts')).toEqual({ ok: true });
         expect(await fs.exists('/repo/foo.ts')).toBe(false);
-        expect(await fs.readFileAbsolute('/repo/src/foo.ts')).toMatchObject({
+        expect(await fs.readFile('/repo/src/foo.ts')).toMatchObject({
           content: 'export const foo = 1;\n',
         });
       });

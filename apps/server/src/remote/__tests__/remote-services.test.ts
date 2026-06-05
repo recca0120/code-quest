@@ -93,26 +93,26 @@ describe('RemoteFilesystem', () => {
     ctx.filesystem.fromTree('/src', { lib: {}, 'index.ts': '' });
     const result = await ctx.fsService.browseEntries('/src');
     expect(result.directories).toEqual([{ name: 'lib', path: '/src/lib' }]);
-    expect(result.files).toEqual([{ name: 'index.ts', path: '/src/index.ts' }]);
+    expect(result.files).toMatchObject([{ name: 'index.ts', path: '/src/index.ts' }]);
   });
 
-  it('readFileAbsolute — returns file content', async () => {
+  it('readFile — returns file content for absolute path', async () => {
     ctx.filesystem.fromTree('/tmp', { 'hello.txt': 'hello world' });
-    const result = await ctx.fsService.readFileAbsolute('/tmp/hello.txt');
+    const result = await ctx.fsService.readFile('/tmp/hello.txt');
     expect(result).toMatchObject({ content: 'hello world' });
   });
 
   it('writeFile — writes and reads back content', async () => {
     ctx.filesystem.fromTree('/tmp', {});
     await ctx.fsService.writeFile('/tmp/out.txt', 'written');
-    const result = await ctx.fsService.readFileAbsolute('/tmp/out.txt');
+    const result = await ctx.fsService.readFile('/tmp/out.txt');
     expect(result).toMatchObject({ content: 'written' });
   });
 
   it('readFile — reads file relative to cwd', async () => {
     ctx.filesystem.fromTree('/workspace', { src: { 'main.ts': 'export {}' } });
-    const result = await ctx.fsService.readFile('/workspace', 'src/main.ts');
-    expect(result).toEqual({ content: 'export {}' });
+    const result = await ctx.fsService.readFile('src/main.ts', { cwd: '/workspace' });
+    expect(result).toMatchObject({ content: 'export {}' });
   });
 
   it('listFiles — returns matching files', async () => {

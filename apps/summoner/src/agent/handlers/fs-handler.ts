@@ -10,7 +10,6 @@ import {
   fsIsDirectoryParamsSchema,
   fsListParamsSchema,
   fsMoveParamsSchema,
-  fsReadFileAbsoluteParamsSchema,
   fsReadParamsSchema,
   fsRenameParamsSchema,
   fsStatKindParamsSchema,
@@ -38,11 +37,6 @@ export class FsHandler implements AgentHandler {
     rpc.onRequest(REMOTE_METHODS.fs.browseEntries, async (params) => {
       const p = fsBrowseEntriesParamsSchema.parse(params);
       return fs.browseEntries(p.path, { showHidden: p.showHidden });
-    });
-
-    rpc.onRequest(REMOTE_METHODS.fs.readFileAbsolute, async (params) => {
-      const p = fsReadFileAbsoluteParamsSchema.parse(params);
-      return fs.readFileAbsolute(p.absolutePath);
     });
 
     rpc.onRequest(REMOTE_METHODS.fs.writeFile, async (params) => {
@@ -83,7 +77,7 @@ export class FsHandler implements AgentHandler {
 
     rpc.onRequest(REMOTE_METHODS.fs.read, async (params) => {
       const p = fsReadParamsSchema.parse(params);
-      return fs.readFile(p.cwd, p.filePath);
+      return fs.readFile(p.file, { cwd: p.cwd, maxBytes: p.maxBytes });
     });
 
     rpc.onRequest(REMOTE_METHODS.fs.exists, async (params) => {

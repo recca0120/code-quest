@@ -1,20 +1,52 @@
+import { EVENTS, fsReadResponseSchema } from '@code-quest/schemas';
+import { imageDataUri, isImageMime, isPdfMime } from '@code-quest/utils';
 import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFsActions } from '@/contexts/FsContext';
 import { useGitStatus } from '@/contexts/GitContext';
-import { FilePreviewModal } from './FilePreviewModal.tsx';
+import { useSocket } from '@/contexts/SocketContext';
+import type { TypedSocket } from '@/socket/client';
+import { rpc } from '@/socket/rpc';
+import { basename } from '@/utils/basename';
+import { Button } from '../ui/Button.tsx';
 import { FileTree } from './FileTree.tsx';
+import { PreviewDrawer, type PreviewState } from './PreviewDrawer.tsx';
+
+const PREVIEW_BYTE_LIMIT = 2 * 1024 * 1024;
+
+async function loadPreview(
+  socket: TypedSocket,
+  path: string,
+  maxBytes: number,
+): Promise<PreviewState> {
+  const response = await rpc(socket, EVENTS.fs.read, { file: path, maxBytes });
+  const parsed = fsReadResponseSchema.safeParse(response);
+  if (!parsed.success) return { kind: 'error', message: 'Read failed' };
+  if ('error' in parsed.data) return { kind: 'error', message: parsed.data.error };
+  if ('tooLarge' in parsed.data) return { kind: 'too-large' };
+
+  const { content, contentType, encoding } = parsed.data;
+  if (encoding === 'base64' && isPdfMime(contentType)) return { kind: 'pdf', data: content };
+  if (encoding === 'base64' && isImageMime(contentType)) {
+    return { kind: 'image', src: imageDataUri(contentType, content), contentType };
+  }
+  return { kind: 'ready', content, contentType };
+}
 
 interface FilesPaneProps {
   cwd: string;
   onMention: (path: string) => void;
 }
 
+type PreviewFile = { path: string; size: number };
+
 export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element {
-  const [previewPath, setPreviewPath] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
+  const [previewState, setPreviewState] = useState<PreviewState>({ kind: 'loading' });
   const [rootError, setRootError] = useState<string | null>(null);
   const { browse } = useFsActions();
+  const { socket } = useSocket();
   const gitData = useGitStatus(cwd);
 
   // Probe the cwd once per change to surface "outside allowed roots" (and any
@@ -33,6 +65,29 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
     };
   }, [cwd, browse]);
 
+  useEffect(() => {
+    if (!previewFile) return;
+    // Skip the RPC entirely when the file is already known to be too large.
+    if (previewFile.size > PREVIEW_BYTE_LIMIT) {
+      setPreviewState({ kind: 'too-large' });
+      return;
+    }
+    let cancelled = false;
+    setPreviewState({ kind: 'loading' });
+    loadPreview(socket, previewFile.path, PREVIEW_BYTE_LIMIT)
+      .then((state) => {
+        if (!cancelled) setPreviewState(state);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error(err);
+        setPreviewState({ kind: 'error', message: 'Unexpected error' });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewFile, socket]);
+
   const gitMarks = useMemo(() => {
     const marks = new Map<string, string>();
     if (gitData && 'changedFiles' in gitData) {
@@ -48,21 +103,48 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
     return marks;
   }, [gitData, cwd]);
 
-  function handleActivate(path: string, event: MouseEvent<Element>) {
+  function handleActivate(file: { path: string; size?: number }, event: MouseEvent<Element>) {
     if (event.metaKey || event.ctrlKey) {
-      onMention(path);
+      onMention(file.path);
       return;
     }
     if (event.altKey) {
       toast('Open in editor — coming soon');
       return;
     }
-    setPreviewPath(path);
+    setPreviewFile((prev) =>
+      prev?.path === file.path ? prev : { path: file.path, size: file.size ?? 0 },
+    );
   }
 
   if (rootError) {
     return <EmptyState message={rootError} />;
   }
+
+  const filename = previewFile ? basename(previewFile.path) : '';
+  const drawerActions = previewFile && (
+    <>
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={() => {
+          onMention(previewFile.path);
+          setPreviewFile(null);
+        }}
+      >
+        Mention
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => {
+          void navigator.clipboard.writeText(previewFile.path);
+        }}
+      >
+        Copy path
+      </Button>
+    </>
+  );
 
   return (
     <section className="flex flex-col h-full" aria-label="files-pane">
@@ -75,16 +157,13 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
           onActivate={handleActivate}
         />
       </div>
-      {previewPath && (
-        <FilePreviewModal
-          path={previewPath}
-          onMention={(p) => {
-            onMention(p);
-            setPreviewPath(null);
-          }}
-          onClose={() => setPreviewPath(null)}
-        />
-      )}
+      <PreviewDrawer
+        open={!!previewFile}
+        title={filename}
+        state={previewState}
+        onClose={() => setPreviewFile(null)}
+        actions={drawerActions}
+      />
     </section>
   );
 }

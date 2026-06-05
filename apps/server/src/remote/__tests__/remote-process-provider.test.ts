@@ -155,6 +155,31 @@ describe('RemoteProcessProvider', () => {
     expect(lines).toEqual([]);
   });
 
+  it('propagates numeric exit code to handle.signal.reason', async () => {
+    const handle = ctx.remoteProvider.spawn('exit', ['42']);
+    await new Promise<void>((r) => setTimeout(r, 20));
+    ctx.agentProcessProvider.latest.abort(42);
+
+    for await (const _ of handle.lines) {
+      /* drain */
+    }
+
+    expect(handle.signal.reason).toBe(42);
+  });
+
+  it('maps non-numeric abort reason to null exit code (process killed)', async () => {
+    const handle = ctx.remoteProvider.spawn('kill', []);
+    await new Promise<void>((r) => setTimeout(r, 20));
+    ctx.agentProcessProvider.latest.abort(); // no reason → null exit code
+
+    for await (const _ of handle.lines) {
+      /* drain */
+    }
+
+    // reason is a DOMException (default AbortError) or undefined — not a number
+    expect(typeof handle.signal.reason).not.toBe('number');
+  });
+
   it('spawn request fails gracefully when rpc channel is closed', async () => {
     ctx.rpc.close();
     const result = await ctx.remoteProvider.runOnce('echo', []);

@@ -5,18 +5,18 @@ import {
   fsIsDirectoryResponseSchema,
   fsListResponseSchema,
   fsMutationResultSchema,
-  fsReadFileAbsoluteResponseSchema,
   fsReadFileResponseSchema,
   fsStatKindResponseSchema,
   REMOTE_METHODS,
 } from '@code-quest/schemas';
 import type {
   DirectoryEntry,
+  FileEntry,
   FileKind,
   FileResult,
   Filesystem,
   FsMutationResult,
-  ReadFileAbsoluteResult,
+  ReadFileOpts,
   ReadFileResult,
   RemoteRpc,
   WriteFileResult,
@@ -37,7 +37,7 @@ export class RemoteFilesystem implements Filesystem {
   async browseEntries(
     path?: string,
     opts?: { showHidden?: boolean },
-  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
+  ): Promise<{ directories: DirectoryEntry[]; files: FileEntry[] }> {
     const raw = await this.rpc.request(REMOTE_METHODS.fs.browseEntries, {
       path,
       showHidden: opts?.showHidden,
@@ -45,14 +45,9 @@ export class RemoteFilesystem implements Filesystem {
     return fsBrowseEntriesResponseSchema.parse(raw);
   }
 
-  async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    const raw = await this.rpc.request(REMOTE_METHODS.fs.readFileAbsolute, { absolutePath });
-    return fsReadFileAbsoluteResponseSchema.parse(raw);
-  }
-
   async *readLines(absolutePath: string): AsyncIterable<string> {
-    const result = await this.readFileAbsolute(absolutePath);
-    if ('error' in result) return;
+    const result = await this.readFile(absolutePath);
+    if ('error' in result || 'tooLarge' in result) return;
     for (const line of result.content.split('\n')) {
       if (line.trim()) yield line;
     }
@@ -96,8 +91,12 @@ export class RemoteFilesystem implements Filesystem {
     return fsListResponseSchema.parse(raw).files;
   }
 
-  async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
-    const raw = await this.rpc.request(REMOTE_METHODS.fs.read, { cwd, filePath });
+  async readFile(file: string, opts?: ReadFileOpts): Promise<ReadFileResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.fs.read, {
+      file,
+      cwd: opts?.cwd,
+      maxBytes: opts?.maxBytes,
+    });
     return fsReadFileResponseSchema.parse(raw);
   }
 

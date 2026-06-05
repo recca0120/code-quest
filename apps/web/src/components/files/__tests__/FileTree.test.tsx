@@ -136,7 +136,10 @@ describe('FileTree', () => {
     await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
 
     expect(onActivate).toHaveBeenCalledTimes(1);
-    expect(onActivate.mock.calls[0]![0]).toBe('/projects/app/README.md');
+    expect(onActivate.mock.calls[0]![0]).toMatchObject({
+      path: '/projects/app/README.md',
+      kind: 'file',
+    });
     expect(onActivate.mock.calls[0]![1]).toMatchObject({ type: 'click' });
   });
 
