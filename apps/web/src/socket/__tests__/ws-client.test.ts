@@ -238,6 +238,64 @@ describe('WsClient', () => {
     });
   });
 
+  describe('onRequest (server-initiated RPC)', () => {
+    it('sends response on same socket that received the request', async () => {
+      const c = makeClient();
+      c.connect();
+      const ws = MockWebSocket.last()!;
+      ws.acceptOpen();
+
+      c.onRequest('ping', async () => ({ pong: true }));
+      ws.deliverEnvelope({ kind: 'request', id: 'r1', event: 'ping', data: {} });
+      await Promise.resolve();
+
+      const reply = ws
+        .allSentEnvelopes()
+        .find(
+          (e) => (e as { kind: string }).kind === 'response' && (e as { id: string }).id === 'r1',
+        );
+      expect(reply).toMatchObject({ kind: 'response', id: 'r1', ok: true, data: { pong: true } });
+    });
+
+    it('does not send response on new socket when connection changed during handler', async () => {
+      vi.useFakeTimers();
+      const c = makeClient();
+      c.connect();
+      const ws1 = MockWebSocket.last()!;
+      ws1.acceptOpen();
+
+      let resolve!: () => void;
+      c.onRequest(
+        'slow',
+        () =>
+          new Promise<unknown>((r) => {
+            resolve = () => r({ done: true });
+          }),
+      );
+
+      ws1.deliverEnvelope({ kind: 'request', id: 'r2', event: 'slow', data: {} });
+
+      // Simulate disconnect + reconnect before handler finishes
+      ws1.acceptClose(1006);
+      vi.advanceTimersByTime(600);
+      const ws2 = MockWebSocket.last()!;
+      expect(ws2).not.toBe(ws1);
+      ws2.acceptOpen();
+
+      // Handler finishes now — should NOT send response on ws2 (wrong connection)
+      resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const ws2Responses = ws2
+        .allSentEnvelopes()
+        .filter(
+          (e) => (e as { kind: string }).kind === 'response' && (e as { id?: string }).id === 'r2',
+        );
+      expect(ws2Responses).toHaveLength(0);
+    });
+  });
+
   describe('ping', () => {
     it('client sends a ping envelope after heartbeat interval of idle', () => {
       vi.useFakeTimers();

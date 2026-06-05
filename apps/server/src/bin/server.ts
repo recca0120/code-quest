@@ -146,7 +146,7 @@ function setupSummonerMode() {
     SUMMONER_PATH,
     [
       bearerAuth(summonerToken),
-      heartbeat({ pingIntervalMs: 30_000, idleTimeoutMs: 60_000 }),
+      heartbeat({ pingIntervalMs: 5_000, idleTimeoutMs: 15_000 }),
       resumable(),
     ],
     (_socket, ctx) => {
