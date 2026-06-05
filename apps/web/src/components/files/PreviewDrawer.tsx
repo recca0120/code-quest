@@ -42,7 +42,7 @@ export function PreviewDrawer({
   const language = state.kind === 'ready' ? langForMime(state.contentType, title) : undefined;
 
   return (
-    <RightDrawer open={open} title={title} defaultWidth={672} onClose={onClose} footer={actions}>
+    <RightDrawer open={open} title={title} width={672} onClose={onClose} footer={actions}>
       {isMarkdown && (
         <div className="flex gap-1 px-4 pt-2 shrink-0">
           <Button
@@ -71,51 +71,25 @@ export function PreviewDrawer({
             <div className="flex items-center justify-center">
               <img src={state.src} alt={title} className="max-w-full object-contain rounded" />
             </div>
+          ) : state.kind === 'loading' ? (
+            <div className="text-sm text-muted">Loading…</div>
+          ) : state.kind === 'too-large' ? (
+            <div className="text-sm text-muted">File too large to preview (over 2 MB).</div>
+          ) : state.kind === 'error' ? (
+            <div className="text-sm text-warning">{state.message}</div>
+          ) : isMarkdown && viewMode === 'preview' ? (
+            <MarkdownContent content={state.content} />
+          ) : language ? (
+            <div className="text-xs">
+              <CodeBlock code={state.content} language={language} />
+            </div>
           ) : (
-            <PreviewContent
-              state={state}
-              language={language}
-              isMarkdown={isMarkdown}
-              viewMode={viewMode}
-            />
+            <VirtualLineTable content={state.content} className="flex-1 min-h-0" />
           )}
         </div>
       )}
     </RightDrawer>
   );
-}
-
-function PreviewContent({
-  state,
-  language,
-  isMarkdown,
-  viewMode,
-}: {
-  state: Exclude<PreviewState, { kind: 'pdf' } | { kind: 'image' }>;
-  language?: string;
-  isMarkdown: boolean;
-  viewMode: 'preview' | 'raw';
-}) {
-  if (state.kind === 'loading') {
-    return <div className="text-sm text-muted">Loading…</div>;
-  }
-  if (state.kind === 'too-large') {
-    return <div className="text-sm text-muted">File too large to preview (over 2 MB).</div>;
-  }
-  if (state.kind === 'error') {
-    return <div className="text-sm text-warning">{state.message}</div>;
-  }
-  if (isMarkdown && viewMode === 'preview') {
-    return <MarkdownContent content={state.content} />;
-  }
-  if (language) {
-    return (
-      <div className="text-xs">
-        <CodeBlock code={state.content} language={language} />
-      </div>
-    );
-  }
-  return <VirtualLineTable content={state.content} className="flex-1 min-h-0" />;
 }
 
 const LINE_HEIGHT = 20;

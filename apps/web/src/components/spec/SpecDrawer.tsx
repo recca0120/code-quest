@@ -6,7 +6,7 @@ import {
   openspecReadResultSchema,
 } from '@code-quest/schemas';
 import * as Tabs from '@radix-ui/react-tabs';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { RightDrawer } from '@/components/ui/RightDrawer.tsx';
 import { TaskChecklist } from '@/components/ui/TaskChecklist';
@@ -33,10 +33,8 @@ const TAB_LABEL: Record<OpenspecArtifactKind, string> = {
   tasks: 'Tasks',
   spec: 'Spec',
 };
-const TABS_BY_KIND: Record<OpenspecKind, OpenspecArtifactKind[]> = {
-  change: CHANGE_TABS,
-  spec: ['spec'],
-};
+
+const FIRST_CHANGE_TAB = CHANGE_TABS[0] as OpenspecArtifactKind;
 
 type TabState =
   | { kind: 'loading' }
@@ -44,19 +42,24 @@ type TabState =
   | { kind: 'error'; message: string };
 
 export function SpecDrawer({ open, cwd, kind, name, onClose }: SpecDrawerProps): React.JSX.Element {
-  const tabs = TABS_BY_KIND[kind];
-  const [active, setActive] = useState<OpenspecArtifactKind>(tabs[0] ?? 'spec');
+  const tabs = kind === 'change' ? CHANGE_TABS : [];
+  const [active, setActive] = useState<OpenspecArtifactKind>(() =>
+    kind === 'change' ? FIRST_CHANGE_TAB : 'spec',
+  );
   const { socket } = useSocket();
   const { toggleTask, refetchOpenspecList } = useOpenspecActions();
   const [state, setState] = useState<TabState>({ kind: 'loading' });
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: name resets the tab when the user switches to a different item of the same kind
   useEffect(() => {
-    setActive(TABS_BY_KIND[kind][0] ?? 'spec');
+    setActive(kind === 'change' ? FIRST_CHANGE_TAB : 'spec');
   }, [kind, name]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setState({ kind: 'loading' });
+      return;
+    }
     let cancelled = false;
     setState({ kind: 'loading' });
     rpc(socket, EVENTS.openspec.read, { cwd, kind, name, artifact: active })
@@ -73,21 +76,38 @@ export function SpecDrawer({ open, cwd, kind, name, onClose }: SpecDrawerProps):
         }
         setState({ kind: 'ready', content: parsed.data.content });
       })
-      .catch(() => {
-        if (!cancelled) setState({ kind: 'error', message: 'Request failed' });
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('[SpecDrawer] fetch failed', err);
+          setState({ kind: 'error', message: 'Request failed' });
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [open, active, cwd, kind, name, socket]);
 
+  const handleTabChange = useCallback((v: string) => {
+    const parsed = openspecArtifactKindSchema.safeParse(v);
+    if (parsed.success) setActive(parsed.data);
+  }, []);
+
+  const handleToggle = useCallback(
+    async (lineIndex: number) => {
+      const result = await toggleTask(cwd, name, lineIndex);
+      if ('ok' in result) await refetchOpenspecList(cwd);
+      return result;
+    },
+    [cwd, name, toggleTask, refetchOpenspecList],
+  );
+
   const title = `${kind === 'change' ? 'Change' : 'Spec'}: ${name}`;
 
   return (
-    <RightDrawer open={open} title={title} onClose={onClose}>
+    <RightDrawer open={open} title={title} width={560} onClose={onClose}>
       <Tabs.Root
         value={active}
-        onValueChange={(v) => setActive(v as OpenspecArtifactKind)}
+        onValueChange={handleTabChange}
         className="flex flex-col flex-1 min-h-0"
       >
         {tabs.length > 1 && (
@@ -106,11 +126,7 @@ export function SpecDrawer({ open, cwd, kind, name, onClose }: SpecDrawerProps):
             (kind === 'change' && active === 'tasks' ? (
               <TaskChecklist
                 content={state.content}
-                onToggle={async (lineIndex) => {
-                  const result = await toggleTask(cwd, name, lineIndex);
-                  if ('ok' in result) await refetchOpenspecList(cwd);
-                  return result;
-                }}
+                onToggle={handleToggle}
                 onError={(message) => toast.error(`Toggle failed: ${message}`)}
               />
             ) : (

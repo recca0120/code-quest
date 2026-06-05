@@ -8,7 +8,7 @@ const MAX_WIDTH_RATIO = 0.8;
 interface RightDrawerProps {
   open: boolean;
   title: ReactNode;
-  defaultWidth?: number;
+  width: number;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
@@ -17,7 +17,7 @@ interface RightDrawerProps {
 export function RightDrawer({
   open,
   title,
-  defaultWidth = 560,
+  width,
   onClose,
   children,
   footer,
@@ -32,21 +32,28 @@ export function RightDrawer({
     el.style.width = `${next}px`;
   }, []);
 
+  const handleOpenChange = useCallback(
+    (v: boolean) => {
+      if (!v) onClose();
+    },
+    [onClose],
+  );
+
   return (
-    <RadixDialog.Root open={open} onOpenChange={(v) => !v && onClose()}>
+    <RadixDialog.Root open={open} onOpenChange={handleOpenChange}>
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-overlay bg-overlay" />
         <RadixDialog.Content
           ref={contentRef}
           className="fixed inset-y-0 right-0 z-modal bg-surface border-l border-border flex flex-col"
-          style={{ width: defaultWidth }}
+          style={{ width }}
         >
           <ResizeHandle
             onResize={handleResize}
             className="absolute left-0 top-0 bottom-0 w-1 hover:bg-accent/50 active:bg-accent"
           />
           <RadixDialog.Title className="flex items-center gap-2 px-4 py-3 border-b border-border text-sm font-medium shrink-0">
-            {typeof title === 'string' ? <span className="flex-1 truncate">{title}</span> : title}
+            <span className="flex-1 truncate">{title}</span>
           </RadixDialog.Title>
           {children}
           {footer && (

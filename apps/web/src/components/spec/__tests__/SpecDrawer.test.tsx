@@ -1,25 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { Toaster } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
-import { createFakeSummoner } from '@/test/fake-summoner';
-import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
 import { SpecDrawer } from '../SpecDrawer.tsx';
-
-function setup() {
-  const summoner = createFakeSummoner();
-  summoner.filesystem().setRoots(['/repo']);
-  function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <FsProvidersWrapper socket={summoner.socket}>
-        {children}
-        <Toaster />
-      </FsProvidersWrapper>
-    );
-  }
-  return { summoner, Wrapper };
-}
+import { setup } from './spec-test-setup.tsx';
 
 type DrawerProps = Parameters<typeof SpecDrawer>[0];
 
@@ -49,7 +33,7 @@ describe('SpecDrawer', () => {
 
   it('renders title with kind and name', async () => {
     const { summoner, Wrapper } = setup();
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
     renderDrawer({}, Wrapper);
     expect(await screen.findByText(/change.*add-foo/i)).toBeInTheDocument();
   });
@@ -62,7 +46,7 @@ describe('SpecDrawer', () => {
 
   it('renders proposal content for kind=change', async () => {
     const { summoner, Wrapper } = setup();
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'proposal', '# Add Foo');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'proposal', '# Add Foo');
     renderDrawer({}, Wrapper);
     expect(await screen.findByRole('heading', { name: /add foo/i })).toBeInTheDocument();
   });
@@ -71,12 +55,12 @@ describe('SpecDrawer', () => {
     const { Wrapper } = setup();
     // no content set → fake returns error
     renderDrawer({}, Wrapper);
-    expect(await screen.findByText(/error|not found|invalid/i)).toBeInTheDocument();
+    expect(await screen.findByText('Not found: add-foo/proposal')).toBeInTheDocument();
   });
 
   it('shows tab bar (Proposal/Design/Tasks) for kind=change', async () => {
     const { summoner, Wrapper } = setup();
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
     renderDrawer({}, Wrapper);
     await screen.findByRole('heading', { name: /proposal/i });
     expect(screen.getByRole('tab', { name: /proposal/i })).toBeInTheDocument();
@@ -86,7 +70,7 @@ describe('SpecDrawer', () => {
 
   it('does not show tab bar for kind=spec (single tab)', async () => {
     const { summoner, Wrapper } = setup();
-    summoner.openspec()?.setContent('/repo', 'spec', 'auth', 'spec', '# Auth spec');
+    summoner.openspec()!.setContent('/repo', 'spec', 'auth', 'spec', '# Auth spec');
     renderDrawer({ kind: 'spec', name: 'auth' }, Wrapper);
     expect(await screen.findByRole('heading', { name: /auth spec/i })).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
@@ -95,8 +79,8 @@ describe('SpecDrawer', () => {
   it('switching tabs fetches new content', async () => {
     const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'design', '# Design');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'design', '# Design');
     renderDrawer({}, Wrapper);
     await screen.findByRole('heading', { name: /proposal/i });
 
@@ -107,23 +91,26 @@ describe('SpecDrawer', () => {
   it('tasks tab renders TaskChecklist instead of markdown', async () => {
     const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
     summoner
-      .openspec()
-      ?.setContent('/repo', 'change', 'add-foo', 'tasks', '- [x] done\n- [ ] todo\n');
+      .openspec()!
+      .setContent('/repo', 'change', 'add-foo', 'tasks', '- [x] done\n- [ ] todo\n');
     renderDrawer({}, Wrapper);
     await screen.findByRole('heading', { name: /proposal/i });
 
     await user.click(screen.getByRole('tab', { name: /tasks/i }));
-    expect((await screen.findAllByRole('checkbox')).length).toBeGreaterThan(0);
+    const checkboxes = await screen.findAllByRole('checkbox');
+    expect(checkboxes).toHaveLength(2);
+    expect(checkboxes[0]).toBeChecked();
+    expect(checkboxes[1]).not.toBeChecked();
   });
 
   it('changing name resets to first tab', async () => {
     const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'design', '# Design');
-    summoner.openspec()?.setContent('/repo', 'change', 'rename-bar', 'proposal', '# Bar proposal');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'design', '# Design');
+    summoner.openspec()!.setContent('/repo', 'change', 'rename-bar', 'proposal', '# Bar proposal');
 
     const { rerender } = renderDrawer({}, Wrapper);
     await screen.findByRole('heading', { name: /proposal/i });
@@ -134,10 +121,9 @@ describe('SpecDrawer', () => {
 
     // open a different item
     rerender(
-      <FsProvidersWrapper socket={summoner.socket}>
+      <Wrapper>
         <SpecDrawer open={true} cwd="/repo" kind="change" name="rename-bar" onClose={() => {}} />
-        <Toaster />
-      </FsProvidersWrapper>,
+      </Wrapper>,
     );
     expect(await screen.findByRole('heading', { name: /bar proposal/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /proposal/i })).toHaveAttribute('data-state', 'active');
@@ -145,7 +131,7 @@ describe('SpecDrawer', () => {
 
   it('calls onClose when Escape is pressed', async () => {
     const { summoner, Wrapper } = setup();
-    summoner.openspec()?.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
+    summoner.openspec()!.setContent('/repo', 'change', 'add-foo', 'proposal', '# Proposal');
     const onClose = vi.fn();
     renderDrawer({ onClose }, Wrapper);
     await screen.findByRole('heading', { name: /proposal/i });

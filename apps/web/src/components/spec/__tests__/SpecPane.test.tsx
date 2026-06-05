@@ -1,25 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
-import { Toaster } from 'sonner';
-import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '@/test/fake-summoner';
-import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
+import { toast } from 'sonner';
+import { describe, expect, it, vi } from 'vitest';
 import { SpecPane } from '../SpecPane.tsx';
-
-function setup() {
-  const summoner = createFakeSummoner();
-  summoner.filesystem().setRoots(['/repo']);
-  function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <FsProvidersWrapper socket={summoner.socket}>
-        {children}
-        <Toaster />
-      </FsProvidersWrapper>
-    );
-  }
-  return { summoner, Wrapper };
-}
+import { setup } from './spec-test-setup.tsx';
 
 function seedOpenspec(summoner: ReturnType<typeof setup>['summoner']) {
   const openspec = summoner.openspec();
@@ -112,7 +96,7 @@ describe('SpecPane', () => {
       const input = await screen.findByLabelText(/change name/i);
       await user.type(input, 'add-foo');
       await user.click(screen.getByRole('button', { name: /^create$/i }));
-      expect(summoner.openspec()?.changeNewCalls).toEqual([{ cwd: '/repo', name: 'add-foo' }]);
+      expect(summoner.openspec()!.changeNewCalls).toEqual([{ cwd: '/repo', name: 'add-foo' }]);
     });
 
     it('invalid slug shows inline error and does not fire RPC', async () => {
@@ -124,20 +108,15 @@ describe('SpecPane', () => {
       await user.type(input, 'BadName');
       await user.click(screen.getByRole('button', { name: /^create$/i }));
       expect(screen.getByText(/lowercase letters, digits/i)).toBeInTheDocument();
-      expect(summoner.openspec()?.changeNewCalls).toEqual([]);
+      expect(summoner.openspec()!.changeNewCalls).toEqual([]);
     });
 
     it('server error keeps dialog open and toasts', async () => {
       const user = userEvent.setup();
       const { summoner, Wrapper } = setup();
-      summoner.openspec()?.setChangeNewError('change already exists');
-      render(
-        <>
-          <SpecPane cwd="/repo" />
-          <div id="toaster-host" />
-        </>,
-        { wrapper: Wrapper },
-      );
+      summoner.openspec()!.setChangeNewError('change already exists');
+      const toastSpy = vi.spyOn(toast, 'error').mockImplementation(() => 'toast-id');
+      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
       await user.click(screen.getByRole('button', { name: /new change/i }));
       const input = await screen.findByLabelText(/change name/i);
       await user.type(input, 'dup');
@@ -146,6 +125,9 @@ describe('SpecPane', () => {
       expect(
         await screen.findByRole('dialog', { name: /new openspec change/i }),
       ).toBeInTheDocument();
+      // Toast shows the server error
+      expect(toastSpy).toHaveBeenCalledWith('Create failed: change already exists');
+      toastSpy.mockRestore();
     });
   });
 
@@ -189,7 +171,7 @@ describe('SpecPane', () => {
       render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
       await user.click(await screen.findByRole('button', { name: /archive all-done/i }));
       await user.click(screen.getByRole('button', { name: /cancel/i }));
-      expect(summoner.openspec()?.archiveCalls).toEqual([]);
+      expect(summoner.openspec()!.archiveCalls).toEqual([]);
     });
 
     it('Confirm with default checkbox fires RPC with skipSpecs=false', async () => {
@@ -203,7 +185,7 @@ describe('SpecPane', () => {
           name: /^archive$/i,
         }),
       );
-      expect(summoner.openspec()?.archiveCalls).toEqual([
+      expect(summoner.openspec()!.archiveCalls).toEqual([
         { cwd: '/repo', name: 'all-done', skipSpecs: false },
       ]);
     });
@@ -237,7 +219,7 @@ describe('SpecPane', () => {
           name: /^archive$/i,
         }),
       );
-      expect(summoner.openspec()?.archiveCalls).toEqual([
+      expect(summoner.openspec()!.archiveCalls).toEqual([
         { cwd: '/repo', name: 'all-done', skipSpecs: true },
       ]);
     });
