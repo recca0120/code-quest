@@ -47,13 +47,23 @@ async function launchSession(
     });
   });
 
-  // Detect entry point: empty state "New Session" button or TabBar "+"
+  // Entry point priority: empty-state "New Session" → TabBar "New tab" → sidebar [+]
   const emptyButton = screen.queryByRole('button', { name: /New Session/ });
   if (emptyButton) {
     await user.click(emptyButton);
   } else {
-    const newTabButtons = await screen.findAllByLabelText('New tab');
-    await user.click(newTabButtons[newTabButtons.length - 1]!);
+    const newTabBtn = screen.queryByRole('button', { name: 'New tab' });
+    if (newTabBtn) {
+      await user.click(newTabBtn);
+    } else {
+      const openNewChatBtns = screen.queryAllByLabelText('Open new chat');
+      if (openNewChatBtns.length > 0) {
+        await user.click(openNewChatBtns[0]!);
+      } else {
+        const fallback = await screen.findByRole('button', { name: /New Session/ });
+        await user.click(fallback);
+      }
+    }
   }
 
   await act(async () => {

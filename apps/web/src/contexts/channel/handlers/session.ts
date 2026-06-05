@@ -25,10 +25,23 @@ function onDisconnect(state: ChannelState): ChannelState {
 }
 
 export function onSessionClosed(state: ChannelState, p: Payload<'session:closed'>): ChannelState {
+  const messages = state.messages.map((m) => {
+    if (m.type !== 'assistant_turn') return m;
+    const hasPartial = m.blocks.some((b) => b.type === 'tool_use' && b.partialInput !== undefined);
+    if (!hasPartial) return m;
+    return {
+      ...m,
+      blocks: m.blocks.map((b) =>
+        b.type === 'tool_use' && b.partialInput !== undefined
+          ? { ...b, partialInput: undefined }
+          : b,
+      ),
+    };
+  });
   return {
     ...state,
     messages: [
-      ...state.messages,
+      ...messages,
       ...(p.error ? [msg({ role: 'system', type: 'error', content: p.error })] : []),
       msg({ role: 'system', type: 'error', content: 'CLI session has ended.' }),
     ],

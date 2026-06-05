@@ -35,7 +35,7 @@ export function DrawerAside({
         mobileWidthClass,
         'transition-transform duration-150 ease-out',
         !open && (isLeft ? '-translate-x-full' : 'translate-x-full'),
-        'lg:static lg:translate-x-0 lg:shrink-0',
+        'lg:static lg:translate-x-0 lg:shrink-0 lg:transition-[width] lg:duration-200',
         dockedWidthClass,
         !open && 'lg:w-0 lg:overflow-hidden',
       )}

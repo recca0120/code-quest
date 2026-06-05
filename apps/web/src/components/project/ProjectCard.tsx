@@ -6,6 +6,7 @@ import { NavigationActionsContext } from '@/contexts/NavigationContext';
 import { ProjectActionsContext } from '@/contexts/ProjectContext';
 import { SessionStateContext } from '@/contexts/SessionContext';
 import { basename } from '@/utils/basename';
+import { copyToClipboard } from '@/utils/clipboard';
 import { cn } from '@/utils/cn';
 import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover.tsx';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog.tsx';
@@ -32,7 +33,6 @@ export function ProjectCard({
   pinned = false,
   onSelect,
   onSelectInitRepo,
-  worktreeCount,
 }: {
   name: string;
   cwd?: string;
@@ -41,8 +41,6 @@ export function ProjectCard({
   onSelect: () => void;
   /** Only passed for non-git projects — when present, ⋯ menu shows "Initialize as git repo". */
   onSelectInitRepo?: () => void;
-  /** When provided and > 0, renders a `{n}wt` meta badge next to the name. */
-  worktreeCount?: number;
 }): React.JSX.Element {
   type Dialog = 'resume' | 'worktree' | 'rename' | 'remove' | null;
   const [openDialog, setOpenDialog] = useState<Dialog>(null);
@@ -63,6 +61,7 @@ export function ProjectCard({
   const menuCallbacks: ProjectMenuCallbacks = {
     onSelectResume: () => setOpenDialog('resume'),
     onSelectCreateWorktree: () => setOpenDialog('worktree'),
+    onCopyPath: cwd ? () => void copyToClipboard(cwd) : undefined,
     onSelectRename: actions && cwd ? () => setOpenDialog('rename') : undefined,
     onSelectRemove: actions && cwd ? () => setOpenDialog('remove') : undefined,
     onSelectInitRepo: onSelectInitRepo,
@@ -90,6 +89,7 @@ export function ProjectCard({
         <ProjectContextMenu disabled={!cwd} {...menuCallbacks}>
           <Popover.Anchor asChild>
             <div
+              data-active={active}
               className={cn(
                 'group relative my-0.5 rounded',
                 active ? 'bg-accent/10' : 'hover:bg-hover-tint',
@@ -107,9 +107,6 @@ export function ProjectCard({
               >
                 <FolderIcon className="w-4 h-4 shrink-0" />
                 <span className="truncate flex-1 font-medium">{label}</span>
-                {worktreeCount && worktreeCount > 0 ? (
-                  <span className="shrink-0 font-mono text-xs text-subtle">{worktreeCount}wt</span>
-                ) : null}
               </button>
               {actions && cwd ? (
                 <div className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center gap-0.5">
@@ -117,6 +114,7 @@ export function ProjectCard({
                     type="button"
                     aria-label={pinned ? 'Unpin' : 'Pin'}
                     title={pinned ? 'Unpin' : 'Pin'}
+                    data-pinned={pinned}
                     onClick={handleTogglePin}
                     className={cn(
                       'shrink-0 p-0.5 rounded hover:text-text',

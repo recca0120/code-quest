@@ -31,6 +31,7 @@ export function FilePreviewModal({
     | { kind: 'loading' }
     | { kind: 'ready'; content: string; contentType: string }
     | { kind: 'pdf'; data: string }
+    | { kind: 'image'; src: string; contentType: string }
     | { kind: 'too-large' }
     | { kind: 'error'; message: string }
   >({ kind: 'loading' });
@@ -56,6 +57,10 @@ export function FilePreviewModal({
         setState({ kind: 'pdf', data: content });
         return;
       }
+      if (encoding === 'base64' && contentType.startsWith('image/')) {
+        setState({ kind: 'image', src: `data:${contentType};base64,${content}`, contentType });
+        return;
+      }
       if (content.length > PREVIEW_CHAR_LIMIT) {
         setState({ kind: 'too-large' });
         return;
@@ -68,13 +73,14 @@ export function FilePreviewModal({
   }, [path, socket]);
 
   const isPdf = state.kind === 'pdf';
+  const isImage = state.kind === 'image';
   const isMarkdown = state.kind === 'ready' && isMarkdownMime(state.contentType);
   const language = state.kind === 'ready' ? langForMime(state.contentType, path) : undefined;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent title={path} size="lg" scrollable={!isPdf}>
-        <div className={`flex flex-col gap-3 ${isPdf ? 'h-full min-h-0' : ''}`}>
+      <DialogContent title={path} size="lg" scrollable={!isPdf && !isImage}>
+        <div className={`flex flex-col gap-3 ${isPdf || isImage ? 'h-full min-h-0' : ''}`}>
           {isMarkdown && (
             <div className="flex gap-1 self-end">
               <Button
@@ -97,6 +103,14 @@ export function FilePreviewModal({
             <Suspense fallback={<div className="text-sm text-muted">Loading…</div>}>
               <PdfViewer data={state.data} className="flex-1 min-h-0" />
             </Suspense>
+          ) : state.kind === 'image' ? (
+            <div className="overflow-auto flex items-center justify-center">
+              <img
+                src={state.src}
+                alt={path}
+                className="max-w-full max-h-[70vh] object-contain rounded"
+              />
+            </div>
           ) : (
             <PreviewBody
               state={state}

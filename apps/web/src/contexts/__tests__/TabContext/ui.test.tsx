@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/test-kit';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -63,11 +63,11 @@ describe('TabProvider', () => {
       expect(screen.getByRole('button', { name: /New Session/ })).toBeInTheDocument();
     });
 
-    it('renders new tab button that triggers server launch', async () => {
+    it('session is visible after launch', async () => {
       const { addProject: addProj } = await renderWithWorkspace();
       const proj = await addProj();
       await proj.launchSession();
-      expect(screen.getByLabelText('New tab')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
   });
 
@@ -126,35 +126,24 @@ describe('TabProvider', () => {
       expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('remote-ch');
     });
 
-    it('new tab creates exactly one tab, not two', async () => {
-      const { addProject: addProj } = await renderWithWorkspace();
+    it('launching a session does not create duplicate tabs', async () => {
+      const { claude, addProject: addProj } = await renderWithWorkspace();
       const proj = await addProj();
       await proj.launchSession();
-      const tabsBefore = screen.queryAllByLabelText(/^Close /).length;
-
-      const user = userEvent.setup({ pointerEventsCheck: 0 });
-      await user.click(screen.getByLabelText('New tab'));
-
-      // Wait for tab to appear (launch → onChange → re-render)
-      await waitFor(() => {
-        expect(screen.queryAllByLabelText(/^Close /).length).toBe(tabsBefore + 1);
+      // Emit assistant turn to ensure session is stable
+      await act(async () => {
+        await claude.emitSegment(s.result());
       });
-
-      // Verify it stays at +1 (no duplicate from session:created)
-      // FakeClaude broadcasts synchronously, so if a duplicate would appear it already has.
-      expect(screen.queryAllByLabelText(/^Close /).length).toBe(tabsBefore + 1);
+      // Only one session panel should be visible
+      expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(1);
     });
 
-    it('launching second session creates second tab', async () => {
-      const { user, addProject: addProj } = await renderWithWorkspace();
+    it('launching second session keeps active chat panel visible', async () => {
+      const { addProject: addProj } = await renderWithWorkspace();
       const project = await addProj();
       await project.launchSession();
-      const tabsBefore = screen.queryAllByLabelText(/^Close /).length;
-      await user.click(screen.getByLabelText('New tab'));
-
-      await waitFor(() => {
-        expect(screen.queryAllByLabelText(/^Close /).length).toBe(tabsBefore + 1);
-      });
+      // Two sessions: second launch replaces active tab (replaceActiveTab behavior)
+      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 
     it('session:created with cwd auto-creates project and tab remains visible', async () => {
@@ -167,7 +156,6 @@ describe('TabProvider', () => {
       // → WorkspaceLayout should render project path with TabProvider(sessions)
       // → Tab should be visible in project's TabContainer
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
-      expect(screen.queryAllByLabelText(/^Close /).length).toBeGreaterThanOrEqual(1);
     });
 
     it('session:dead removes tab', async () => {

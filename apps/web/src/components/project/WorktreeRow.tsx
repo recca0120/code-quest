@@ -1,50 +1,88 @@
 import type { WorktreeInfo } from '@code-quest/git';
-import { forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
-import { Badge } from '@/components/ui/Badge';
+import type { ReactElement, ReactNode } from 'react';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
 
-interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
+type RowActionButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  'aria-label': string;
+};
+function RowActionButton({
+  'aria-label': ariaLabel,
+  onClick,
+  children,
+  className,
+  ...rest
+}: RowActionButtonProps) {
+  return (
+    <button
+      {...rest}
+      type="button"
+      aria-label={ariaLabel}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.(e);
+      }}
+      className={cn(
+        'relative z-10 shrink-0 px-1 text-muted hover:text-text lg:opacity-0 lg:group-hover:opacity-100',
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+interface WorktreeRowProps {
   worktree: WorktreeInfo;
   active: boolean;
-  liveSessions: number;
   /** Count of uncommitted changes (from `git status`). >0 triggers the warning dot. */
   changes: number;
   onSelect: () => void;
-  /** Called when the branch badge is clicked (keyboard or mouse). */
-  onBranchClick?: () => void;
-  /** Called when the ⋯ "More actions" button is clicked. */
+  /** Called when the [+] "Open new chat" button is clicked. */
+  onOpenNewChat?: () => void;
+  /** Called when the ⋯ "More actions" button is clicked (mobile: opens BottomSheet). */
   onMoreActions?: () => void;
+  className?: string;
   /**
    * Parent-supplied wrapper that renders the branch badge as a Radix
    * trigger (e.g. `Popover.Trigger asChild`). When omitted, the badge is
-   * a plain element that calls `onBranchClick` on activation.
+   * a plain element.
    */
   wrapBranchTrigger?: (child: ReactElement) => ReactNode;
-  /** Same as `wrapBranchTrigger` but for the ⋯ button (DropdownMenu.Trigger). */
+  /**
+   * Parent-supplied wrapper that renders the ⋯ button as a Radix
+   * trigger (e.g. `DropdownMenu.Trigger asChild`). Desktop only.
+   * When omitted, the button calls `onMoreActions` directly.
+   */
   wrapMoreTrigger?: (child: ReactElement) => ReactNode;
 }
 
-export const WorktreeRow: React.ForwardRefExoticComponent<
-  WorktreeRowProps & React.RefAttributes<HTMLDivElement>
-> = forwardRef<HTMLDivElement, WorktreeRowProps>(function WorktreeRow(
-  {
-    worktree,
-    active,
-    liveSessions,
-    changes,
-    onSelect,
-    onBranchClick,
-    onMoreActions,
-    wrapBranchTrigger,
-    wrapMoreTrigger,
-    className,
-    ...rest
-  },
-  ref,
-) {
+export function WorktreeRow({
+  worktree,
+  active,
+  changes,
+  onSelect,
+  onOpenNewChat,
+  onMoreActions,
+  wrapBranchTrigger,
+  wrapMoreTrigger,
+  className,
+}: WorktreeRowProps): React.JSX.Element {
   const label = worktree.branch ?? worktree.name;
+
+  const moreBtn =
+    onMoreActions || wrapMoreTrigger ? (
+      <RowActionButton
+        aria-label="More actions"
+        title="More"
+        onClick={() => {
+          onMoreActions?.();
+        }}
+      >
+        ⋯
+      </RowActionButton>
+    ) : null;
 
   const branchBadge = (
     <button
@@ -52,37 +90,19 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
       aria-label={`Switch branch (currently ${label})`}
       onClick={(e) => {
         e.stopPropagation();
-        onBranchClick?.();
       }}
-      className="relative z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-hover-tint hover:border-accent hover:bg-tint-10 cursor-pointer font-mono text-xs text-muted"
-      title="Switch branch"
+      className="relative z-10 inline-flex items-center gap-1 min-w-0 hover:text-text cursor-pointer font-mono text-xs text-muted"
+      title={label}
     >
-      <span aria-hidden="true" className="text-subtle text-xs">
+      <span aria-hidden="true" className="text-subtle text-xs shrink-0">
         ⎇
       </span>
-      <span>{label}</span>
-    </button>
-  );
-
-  const moreButton = (
-    <button
-      type="button"
-      aria-label="More actions"
-      title="More"
-      onClick={(e) => {
-        e.stopPropagation();
-        onMoreActions?.();
-      }}
-      className="relative z-10 shrink-0 px-1 text-muted hover:text-text opacity-0 group-hover:opacity-100"
-    >
-      ⋯
+      <span className="truncate">{label}</span>
     </button>
   );
 
   return (
     <div
-      ref={ref}
-      {...rest}
       className={cn(
         'group relative flex items-center gap-1.5 px-2 py-1 text-xs rounded border-l-2',
         active
@@ -100,17 +120,6 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
       <span className="relative z-10 flex flex-1 items-center gap-1.5 min-w-0">
         {wrapBranchTrigger ? wrapBranchTrigger(branchBadge) : branchBadge}
       </span>
-      {liveSessions > 0 && (
-        <Badge
-          variant="success"
-          role="status"
-          aria-label={pluralize(liveSessions, 'active session')}
-          className="relative z-10 gap-1 bg-success/20"
-        >
-          <StatusDot color="success" pulse />
-          {liveSessions}
-        </Badge>
-      )}
       {changes > 0 && (
         <StatusDot
           color="warning"
@@ -120,7 +129,18 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
           title={pluralize(changes, 'change')}
         />
       )}
-      {wrapMoreTrigger ? wrapMoreTrigger(moreButton) : moreButton}
+      {onOpenNewChat && (
+        <RowActionButton
+          aria-label="Open new chat"
+          title="Open new chat"
+          onClick={() => {
+            onOpenNewChat();
+          }}
+        >
+          +
+        </RowActionButton>
+      )}
+      {moreBtn && (wrapMoreTrigger ? wrapMoreTrigger(moreBtn) : moreBtn)}
     </div>
   );
-});
+}

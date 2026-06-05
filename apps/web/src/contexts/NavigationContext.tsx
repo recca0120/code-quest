@@ -1,5 +1,8 @@
-import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
-import { ProjectStateContext } from './ProjectContext.tsx';
+import { createContext, type ReactNode, useContext, useState } from 'react';
+
+export function setMapEntry<T>(prev: Record<string, T>, key: string, value: T): Record<string, T> {
+  return prev[key] === value ? prev : { ...prev, [key]: value };
+}
 
 /** Intent: tell a TabProvider scoped to `cwd` to activate `channelId` once it
  *  appears in that provider's tabs. Set by flows that spawn a channel
@@ -25,6 +28,10 @@ interface NavigationState {
    *  Selecting a worktree DOES NOT auto-open chat — user clicks `+` for that. */
   selectedWorktreeCwd: Record<string, string | null>;
   activeCwd: string | null;
+  /** Last worktree the user visited per project — restored on project re-select. */
+  lastWorktreeByProject: Record<string, string>;
+  /** Last tab the user viewed per worktree — restored on worktree re-select. */
+  lastTabByWorktree: Record<string, string>;
 }
 
 interface NavigationActions {
@@ -35,6 +42,8 @@ interface NavigationActions {
   /** Set/clear which worktree the sidebar has highlighted under the given project. */
   setSelectedWorktree: (projectCwd: string, worktreeCwd: string | null) => void;
   setActiveCwd: (cwd: string | null) => void;
+  recordLastWorktree: (projectCwd: string, worktreeCwd: string) => void;
+  recordLastTab: (worktreeCwd: string, channelId: string) => void;
 }
 
 export const NavigationStateContext: React.Context<NavigationState | null> =
@@ -54,19 +63,6 @@ export function useNavigationActions(): NavigationActions {
   return ctx;
 }
 
-export function useActiveCwd(): string | null {
-  const navState = useContext(NavigationStateContext);
-  const projectState = useContext(ProjectStateContext);
-
-  if (navState?.activeCwd) return navState.activeCwd;
-
-  const activeProjectCwd = projectState?.activeProjectCwd ?? null;
-  if (activeProjectCwd && navState?.selectedWorktreeCwd[activeProjectCwd]) {
-    return navState.selectedWorktreeCwd[activeProjectCwd] ?? null;
-  }
-  return activeProjectCwd;
-}
-
 export function NavigationProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [pendingActivateChannel, setPendingActivateChannel] =
     useState<PendingActivateChannel | null>(null);
@@ -75,6 +71,8 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
     Record<string, string | null>
   >({});
   const [activeCwd, setActiveCwd] = useState<string | null>(null);
+  const [lastWorktreeByProject, setLastWorktreeByProject] = useState<Record<string, string>>({});
+  const [lastTabByWorktree, setLastTabByWorktree] = useState<Record<string, string>>({});
 
   const [actions] = useState<NavigationActions>(() => ({
     requestActivateChannel: (cwd, channelId) => setPendingActivateChannel({ cwd, channelId }),
@@ -83,6 +81,10 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
       setPendingOpenWorktree({ projectCwd, worktreeCwd, forceNew }),
     clearPendingOpenWorktree: () => setPendingOpenWorktree(null),
     setActiveCwd,
+    recordLastWorktree: (projectCwd, worktreeCwd) =>
+      setLastWorktreeByProject((prev) => setMapEntry(prev, projectCwd, worktreeCwd)),
+    recordLastTab: (worktreeCwd, channelId) =>
+      setLastTabByWorktree((prev) => setMapEntry(prev, worktreeCwd, channelId)),
     setSelectedWorktree: (projectCwd, worktreeCwd) => {
       setSelectedWorktreeCwdState((prev) => {
         if (worktreeCwd === null) {
@@ -96,10 +98,14 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
     },
   }));
 
-  const state = useMemo<NavigationState>(
-    () => ({ pendingActivateChannel, pendingOpenWorktree, selectedWorktreeCwd, activeCwd }),
-    [pendingActivateChannel, pendingOpenWorktree, selectedWorktreeCwd, activeCwd],
-  );
+  const state: NavigationState = {
+    pendingActivateChannel,
+    pendingOpenWorktree,
+    selectedWorktreeCwd,
+    activeCwd,
+    lastWorktreeByProject,
+    lastTabByWorktree,
+  };
 
   return (
     <NavigationStateContext.Provider value={state}>

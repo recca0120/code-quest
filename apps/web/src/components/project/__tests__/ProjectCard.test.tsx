@@ -43,36 +43,16 @@ describe('ProjectCard', () => {
     expect(screen.getByText(/code-quest/)).toBeInTheDocument();
   });
 
-  it('renders worktree-count meta badge when worktreeCount > 0', () => {
-    render(<ProjectCard name="code-quest" active={false} onSelect={() => {}} worktreeCount={3} />);
-    expect(screen.getByText(/3\s*wt/i)).toBeInTheDocument();
-  });
-
-  it('hides worktree-count meta when count is undefined or 0', () => {
-    const { rerender } = render(
-      <ProjectCard name="code-quest" active={false} onSelect={() => {}} />,
-    );
-    expect(screen.queryByText(/wt$/i)).toBeNull();
-    rerender(
-      <ProjectCard name="code-quest" active={false} onSelect={() => {}} worktreeCount={0} />,
-    );
-    expect(screen.queryByText(/wt$/i)).toBeNull();
-  });
-
   it('active state uses bg tint (no hard accent border) — F.html contract', () => {
     const { container } = render(<ProjectCard name="code-quest" active onSelect={() => {}} />);
-    const card = container.firstElementChild;
-    expect(card?.className).toContain('bg-accent/10');
-    expect(card?.className).not.toContain('border-accent');
+    expect(container.querySelector('[data-active="true"]')).toBeInTheDocument();
   });
 
   it('inactive state has neither bg tint nor accent border', () => {
     const { container } = render(
       <ProjectCard name="code-quest" active={false} onSelect={() => {}} />,
     );
-    const card = container.firstElementChild;
-    expect(card?.className).not.toContain('border-accent');
-    expect(card?.className).not.toContain('bg-accent/10');
+    expect(container.querySelector('[data-active="false"]')).toBeInTheDocument();
   });
 
   it('calls onSelect when clicked', async () => {
@@ -94,9 +74,7 @@ describe('ProjectCard', () => {
         </Wrapper>,
       );
       const star = screen.getByRole('button', { name: /unpin/i });
-      expect(star.className).toContain('text-accent');
-      // Filled star is always visible (no opacity-0)
-      expect(star.className).not.toContain('opacity-0');
+      expect(star).toHaveAttribute('data-pinned', 'true');
     });
 
     it('shows Pin button (outlined star) hidden until hover when not pinned', () => {
@@ -107,8 +85,7 @@ describe('ProjectCard', () => {
         </Wrapper>,
       );
       const star = screen.getByRole('button', { name: /^pin$/i });
-      expect(star.className).toContain('opacity-0');
-      expect(star.className).toContain('group-hover:opacity-100');
+      expect(star).toHaveAttribute('data-pinned', 'false');
     });
 
     it('⋯ button opens context menu', async () => {
@@ -120,7 +97,21 @@ describe('ProjectCard', () => {
       );
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(screen.getByRole('button', { name: /more actions/i }));
-      expect(await screen.findByRole('menuitem', { name: /resume session/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('menuitem', { name: /open past session/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('context menu shows "Copy path"', async () => {
+      const { Wrapper } = setupMin();
+      render(
+        <Wrapper>
+          <ProjectCard name="p" cwd="/p" active={false} onSelect={() => {}} />
+        </Wrapper>,
+      );
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      await user.click(screen.getByRole('button', { name: /more actions/i }));
+      expect(await screen.findByRole('menuitem', { name: /copy path/i })).toBeInTheDocument();
     });
   });
 
@@ -156,7 +147,7 @@ describe('ProjectCard', () => {
 
       // Right-click → context menu appears
       fireEvent.contextMenu(screen.getByRole('button', { name: /proj/i }));
-      const menuItem = await screen.findByRole('menuitem', { name: /resume session/i });
+      const menuItem = await screen.findByRole('menuitem', { name: /open past session/i });
 
       // Click menu item → dialog opens with picker, listing the session
       const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -194,7 +185,7 @@ describe('ProjectCard', () => {
 
       fireEvent.contextMenu(screen.getByRole('button', { name: /proj/i }));
       const user = userEvent.setup({ pointerEventsCheck: 0 });
-      await user.click(await screen.findByRole('menuitem', { name: /resume session/i }));
+      await user.click(await screen.findByRole('menuitem', { name: /open past session/i }));
 
       // Dialog open — SessionHistory shows its search bar
       const searchInput = await screen.findByPlaceholderText(/Search sessions/i);

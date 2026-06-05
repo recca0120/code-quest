@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import {
   NavigationProvider,
+  setMapEntry,
   useNavigationActions,
   useNavigationState,
 } from '../NavigationContext.tsx';
@@ -102,11 +103,90 @@ describe('NavigationContext', () => {
     });
   });
 
-  it('state object keeps stable identity when no state changes', () => {
-    const { result, rerender } = renderHook(() => useNavigationState(), { wrapper });
-    const first = result.current;
-    rerender();
-    expect(result.current).toBe(first);
+  describe('navigation memory', () => {
+    it('lastWorktreeByProject starts empty', () => {
+      const { result } = renderHook(() => useNavigationState(), { wrapper });
+      expect(result.current.lastWorktreeByProject).toEqual({});
+    });
+
+    it('recordLastWorktree stores the worktree for the project', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      act(() => {
+        result.current.actions.recordLastWorktree('/proj', '/proj/wt-feat');
+      });
+      expect(result.current.state.lastWorktreeByProject).toEqual({ '/proj': '/proj/wt-feat' });
+    });
+
+    it('recordLastWorktree updates when called again for same project', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      act(() => result.current.actions.recordLastWorktree('/proj', '/proj/wt-a'));
+      act(() => result.current.actions.recordLastWorktree('/proj', '/proj/wt-b'));
+      expect(result.current.state.lastWorktreeByProject['/proj']).toBe('/proj/wt-b');
+    });
+
+    it('lastTabByWorktree starts empty', () => {
+      const { result } = renderHook(() => useNavigationState(), { wrapper });
+      expect(result.current.lastTabByWorktree).toEqual({});
+    });
+
+    it('recordLastTab stores the channelId for the worktree', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      act(() => {
+        result.current.actions.recordLastTab('/proj/wt-feat', 'ch-abc');
+      });
+      expect(result.current.state.lastTabByWorktree).toEqual({ '/proj/wt-feat': 'ch-abc' });
+    });
+
+    it('recordLastTab updates when called again for same worktree', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      act(() => result.current.actions.recordLastTab('/proj/wt', 'ch-1'));
+      act(() => result.current.actions.recordLastTab('/proj/wt', 'ch-2'));
+      expect(result.current.state.lastTabByWorktree['/proj/wt']).toBe('ch-2');
+    });
+
+    it('actions keep stable identity after recordLastWorktree', () => {
+      const { result, rerender } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      const first = result.current.actions;
+      act(() => result.current.actions.recordLastWorktree('/proj', '/proj/wt'));
+      rerender();
+      expect(result.current.actions).toBe(first);
+    });
+  });
+
+  describe('setMapEntry', () => {
+    it('returns a new object with the entry set', () => {
+      const prev = { a: '1' };
+      const result = setMapEntry(prev, 'b', '2');
+      expect(result).toEqual({ a: '1', b: '2' });
+    });
+
+    it('returns the same object reference when value is unchanged', () => {
+      const prev = { a: '1' };
+      const result = setMapEntry(prev, 'a', '1');
+      expect(result).toBe(prev);
+    });
+
+    it('updates an existing key', () => {
+      const prev = { a: '1' };
+      const result = setMapEntry(prev, 'a', '2');
+      expect(result).toEqual({ a: '2' });
+      expect(result).not.toBe(prev);
+    });
   });
 
   describe('pendingOpenWorktree', () => {

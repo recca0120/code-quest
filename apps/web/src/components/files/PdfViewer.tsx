@@ -1,4 +1,3 @@
-import { pdfDataUri } from '@code-quest/utils';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -81,6 +80,7 @@ export function PdfViewer({
   className?: string;
 }): React.JSX.Element {
   const [numPages, setNumPages] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [baseWidth, setBaseWidth] = useState(INITIAL_BASE_WIDTH);
@@ -142,7 +142,16 @@ export function PdfViewer({
     return () => el.removeEventListener('mousedown', onMouseDown);
   }, []);
 
-  const file = useMemo(() => pdfDataUri(data), [data]);
+  const file = useMemo(() => {
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+  }, [data]);
+
+  useEffect(() => {
+    return () => URL.revokeObjectURL(file);
+  }, [file]);
   const onPrev = () => setPage((p) => p - 1);
   const onNext = () => setPage((p) => p + 1);
   const onZoomOut = () => setScale((s) => Math.max(MIN_SCALE, s - SCALE_STEP));
@@ -156,9 +165,14 @@ export function PdfViewer({
         aria-label="PDF viewport"
         className="overflow-auto flex-1 min-h-0 select-none"
       >
+        {loadError && <div className="text-sm text-warning p-2">{loadError}</div>}
         <Document
           file={file}
-          onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+          onLoadSuccess={({ numPages: n }) => {
+            setNumPages(n);
+            setLoadError(null);
+          }}
+          onLoadError={(err) => setLoadError(err.message)}
           className="border border-border rounded overflow-hidden w-fit"
         >
           <Page pageNumber={page} width={baseWidth * scale} />

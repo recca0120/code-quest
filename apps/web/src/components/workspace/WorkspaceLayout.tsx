@@ -1,3 +1,4 @@
+import type { SessionStateSummary } from '@code-quest/schemas';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -15,10 +16,16 @@ import { NO_FORM } from '@/utils/hotkey-options';
 import { CommandPalette } from '../palette/CommandPalette.tsx';
 import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { ProjectTree } from '../project/ProjectTree.tsx';
-import { TopScopeSwitcher } from '../project/TopScopeSwitcher.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
 import { TabContainer } from './TabContainer.tsx';
 import { WorkspaceTopbar } from './WorkspaceTopbar.tsx';
+
+const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
+  path_not_found: (p) => `Path not found: ${p}`,
+  path_not_directory: (p) => `Not a directory: ${p}`,
+};
+
+const EMPTY_SESSIONS: SessionStateSummary[] = [];
 
 function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   const isBusy = sessions.some((s) => s.state === 'busy');
@@ -49,12 +56,6 @@ export function WorkspaceLayout(): React.JSX.Element {
   );
 }
 
-function formatAddProjectError(error: string, path: string | undefined, cwd: string): string {
-  if (error === 'path_not_found') return `Path not found: ${path ?? cwd}`;
-  if (error === 'path_not_directory') return `Not a directory: ${path ?? cwd}`;
-  return `Could not add project (${error})`;
-}
-
 function WorkspaceLayoutInner() {
   const { openPalette, registerActions } = useCommandPaletteActions();
   useHotkeys('mod+k', () => openPalette(), NO_FORM);
@@ -69,6 +70,7 @@ function WorkspaceLayoutInner() {
   }, [registerActions]);
   const { projects, activeProjectCwd } = useProjectState();
   const { sessions, sessionsMap } = useSession();
+  const { selectedWorktreeCwd } = useNavigationState();
   const { addProject, setActiveProject } = useProjectActions();
   const { isMobile, isDesktop } = useBreakpoint();
   const [leftOpen, setLeftOpen] = useState(() => isDesktop);
@@ -76,7 +78,9 @@ function WorkspaceLayoutInner() {
   async function handleAddProject(cwd: string) {
     const res = await addProject(cwd);
     if ('error' in res) {
-      toast.error(formatAddProjectError(res.error, res.path, cwd));
+      const p = res.path ?? cwd;
+      const msg = ADD_PROJECT_ERRORS[res.error]?.(p) ?? `Could not add project (${res.error})`;
+      toast.error(msg);
       return;
     }
     setDialogOpen(false);
@@ -91,6 +95,15 @@ function WorkspaceLayoutInner() {
     setLeftOpen((v) => !v);
   }
   const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
+  const sessionsByProject = useMemo(() => {
+    const m = new Map<string, typeof sessions>();
+    for (const s of sessions) {
+      const list = m.get(s.projectRoot) ?? [];
+      list.push(s);
+      m.set(s.projectRoot, list);
+    }
+    return m;
+  }, [sessions]);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -112,14 +125,7 @@ function WorkspaceLayoutInner() {
             onToggleLeft={onToggleLeft}
             sessions={sessions}
             onActivateSession={handleActivateSession}
-          >
-            <TopScopeSwitcher
-              projects={projects}
-              activeProjectCwd={activeProjectCwd}
-              onSelect={setActiveProject}
-              onAddProject={() => setDialogOpen(true)}
-            />
-          </WorkspaceTopbar>
+          />
           <div className="relative flex flex-1 overflow-hidden">
             {leftOpen && (
               <button
@@ -150,11 +156,23 @@ function WorkspaceLayoutInner() {
             </DrawerAside>
 
             <main className="flex flex-1 min-w-0 h-full">
-              <ProjectsTabContainer
-                projects={projects}
-                activeProjectCwd={activeProjectCwd}
-                sessions={sessions}
-              />
+              {projects.map((project) => (
+                <section
+                  key={project.cwd}
+                  aria-label={project.cwd === activeProjectCwd ? 'project-container' : undefined}
+                  className={cn(
+                    project.cwd === activeProjectCwd ? 'flex flex-1 min-w-0 h-full' : 'hidden',
+                  )}
+                >
+                  <TabProvider
+                    sessions={sessionsByProject.get(project.cwd) ?? EMPTY_SESSIONS}
+                    cwd={project.cwd}
+                    selectedCwd={selectedWorktreeCwd[project.cwd] ?? undefined}
+                  >
+                    <TabContainer projectCwd={project.cwd} onToggleLeft={onToggleLeft} />
+                  </TabProvider>
+                </section>
+              ))}
             </main>
           </div>
         </>
@@ -166,37 +184,6 @@ function WorkspaceLayoutInner() {
         addedProjectCwds={addedProjectCwds}
       />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-    </div>
-  );
-}
-
-function ProjectsTabContainer({
-  projects,
-  activeProjectCwd,
-  sessions,
-}: {
-  projects: ReturnType<typeof useProjectState>['projects'];
-  activeProjectCwd: string | null;
-  sessions: ReturnType<typeof useSession>['sessions'];
-}) {
-  const { selectedWorktreeCwd } = useNavigationState();
-  return (
-    <div className="flex flex-1 min-w-0 h-full">
-      {projects.map((project) => (
-        <section
-          key={project.cwd}
-          aria-label={project.cwd === activeProjectCwd ? 'project-container' : undefined}
-          className={cn(project.cwd === activeProjectCwd ? 'flex flex-1 min-w-0 h-full' : 'hidden')}
-        >
-          <TabProvider
-            sessions={sessions.filter((s) => s.projectRoot === project.cwd)}
-            cwd={project.cwd}
-            selectedCwd={selectedWorktreeCwd[project.cwd] ?? undefined}
-          >
-            <TabContainer projectCwd={project.cwd} />
-          </TabProvider>
-        </section>
-      ))}
     </div>
   );
 }

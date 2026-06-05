@@ -58,5 +58,10 @@
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "pdfjs-dist": "5.4.296"
+    }
   }
 }

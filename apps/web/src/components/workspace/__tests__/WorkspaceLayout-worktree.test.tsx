@@ -1,7 +1,7 @@
 import type { CreateWorktreeResponse } from '@code-quest/schemas';
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import { FakeGit } from '@code-quest/test-kit';
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
@@ -20,8 +20,8 @@ describe('WorkspaceLayout worktree grouping', () => {
     const project = await addProject({ path: '/projects', dirName: 'app' });
     await project.launchSession();
 
-    // Sanity: one tab initially.
-    expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
+    // Sanity: chat panel is showing (one active session).
+    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
 
     const socket = summoner.socket;
     let resp: CreateWorktreeResponse | null = null;
@@ -36,11 +36,9 @@ describe('WorkspaceLayout worktree grouping', () => {
     });
     expect(resp!.ok).toBe(true);
 
-    // Tab count stays 1 — worktree creation no longer spawns a session.
-    // (User opens chat by clicking the worktree row in the sidebar.)
-    await waitFor(() => {
-      // Allow microtasks to flush so any unintended tab creation would land.
-    });
-    expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
+    // Chat panel stays showing the original session — no new session spawned.
+    // (User opens chat by clicking the worktree [+] button in the sidebar.)
+    await act(async () => {});
+    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 });

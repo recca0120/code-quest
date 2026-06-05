@@ -1,43 +1,19 @@
-import type { GitAddResult, GitCommitResult, GitFileChange, GitPushResult } from '@code-quest/git';
-import type { ClientToServerEvents } from '@code-quest/schemas';
-import {
-  EVENTS,
-  gitAddResultSchema,
-  gitCommitResultSchema,
-  gitDiffByCwdResultSchema,
-  gitPushResultSchema,
-} from '@code-quest/schemas';
+import type { GitFileChange } from '@code-quest/git';
 import { useState } from 'react';
-import { toast } from 'sonner';
-import type { ZodType } from 'zod';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useGitActions, useGitStatus } from '@/contexts/GitContext';
-import { useSocket } from '@/contexts/SocketContext';
-import type { TypedSocket } from '@/socket/client';
-import { rpc } from '@/socket/rpc';
 import { cn } from '@/utils/cn';
-import { type DiffFile, parseUnifiedDiff } from '@/utils/parse-unified-diff';
-import { BranchSection } from '../project/BranchSection.tsx';
+import type { DiffFile } from '@/utils/parse-unified-diff';
 import { ActionButton } from '../ui/ActionButton.tsx';
 import { CommandHint } from '../ui/CommandHint.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
 import { Spinner } from '../ui/Spinner.tsx';
 import { CommitComposer } from './CommitComposer.tsx';
 import { DiffModal } from './DiffModal.tsx';
+import { useGitPaneActions } from './useGitPaneActions.ts';
 
 interface GitPaneProps {
   cwd: string;
-}
-
-async function rpcParsed<T, E extends keyof ClientToServerEvents>(
-  socket: TypedSocket,
-  schema: ZodType<T>,
-  event: E,
-  ...args: Parameters<ClientToServerEvents[E]> extends [...infer P, infer _Cb] ? P : never
-): Promise<T | { error: string }> {
-  // biome-ignore lint/suspicious/noExplicitAny: rpc generic constraints can't express this call pattern without an escape hatch
-  const raw = await (rpc as any)(socket, event, ...args);
-  return schema.safeParse(raw).data ?? { error: 'Invalid response' };
 }
 
 const STATUS_LABEL: Record<string, { mark: string; cls: string }> = {
@@ -54,110 +30,15 @@ function statusFor(s: string): { mark: string; cls: string } {
 }
 
 export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
-  const { socket } = useSocket();
-  const { checkout, discardFile, fetch, listBranches, pull, refetchGitStatus } = useGitActions();
+  const { refetchGitStatus } = useGitActions();
   const data = useGitStatus(cwd);
-  function refetch() {
-    return refetchGitStatus(cwd);
-  }
+  const refetch = () => refetchGitStatus(cwd);
   const [diffFile, setDiffFile] = useState<DiffFile | null>(null);
-  const [branchPopoverOpen, setBranchPopoverOpen] = useState(false);
-  const [branches, setBranches] = useState<string[]>([]);
 
-  async function handleBranchOpenChange(open: boolean) {
-    setBranchPopoverOpen(open);
-    if (open) {
-      const res = await listBranches(cwd);
-      setBranches(Array.isArray(res) ? res : []);
-    }
-  }
-
-  async function stageAll() {
-    const result: GitAddResult = await rpcParsed(socket, gitAddResultSchema, EVENTS.git.add, {
-      cwd,
-    });
-    if ('error' in result) toast.error(`Stage failed: ${result.error}`);
-    else toast.success('Staged all changes');
-    await refetch();
-  }
-
-  async function commit(message: string) {
-    const result: GitCommitResult = await rpcParsed(
-      socket,
-      gitCommitResultSchema,
-      EVENTS.git.commit,
-      { cwd, message },
-    );
-    if ('error' in result) {
-      if (result.error === 'nothing-to-commit') {
-        toast('Nothing to commit. Stage first.');
-      } else {
-        toast.error(`Commit failed: ${result.error}`);
-      }
-      return;
-    }
-    toast.success(`Committed ${result.hash.slice(0, 7)}`);
-    await refetch();
-  }
-
-  async function runFetch() {
-    const result = await fetch(cwd);
-    if ('error' in result) toast.error(`Fetch failed: ${result.error}`);
-    else toast.success('Fetched');
-  }
-
-  async function runPull() {
-    const result = await pull(cwd);
-    if ('error' in result) {
-      if (result.error === 'non-ff') {
-        toast('Pull rejected (non-FF). Run `git pull --rebase` manually.');
-      } else if (result.error === 'no-upstream') {
-        toast('No upstream — set one with `git push -u`');
-      } else {
-        toast.error(`Pull failed: ${result.error}`);
-      }
-      return;
-    }
-    toast.success(result.fastForwarded ? 'Pulled' : 'Already up to date');
-    await refetch();
-  }
-
-  async function push() {
-    const result: GitPushResult = await rpcParsed(socket, gitPushResultSchema, EVENTS.git.push, {
-      cwd,
-    });
-    if ('error' in result) {
-      if (result.error === 'no-upstream') toast('No upstream — set one with git push -u');
-      else if (result.error === 'rejected') toast('Push rejected (non-FF). Pull first.');
-      else toast.error(`Push failed: ${result.error}`);
-      return;
-    }
-    toast.success('Pushed');
-  }
-
-  async function openDiff(filePath: string, fileStatus: string) {
-    const response = await rpc(socket, EVENTS.git.diff, { cwd, filePath, status: fileStatus });
-    const parsed = gitDiffByCwdResultSchema.safeParse(response);
-    if (!parsed.success) {
-      toast.error('Diff unavailable: invalid response');
-      return;
-    }
-    if ('error' in parsed.data) {
-      toast.error(`Diff failed: ${parsed.data.error}`);
-      return;
-    }
-    const files = parseUnifiedDiff(parsed.data.diff);
-    const match = files.find((f) => f.path === filePath);
-    setDiffFile(
-      match ?? {
-        path: filePath,
-        isBinary: false,
-        added: 0,
-        removed: 0,
-        lines: [{ kind: 'meta', text: 'No diff available.' }],
-      },
-    );
-  }
+  const { stageAll, commit, runFetch, runPull, push, openDiff, handleDiscard } = useGitPaneActions(
+    cwd,
+    { onDiffOpen: setDiffFile },
+  );
 
   // ── Early returns (must follow ALL hook calls above) ──
   if (data && 'notARepo' in data) {
@@ -185,8 +66,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
     );
   }
 
-  // After the early returns above, `data` is the success branch — drop the
-  // dead defensive narrowing.
   const status = data;
   const hasChanges = !status.isClean;
   const changedCount = status.changedFiles.length;
@@ -200,19 +79,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   return (
     <section className="flex flex-col h-full" aria-label="git-pane">
       <div className="flex-1 min-h-0 overflow-auto">
-        <BranchSection
-          status={status}
-          branches={branches}
-          popoverOpen={branchPopoverOpen}
-          onPopoverOpenChange={handleBranchOpenChange}
-          onSelectBranch={async (branch) => {
-            const res = await checkout(cwd, branch);
-            if (!res.ok) toast.error(`Checkout failed: ${res.error}`);
-            else toast.success(`Switched to ${res.branch}`);
-          }}
-        />
-
-        {/* Changes section — flows naturally; pane scrolls as one. */}
         <section className="px-3 py-2 border-b border-border text-sm">
           <div className="flex items-center justify-between mb-1">
             <h4 className="section-label m-0">Changes ({changedCount})</h4>
@@ -227,13 +93,16 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
               </ActionButton>
             )}
           </div>
-          <ChangedFiles files={status.changedFiles} onPick={openDiff} />
+          <ChangedFiles
+            files={status.changedFiles}
+            onPick={openDiff}
+            onDiscard={(filePath) => void handleDiscard(filePath, refetch)}
+          />
           {hasChanges && (
             <CommitComposer onCommit={(msg) => void commit(msg)} count={changedCount} />
           )}
         </section>
 
-        {/* Actions section — sits right under Changes content, not pinned. */}
         <section className="px-3 py-2">
           <h4 className="section-label m-0 mb-1">Actions</h4>
           <div className="flex gap-2 text-xs">
@@ -268,47 +137,68 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
           file={diffFile}
           onClose={() => setDiffFile(null)}
           canDiscard={canDiscardDiffFile}
-          onDiscard={async () => {
-            const result = await discardFile(cwd, diffFile.path);
-            if ('error' in result) toast.error(`Discard failed: ${result.error}`);
-            else {
-              toast.success(`Discarded ${diffFile.path}`);
-              setDiffFile(null);
-            }
-          }}
+          onDiscard={() => void handleDiscard(diffFile.path, () => setDiffFile(null))}
         />
       )}
     </section>
   );
 }
 
+function FileRow({
+  file,
+  onPick,
+  onDiscard,
+}: {
+  file: GitFileChange;
+  onPick: (path: string, status: string) => void;
+  onDiscard?: (path: string) => void;
+}) {
+  const { mark, cls } = statusFor(file.status);
+  const canDiscard = file.status !== '??';
+  return (
+    <li className="group relative flex items-center">
+      <button
+        type="button"
+        className="flex flex-1 items-center gap-2 min-w-0 text-left px-1 py-0.5 hover:bg-hover-tint rounded"
+        onClick={() => onPick(file.file, file.status)}
+      >
+        <span className={cn('font-mono w-4 text-xs shrink-0', cls)}>{mark}</span>
+        <span className="font-mono text-xs truncate">{file.file}</span>
+      </button>
+      {onDiscard && canDiscard && (
+        <button
+          type="button"
+          aria-label={`Discard ${file.file}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDiscard(file.file);
+          }}
+          className="shrink-0 px-1 text-subtle hover:text-danger opacity-0 group-hover:opacity-100"
+        >
+          ×
+        </button>
+      )}
+    </li>
+  );
+}
+
 function ChangedFiles({
   files,
   onPick,
+  onDiscard,
 }: {
   files: GitFileChange[];
   onPick: (path: string, status: string) => void;
+  onDiscard?: (path: string) => void;
 }) {
   if (files.length === 0) {
     return <div className="text-muted text-xs px-1">No changes</div>;
   }
   return (
     <ul className="flex flex-col">
-      {files.map((f) => {
-        const { mark, cls } = statusFor(f.status);
-        return (
-          <li key={f.file}>
-            <button
-              type="button"
-              className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-hover-tint rounded"
-              onClick={() => onPick(f.file, f.status)}
-            >
-              <span className={cn('font-mono w-4 text-xs', cls)}>{mark}</span>
-              <span className="font-mono text-xs truncate">{f.file}</span>
-            </button>
-          </li>
-        );
-      })}
+      {files.map((f) => (
+        <FileRow key={f.file} file={f} onPick={onPick} onDiscard={onDiscard} />
+      ))}
     </ul>
   );
 }

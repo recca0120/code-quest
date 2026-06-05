@@ -11,6 +11,16 @@ afterEach(() => {
   btwSignal.setState({ open: false, question: '', answer: null, loading: false, error: null });
 });
 
+describe('ChatView header bar', () => {
+  it('ResumeButton (clock icon) renders inside the chat-breadcrumb header bar, not below it', async () => {
+    const { container } = await renderWithChannel(<ChatView />);
+    const breadcrumb = container.querySelector('header[aria-label="chat-breadcrumb"]');
+    expect(breadcrumb).toBeTruthy();
+    const clockBtn = within(breadcrumb as HTMLElement).getByTitle('Session history');
+    expect(clockBtn).toBeInTheDocument();
+  });
+});
+
 describe('ChatSession overlay placement', () => {
   it('SideQuestionDialog is not inside the message list area', async () => {
     const { container } = await renderWithChannel(<ChatView />);
