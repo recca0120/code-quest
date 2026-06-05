@@ -16,8 +16,15 @@ class LineStream implements AsyncIterable<string> {
   readonly exitCode: Promise<number | null>;
   private resolveExitCode!: (code: number | null) => void;
   private readonly unsubscribers: Array<() => void> = [];
+  private readonly onExit?: (code: number | null) => void;
 
-  constructor(rpc: RemoteRpcWithEvents, sessionId: string, signal: AbortSignal) {
+  constructor(
+    rpc: RemoteRpcWithEvents,
+    sessionId: string,
+    signal: AbortSignal,
+    onExit?: (code: number | null) => void,
+  ) {
+    this.onExit = onExit;
     this.exitCode = new Promise<number | null>((r) => {
       this.resolveExitCode = r;
     });
@@ -56,7 +63,9 @@ class LineStream implements AsyncIterable<string> {
   }
 
   private finish(code: number | null): void {
+    if (this.done) return;
     this.done = true;
+    this.onExit?.(code);
     this.resolveExitCode(code);
     this.resolve?.();
     this.resolve = null;
@@ -142,7 +151,9 @@ export class RemoteProcessProvider implements ProcessProvider {
   ): { sessionId: string; controller: AbortController; stream: LineStream } {
     const sessionId = uuidv4();
     const controller = new AbortController();
-    const stream = new LineStream(this.rpc, sessionId, controller.signal);
+    const stream = new LineStream(this.rpc, sessionId, controller.signal, (code) => {
+      if (!controller.signal.aborted) controller.abort(code ?? undefined);
+    });
     this.fireSpawn(sessionId, command, args, options, controller);
     return { sessionId, controller, stream };
   }
