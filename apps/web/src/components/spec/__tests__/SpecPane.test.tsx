@@ -83,7 +83,7 @@ describe('SpecPane', () => {
     expect(screen.queryByRole('status', { name: 'pane-status-footer' })).toBeNull();
   });
 
-  it('clicking a change opens SpecModal showing proposal content', async () => {
+  it('clicking a change opens SpecDrawer showing proposal content', async () => {
     const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
     seedOpenspec(summoner);

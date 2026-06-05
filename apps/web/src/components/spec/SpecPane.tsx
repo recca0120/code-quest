@@ -13,7 +13,7 @@ import { SectionLabel } from '../ui/SectionLabel.tsx';
 import { SkeletonRows } from '../ui/SkeletonRows.tsx';
 import { ArchiveChangeDialog } from './ArchiveChangeDialog.tsx';
 import { NewChangeDialog } from './NewChangeDialog.tsx';
-import { SpecModal } from './SpecModal.tsx';
+import { SpecDrawer } from './SpecDrawer.tsx';
 
 interface SpecPaneProps {
   cwd: string;
@@ -195,9 +195,13 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
           <span>{pluralize(data.specs.length, 'spec')}</span>
         </PaneStatusFooter>
       )}
-      {open && (
-        <SpecModal cwd={cwd} kind={open.kind} name={open.name} onClose={() => setOpen(null)} />
-      )}
+      <SpecDrawer
+        open={!!open}
+        cwd={cwd}
+        kind={open?.kind ?? 'change'}
+        name={open?.name ?? ''}
+        onClose={() => setOpen(null)}
+      />
       <NewChangeDialog
         open={newChangeOpen}
         onSubmit={handleCreateChange}
