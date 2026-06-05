@@ -10,6 +10,8 @@ export {
   parseLogConfig,
 } from './logger.ts';
 export {
+  imageDataUri,
+  isImageMime,
   isMarkdownMime,
   isPdfMime,
   langForMime,

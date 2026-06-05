@@ -104,10 +104,18 @@ export function isPdfMime(mimeType: string): boolean {
   return mimeType === MIME.pdf;
 }
 
+export function isImageMime(mimeType: string): boolean {
+  return mimeType.startsWith('image/');
+}
+
 export function isMarkdownMime(mimeType: string): boolean {
   return mimeType === MIME.markdown;
 }
 
 export function pdfDataUri(base64: string): string {
   return `data:${MIME.pdf};base64,${base64}`;
+}
+
+export function imageDataUri(mimeType: string, base64: string): string {
+  return `data:${mimeType};base64,${base64}`;
 }

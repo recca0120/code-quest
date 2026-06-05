@@ -10,7 +10,6 @@ export const REMOTE_METHODS = {
   fs: {
     browseDirectories: 'fs/browseDirectories',
     browseEntries: 'fs/browseEntries',
-    readFileAbsolute: 'fs/readFileAbsolute',
     writeFile: 'fs/writeFile',
     create: 'fs/create',
     delete: 'fs/delete',

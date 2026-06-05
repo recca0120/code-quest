@@ -28,8 +28,8 @@ export abstract class FileProjectScanner implements ProjectScanner {
   async countEvents(sessionId: string): Promise<number> {
     const filePath = await this.findSessionFile(sessionId);
     if (!filePath) return 0;
-    const result = await this.fs.readFileAbsolute(filePath);
-    if ('error' in result) return 0;
+    const result = await this.fs.readFile(filePath);
+    if ('error' in result || 'tooLarge' in result) return 0;
     return this.extractMeta(result.content).decodableLines;
   }
 
@@ -64,8 +64,8 @@ export abstract class FileProjectScanner implements ProjectScanner {
     const sessionFiles = files.filter((f) => this.isSessionFile(f.name));
     const results = await Promise.all(
       sessionFiles.map(async (file): Promise<SessionEntry | null> => {
-        const result = await this.fs.readFile(projectPath, file.name);
-        if ('error' in result) return null;
+        const result = await this.fs.readFile(file.name, { cwd: projectPath });
+        if ('error' in result || 'tooLarge' in result) return null;
         const { title, createdAt, cwd, decodableLines } = this.extractMeta(result.content);
         return {
           sessionId: basename(file.name, extname(file.name)),

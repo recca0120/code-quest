@@ -1,10 +1,11 @@
 import { basename, dirname, join } from 'node:path';
 import type {
   DirectoryEntry,
+  FileEntry,
   FileResult,
   Filesystem,
   FsMutationResult,
-  ReadFileAbsoluteResult,
+  ReadFileOpts,
   ReadFileResult,
   WriteFileResult,
 } from '@code-quest/filesystem';
@@ -104,11 +105,15 @@ export class FakeFilesystem implements Filesystem {
 
   async browseEntries(
     path?: string,
-  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
+  ): Promise<{ directories: DirectoryEntry[]; files: FileEntry[] }> {
     const directories = await this.browseDirectories(path);
     if (!path) return { directories, files: [] };
-    const files: DirectoryEntry[] = this.directChildFiles(path)
-      .map((p) => ({ name: basename(p), path: p }))
+    const files: FileEntry[] = this.directChildFiles(path)
+      .map((p) => ({
+        name: basename(p),
+        path: p,
+        size: Buffer.byteLength(this.files.get(p) ?? ''),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
     return { directories, files };
   }
@@ -139,14 +144,6 @@ export class FakeFilesystem implements Filesystem {
     return results;
   }
 
-  async readFileAbsolute(absolutePath: string): Promise<ReadFileAbsoluteResult> {
-    const content = this.files.get(absolutePath);
-    if (content === undefined) return { error: `File not found: ${absolutePath}` };
-    const { contentType, encoding } = mimeForPath(absolutePath);
-    const encoded = encoding === 'base64' ? Buffer.from(content).toString('base64') : content;
-    return { content: encoded, contentType, encoding };
-  }
-
   async *readLines(absolutePath: string): AsyncIterable<string> {
     const content = this.files.get(absolutePath);
     if (content === undefined) throw new Error(`File not found: ${absolutePath}`);
@@ -164,16 +161,22 @@ export class FakeFilesystem implements Filesystem {
     return { ok: true };
   }
 
-  async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
-    const absolute = join(cwd, filePath);
-    if (!isPathWithin(cwd, absolute)) {
+  async readFile(file: string, opts?: ReadFileOpts): Promise<ReadFileResult> {
+    const cwd = opts?.cwd;
+    const absolute = cwd ? join(cwd, file) : file;
+    if (cwd && !isPathWithin(cwd, absolute)) {
       return { error: 'Path traversal not allowed' };
     }
     const content = this.files.get(absolute);
     if (content === undefined) {
-      return { error: `File not found: ${filePath}` };
+      return { error: `File not found: ${file}` };
     }
-    return { content };
+    if (opts?.maxBytes !== undefined && Buffer.byteLength(content) > opts.maxBytes) {
+      return { tooLarge: true };
+    }
+    const { contentType, encoding } = mimeForPath(absolute);
+    const encoded = encoding === 'base64' ? Buffer.from(content).toString('base64') : content;
+    return { content: encoded, contentType, encoding };
   }
 
   async exists(path: string): Promise<boolean> {

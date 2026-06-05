@@ -112,10 +112,10 @@ describe('LocalFilesystem', () => {
     });
   });
 
-  describe('readFileAbsolute', () => {
-    it('returns utf-8 content with contentType and encoding for a text file', async () => {
+  describe('readFile', () => {
+    it('returns utf-8 content with contentType and encoding for a text file (absolute)', async () => {
       vol.writeFileSync(join(ROOT, 'app.ts'), 'export {}');
-      expect(await service.readFileAbsolute(join(ROOT, 'app.ts'))).toEqual({
+      expect(await service.readFile(join(ROOT, 'app.ts'))).toEqual({
         content: 'export {}',
         contentType: 'text/plain',
         encoding: 'utf-8',
@@ -125,7 +125,7 @@ describe('LocalFilesystem', () => {
     it('returns base64 content with contentType application/pdf for a .pdf file', async () => {
       const pdfBytes = Buffer.from('%PDF-fake');
       vol.writeFileSync(join(ROOT, 'report.pdf'), pdfBytes);
-      const result = await service.readFileAbsolute(join(ROOT, 'report.pdf'));
+      const result = await service.readFile(join(ROOT, 'report.pdf'));
       expect(result).toEqual({
         content: pdfBytes.toString('base64'),
         contentType: 'application/pdf',
@@ -136,30 +136,41 @@ describe('LocalFilesystem', () => {
     it('returns base64 content for a .png file', async () => {
       const bytes = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
       vol.writeFileSync(join(ROOT, 'image.png'), bytes);
-      const result = await service.readFileAbsolute(join(ROOT, 'image.png'));
+      const result = await service.readFile(join(ROOT, 'image.png'));
       expect(result).toMatchObject({ contentType: 'image/png', encoding: 'base64' });
     });
 
     it('returns error for non-existent file', async () => {
-      const result = await service.readFileAbsolute(join(ROOT, 'missing.ts'));
+      const result = await service.readFile(join(ROOT, 'missing.ts'));
       expect(result).toMatchObject({ error: expect.stringContaining('missing.ts') });
     });
-  });
 
-  describe('readFile', () => {
-    it('reads existing file', async () => {
-      expect(await service.readFile(ROOT, 'package.json')).toEqual({ content: '{}' });
+    it('returns { tooLarge: true } when file size exceeds maxBytes', async () => {
+      vol.writeFileSync(join(ROOT, 'big.txt'), 'x'.repeat(100));
+      const result = await service.readFile(join(ROOT, 'big.txt'), { maxBytes: 50 });
+      expect(result).toEqual({ tooLarge: true });
     });
 
-    it('rejects path traversal', async () => {
-      expect(await service.readFile(ROOT, '../../etc/passwd')).toEqual({
+    it('reads file normally when size is within maxBytes', async () => {
+      vol.writeFileSync(join(ROOT, 'small.txt'), 'hello');
+      const result = await service.readFile(join(ROOT, 'small.txt'), { maxBytes: 100 });
+      expect(result).toMatchObject({ content: 'hello', encoding: 'utf-8' });
+    });
+
+    it('reads relative path when cwd provided', async () => {
+      const result = await service.readFile('package.json', { cwd: ROOT });
+      expect(result).toMatchObject({ content: '{}', encoding: 'utf-8' });
+    });
+
+    it('rejects path traversal when cwd is provided', async () => {
+      expect(await service.readFile('../../etc/passwd', { cwd: ROOT })).toEqual({
         error: 'Path traversal not allowed',
       });
     });
 
-    it('returns error for non-existent file', async () => {
-      expect(await service.readFile(ROOT, 'nope.txt')).toEqual({
-        error: 'File not found: nope.txt',
+    it('returns error for non-existent relative file', async () => {
+      expect(await service.readFile('nope.txt', { cwd: ROOT })).toMatchObject({
+        error: expect.stringContaining('nope.txt'),
       });
     });
   });
@@ -246,7 +257,7 @@ describe('LocalFilesystem', () => {
       vol.writeFileSync(a, 'rename me');
       expect(await svc.rename(a, b)).toEqual({ ok: true });
       expect(await svc.exists(a)).toBe(false);
-      expect(await svc.readFileAbsolute(b)).toMatchObject({ content: 'rename me' });
+      expect(await svc.readFile(b)).toMatchObject({ content: 'rename me' });
     });
 
     it('rename rejects when destination exists', async () => {
@@ -262,7 +273,7 @@ describe('LocalFilesystem', () => {
       const b = join(MROOT, 'orig-copy.txt');
       vol.writeFileSync(a, 'hello');
       expect(await svc.copy(a, b)).toEqual({ ok: true });
-      expect(await svc.readFileAbsolute(b)).toMatchObject({ content: 'hello' });
+      expect(await svc.readFile(b)).toMatchObject({ content: 'hello' });
       expect(await svc.exists(a)).toBe(true);
     });
 
@@ -272,7 +283,7 @@ describe('LocalFilesystem', () => {
       vol.writeFileSync(join(src, 'inner.txt'), 'inside');
       const dst = join(MROOT, 'tree-dst');
       expect(await svc.copy(src, dst)).toEqual({ ok: true });
-      expect(await svc.readFileAbsolute(join(dst, 'inner.txt'))).toMatchObject({
+      expect(await svc.readFile(join(dst, 'inner.txt'))).toMatchObject({
         content: 'inside',
       });
     });
@@ -287,7 +298,7 @@ describe('LocalFilesystem', () => {
       vol.writeFileSync(from, 'moved');
       expect(await svc.move(from, to)).toEqual({ ok: true });
       expect(await svc.exists(from)).toBe(false);
-      expect(await svc.readFileAbsolute(to)).toMatchObject({ content: 'moved' });
+      expect(await svc.readFile(to)).toMatchObject({ content: 'moved' });
     });
   });
 });

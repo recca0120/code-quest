@@ -19,11 +19,11 @@ export const fsDirectorySchema: z.ZodObject<
 });
 export type FsDirectory = z.infer<typeof fsDirectorySchema>;
 
-export const fsFileSchema: z.ZodObject<{ name: z.ZodString; path: z.ZodString }, z.core.$strip> =
-  z.object({
-    name: z.string(),
-    path: z.string(),
-  });
+export const fsFileSchema = z.object({
+  name: z.string(),
+  path: z.string(),
+  size: z.number(),
+});
 export type FsFile = z.infer<typeof fsFileSchema>;
 
 export const fsBrowsePayloadSchema: z.ZodObject<
@@ -54,29 +54,20 @@ export type FsBrowseResponse = z.infer<typeof fsBrowseResponseSchema>;
 
 // ── Read ──
 
-export const fsReadPayloadSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object({
-  path: z.string(),
+export const fsReadPayloadSchema = z.object({
+  file: z.string(),
+  cwd: z.string().optional(),
+  maxBytes: z.number().optional(),
 });
 export type FsReadPayload = z.infer<typeof fsReadPayloadSchema>;
 
-export const fsReadResponseSchema: z.ZodUnion<
-  readonly [
-    z.ZodObject<
-      {
-        content: z.ZodString;
-        contentType: z.ZodString;
-        encoding: z.ZodEnum<{ 'utf-8': 'utf-8'; base64: 'base64' }>;
-      },
-      z.core.$strip
-    >,
-    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
-  ]
-> = z.union([
+export const fsReadResponseSchema = z.union([
   z.object({
     content: z.string(),
     contentType: z.string(),
     encoding: z.enum(['utf-8', 'base64']),
   }),
+  z.object({ tooLarge: z.literal(true) }),
   z.object({ error: z.string() }),
 ]);
 export type FsReadResponse = z.infer<typeof fsReadResponseSchema>;
