@@ -201,7 +201,7 @@ export function FileTree({
   useEffect(() => {
     if (!rootCwd) return;
     return subscribeFsDirty(rootCwd, (paths, snapshot) => {
-      if (snapshot) snapshotRef.current = snapshot;
+      if (snapshot && snapshot.length > 0) snapshotRef.current = snapshot;
       const invalidated = new Set<string>();
       for (const relPath of paths) {
         const slash = relPath.lastIndexOf('/');
