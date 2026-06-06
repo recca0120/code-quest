@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
-import type { TypedSocket } from '@/socket/client.ts';
+import { useSocket } from '@/contexts/SocketContext.tsx';
 
-interface RemoteStatusBannerProps {
-  socket: TypedSocket;
-}
-
-export function RemoteStatusBanner({ socket }: RemoteStatusBannerProps): React.JSX.Element | null {
+export function RemoteStatusBanner(): React.JSX.Element | null {
+  const { socket } = useSocket();
   const [connected, setConnected] = useState(true);
 
   useEffect(() => {

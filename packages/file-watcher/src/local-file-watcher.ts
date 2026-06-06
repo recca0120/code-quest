@@ -24,7 +24,7 @@ export class LocalFileWatcher implements FileWatcher {
   private readonly logger: MinimalLogger;
   private entries = new Map<
     string,
-    { subscription: parcelWatcher.AsyncSubscription; subs: Set<WatchCallback> }
+    { subscriptionPromise: Promise<parcelWatcher.AsyncSubscription>; subs: Set<WatchCallback> }
   >();
 
   constructor(logger?: MinimalLogger) {
@@ -46,67 +46,53 @@ export class LocalFileWatcher implements FileWatcher {
       if (!e) return;
       e.subs.delete(cb);
       if (e.subs.size === 0) {
-        void e.subscription.unsubscribe();
         this.entries.delete(cwd);
+        void e.subscriptionPromise.then((s) => s.unsubscribe());
       }
     };
   }
 
   private createEntry(cwd: string): {
-    subscription: parcelWatcher.AsyncSubscription;
+    subscriptionPromise: Promise<parcelWatcher.AsyncSubscription>;
     subs: Set<WatchCallback>;
   } {
     const subs = new Set<WatchCallback>();
-    let resolvedSubscription: parcelWatcher.AsyncSubscription | null = null;
 
-    const subscriptionPromise = parcelWatcher.subscribe(
-      cwd,
-      (err, events) => {
-        if (err) {
-          this.logger.error({ err }, '[LocalFileWatcher] watcher error');
-          return;
-        }
-        for (const ev of events) {
-          const type = TYPE_MAP[ev.type];
-          if (!type) continue;
-          const path = relative(cwd, ev.path);
-          if (!path) continue;
-          const watchEvent: WatchEvent = { type, path };
-          for (const sub of subs) {
-            try {
-              sub(watchEvent);
-            } catch (e) {
-              this.logger.error({ err: e }, '[LocalFileWatcher] subscriber threw');
+    const subscriptionPromise = parcelWatcher
+      .subscribe(
+        cwd,
+        (err, events) => {
+          if (err) {
+            this.logger.error({ err }, '[LocalFileWatcher] watcher error');
+            return;
+          }
+          for (const ev of events) {
+            const type = TYPE_MAP[ev.type];
+            if (!type) continue;
+            const path = relative(cwd, ev.path);
+            if (!path) continue;
+            const watchEvent: WatchEvent = { type, path };
+            for (const sub of subs) {
+              try {
+                sub(watchEvent);
+              } catch (e) {
+                this.logger.error({ err: e }, '[LocalFileWatcher] subscriber threw');
+              }
             }
           }
-        }
-      },
-      {
-        ignore: ['**/node_modules', '**/.git/objects', '**/.git/logs'],
-      },
-    );
-
-    subscriptionPromise
+        },
+        { ignore: ['**/node_modules', '**/.git/objects', '**/.git/logs'] },
+      )
       .then((sub) => {
-        resolvedSubscription = sub;
-        // If already unsubscribed before promise resolved, clean up immediately.
-        if (!this.entries.has(cwd)) {
-          void sub.unsubscribe();
-        }
+        // If unsubscribed before the promise resolved, clean up immediately.
+        if (!this.entries.has(cwd)) void sub.unsubscribe();
+        return sub;
       })
       .catch((err: unknown) => {
         this.logger.error({ err }, '[LocalFileWatcher] subscribe failed');
+        throw err;
       });
 
-    // Return a proxy subscription that delegates unsubscribe to the resolved one.
-    const proxySubscription: parcelWatcher.AsyncSubscription = {
-      unsubscribe: async () => {
-        if (resolvedSubscription) {
-          await resolvedSubscription.unsubscribe();
-        }
-      },
-    };
-
-    return { subscription: proxySubscription, subs };
+    return { subscriptionPromise, subs };
   }
 }

@@ -45,7 +45,7 @@ export function useFsActions(): FsActions {
 
 export function FsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
-  const emitterRef = useRef<TopicEmitter<string, [string[], FileResult[] | undefined]>>(
+  const emitterRef = useRef<TopicEmitter<string, { paths: string[]; snapshot?: FileResult[] }>>(
     new TopicEmitter(),
   );
   const nextIdRef = useRef(0);
@@ -56,11 +56,11 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
       const parsed = filesDirtyEventSchema.safeParse(payload);
       if (!parsed.success) return;
       const { cwd, paths, snapshot } = parsed.data;
-      const files = snapshot as FileResult[] | undefined;
       if (paths.length > 0) {
-        emitterRef.current.publish(cwd, [paths, undefined]);
-      } else if (files !== undefined) {
-        emitterRef.current.publish(cwd, [[''], files]);
+        emitterRef.current.publish(cwd, { paths });
+      } else if (snapshot !== undefined) {
+        // snapshot is unknown[] from Zod schema — server guarantees FileResult shape
+        emitterRef.current.publish(cwd, { paths: [''], snapshot: snapshot as FileResult[] });
       }
     };
     socket.on(EVENTS.fs.dirty, onDirty);
@@ -69,8 +69,14 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
     };
   }, [socket]);
 
-  const actions = useMemo<FsActions>(
-    () => ({
+  const actions = useMemo<FsActions>(() => {
+    async function mutate(event: string, payload: unknown): Promise<FsMutationResult> {
+      const response = await rpc(socket, event as Parameters<typeof rpc>[1], payload as never);
+      const parsed = fsMutationResultSchema.safeParse(response);
+      return parsed.success ? parsed.data : { error: 'Invalid response' };
+    }
+
+    return {
       async browse(path, opts) {
         const payload: { path?: string; showHidden: boolean } = {
           showHidden: opts?.showHidden ?? false,
@@ -82,34 +88,14 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
         if ('error' in parsed.data) return { error: parsed.data.error };
         return { directories: parsed.data.directories, files: parsed.data.files };
       },
-      async create(path, kind) {
-        const response = await rpc(socket, EVENTS.fs.create, { path, kind });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
-      async delete(path) {
-        const response = await rpc(socket, EVENTS.fs.delete, { path });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
-      async rename(from, to) {
-        const response = await rpc(socket, EVENTS.fs.rename, { from, to });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
-      async copy(from, to) {
-        const response = await rpc(socket, EVENTS.fs.copy, { from, to });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
-      async move(from, to) {
-        const response = await rpc(socket, EVENTS.fs.move, { from, to });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
+      create: (path, kind) => mutate(EVENTS.fs.create, { path, kind }),
+      delete: (path) => mutate(EVENTS.fs.delete, { path }),
+      rename: (from, to) => mutate(EVENTS.fs.rename, { from, to }),
+      copy: (from, to) => mutate(EVENTS.fs.copy, { from, to }),
+      move: (from, to) => mutate(EVENTS.fs.move, { from, to }),
       subscribeFsDirty(cwd, onDirty) {
         const subscriberId = `sub-${nextIdRef.current++}`;
-        const off = emitterRef.current.subscribe(cwd, subscriberId, ([paths, snapshot]) =>
+        const off = emitterRef.current.subscribe(cwd, subscriberId, ({ paths, snapshot }) =>
           onDirty(paths, snapshot),
         );
         socket.emit(EVENTS.fs.watch, { cwd, subscriberId });
@@ -121,9 +107,8 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
           socket.emit(EVENTS.fs.unwatch, { subscriberId });
         };
       },
-    }),
-    [socket],
-  );
+    };
+  }, [socket]);
 
   return <FsActionsContext.Provider value={actions}>{children}</FsActionsContext.Provider>;
 }
@@ -140,5 +125,5 @@ export function useFsBrowse(): {
     return result.directories;
   }
 
-  return { browse: browse, browseEntries: browseEntries };
+  return { browse, browseEntries };
 }

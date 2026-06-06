@@ -18,10 +18,6 @@ export abstract class DataSource<T> implements DataSourceLike<T> {
     this.cwd = cwd;
     this.unsub = watchService.subscribe(cwd, (ev) => {
       if (!filter(ev.path)) return;
-      if (debounceMs === 0) {
-        for (const cb of this.callbacks) cb();
-        return;
-      }
       clearTimeout(this.timer);
       this.timer = setTimeout(() => {
         for (const cb of this.callbacks) cb();

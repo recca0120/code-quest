@@ -57,7 +57,7 @@ export function App(): React.JSX.Element {
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         {socket && (
           <SocketProvider socket={socket}>
-            <RemoteStatusBanner socket={socket} />
+            <RemoteStatusBanner />
             <AppInitProvider>
               <SessionProvider>
                 <PluginProvider>

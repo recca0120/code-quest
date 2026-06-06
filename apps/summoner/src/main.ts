@@ -71,12 +71,10 @@ client.setLifecycleListener({
 client.connect();
 
 process.on('uncaughtException', (err) => {
-  const counts: Record<string, number> = {};
-  for (const h of (process as unknown as { _getActiveHandles(): object[] })._getActiveHandles()) {
-    const type = (h as object).constructor?.name ?? 'unknown';
-    counts[type] = (counts[type] ?? 0) + 1;
-  }
-  logger.error({ err, openHandles: counts }, '[summoner] uncaught exception — continuing');
+  logger.error(
+    { err, openHandles: getActiveHandleCounts() },
+    '[summoner] uncaught exception — continuing',
+  );
 });
 
 process.on('unhandledRejection', (reason) => {
@@ -89,4 +87,15 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
     client.disconnect();
     process.exit(0);
   });
+}
+
+function getActiveHandleCounts(): Record<string, number> {
+  // _getActiveHandles is an undocumented Node.js internal used only for diagnostics
+  const handles = (process as unknown as { _getActiveHandles(): object[] })._getActiveHandles();
+  const counts: Record<string, number> = {};
+  for (const h of handles) {
+    const type = (h as { constructor?: { name?: string } }).constructor?.name ?? 'unknown';
+    counts[type] = (counts[type] ?? 0) + 1;
+  }
+  return counts;
 }

@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { SocketProvider } from '@/contexts/SocketContext.tsx';
 import type { TypedSocket } from '@/socket/client.ts';
 import { RemoteStatusBanner } from '../RemoteStatusBanner.tsx';
 
@@ -21,30 +22,38 @@ function makeSocket() {
   };
 }
 
+function renderBanner(socket: TypedSocket) {
+  return render(
+    <SocketProvider socket={socket}>
+      <RemoteStatusBanner />
+    </SocketProvider>,
+  );
+}
+
 describe('RemoteStatusBanner', () => {
   it('renders nothing while summoner is connected', () => {
     const { socket } = makeSocket();
-    render(<RemoteStatusBanner socket={socket} />);
+    renderBanner(socket);
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('shows banner when summoner disconnects', () => {
     const { socket, disconnect } = makeSocket();
-    render(<RemoteStatusBanner socket={socket} />);
+    renderBanner(socket);
     disconnect();
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('banner contains an offline message', () => {
     const { socket, disconnect } = makeSocket();
-    render(<RemoteStatusBanner socket={socket} />);
+    renderBanner(socket);
     disconnect();
     expect(screen.getByRole('alert').textContent).toMatch(/offline|disconnected|not connected/i);
   });
 
   it('banner disappears when summoner reconnects', () => {
     const { socket, disconnect, reconnect } = makeSocket();
-    render(<RemoteStatusBanner socket={socket} />);
+    renderBanner(socket);
     disconnect();
     reconnect();
     expect(screen.queryByRole('alert')).toBeNull();
