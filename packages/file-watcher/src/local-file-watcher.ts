@@ -82,19 +82,7 @@ export class LocalFileWatcher implements FileWatcher {
         }
       },
       {
-        ignore: [
-          '**/node_modules/**',
-          '**/.git/objects/**',
-          '**/.git/logs/**',
-          '**/dist/**',
-          '**/build/**',
-          '**/out/**',
-          '**/.next/**',
-          '**/.turbo/**',
-          '**/.parcel-cache/**',
-          '**/*.log',
-          '**/.DS_Store',
-        ],
+        ignore: ['**/node_modules', '**/.git/objects', '**/.git/logs'],
       },
     );
 
