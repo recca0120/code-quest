@@ -1,4 +1,4 @@
-import type { OpenspecKind } from '@code-quest/schemas';
+import type { OpenspecChangeSummary, OpenspecKind, OpenspecSpecSummary } from '@code-quest/schemas';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -13,21 +13,16 @@ import { SectionLabel } from '../ui/SectionLabel.tsx';
 import { SkeletonRows } from '../ui/SkeletonRows.tsx';
 import { ArchiveChangeDialog } from './ArchiveChangeDialog.tsx';
 import { NewChangeDialog } from './NewChangeDialog.tsx';
-import { SpecModal } from './SpecModal.tsx';
+import { SpecDrawer } from './SpecDrawer.tsx';
 
 interface SpecPaneProps {
   cwd: string;
 }
 
-interface OpenSpec {
-  kind: OpenspecKind;
-  name: string;
-}
-
 export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
   const data = useOpenspecList(cwd);
   const { changeNew, archive, refetchOpenspecList } = useOpenspecActions();
-  const [open, setOpen] = useState<OpenSpec | null>(null);
+  const [open, setOpen] = useState<{ kind: OpenspecKind; name: string } | null>(null);
   const [newChangeOpen, setNewChangeOpen] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
 
@@ -75,9 +70,6 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
     return <EmptyState message={data.error} />;
   }
 
-  // `data === undefined` while the openspec list fetch is in flight. Keep the
-  // Section frame visible so the `+ new` action stays reachable; substitute a
-  // small loading hint in place of each section's body.
   const isLoading = !data;
 
   return (
@@ -101,62 +93,14 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
             <SkeletonRows count={3} />
           ) : data.changes.length > 0 ? (
             <ul className="flex flex-col">
-              {data.changes.map((c) => {
-                const ready = c.status === 'complete';
-                return (
-                  <li
-                    key={c.name}
-                    className="flex items-center gap-2 px-1 py-0.5 hover:bg-hover-tint rounded"
-                  >
-                    <button
-                      type="button"
-                      aria-label={`spec-change-row-${c.name}`}
-                      className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
-                      onClick={() => setOpen({ kind: 'change', name: c.name })}
-                    >
-                      <span aria-hidden className="text-xs">
-                        📋
-                      </span>
-                      <span className="font-mono text-xs truncate flex-1">{c.name}</span>
-                    </button>
-                    {ready && (
-                      <Badge
-                        variant="success"
-                        mono
-                        size="xs"
-                        border
-                        role="status"
-                        aria-label={`spec-ready-badge-${c.name}`}
-                        className="uppercase tracking-wide"
-                      >
-                        Ready
-                      </Badge>
-                    )}
-                    {ready && (
-                      <button
-                        type="button"
-                        aria-label={`Archive ${c.name}`}
-                        onClick={() => setArchiveTarget(c.name)}
-                        className="shrink-0 px-1.5 py-px rounded border border-border text-muted hover:border-danger hover:text-danger font-mono text-2xs uppercase cursor-pointer"
-                      >
-                        Archive
-                      </button>
-                    )}
-                    {c.tasks && (
-                      <Badge
-                        variant="muted"
-                        mono
-                        size="xs"
-                        border
-                        role="status"
-                        aria-label={`spec-task-pill-${c.name}`}
-                      >
-                        {c.tasks.done}/{c.tasks.total}
-                      </Badge>
-                    )}
-                  </li>
-                );
-              })}
+              {data.changes.map((c) => (
+                <ChangeRow
+                  key={c.name}
+                  change={c}
+                  onOpen={() => setOpen({ kind: 'change', name: c.name })}
+                  onArchive={() => setArchiveTarget(c.name)}
+                />
+              ))}
             </ul>
           ) : (
             <div className="text-dim text-xs px-1">No active changes</div>
@@ -168,19 +112,11 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
           ) : data.specs.length > 0 ? (
             <ul className="flex flex-col">
               {data.specs.map((s) => (
-                <li key={s.capability}>
-                  <button
-                    type="button"
-                    aria-label={`spec-capability-row-${s.capability}`}
-                    className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-hover-tint rounded"
-                    onClick={() => setOpen({ kind: 'spec', name: s.capability })}
-                  >
-                    <span aria-hidden className="text-dim text-xs">
-                      ▸
-                    </span>
-                    <span className="font-mono text-xs">{s.capability}</span>
-                  </button>
-                </li>
+                <SpecRow
+                  key={s.capability}
+                  spec={s}
+                  onOpen={() => setOpen({ kind: 'spec', name: s.capability })}
+                />
               ))}
             </ul>
           ) : (
@@ -188,30 +124,114 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
           )}
         </Section>
       </div>
-      {data && !('error' in data) && (
+      {data && (
         <PaneStatusFooter>
           <span>{pluralize(data.changes.length, 'change')}</span>
           <span>·</span>
           <span>{pluralize(data.specs.length, 'spec')}</span>
         </PaneStatusFooter>
       )}
-      {open && (
-        <SpecModal cwd={cwd} kind={open.kind} name={open.name} onClose={() => setOpen(null)} />
-      )}
+      <SpecDrawer
+        open={!!open}
+        cwd={cwd}
+        kind={open?.kind ?? 'change'}
+        name={open?.name ?? ''}
+        onClose={() => setOpen(null)}
+      />
       <NewChangeDialog
         open={newChangeOpen}
         onSubmit={handleCreateChange}
         onClose={() => setNewChangeOpen(false)}
       />
-      <ArchiveChangeDialog
-        open={archiveTarget !== null}
-        name={archiveTarget ?? ''}
-        onSubmit={(opts) =>
-          archiveTarget ? handleArchive(archiveTarget, opts) : Promise.resolve()
-        }
-        onClose={() => setArchiveTarget(null)}
-      />
+      {archiveTarget !== null && (
+        <ArchiveChangeDialog
+          open
+          name={archiveTarget}
+          onSubmit={(opts) => handleArchive(archiveTarget, opts)}
+          onClose={() => setArchiveTarget(null)}
+        />
+      )}
     </section>
+  );
+}
+
+function ChangeRow({
+  change: c,
+  onOpen,
+  onArchive,
+}: {
+  change: OpenspecChangeSummary;
+  onOpen: () => void;
+  onArchive: () => void;
+}) {
+  const ready = c.status === 'complete';
+  return (
+    <li className="flex items-center gap-2 px-1 py-0.5 hover:bg-hover-tint rounded">
+      <button
+        type="button"
+        aria-label={`spec-change-row-${c.name}`}
+        className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
+        onClick={onOpen}
+      >
+        <span aria-hidden className="text-xs">
+          📋
+        </span>
+        <span className="font-mono text-xs truncate flex-1">{c.name}</span>
+      </button>
+      {ready && (
+        <Badge
+          variant="success"
+          mono
+          size="xs"
+          border
+          role="status"
+          aria-label={`spec-ready-badge-${c.name}`}
+          className="uppercase tracking-wide"
+        >
+          Ready
+        </Badge>
+      )}
+      {ready && (
+        <button
+          type="button"
+          aria-label={`Archive ${c.name}`}
+          onClick={onArchive}
+          className="shrink-0 px-1.5 py-px rounded border border-border text-muted hover:border-danger hover:text-danger font-mono text-2xs uppercase cursor-pointer"
+        >
+          Archive
+        </button>
+      )}
+      {c.tasks && (
+        <Badge
+          variant="muted"
+          mono
+          size="xs"
+          border
+          role="status"
+          aria-label={`spec-task-pill-${c.name}`}
+        >
+          {c.tasks.done}/{c.tasks.total}
+        </Badge>
+      )}
+    </li>
+  );
+}
+
+function SpecRow({ spec: s, onOpen }: { spec: OpenspecSpecSummary; onOpen: () => void }) {
+  return (
+    <li>
+      <button
+        type="button"
+        aria-label={`spec-capability-row-${s.capability}`}
+        className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-hover-tint rounded"
+        onClick={onOpen}
+      >
+        <span aria-hidden className="text-dim text-xs">
+          ▸
+        </span>
+        <span className="font-mono text-xs">{s.capability}</span>
+      </button>
+    </li>
   );
 }
 
