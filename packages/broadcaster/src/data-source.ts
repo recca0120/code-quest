@@ -7,12 +7,25 @@ export abstract class DataSource<T> implements DataSourceLike<T> {
   protected readonly cwd: string;
   private readonly callbacks = new Set<() => void>();
   private readonly unsub: Unsubscribe;
+  private timer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(cwd: string, watchService: FileWatcher, filter: (path: string) => boolean) {
+  constructor(
+    cwd: string,
+    watchService: FileWatcher,
+    filter: (path: string) => boolean,
+    debounceMs = 80,
+  ) {
     this.cwd = cwd;
     this.unsub = watchService.subscribe(cwd, (ev) => {
       if (!filter(ev.path)) return;
-      for (const cb of this.callbacks) cb();
+      if (debounceMs === 0) {
+        for (const cb of this.callbacks) cb();
+        return;
+      }
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => {
+        for (const cb of this.callbacks) cb();
+      }, debounceMs);
     });
   }
 
@@ -24,6 +37,7 @@ export abstract class DataSource<T> implements DataSourceLike<T> {
   }
 
   dispose(): void {
+    clearTimeout(this.timer);
     this.unsub();
   }
 }

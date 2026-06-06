@@ -1,5 +1,5 @@
 import { FakeFilesystem, FakeFileWatcher, FakeGit } from '@code-quest/test-kit';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FilesDataSource } from '../data-sources/files-data-source.ts';
 import { GitDataSource } from '../data-sources/git-data-source.ts';
 import { OpenspecDataSource, type OpenspecLike } from '../data-sources/openspec-data-source.ts';
@@ -24,50 +24,60 @@ describe('FilesDataSource', () => {
     expect(result[0]?.path).toBe('foo.ts');
   });
 
-  it('notifies onChange when a regular file changes', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
-    expect(cb).toHaveBeenCalledOnce();
-  });
+  describe('onChange filter', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
 
-  it('does NOT notify onChange for .git/HEAD changes', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: '.git/HEAD' });
-    expect(cb).not.toHaveBeenCalled();
-  });
+    it('notifies onChange when a regular file changes', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
+      vi.advanceTimersByTime(80);
+      expect(cb).toHaveBeenCalledOnce();
+    });
 
-  it('does NOT notify onChange for node_modules changes', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: 'node_modules/pkg/index.js' });
-    expect(cb).not.toHaveBeenCalled();
-  });
+    it('does NOT notify onChange for .git/HEAD changes', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: '.git/HEAD' });
+      vi.advanceTimersByTime(80);
+      expect(cb).not.toHaveBeenCalled();
+    });
 
-  it('does NOT notify onChange for dist changes', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: 'dist/bundle.js' });
-    expect(cb).not.toHaveBeenCalled();
-  });
+    it('does NOT notify onChange for node_modules changes', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: 'node_modules/pkg/index.js' });
+      vi.advanceTimersByTime(80);
+      expect(cb).not.toHaveBeenCalled();
+    });
 
-  it('unsubscribed onChange listener stops receiving callbacks', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
-    const cb = vi.fn();
-    const off = ds.onChange(cb);
-    off();
-    watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
-    expect(cb).not.toHaveBeenCalled();
+    it('does NOT notify onChange for dist changes', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: 'dist/bundle.js' });
+      vi.advanceTimersByTime(80);
+      expect(cb).not.toHaveBeenCalled();
+    });
+
+    it('unsubscribed onChange listener stops receiving callbacks', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new FilesDataSource('/repo', watch, new FakeFilesystem());
+      const cb = vi.fn();
+      const off = ds.onChange(cb);
+      off();
+      watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
+      vi.advanceTimersByTime(80);
+      expect(cb).not.toHaveBeenCalled();
+    });
   });
 });
 
@@ -85,49 +95,59 @@ describe('GitDataSource', () => {
     expect(result.isClean).toBe(false);
   });
 
-  it('notifies onChange for .git/HEAD change', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new GitDataSource('/repo', watch, new FakeGit());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: '.git/HEAD' });
-    expect(cb).toHaveBeenCalledOnce();
-  });
+  describe('onChange filter', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
 
-  it('notifies onChange for .git/index change', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new GitDataSource('/repo', watch, new FakeGit());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: '.git/index' });
-    expect(cb).toHaveBeenCalledOnce();
-  });
+    it('notifies onChange for .git/HEAD change', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new GitDataSource('/repo', watch, new FakeGit());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: '.git/HEAD' });
+      vi.advanceTimersByTime(80);
+      expect(cb).toHaveBeenCalledOnce();
+    });
 
-  it('notifies onChange for .git/refs/heads/main change', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new GitDataSource('/repo', watch, new FakeGit());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: '.git/refs/heads/main' });
-    expect(cb).toHaveBeenCalledOnce();
-  });
+    it('notifies onChange for .git/index change', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new GitDataSource('/repo', watch, new FakeGit());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: '.git/index' });
+      vi.advanceTimersByTime(80);
+      expect(cb).toHaveBeenCalledOnce();
+    });
 
-  it('does NOT notify onChange for regular file changes', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new GitDataSource('/repo', watch, new FakeGit());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
-    expect(cb).not.toHaveBeenCalled();
-  });
+    it('notifies onChange for .git/refs/heads/main change', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new GitDataSource('/repo', watch, new FakeGit());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: '.git/refs/heads/main' });
+      vi.advanceTimersByTime(80);
+      expect(cb).toHaveBeenCalledOnce();
+    });
 
-  it('does NOT notify onChange for .git/objects changes', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new GitDataSource('/repo', watch, new FakeGit());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: '.git/objects/ab/cdef' });
-    expect(cb).not.toHaveBeenCalled();
+    it('does NOT notify onChange for regular file changes', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new GitDataSource('/repo', watch, new FakeGit());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
+      vi.advanceTimersByTime(80);
+      expect(cb).not.toHaveBeenCalled();
+    });
+
+    it('does NOT notify onChange for .git/objects changes', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new GitDataSource('/repo', watch, new FakeGit());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: '.git/objects/ab/cdef' });
+      vi.advanceTimersByTime(80);
+      expect(cb).not.toHaveBeenCalled();
+    });
   });
 });
 
@@ -148,21 +168,28 @@ describe('OpenspecDataSource', () => {
     expect(result.changes).toHaveLength(1);
   });
 
-  it('notifies onChange for openspec/ file changes', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new OpenspecDataSource('/repo', watch, makeFakeOpenspec());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: 'openspec/changes/foo/design.md' });
-    expect(cb).toHaveBeenCalledOnce();
-  });
+  describe('onChange filter', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
 
-  it('does NOT notify onChange for non-openspec file changes', () => {
-    const watch = new FakeFileWatcher();
-    const ds = new OpenspecDataSource('/repo', watch, makeFakeOpenspec());
-    const cb = vi.fn();
-    ds.onChange(cb);
-    watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
-    expect(cb).not.toHaveBeenCalled();
+    it('notifies onChange for openspec/ file changes', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new OpenspecDataSource('/repo', watch, makeFakeOpenspec());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: 'openspec/changes/foo/design.md' });
+      vi.advanceTimersByTime(80);
+      expect(cb).toHaveBeenCalledOnce();
+    });
+
+    it('does NOT notify onChange for non-openspec file changes', () => {
+      const watch = new FakeFileWatcher();
+      const ds = new OpenspecDataSource('/repo', watch, makeFakeOpenspec());
+      const cb = vi.fn();
+      ds.onChange(cb);
+      watch.simulate('/repo', { type: 'change', path: 'src/foo.ts' });
+      vi.advanceTimersByTime(80);
+      expect(cb).not.toHaveBeenCalled();
+    });
   });
 });
