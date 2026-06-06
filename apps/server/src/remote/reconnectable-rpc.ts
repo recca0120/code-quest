@@ -20,6 +20,7 @@ export class ReconnectableRpc implements RemoteRpcWithEvents {
     this.currentUnsubscribers = [];
     this.current = rpc;
     logger.info('Remote summoner connected');
+    for (const fn of this.persistentListeners.get('reconnect') ?? []) fn();
 
     for (const [event, fns] of this.persistentListeners) {
       for (const fn of fns) {

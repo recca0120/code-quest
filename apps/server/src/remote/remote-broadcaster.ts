@@ -1,6 +1,7 @@
 import type { Broadcaster, SnapshotCallback, Unsubscribe } from '@code-quest/broadcaster';
 import { REMOTE_METHODS } from '@code-quest/schemas';
 import { z } from 'zod';
+import { logger } from '../logger.ts';
 import type { RemoteRpcWithEvents } from './types.ts';
 
 const watchSnapshotSchema = z.object({
@@ -16,6 +17,13 @@ export class RemoteBroadcaster implements Broadcaster {
 
   constructor(rpc: RemoteRpcWithEvents) {
     this.rpc = rpc;
+    rpc.on('reconnect', () => {
+      for (const cwd of this.subscribers.keys()) {
+        void this.rpc.request(REMOTE_METHODS.watch.start, { cwd }).catch((err) => {
+          logger.warn({ err }, 'watch.start failed on reconnect');
+        });
+      }
+    });
   }
 
   subscribe(cwd: string, subscriberId: string, cb: SnapshotCallback): Unsubscribe {
@@ -30,7 +38,9 @@ export class RemoteBroadcaster implements Broadcaster {
 
     if (isFirst) {
       this.ensureSnapshotListener();
-      void this.rpc.request(REMOTE_METHODS.watch.start, { cwd });
+      void this.rpc.request(REMOTE_METHODS.watch.start, { cwd }).catch((err) => {
+        logger.warn({ err }, 'watch.start failed');
+      });
     }
 
     return () => {
