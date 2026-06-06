@@ -71,7 +71,12 @@ client.setLifecycleListener({
 client.connect();
 
 process.on('uncaughtException', (err) => {
-  logger.error({ err }, '[summoner] uncaught exception — continuing');
+  const counts: Record<string, number> = {};
+  for (const h of (process as unknown as { _getActiveHandles(): object[] })._getActiveHandles()) {
+    const type = (h as object).constructor?.name ?? 'unknown';
+    counts[type] = (counts[type] ?? 0) + 1;
+  }
+  logger.error({ err, openHandles: counts }, '[summoner] uncaught exception — continuing');
 });
 
 process.on('unhandledRejection', (reason) => {
