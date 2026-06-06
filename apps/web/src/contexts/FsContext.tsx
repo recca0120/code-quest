@@ -1,4 +1,4 @@
-import type { FsMutationResult } from '@code-quest/filesystem';
+import type { FileResult, FsMutationResult } from '@code-quest/filesystem';
 import {
   EVENTS,
   type FsDirectory,
@@ -20,10 +20,13 @@ interface FsActions {
    *  cwd emits `fs:watch` to the server (refcounted); the last release
    *  emits `fs:unwatch`. Returned unsubscribe is idempotent.
    *
-   *  `onDirty` receives the cwd-relative paths from each batch; consumers
-   *  who only care about "watcher alive so adjacent providers' dirty
-   *  events keep flowing" can pass an empty callback. */
-  subscribeFsDirty: (cwd: string, onDirty: (paths: string[]) => void) => () => void;
+   *  `onDirty` receives the cwd-relative paths and an optional snapshot.
+   *  When snapshot is present and paths is `['']`, the full file list is
+   *  already available — consumers should prefer it over a follow-up RPC. */
+  subscribeFsDirty: (
+    cwd: string,
+    onDirty: (paths: string[], snapshot?: FileResult[]) => void,
+  ) => () => void;
   // ── Mutations ──
   create: (path: string, kind: 'file' | 'directory') => Promise<FsMutationResult>;
   delete: (path: string) => Promise<FsMutationResult>;
@@ -42,7 +45,9 @@ export function useFsActions(): FsActions {
 
 export function FsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
-  const emitterRef = useRef<TopicEmitter<string, string[]>>(new TopicEmitter());
+  const emitterRef = useRef<TopicEmitter<string, [string[], FileResult[] | undefined]>>(
+    new TopicEmitter(),
+  );
   const nextIdRef = useRef(0);
 
   useEffect(() => {
@@ -51,11 +56,11 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
       const parsed = filesDirtyEventSchema.safeParse(payload);
       if (!parsed.success) return;
       const { cwd, paths, snapshot } = parsed.data;
+      const files = snapshot as FileResult[] | undefined;
       if (paths.length > 0) {
-        emitterRef.current.publish(cwd, paths);
-      } else if (snapshot !== undefined) {
-        // Snapshot present but no specific paths: refresh from root
-        emitterRef.current.publish(cwd, ['']);
+        emitterRef.current.publish(cwd, [paths, undefined]);
+      } else if (files !== undefined) {
+        emitterRef.current.publish(cwd, [[''], files]);
       }
     };
     socket.on(EVENTS.fs.dirty, onDirty);
@@ -104,7 +109,9 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
       },
       subscribeFsDirty(cwd, onDirty) {
         const subscriberId = `sub-${nextIdRef.current++}`;
-        const off = emitterRef.current.subscribe(cwd, subscriberId, onDirty);
+        const off = emitterRef.current.subscribe(cwd, subscriberId, ([paths, snapshot]) =>
+          onDirty(paths, snapshot),
+        );
         socket.emit(EVENTS.fs.watch, { cwd, subscriberId });
         let active = true;
         return () => {
