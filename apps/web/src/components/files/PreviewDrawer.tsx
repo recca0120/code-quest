@@ -42,7 +42,14 @@ export function PreviewDrawer({
   const language = state.kind === 'ready' ? langForMime(state.contentType, title) : undefined;
 
   return (
-    <RightDrawer open={open} title={title} width={672} onClose={onClose} footer={actions}>
+    <RightDrawer
+      open={open}
+      title={title}
+      width={672}
+      onClose={onClose}
+      footer={actions}
+      overlayTestId="preview-drawer-overlay"
+    >
       {isMarkdown && (
         <div className="flex gap-1 px-4 pt-2 shrink-0">
           <Button

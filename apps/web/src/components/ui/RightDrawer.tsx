@@ -12,6 +12,7 @@ interface RightDrawerProps {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  overlayTestId?: string;
 }
 
 export function RightDrawer({
@@ -21,6 +22,7 @@ export function RightDrawer({
   onClose,
   children,
   footer,
+  overlayTestId,
 }: RightDrawerProps): React.JSX.Element {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +44,10 @@ export function RightDrawer({
   return (
     <RadixDialog.Root open={open} onOpenChange={handleOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="fixed inset-0 z-overlay bg-overlay" />
+        <RadixDialog.Overlay
+          data-testid={overlayTestId}
+          className="fixed inset-0 z-overlay bg-overlay"
+        />
         <RadixDialog.Content
           ref={contentRef}
           className="fixed inset-y-0 right-0 z-modal bg-surface border-l border-border flex flex-col"

@@ -42,7 +42,7 @@ describe('PreviewDrawer', () => {
   it('calls onClose when overlay is clicked', async () => {
     const onClose = vi.fn();
     renderDrawer({ kind: 'loading' }, { onClose });
-    await userEvent.setup().click(document.querySelector('.bg-overlay')!);
+    await userEvent.setup().click(screen.getByTestId('preview-drawer-overlay'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

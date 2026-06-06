@@ -9,6 +9,7 @@ import { useSocket } from '@/contexts/SocketContext';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import { basename } from '@/utils/basename';
+import { copyToClipboard } from '@/utils/clipboard';
 import { Button } from '../ui/Button.tsx';
 import { FileTree } from './FileTree.tsx';
 import { PreviewDrawer, type PreviewState } from './PreviewDrawer.tsx';
@@ -138,7 +139,7 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
         variant="secondary"
         size="sm"
         onClick={() => {
-          void navigator.clipboard.writeText(previewFile.path);
+          void copyToClipboard(previewFile.path);
         }}
       >
         Copy path

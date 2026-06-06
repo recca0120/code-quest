@@ -155,7 +155,7 @@ describe('GitPane', () => {
     expect(screen.getByRole('button', { name: 'Commit 2' })).toBeInTheDocument();
   });
 
-  describe('discard from DiffModal', () => {
+  describe('discard from DiffDrawer', () => {
     it('modified file: two-click Discard calls git.discardFile with the file path', async () => {
       const user = userEvent.setup();
       const { summoner, Wrapper } = setup();
@@ -235,7 +235,7 @@ describe('GitPane', () => {
     });
   });
 
-  it('clicking a changed file opens DiffModal with file path', async () => {
+  it('clicking a changed file opens DiffDrawer with file path', async () => {
     const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
     summoner.git()!.setBranch('main');
