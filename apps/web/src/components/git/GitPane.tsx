@@ -9,7 +9,7 @@ import { CommandHint } from '../ui/CommandHint.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
 import { Spinner } from '../ui/Spinner.tsx';
 import { CommitComposer } from './CommitComposer.tsx';
-import { DiffModal } from './DiffModal.tsx';
+import { DiffDrawer } from './DiffDrawer.tsx';
 import { useGitPaneActions } from './useGitPaneActions.ts';
 
 interface GitPaneProps {
@@ -132,13 +132,16 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
           </>
         )}
       </PaneStatusFooter>
-      {diffFile && (
-        <DiffModal
+      {diffFile ? (
+        <DiffDrawer
+          open={true}
           file={diffFile}
-          onClose={() => setDiffFile(null)}
           canDiscard={canDiscardDiffFile}
+          onClose={() => setDiffFile(null)}
           onDiscard={() => void handleDiscard(diffFile.path, () => setDiffFile(null))}
         />
+      ) : (
+        <DiffDrawer open={false} onClose={() => setDiffFile(null)} />
       )}
     </section>
   );
