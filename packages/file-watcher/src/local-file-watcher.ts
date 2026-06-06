@@ -85,7 +85,11 @@ export class LocalFileWatcher implements FileWatcher {
       )
       .then((sub) => {
         // If unsubscribed before the promise resolved, clean up immediately.
-        if (!this.entries.has(cwd)) void sub.unsubscribe();
+        if (!this.entries.has(cwd)) {
+          void sub.unsubscribe().catch((err) => {
+            this.logger.error({ err }, '[LocalFileWatcher] late unsubscribe failed');
+          });
+        }
         return sub;
       })
       .catch((err: unknown) => {

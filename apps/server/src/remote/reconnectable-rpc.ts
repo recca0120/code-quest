@@ -24,6 +24,7 @@ export class ReconnectableRpc implements RemoteRpcWithEvents {
     for (const fn of this.persistentListeners.get('reconnect') ?? []) fn();
 
     for (const [event, fns] of this.persistentListeners) {
+      if (event === 'reconnect') continue; // synthetic — inner RPC never emits this
       for (const fn of fns) {
         this.currentUnsubscribers.push(rpc.on(event, fn));
       }
