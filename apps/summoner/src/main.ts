@@ -70,6 +70,14 @@ client.setLifecycleListener({
 
 client.connect();
 
+process.on('uncaughtException', (err) => {
+  logger.error({ err }, '[summoner] uncaught exception — continuing');
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error({ err: reason }, '[summoner] unhandled rejection — continuing');
+});
+
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, () => {
     agent.dispose();
