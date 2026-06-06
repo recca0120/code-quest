@@ -16,12 +16,15 @@ export class ReconnectableRpc implements RemoteRpcWithEvents {
   }
 
   replace(rpc: RemoteRpcWithEvents): void {
-    for (const unsub of this.currentUnsubscribers) unsub();
-    this.currentUnsubscribers = [];
+    this.teardownCurrent();
     this.current = rpc;
     logger.info('Remote summoner connected');
+    // Fire reconnect before re-wiring other listeners so consumers can re-subscribe
+    // before snapshot callbacks start arriving on the new connection.
+    for (const fn of this.persistentListeners.get('reconnect') ?? []) fn();
 
     for (const [event, fns] of this.persistentListeners) {
+      if (event === 'reconnect') continue; // synthetic — inner RPC never emits this
       for (const fn of fns) {
         this.currentUnsubscribers.push(rpc.on(event, fn));
       }
@@ -32,18 +35,21 @@ export class ReconnectableRpc implements RemoteRpcWithEvents {
         if (this.current === rpc) {
           logger.info('Remote summoner disconnected');
           this.current = null;
-          for (const unsub of this.currentUnsubscribers) unsub();
-          this.currentUnsubscribers = [];
+          this.teardownCurrent();
         }
       }),
     );
   }
 
   destroy(): void {
-    for (const unsub of this.currentUnsubscribers) unsub();
-    this.currentUnsubscribers = [];
+    this.teardownCurrent();
     this.persistentListeners.clear();
     this.current = null;
+  }
+
+  private teardownCurrent(): void {
+    for (const unsub of this.currentUnsubscribers) unsub();
+    this.currentUnsubscribers = [];
   }
 
   request<R = unknown>(method: string, params: unknown): Promise<R> {

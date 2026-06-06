@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@code-quest/schemas": "workspace:*",
-    "chokidar": "^5.0.0"
+    "@parcel/watcher": "^2.5.1"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

@@ -1,5 +1,5 @@
 import { relative } from 'node:path';
-import chokidar, { type FSWatcher } from 'chokidar';
+import parcelWatcher from '@parcel/watcher';
 import type {
   FileWatcher,
   MinimalLogger,
@@ -8,26 +8,10 @@ import type {
   WatchEvent,
 } from './types.ts';
 
-const IGNORES = [
-  /(^|[/\\])node_modules([/\\]|$)/,
-  /(^|[/\\])\.git[/\\]objects([/\\]|$)/,
-  /(^|[/\\])\.git[/\\]logs([/\\]|$)/,
-  /(^|[/\\])dist([/\\]|$)/,
-  /(^|[/\\])build([/\\]|$)/,
-  /(^|[/\\])out([/\\]|$)/,
-  /(^|[/\\])\.next([/\\]|$)/,
-  /(^|[/\\])\.turbo([/\\]|$)/,
-  /(^|[/\\])\.parcel-cache([/\\]|$)/,
-  /\.log$/,
-  /(^|[/\\])\.DS_Store$/,
-];
-
-const CHOKIDAR_OPTS = {
-  ignored: IGNORES,
-  ignoreInitial: true,
-  persistent: true,
-  followSymlinks: false,
-  awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 50 },
+const TYPE_MAP: Record<string, WatchEvent['type']> = {
+  create: 'add',
+  update: 'change',
+  delete: 'unlink',
 };
 
 const noopLogger: MinimalLogger = {
@@ -36,16 +20,12 @@ const noopLogger: MinimalLogger = {
   error: () => {},
 };
 
-function errorCode(err: unknown): string | undefined {
-  if (typeof err !== 'object' || err === null || !('code' in err)) return undefined;
-  const { code } = err as { code: unknown };
-  return typeof code === 'string' ? code : undefined;
-}
-
 export class LocalFileWatcher implements FileWatcher {
   private readonly logger: MinimalLogger;
-  private entries = new Map<string, { watcher: FSWatcher; subs: Set<WatchCallback> }>();
-  private inotifyWarned = false;
+  private entries = new Map<
+    string,
+    { subscriptionPromise: Promise<parcelWatcher.AsyncSubscription>; subs: Set<WatchCallback> }
+  >();
 
   constructor(logger?: MinimalLogger) {
     this.logger = logger ?? noopLogger;
@@ -54,7 +34,7 @@ export class LocalFileWatcher implements FileWatcher {
   subscribe(cwd: string, cb: WatchCallback): Unsubscribe {
     let entry = this.entries.get(cwd);
     if (!entry) {
-      entry = this.createWatcherEntry(cwd);
+      entry = this.createEntry(cwd);
       this.entries.set(cwd, entry);
     }
     entry.subs.add(cb);
@@ -66,40 +46,57 @@ export class LocalFileWatcher implements FileWatcher {
       if (!e) return;
       e.subs.delete(cb);
       if (e.subs.size === 0) {
-        void e.watcher.close();
         this.entries.delete(cwd);
+        void e.subscriptionPromise.then((s) => s.unsubscribe());
       }
     };
   }
 
-  private createWatcherEntry(cwd: string): { watcher: FSWatcher; subs: Set<WatchCallback> } {
-    const watcher = chokidar.watch(cwd, CHOKIDAR_OPTS);
-    const entry = { watcher, subs: new Set<WatchCallback>() };
-    watcher.on('all', (type, path) => {
-      if (type === 'ready' || type === 'error') return;
-      const rel = relative(cwd, path);
-      if (!rel) return;
-      const event: WatchEvent = { type: type as WatchEvent['type'], path: rel };
-      for (const sub of entry.subs) {
-        try {
-          sub(event);
-        } catch (err) {
-          this.logger.error({ err }, '[LocalFileWatcher] subscriber threw');
+  private createEntry(cwd: string): {
+    subscriptionPromise: Promise<parcelWatcher.AsyncSubscription>;
+    subs: Set<WatchCallback>;
+  } {
+    const subs = new Set<WatchCallback>();
+
+    const subscriptionPromise = parcelWatcher
+      .subscribe(
+        cwd,
+        (err, events) => {
+          if (err) {
+            this.logger.error({ err }, '[LocalFileWatcher] watcher error');
+            return;
+          }
+          for (const ev of events) {
+            const type = TYPE_MAP[ev.type];
+            if (!type) continue;
+            const path = relative(cwd, ev.path);
+            if (!path) continue;
+            const watchEvent: WatchEvent = { type, path };
+            for (const sub of subs) {
+              try {
+                sub(watchEvent);
+              } catch (e) {
+                this.logger.error({ err: e }, '[LocalFileWatcher] subscriber threw');
+              }
+            }
+          }
+        },
+        { ignore: ['**/node_modules', '**/.git/objects', '**/.git/logs'] },
+      )
+      .then((sub) => {
+        // If unsubscribed before the promise resolved, clean up immediately.
+        if (!this.entries.has(cwd)) {
+          void sub.unsubscribe().catch((err) => {
+            this.logger.error({ err }, '[LocalFileWatcher] late unsubscribe failed');
+          });
         }
-      }
-    });
-    watcher.on('error', (err: unknown) => {
-      const code = errorCode(err);
-      if (code === 'ENOSPC' && !this.inotifyWarned) {
-        this.inotifyWarned = true;
-        this.logger.warn(
-          '[LocalFileWatcher] inotify watch limit reached. ' +
-            'Increase with: sudo sysctl -n fs.inotify.max_user_watches=524288',
-        );
-        return;
-      }
-      this.logger.error({ err }, '[LocalFileWatcher] watcher error');
-    });
-    return entry;
+        return sub;
+      })
+      .catch((err: unknown) => {
+        this.logger.error({ err }, '[LocalFileWatcher] subscribe failed');
+        throw err;
+      });
+
+    return { subscriptionPromise, subs };
   }
 }

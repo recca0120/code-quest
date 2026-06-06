@@ -233,6 +233,32 @@ describe('ChannelEmitter', () => {
     });
   });
 
+  describe('onConnect', () => {
+    it('fires callback with the socket when a new connection is handled', () => {
+      const emitter = new ChannelEmitter();
+      const cb = vi.fn();
+      emitter.onConnect(cb);
+
+      const fake = createFakeSocket();
+      emitter.handleConnection(fake.serverSocket, () => undefined);
+
+      expect(cb).toHaveBeenCalledOnce();
+      expect(cb).toHaveBeenCalledWith(fake.serverSocket);
+    });
+
+    it('fires multiple registered callbacks in order', () => {
+      const emitter = new ChannelEmitter();
+      const order: number[] = [];
+      emitter.onConnect(() => order.push(1));
+      emitter.onConnect(() => order.push(2));
+
+      const fake = createFakeSocket();
+      emitter.handleConnection(fake.serverSocket, () => undefined);
+
+      expect(order).toEqual([1, 2]);
+    });
+  });
+
   describe('reattachSocket / expireSocket (reconnect support)', () => {
     it('reattachSocket re-adds socket to all previously joined channels', async () => {
       const emitter = new ChannelEmitter();

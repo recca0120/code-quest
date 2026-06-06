@@ -80,4 +80,33 @@ describe('ReconnectableRpc', () => {
     await rpc.request('test', {});
     expect(second.request).toHaveBeenCalledWith('test', {});
   });
+
+  describe('reconnect event', () => {
+    it('fires reconnect handlers registered via on() when replace() is called', () => {
+      const rpc = new ReconnectableRpc();
+      const handler = vi.fn();
+      rpc.on('reconnect', handler);
+
+      rpc.replace(fakeRpc());
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('fires reconnect handler again on second replace()', () => {
+      const rpc = new ReconnectableRpc();
+      const handler = vi.fn();
+      rpc.on('reconnect', handler);
+
+      rpc.replace(fakeRpc());
+      rpc.replace(fakeRpc());
+      expect(handler).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not fire reconnect handler before any replace()', () => {
+      const rpc = new ReconnectableRpc();
+      const handler = vi.fn();
+      rpc.on('reconnect', handler);
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+  });
 });

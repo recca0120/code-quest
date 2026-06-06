@@ -1,4 +1,4 @@
-import type { FsMutationResult } from '@code-quest/filesystem';
+import type { FileResult, FsMutationResult } from '@code-quest/filesystem';
 import {
   EVENTS,
   type FsDirectory,
@@ -20,10 +20,13 @@ interface FsActions {
    *  cwd emits `fs:watch` to the server (refcounted); the last release
    *  emits `fs:unwatch`. Returned unsubscribe is idempotent.
    *
-   *  `onDirty` receives the cwd-relative paths from each batch; consumers
-   *  who only care about "watcher alive so adjacent providers' dirty
-   *  events keep flowing" can pass an empty callback. */
-  subscribeFsDirty: (cwd: string, onDirty: (paths: string[]) => void) => () => void;
+   *  `onDirty` receives the cwd-relative paths and an optional snapshot.
+   *  When snapshot is present and paths is `['']`, the full file list is
+   *  already available — consumers should prefer it over a follow-up RPC. */
+  subscribeFsDirty: (
+    cwd: string,
+    onDirty: (paths: string[], snapshot?: FileResult[]) => void,
+  ) => () => void;
   // ── Mutations ──
   create: (path: string, kind: 'file' | 'directory') => Promise<FsMutationResult>;
   delete: (path: string) => Promise<FsMutationResult>;
@@ -42,7 +45,9 @@ export function useFsActions(): FsActions {
 
 export function FsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
-  const emitterRef = useRef<TopicEmitter<string, string[]>>(new TopicEmitter());
+  const emitterRef = useRef<TopicEmitter<string, { paths: string[]; snapshot?: FileResult[] }>>(
+    new TopicEmitter(),
+  );
   const nextIdRef = useRef(0);
 
   useEffect(() => {
@@ -52,10 +57,10 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
       if (!parsed.success) return;
       const { cwd, paths, snapshot } = parsed.data;
       if (paths.length > 0) {
-        emitterRef.current.publish(cwd, paths);
+        emitterRef.current.publish(cwd, { paths });
       } else if (snapshot !== undefined) {
-        // Snapshot present but no specific paths: refresh from root
-        emitterRef.current.publish(cwd, ['']);
+        // snapshot is unknown[] from Zod schema — server guarantees FileResult shape
+        emitterRef.current.publish(cwd, { paths: [''], snapshot: snapshot as FileResult[] });
       }
     };
     socket.on(EVENTS.fs.dirty, onDirty);
@@ -77,34 +82,17 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
         if ('error' in parsed.data) return { error: parsed.data.error };
         return { directories: parsed.data.directories, files: parsed.data.files };
       },
-      async create(path, kind) {
-        const response = await rpc(socket, EVENTS.fs.create, { path, kind });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
-      async delete(path) {
-        const response = await rpc(socket, EVENTS.fs.delete, { path });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
-      async rename(from, to) {
-        const response = await rpc(socket, EVENTS.fs.rename, { from, to });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
-      async copy(from, to) {
-        const response = await rpc(socket, EVENTS.fs.copy, { from, to });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
-      async move(from, to) {
-        const response = await rpc(socket, EVENTS.fs.move, { from, to });
-        const parsed = fsMutationResultSchema.safeParse(response);
-        return parsed.success ? parsed.data : { error: 'Invalid response' };
-      },
+      create: async (path, kind) =>
+        parseMutation(await rpc(socket, EVENTS.fs.create, { path, kind })),
+      delete: async (path) => parseMutation(await rpc(socket, EVENTS.fs.delete, { path })),
+      rename: async (from, to) => parseMutation(await rpc(socket, EVENTS.fs.rename, { from, to })),
+      copy: async (from, to) => parseMutation(await rpc(socket, EVENTS.fs.copy, { from, to })),
+      move: async (from, to) => parseMutation(await rpc(socket, EVENTS.fs.move, { from, to })),
       subscribeFsDirty(cwd, onDirty) {
         const subscriberId = `sub-${nextIdRef.current++}`;
-        const off = emitterRef.current.subscribe(cwd, subscriberId, onDirty);
+        const off = emitterRef.current.subscribe(cwd, subscriberId, ({ paths, snapshot }) =>
+          onDirty(paths, snapshot),
+        );
         socket.emit(EVENTS.fs.watch, { cwd, subscriberId });
         let active = true;
         return () => {
@@ -121,17 +109,7 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
   return <FsActionsContext.Provider value={actions}>{children}</FsActionsContext.Provider>;
 }
 
-export function useFsBrowse(): {
-  browse: (path?: string) => Promise<FsDirectory[]>;
-  browseEntries: (path?: string, opts?: { showHidden?: boolean }) => Promise<FsBrowseEntries>;
-} {
-  const { browse: browseEntries } = useFsActions();
-
-  async function browse(path?: string): Promise<FsDirectory[]> {
-    const result = await browseEntries(path);
-    if ('error' in result) return [];
-    return result.directories;
-  }
-
-  return { browse: browse, browseEntries: browseEntries };
+function parseMutation(response: unknown): FsMutationResult {
+  const parsed = fsMutationResultSchema.safeParse(response);
+  return parsed.success ? parsed.data : { error: 'Invalid response' };
 }

@@ -1,9 +1,10 @@
+import type { FileResult } from '@code-quest/filesystem';
 import { asyncDataLoaderFeature } from '@headless-tree/core';
 import { useTree } from '@headless-tree/react/react-compiler';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { type MouseEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { useFsActions, useFsBrowse } from '@/contexts/FsContext';
+import { useFsActions } from '@/contexts/FsContext';
 import { basename } from '@/utils/basename';
 import { nextDuplicateName } from '@/utils/duplicate-name';
 import { sortEntriesDirsFirst } from '@/utils/sort-entries';
@@ -49,9 +50,8 @@ export function FileTree({
    *  project roots. */
   disabledPaths?: ReadonlySet<string>;
 }): React.JSX.Element {
-  const { browseEntries } = useFsBrowse();
   const fsActions = useFsActions();
-  const { subscribeFsDirty } = fsActions;
+  const { browse: browseEntries, subscribeFsDirty } = fsActions;
 
   const [loadingItemData, setLoadingItemData] = useState<string[]>([]);
   const [loadingItemChildrens, setLoadingItemChildrens] = useState<string[]>([]);
@@ -63,6 +63,7 @@ export function FileTree({
    *  feeds `dataLoader.getItem` so file leaves don't lie about isItemFolder
    *  during focus/refresh callbacks before their parent re-fetches. */
   const kindByPathRef = useRef<Map<string, 'file' | 'directory'>>(new Map());
+  const snapshotRef = useRef<FileResult[] | null>(null);
   /** Inline-rename: holds the target path while user types a new name. */
   const [renaming, setRenaming] = useState<{ path: string; value: string } | null>(null);
   /** Pending dialog state. */
@@ -149,8 +150,28 @@ export function FileTree({
         return { name: basename(itemId), path: itemId, kind: 'directory' };
       },
       getChildrenWithData: async (itemId) => {
-        const path = itemId === 'root' ? rootCwd : itemId;
-        const result = await browseEntries(path, { showHidden });
+        const dirPath = itemId === 'root' ? rootCwd : itemId;
+
+        // Snapshot paths are relative to rootCwd and contain only direct
+        // children — use them directly to avoid a round-trip browseEntries call.
+        const snapshot = snapshotRef.current;
+        if (snapshot && itemId === 'root' && dirPath) {
+          snapshotRef.current = null;
+          setHasLoadedRoot(true);
+          const base = dirPath.endsWith('/') ? dirPath : `${dirPath}/`;
+          const entries = sortEntriesDirsFirst(
+            snapshot.map((f) => ({
+              path: `${base}${f.name}`,
+              name: f.name,
+              kind: (f.type === 'directory' ? 'directory' : 'file') as 'file' | 'directory',
+              size: 0,
+            })),
+          );
+          for (const e of entries) kindByPathRef.current.set(e.path, e.kind);
+          return entries.map((entry) => ({ id: entry.path, data: entry }));
+        }
+
+        const result = await browseEntries(dirPath, { showHidden });
         if (itemId === 'root') setHasLoadedRoot(true);
         if ('error' in result) return [];
         for (const d of result.directories) kindByPathRef.current.set(d.path, 'directory');
@@ -178,7 +199,8 @@ export function FileTree({
   // are skipped (the dataLoader fetches fresh on user expansion).
   useEffect(() => {
     if (!rootCwd) return;
-    return subscribeFsDirty(rootCwd, (paths) => {
+    return subscribeFsDirty(rootCwd, (paths, snapshot) => {
+      if (snapshot && snapshot.length > 0) snapshotRef.current = snapshot;
       const invalidated = new Set<string>();
       for (const relPath of paths) {
         const slash = relPath.lastIndexOf('/');

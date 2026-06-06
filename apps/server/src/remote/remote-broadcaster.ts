@@ -1,6 +1,7 @@
 import type { Broadcaster, SnapshotCallback, Unsubscribe } from '@code-quest/broadcaster';
 import { REMOTE_METHODS } from '@code-quest/schemas';
 import { z } from 'zod';
+import { logger } from '../logger.ts';
 import type { RemoteRpcWithEvents } from './types.ts';
 
 const watchSnapshotSchema = z.object({
@@ -13,9 +14,15 @@ export class RemoteBroadcaster implements Broadcaster {
   private readonly rpc: RemoteRpcWithEvents;
   private readonly subscribers = new Map<string, Map<string, SnapshotCallback>>();
   private offSnapshot: Unsubscribe | null = null;
+  private offReconnect: Unsubscribe | null = null;
 
   constructor(rpc: RemoteRpcWithEvents) {
     this.rpc = rpc;
+    this.offReconnect = rpc.on('reconnect', () => {
+      for (const cwd of this.subscribers.keys()) {
+        this.startWatch(cwd);
+      }
+    });
   }
 
   subscribe(cwd: string, subscriberId: string, cb: SnapshotCallback): Unsubscribe {
@@ -30,7 +37,7 @@ export class RemoteBroadcaster implements Broadcaster {
 
     if (isFirst) {
       this.ensureSnapshotListener();
-      void this.rpc.request(REMOTE_METHODS.watch.start, { cwd });
+      this.startWatch(cwd);
     }
 
     return () => {
@@ -39,7 +46,7 @@ export class RemoteBroadcaster implements Broadcaster {
       subs.delete(subscriberId);
       if (subs.size === 0) {
         this.subscribers.delete(cwd);
-        void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd }).catch(() => {});
+        this.stopWatch(cwd);
       }
     };
   }
@@ -47,10 +54,22 @@ export class RemoteBroadcaster implements Broadcaster {
   dispose(): void {
     this.offSnapshot?.();
     this.offSnapshot = null;
+    this.offReconnect?.();
+    this.offReconnect = null;
     for (const cwd of this.subscribers.keys()) {
-      void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd }).catch(() => {});
+      this.stopWatch(cwd);
     }
     this.subscribers.clear();
+  }
+
+  private startWatch(cwd: string): void {
+    void this.rpc.request(REMOTE_METHODS.watch.start, { cwd }).catch((err) => {
+      logger.warn({ err }, 'watch.start failed');
+    });
+  }
+
+  private stopWatch(cwd: string): void {
+    void this.rpc.request(REMOTE_METHODS.watch.stop, { cwd }).catch(() => {});
   }
 
   private ensureSnapshotListener(): void {

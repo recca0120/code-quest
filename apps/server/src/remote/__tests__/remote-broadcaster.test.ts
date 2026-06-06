@@ -3,11 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { RemoteBroadcaster } from '../remote-broadcaster.ts';
 import type { RemoteRpcWithEvents } from '../types.ts';
 
-function makeFakeRpc() {
+function makeFakeRpc({ rejectRequest = false } = {}) {
   const requests: Array<[string, unknown]> = [];
   const handlers = new Map<string, (...args: unknown[]) => void>();
   const rpc: RemoteRpcWithEvents = {
     request: vi.fn(async (method: string, params: unknown) => {
+      if (rejectRequest) throw new Error('No remote summoner connected');
       requests.push([method, params]);
       return { ok: true };
     }) as RemoteRpcWithEvents['request'],
@@ -137,5 +138,51 @@ describe('RemoteBroadcaster', () => {
     });
 
     expect(cb).not.toHaveBeenCalled();
+  });
+
+  describe('resilience', () => {
+    it('watch.start rejection does not cause unhandled promise rejection', async () => {
+      const rpc = makeFakeRpc({ rejectRequest: true });
+      const broadcaster = new RemoteBroadcaster(rpc);
+
+      // Should not throw synchronously or produce unhandled rejection
+      broadcaster.subscribe('/repo', 'socket-1', vi.fn());
+
+      // Give microtasks a chance to settle
+      await new Promise((r) => setTimeout(r, 0));
+      // If we reach here without unhandled rejection, the test passes
+    });
+
+    it('fires watch.start for all active cwds when reconnect event fires', async () => {
+      const rpc = makeFakeRpc();
+      const broadcaster = new RemoteBroadcaster(rpc);
+
+      broadcaster.subscribe('/repo', 'socket-1', vi.fn());
+      broadcaster.subscribe('/other', 'socket-2', vi.fn());
+
+      await vi.waitUntil(() => rpc.requests.length >= 2, { timeout: 500 });
+      rpc.requests.length = 0; // clear
+
+      rpc.simulate('reconnect');
+
+      await vi.waitUntil(() => rpc.requests.length >= 2, { timeout: 500 });
+      expect(rpc.requests).toContainEqual([REMOTE_METHODS.watch.start, { cwd: '/repo' }]);
+      expect(rpc.requests).toContainEqual([REMOTE_METHODS.watch.start, { cwd: '/other' }]);
+    });
+
+    it('does not fire watch.start for cwds with no active subscribers on reconnect', async () => {
+      const rpc = makeFakeRpc();
+      const broadcaster = new RemoteBroadcaster(rpc);
+
+      const off = broadcaster.subscribe('/repo', 'socket-1', vi.fn());
+      await vi.waitUntil(() => rpc.requests.length >= 1, { timeout: 500 });
+      off(); // unsubscribe — cwd entry removed
+      rpc.requests.length = 0;
+
+      rpc.simulate('reconnect');
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(rpc.requests.filter(([m]) => m === REMOTE_METHODS.watch.start)).toHaveLength(0);
+    });
   });
 });

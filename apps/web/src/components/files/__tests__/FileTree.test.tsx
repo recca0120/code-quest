@@ -226,7 +226,7 @@ describe('FileTree', () => {
       return { Wrapper, FsWatchKeeper, summoner, watch };
     }
 
-    it('file change triggers root refetch (snapshot-based refresh)', async () => {
+    it('file change updates tree from snapshot without calling browseEntries for root', async () => {
       const { Wrapper, FsWatchKeeper, summoner, watch } = setupWithWatch();
       const browseSpy = vi.spyOn(summoner.filesystem(), 'browseEntries');
 
@@ -238,17 +238,21 @@ describe('FileTree', () => {
       );
 
       await screen.findByRole('treeitem', { name: 'src' });
+
+      // Add a new file so the snapshot will include it
+      summoner.filesystem().addFile('/projects/app/new-file.ts', '');
       browseSpy.mockClear();
 
       await act(async () => {
-        watch.simulate('/projects/app', { type: 'change', path: 'src/bar.ts' });
+        watch.simulate('/projects/app', { type: 'add', path: 'new-file.ts' });
       });
 
-      // Snapshot-based updates always refresh from root.
-      await waitFor(() => {
-        const rootCalls = browseSpy.mock.calls.filter((c) => c[0] === '/projects/app').length;
-        expect(rootCalls).toBeGreaterThan(0);
-      });
+      // New file appears in the tree (snapshot was used)
+      await screen.findByRole('treeitem', { name: 'new-file.ts' });
+
+      // browseEntries for root must NOT have been called — snapshot drove the update
+      const rootCalls = browseSpy.mock.calls.filter((c) => c[0] === '/projects/app').length;
+      expect(rootCalls).toBe(0);
     });
 
     it('expanded directory STAYS expanded across a dirty event (no full remount)', async () => {

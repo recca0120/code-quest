@@ -60,6 +60,7 @@ export class ChannelEmitter {
   private channelSockets = new Map<string, Set<TypedSocket>>();
   private socketChannels = new Map<string, Set<string>>();
   private socketRefs = new Map<string, TypedSocket>();
+  private readonly connectionCallbacks: Array<(socket: TypedSocket) => void> = [];
 
   // ── Subscribe ──
 
@@ -67,6 +68,11 @@ export class ChannelEmitter {
     const handlers = this.eventMap.get(name) ?? [];
     handlers.push(handler);
     this.eventMap.set(name, handlers);
+  }
+
+  /** Register a callback that fires once per new socket connection. */
+  onConnect(cb: (socket: TypedSocket) => void): void {
+    this.connectionCallbacks.push(cb);
   }
 
   // ── Dispatch ──
@@ -195,6 +201,7 @@ export class ChannelEmitter {
     // Register the socket in the global ref map so broadcastAll reaches every
     // connected peer — even ones that have not (yet) joined a channel.
     this.socketRefs.set(socket.id, socket);
+    for (const cb of this.connectionCallbacks) cb(socket);
 
     // Wire client socket events for emitter.on subscribers only.
     // NOTE: handlers must be registered (emitter.on) before connections are accepted.
