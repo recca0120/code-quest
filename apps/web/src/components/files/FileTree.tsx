@@ -4,7 +4,7 @@ import { useTree } from '@headless-tree/react/react-compiler';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { type MouseEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { useFsActions, useFsBrowse } from '@/contexts/FsContext';
+import { useFsActions } from '@/contexts/FsContext';
 import { basename } from '@/utils/basename';
 import { nextDuplicateName } from '@/utils/duplicate-name';
 import { sortEntriesDirsFirst } from '@/utils/sort-entries';
@@ -50,9 +50,8 @@ export function FileTree({
    *  project roots. */
   disabledPaths?: ReadonlySet<string>;
 }): React.JSX.Element {
-  const { browseEntries } = useFsBrowse();
   const fsActions = useFsActions();
-  const { subscribeFsDirty } = fsActions;
+  const { browse: browseEntries, subscribeFsDirty } = fsActions;
 
   const [loadingItemData, setLoadingItemData] = useState<string[]>([]);
   const [loadingItemChildrens, setLoadingItemChildrens] = useState<string[]>([]);

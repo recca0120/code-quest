@@ -69,14 +69,8 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
     };
   }, [socket]);
 
-  const actions = useMemo<FsActions>(() => {
-    async function mutate(event: string, payload: unknown): Promise<FsMutationResult> {
-      const response = await rpc(socket, event as Parameters<typeof rpc>[1], payload as never);
-      const parsed = fsMutationResultSchema.safeParse(response);
-      return parsed.success ? parsed.data : { error: 'Invalid response' };
-    }
-
-    return {
+  const actions = useMemo<FsActions>(
+    () => ({
       async browse(path, opts) {
         const payload: { path?: string; showHidden: boolean } = {
           showHidden: opts?.showHidden ?? false,
@@ -88,11 +82,12 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
         if ('error' in parsed.data) return { error: parsed.data.error };
         return { directories: parsed.data.directories, files: parsed.data.files };
       },
-      create: (path, kind) => mutate(EVENTS.fs.create, { path, kind }),
-      delete: (path) => mutate(EVENTS.fs.delete, { path }),
-      rename: (from, to) => mutate(EVENTS.fs.rename, { from, to }),
-      copy: (from, to) => mutate(EVENTS.fs.copy, { from, to }),
-      move: (from, to) => mutate(EVENTS.fs.move, { from, to }),
+      create: async (path, kind) =>
+        parseMutation(await rpc(socket, EVENTS.fs.create, { path, kind })),
+      delete: async (path) => parseMutation(await rpc(socket, EVENTS.fs.delete, { path })),
+      rename: async (from, to) => parseMutation(await rpc(socket, EVENTS.fs.rename, { from, to })),
+      copy: async (from, to) => parseMutation(await rpc(socket, EVENTS.fs.copy, { from, to })),
+      move: async (from, to) => parseMutation(await rpc(socket, EVENTS.fs.move, { from, to })),
       subscribeFsDirty(cwd, onDirty) {
         const subscriberId = `sub-${nextIdRef.current++}`;
         const off = emitterRef.current.subscribe(cwd, subscriberId, ({ paths, snapshot }) =>
@@ -107,23 +102,14 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
           socket.emit(EVENTS.fs.unwatch, { subscriberId });
         };
       },
-    };
-  }, [socket]);
+    }),
+    [socket],
+  );
 
   return <FsActionsContext.Provider value={actions}>{children}</FsActionsContext.Provider>;
 }
 
-export function useFsBrowse(): {
-  browse: (path?: string) => Promise<FsDirectory[]>;
-  browseEntries: (path?: string, opts?: { showHidden?: boolean }) => Promise<FsBrowseEntries>;
-} {
-  const { browse: browseEntries } = useFsActions();
-
-  async function browse(path?: string): Promise<FsDirectory[]> {
-    const result = await browseEntries(path);
-    if ('error' in result) return [];
-    return result.directories;
-  }
-
-  return { browse, browseEntries };
+function parseMutation(response: unknown): FsMutationResult {
+  const parsed = fsMutationResultSchema.safeParse(response);
+  return parsed.success ? parsed.data : { error: 'Invalid response' };
 }
