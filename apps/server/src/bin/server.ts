@@ -159,6 +159,9 @@ function setupSummonerMode() {
   );
 
   channelEmitter = c.get<ChannelEmitter>(TYPES.ChannelEventRouter);
+  channelEmitter.onConnect((socket) => {
+    socket.emit('remote:status', { connected: reconnectableRpc.connected });
+  });
   handles.push(wsTransport.attach(httpServer));
   registerTransports(c.get<SocketServer>(TYPES.SocketServer));
   return c;

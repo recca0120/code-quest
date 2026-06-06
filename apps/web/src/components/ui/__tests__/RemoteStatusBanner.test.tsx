@@ -17,6 +17,7 @@ function makeSocket() {
   } as unknown as TypedSocket;
   return {
     socket,
+    push: (payload: { connected: boolean }) => act(() => handler?.(payload)),
     disconnect: () => act(() => handler?.({ connected: false })),
     reconnect: () => act(() => handler?.({ connected: true })),
   };
@@ -56,6 +57,20 @@ describe('RemoteStatusBanner', () => {
     renderBanner(socket);
     disconnect();
     reconnect();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('shows banner when server pushes connected:false on initial connect', () => {
+    const { socket, push } = makeSocket();
+    renderBanner(socket);
+    push({ connected: false });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
+
+  it('stays hidden when server pushes connected:true on initial connect', () => {
+    const { socket, push } = makeSocket();
+    renderBanner(socket);
+    push({ connected: true });
     expect(screen.queryByRole('alert')).toBeNull();
   });
 });
