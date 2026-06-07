@@ -102,7 +102,13 @@ describe('RemoteFilesystem', () => {
     expect(result).toMatchObject({ content: 'hello world' });
   });
 
-  it('writeFile — writes and reads back content', async () => {
+  it('writeFile — persists content to disk', async () => {
+    ctx.filesystem.fromTree('/tmp', {});
+    await ctx.fsService.writeFile('/tmp/out.txt', 'written');
+    expect(await ctx.fsService.exists('/tmp/out.txt')).toBe(true);
+  });
+
+  it('readFile — returns previously written content', async () => {
     ctx.filesystem.fromTree('/tmp', {});
     await ctx.fsService.writeFile('/tmp/out.txt', 'written');
     const result = await ctx.fsService.readFile('/tmp/out.txt');
@@ -206,7 +212,7 @@ describe('RemoteGit', () => {
   });
 
   it('checkout — resolves without throwing', async () => {
-    await expect(ctx.gitService.checkout('/repo', 'main')).resolves.not.toThrow();
+    await expect(ctx.gitService.checkout('/repo', 'main')).resolves.toBeUndefined();
   });
 
   it('log — returns configured entries', async () => {
@@ -276,7 +282,7 @@ describe('RemoteGit', () => {
   it('listBranches — returns empty list by default', async () => {
     ctx.git.markAsRepo('/repo');
     const result = await ctx.gitService.listBranches('/repo');
-    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual(['main']);
   });
 
   it('createWorktree — returns worktree info', async () => {
@@ -293,7 +299,7 @@ describe('RemoteGit', () => {
 
   it('deleteWorktree — resolves without throwing', async () => {
     ctx.git.addWorktree({ name: 'to-delete', path: '/repo/to-delete', branch: 'feat/delete' });
-    await expect(ctx.gitService.deleteWorktree('/repo', 'to-delete')).resolves.not.toThrow();
+    await expect(ctx.gitService.deleteWorktree('/repo', 'to-delete')).resolves.toBeUndefined();
   });
 
   it('renameWorktree — returns renamed worktree info', async () => {
@@ -305,7 +311,7 @@ describe('RemoteGit', () => {
   it('archiveWorktree — returns archive result', async () => {
     ctx.git.addWorktree({ name: 'wt', path: '/repo/wt', branch: 'feat/archive' });
     const result = await ctx.gitService.archiveWorktree('/repo', 'wt', {});
-    expect(result).toBeDefined();
+    expect(result).toEqual({ ok: true });
   });
 
   it('rejects when connection is closed', async () => {

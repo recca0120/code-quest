@@ -88,7 +88,7 @@ describe('ChatSession', () => {
     expect(screen.getByText('Yes')).toBeInTheDocument();
   });
 
-  it('renders HeaderBar with model info', async () => {
+  it('renders HeaderBar', async () => {
     await renderWithChannel(<ChatView />);
     expect(screen.getByRole('banner')).toBeInTheDocument();
   });
@@ -260,7 +260,7 @@ describe('ChatSession', () => {
       expect(screen.queryAllByText(/Retry/i).length).toBeGreaterThan(0);
     });
 
-    it('open_diff control_request does not crash', async () => {
+    it('open_diff control_request does not crash the component', async () => {
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
@@ -317,7 +317,7 @@ describe('ChatSession', () => {
       expect(await screen.findByTitle('Send')).toBeInTheDocument();
     });
 
-    it('diffRespond with unknown toolId does not crash', async () => {
+    it('diffRespond with unknown toolId does not crash the component', async () => {
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');

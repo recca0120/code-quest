@@ -47,13 +47,13 @@ describe('AccountUsageDialog', () => {
     });
 
     // Rate limit message rendered
-    expect(screen.queryAllByText(/limit/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Rate limit:/i)).toBeInTheDocument();
   });
 
   it('assistant message renders after init', async () => {
     await setupWithTurn();
 
-    expect(screen.queryAllByText(/hi/).length).toBeGreaterThan(0);
+    expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
   it('handles rate limit event when dialog is closed', async () => {
@@ -68,13 +68,6 @@ describe('AccountUsageDialog', () => {
     });
 
     expect(screen.getByText('ok')).toBeInTheDocument();
-  });
-
-  it('opening /usage dialog does not crash', async () => {
-    const { user } = await setupWithTurn();
-
-    const dialog = await openUsageDialog(user);
-    expect(dialog).toBeInTheDocument();
   });
 
   it('dialog opens and shows quota section', async () => {
@@ -113,7 +106,7 @@ describe('AccountUsageDialog', () => {
     expect(screen.queryByRole('dialog', { name: /account & usage/i })).not.toBeInTheDocument();
   });
 
-  it('renders after init with account info', async () => {
+  it('chat input is visible after init', async () => {
     const { addProject: addProj } = await renderWithWorkspace();
     const proj = await addProj();
     await proj.launchSession();

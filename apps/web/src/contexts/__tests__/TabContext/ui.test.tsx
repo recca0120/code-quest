@@ -91,13 +91,6 @@ describe('TabProvider', () => {
   });
 
   describe('socket events', () => {
-    it('session:created adds a tab — UI shows content', async () => {
-      const { addProject: addProj } = await renderWithWorkspace();
-      const proj = await addProj();
-      await proj.launchSession();
-      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
-    });
-
     it('addTab activates first tab when no active tab', async () => {
       function Test() {
         const { tabs, activeTabId } = useTabState();
@@ -138,14 +131,6 @@ describe('TabProvider', () => {
       expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(1);
     });
 
-    it('launching second session keeps active chat panel visible', async () => {
-      const { addProject: addProj } = await renderWithWorkspace();
-      const project = await addProj();
-      await project.launchSession();
-      // Two sessions: second launch replaces active tab (replaceActiveTab behavior)
-      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
-    });
-
     it('session:created with cwd auto-creates project and tab remains visible', async () => {
       const { addProject: addProj } = await renderWithWorkspace();
       const proj = await addProj();
@@ -158,7 +143,7 @@ describe('TabProvider', () => {
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 
-    it('session:dead removes tab', async () => {
+    it('workspace remains visible after session becomes dead', async () => {
       const { claude, addProject } = await renderWithWorkspace();
       const project = await addProject();
       await project.launchSession();

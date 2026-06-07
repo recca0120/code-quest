@@ -29,6 +29,7 @@ describe('AppInitContext', () => {
     await renderInAppInit(<Subscriber />);
 
     expect(cb).toHaveBeenCalled();
+    expect(cb.mock.calls[0]![0]).toHaveProperty('sessions');
   });
 
   it('late subscriber receives already-fired init data immediately', async () => {

@@ -445,10 +445,10 @@ describe('TabProvider', () => {
       expect(screen.getByRole('status', { name: 'status' })).toHaveTextContent('processing');
     });
 
-    it('setTabTitle and setTabStatus work independently', async () => {
+    it('setTabTitle updates the tab title without affecting status', async () => {
       function Test() {
         const { tabs } = useTabState();
-        const { addTab, setTabTitle, setTabStatus } = useTabActions();
+        const { addTab, setTabTitle } = useTabActions();
         return (
           <>
             <span role="status" aria-label="tab">
@@ -460,6 +460,29 @@ describe('TabProvider', () => {
             <button type="button" onClick={() => setTabTitle('tab-1', 'Hello')}>
               title
             </button>
+          </>
+        );
+      }
+      const { user } = renderInTab(<Test />);
+      await user.click(screen.getByText('add'));
+      await user.click(screen.getByText('title'));
+      const tab = JSON.parse(screen.getByRole('status', { name: 'tab' }).textContent!);
+      expect(tab.title).toBe('Hello');
+      expect(tab.tabStatus).toBe('connecting');
+    });
+
+    it('setTabStatus updates the tab status without affecting title', async () => {
+      function Test() {
+        const { tabs } = useTabState();
+        const { addTab, setTabStatus } = useTabActions();
+        return (
+          <>
+            <span role="status" aria-label="tab">
+              {JSON.stringify(tabs['tab-1'] ?? null)}
+            </span>
+            <button type="button" onClick={() => addTab('tab-1')}>
+              add
+            </button>
             <button type="button" onClick={() => setTabStatus('tab-1', 'disconnected')}>
               disconnected
             </button>
@@ -468,13 +491,10 @@ describe('TabProvider', () => {
       }
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('add'));
-      await user.click(screen.getByText('title'));
       await user.click(screen.getByText('disconnected'));
-      expect(JSON.parse(screen.getByRole('status', { name: 'tab' }).textContent!)).toEqual({
-        title: 'Hello',
-        tabStatus: 'disconnected',
-        mode: 'resume',
-      });
+      const tab = JSON.parse(screen.getByRole('status', { name: 'tab' }).textContent!);
+      expect(tab.tabStatus).toBe('disconnected');
+      expect(tab.title).toBeUndefined();
     });
 
     it('throws when useTabState is called outside provider', () => {

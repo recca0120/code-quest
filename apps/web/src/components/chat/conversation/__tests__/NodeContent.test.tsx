@@ -35,11 +35,12 @@ async function setup() {
 
 describe('NodeContent', () => {
   it('renders text message with markdown', async () => {
-    const { claude } = await setup();
+    const { container, claude } = await setup();
     await act(async () => {
       await claude.emitSegment(s.assistant('Hello **world**'));
     });
     expect(screen.getByText('world')).toBeInTheDocument();
+    expect(container.querySelector('strong')).toBeInTheDocument();
   });
 
   // NOTE: showAvatar is a NodeContent-internal prop not controllable via MessageList.
@@ -134,7 +135,6 @@ describe('NodeContent', () => {
     const btn = screen.queryByLabelText('message-copy');
     expect(btn).not.toBeNull();
     if (btn) await user.click(btn as HTMLElement);
-    expect(writeText).toHaveBeenCalled();
     expect(String(writeText.mock.calls[0]![0])).toContain('Hello');
   });
 

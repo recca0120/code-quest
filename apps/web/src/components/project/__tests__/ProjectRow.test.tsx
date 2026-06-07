@@ -13,7 +13,9 @@ const PROJECT = {
   lastOpenedAt: new Date().toISOString(),
 };
 
-// Pre-populate git listing so WorktreeChildList renders immediately (no socket round-trip)
+// Pre-populate git listing so WorktreeChildList renders immediately without waiting for a socket
+// round-trip. createTestWrapper provides the real GitProvider, but it relies on socket events to
+// populate the listing. Mocking useGitState here avoids that async dependency in unit tests.
 vi.mock('@/contexts/GitContext', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/contexts/GitContext')>();
   return {
@@ -35,16 +37,19 @@ beforeEach(() => {
 });
 
 describe('ProjectRow — expand/collapse behaviour', () => {
-  it('clicking project card when collapsed → expands worktree list', async () => {
+  function setupCollapsed() {
     const { Wrapper, user } = setup();
     render(
       <Wrapper>
         <ProjectRow project={PROJECT} active={false} onSelect={() => {}} />
       </Wrapper>,
     );
-
-    // collapsed initially — no WorktreeChildList
     expect(screen.queryByText('+ New worktree…')).not.toBeInTheDocument();
+    return { user };
+  }
+
+  it('clicking project card when collapsed → expands worktree list', async () => {
+    const { user } = setupCollapsed();
 
     await user.click(screen.getByRole('button', { name: /^app$/i }));
 
@@ -91,15 +96,7 @@ describe('ProjectRow — expand/collapse behaviour', () => {
   });
 
   it('clicking chevron when collapsed → expands the list', async () => {
-    const { Wrapper, user } = setup();
-
-    render(
-      <Wrapper>
-        <ProjectRow project={PROJECT} active={false} onSelect={() => {}} />
-      </Wrapper>,
-    );
-
-    expect(screen.queryByText('+ New worktree…')).not.toBeInTheDocument();
+    const { user } = setupCollapsed();
 
     await user.click(screen.getByRole('button', { name: /expand app/i }));
 

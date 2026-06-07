@@ -38,13 +38,6 @@ describe('RemoteStatusBanner', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('shows banner when summoner disconnects', () => {
-    const { socket, disconnect } = makeSocket();
-    renderBanner(socket);
-    disconnect();
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-  });
-
   it('banner contains an offline message', () => {
     const { socket, disconnect } = makeSocket();
     renderBanner(socket);

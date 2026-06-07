@@ -105,6 +105,7 @@ export class FakeFilesystem implements Filesystem {
 
   async browseEntries(
     path?: string,
+    _opts?: { showHidden?: boolean },
   ): Promise<{ directories: DirectoryEntry[]; files: FileEntry[] }> {
     const directories = await this.browseDirectories(path);
     if (!path) return { directories, files: [] };

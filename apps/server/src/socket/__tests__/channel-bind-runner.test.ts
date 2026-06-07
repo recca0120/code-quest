@@ -59,6 +59,7 @@ describe('Channel.bindRunner', () => {
 
       const events = claude.receivedEvents('message:assistant');
       expect(events.length).toBeGreaterThan(0);
+      expect(events[0]!.channelId).toBe(channelId);
     });
   });
 
@@ -92,12 +93,18 @@ describe('Channel.bindRunner', () => {
       );
       await claude.emitSegment(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
 
+      // Verify the control:permission event was emitted (request was tracked)
+      const permEvents = claude.receivedEvents('control:permission');
+      expect(permEvents.length).toBeGreaterThan(0);
+      expect(permEvents[0]!.requestId).toBe('req-1');
+
       await claude.send('chat:respond', {
         channelId,
         requestId: 'req-1',
         response: { behavior: 'allow', updatedInput: {} },
       });
 
+      // The response was forwarded to Claude stdin
       expect(claude.received('control_response').length).toBeGreaterThan(0);
     });
   });
@@ -121,6 +128,8 @@ describe('Channel.bindRunner', () => {
       await new Promise<void>((r) => queueMicrotask(r));
 
       expect(claude.handle.signal.aborted).toBe(true);
+      // session:closed is emitted — confirming channel exit was broadcast
+      expect(claude.receivedEvents('session:closed').length).toBeGreaterThan(0);
     });
 
     it('destroy cleans up channel', async () => {

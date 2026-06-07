@@ -234,6 +234,7 @@ describe('MessageVisibilityContext — persistence', () => {
     await renderWithChannel(<Probe />);
     // Unrecognized format — store falls back to null → context uses defaults
     const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
-    expect(enabled).toBeTruthy();
+    expect(enabled).toContain('text');
+    expect(enabled).not.toContain('hook_started');
   });
 });

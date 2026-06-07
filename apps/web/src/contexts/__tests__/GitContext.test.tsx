@@ -360,7 +360,7 @@ describe('WorktreeContext', () => {
       await waitFor(() => {
         expect(statusSpy).toHaveBeenCalledTimes(2);
       });
-      expect(result.current).toBeDefined();
+      expect(result.current).toHaveProperty('branch');
     });
   });
 

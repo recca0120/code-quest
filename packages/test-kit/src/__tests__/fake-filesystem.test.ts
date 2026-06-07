@@ -285,4 +285,12 @@ describe('FakeFilesystem', () => {
       });
     });
   });
+
+  describe('browseEntries opts parameter', () => {
+    it('accepts showHidden option without throwing', async () => {
+      const fs = new FakeFilesystem();
+      fs.addDirectory('/repo', ['src']);
+      await expect(fs.browseEntries('/repo', { showHidden: true })).resolves.toBeDefined();
+    });
+  });
 });

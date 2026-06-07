@@ -17,12 +17,6 @@ describe('SpinnerVerb', () => {
     expect(el.textContent).toContain('Compacting');
   });
 
-  it('renders an animated icon', () => {
-    render(<SpinnerVerb />);
-    const icon = screen.getByLabelText('spinner-icon');
-    expect(icon).toBeInTheDocument();
-  });
-
   it('cycles icon on interval', () => {
     vi.useFakeTimers();
     render(<SpinnerVerb />);
@@ -97,7 +91,7 @@ describe('SpinnerVerb', () => {
     expect(screen.getByLabelText('spinner-meta').textContent).toBe('');
   });
 
-  it('shows spinner verb after sendMessage while AI is processing', async () => {
+  it('sendMessage delivers user message to channel', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();

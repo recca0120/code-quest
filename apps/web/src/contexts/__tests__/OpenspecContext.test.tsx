@@ -58,6 +58,7 @@ describe('OpenspecContext (external store via useSyncExternalStore)', () => {
     await waitFor(() => {
       expect(result.current).toBeDefined();
     });
+    expect(result.current).toHaveProperty('changes');
   });
 
   it('switching cwd back to a cached cwd is synchronous (zero flicker)', async () => {

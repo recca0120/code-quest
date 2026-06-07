@@ -8,12 +8,32 @@ import { useOpenspecActions, useOpenspecList } from '@/contexts/OpenspecContext'
 import { pluralize } from '@/utils/pluralize';
 import { Badge } from '../ui/Badge.tsx';
 import { CommandHint } from '../ui/CommandHint.tsx';
+import { InlinePlaceholder } from '../ui/InlinePlaceholder.tsx';
+import { PaneSection } from '../ui/PaneSection.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
-import { SectionLabel } from '../ui/SectionLabel.tsx';
 import { SkeletonRows } from '../ui/SkeletonRows.tsx';
 import { ArchiveChangeDialog } from './ArchiveChangeDialog.tsx';
 import { NewChangeDialog } from './NewChangeDialog.tsx';
 import { SpecDrawer } from './SpecDrawer.tsx';
+
+async function runOpenspecAction(
+  action: () => Promise<{ error: string } | object>,
+  options: {
+    errorPrefix: string;
+    successMessage: string;
+    onSuccess: () => void;
+    refetch: () => Promise<unknown>;
+  },
+): Promise<void> {
+  const result = await action();
+  if ('error' in result) {
+    toast.error(`${options.errorPrefix}: ${result.error}`);
+    return;
+  }
+  toast.success(options.successMessage);
+  options.onSuccess();
+  await options.refetch();
+}
 
 interface SpecPaneProps {
   cwd: string;
@@ -27,25 +47,21 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
 
   async function handleCreateChange(name: string) {
-    const result = await changeNew(cwd, name);
-    if ('error' in result) {
-      toast.error(`Create failed: ${result.error}`);
-      return;
-    }
-    toast.success(`Created change ${name}`);
-    setNewChangeOpen(false);
-    await refetchOpenspecList(cwd);
+    await runOpenspecAction(() => changeNew(cwd, name), {
+      errorPrefix: 'Create failed',
+      successMessage: `Created change ${name}`,
+      onSuccess: () => setNewChangeOpen(false),
+      refetch: () => refetchOpenspecList(cwd),
+    });
   }
 
   async function handleArchive(name: string, opts: { skipSpecs: boolean }) {
-    const result = await archive(cwd, name, opts);
-    if ('error' in result) {
-      toast.error(`Archive failed: ${result.error}`);
-      return;
-    }
-    toast.success(`Archived ${name}`);
-    setArchiveTarget(null);
-    await refetchOpenspecList(cwd);
+    await runOpenspecAction(() => archive(cwd, name, opts), {
+      errorPrefix: 'Archive failed',
+      successMessage: `Archived ${name}`,
+      onSuccess: () => setArchiveTarget(null),
+      refetch: () => refetchOpenspecList(cwd),
+    });
   }
 
   if (data && 'error' in data) {
@@ -74,8 +90,8 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
 
   return (
     <section className="flex flex-col h-full" aria-label="spec-pane">
-      <div className="flex-1 min-h-0 overflow-auto p-2 text-sm">
-        <Section
+      <div className="flex-1 min-h-0 overflow-auto text-sm">
+        <PaneSection
           title="Active changes"
           scope="worktree"
           action={
@@ -103,10 +119,10 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
               ))}
             </ul>
           ) : (
-            <div className="text-dim text-xs px-1">No active changes</div>
+            <InlinePlaceholder>No active changes</InlinePlaceholder>
           )}
-        </Section>
-        <Section title="Specs" scope="project">
+        </PaneSection>
+        <PaneSection title="Specs" scope="project">
           {isLoading ? (
             <SkeletonRows count={3} />
           ) : data.specs.length > 0 ? (
@@ -120,11 +136,11 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
               ))}
             </ul>
           ) : (
-            <div className="text-dim text-xs px-1">No specs</div>
+            <InlinePlaceholder>No specs</InlinePlaceholder>
           )}
-        </Section>
+        </PaneSection>
       </div>
-      {data && (
+      {!isLoading && (
         <PaneStatusFooter>
           <span>{pluralize(data.changes.length, 'change')}</span>
           <span>·</span>
@@ -179,27 +195,27 @@ function ChangeRow({
         <span className="font-mono text-xs truncate flex-1">{c.name}</span>
       </button>
       {ready && (
-        <Badge
-          variant="success"
-          mono
-          size="xs"
-          border
-          role="status"
-          aria-label={`spec-ready-badge-${c.name}`}
-          className="uppercase tracking-wide"
-        >
-          Ready
-        </Badge>
-      )}
-      {ready && (
-        <button
-          type="button"
-          aria-label={`Archive ${c.name}`}
-          onClick={onArchive}
-          className="shrink-0 px-1.5 py-px rounded border border-border text-muted hover:border-danger hover:text-danger font-mono text-2xs uppercase cursor-pointer"
-        >
-          Archive
-        </button>
+        <>
+          <Badge
+            variant="success"
+            mono
+            size="xs"
+            border
+            role="status"
+            aria-label={`spec-ready-badge-${c.name}`}
+            className="uppercase tracking-wide"
+          >
+            Ready
+          </Badge>
+          <button
+            type="button"
+            aria-label={`Archive ${c.name}`}
+            onClick={onArchive}
+            className="shrink-0 px-1.5 py-px rounded border border-border text-muted hover:border-danger hover:text-danger font-mono text-2xs uppercase cursor-pointer"
+          >
+            Archive
+          </button>
+        </>
       )}
       {c.tasks && (
         <Badge
@@ -232,28 +248,5 @@ function SpecRow({ spec: s, onOpen }: { spec: OpenspecSpecSummary; onOpen: () =>
         <span className="font-mono text-xs">{s.capability}</span>
       </button>
     </li>
-  );
-}
-
-function Section({
-  title,
-  scope,
-  action,
-  children,
-}: {
-  title: string;
-  scope?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="mb-3">
-      <SectionLabel as="h3" className="px-1 mb-1 flex items-baseline gap-1">
-        <span>{title}</span>
-        {scope && <span className="text-xs text-dim normal-case">({scope})</span>}
-        {action && <span className="ml-auto">{action}</span>}
-      </SectionLabel>
-      {children}
-    </div>
   );
 }

@@ -148,9 +148,11 @@ describe('RemoteBroadcaster', () => {
       // Should not throw synchronously or produce unhandled rejection
       broadcaster.subscribe('/repo', 'socket-1', vi.fn());
 
-      // Give microtasks a chance to settle
-      await new Promise((r) => setTimeout(r, 0));
-      // If we reach here without unhandled rejection, the test passes
+      // The subscribe path was entered — request was attempted even though it rejected
+      await vi.waitUntil(() => (rpc.request as ReturnType<typeof vi.fn>).mock.calls.length > 0, {
+        timeout: 500,
+      });
+      expect(rpc.request).toHaveBeenCalled();
     });
 
     it('fires watch.start for all active cwds when reconnect event fires', async () => {
@@ -180,7 +182,7 @@ describe('RemoteBroadcaster', () => {
       rpc.requests.length = 0;
 
       rpc.simulate('reconnect');
-      await new Promise((r) => setTimeout(r, 10));
+      await Promise.resolve(); // drain promise callbacks — no watch.start should be queued
 
       expect(rpc.requests.filter(([m]) => m === REMOTE_METHODS.watch.start)).toHaveLength(0);
     });

@@ -77,22 +77,17 @@ describe('DiffDrawer', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  describe('Copy path', () => {
-    it('renders Copy path button', () => {
-      renderDrawer();
-      expect(screen.getByRole('button', { name: /copy path/i })).toBeInTheDocument();
-    });
+  it('renders title with path and Copy path button', () => {
+    renderDrawer({ file: makeFile({ path: 'src/foo.ts', added: 3, removed: 2 }) });
+    expect(screen.getByRole('button', { name: /copy path/i })).toBeInTheDocument();
   });
 
   describe('Discard', () => {
-    it('is visible when onDiscard is provided', () => {
+    it('is visible and enabled by default when onDiscard is provided', () => {
       renderDrawer({ onDiscard: vi.fn() });
-      expect(screen.getByRole('button', { name: /discard/i })).toBeInTheDocument();
-    });
-
-    it('is enabled by default', () => {
-      renderDrawer({ onDiscard: vi.fn() });
-      expect(screen.getByRole('button', { name: /discard/i })).not.toBeDisabled();
+      const btn = screen.getByRole('button', { name: /discard/i });
+      expect(btn).toBeInTheDocument();
+      expect(btn).not.toBeDisabled();
     });
 
     it('is disabled when canDiscard is false', () => {

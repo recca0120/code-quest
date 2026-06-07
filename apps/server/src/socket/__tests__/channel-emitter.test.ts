@@ -51,7 +51,7 @@ describe('ChannelEmitter', () => {
   });
 
   describe('async handler error safety', () => {
-    it('catches errors from async handlers without unhandled rejection', async () => {
+    it('error in async handler does not propagate as unhandled rejection', async () => {
       const emitter = new ChannelEmitter();
       const error = new Error('async boom');
       emitter.on('test:event', async () => {
@@ -61,7 +61,10 @@ describe('ChannelEmitter', () => {
       const ch = makeChannel();
       await emitter.dispatch('test:event', ch, {});
 
-      // setImmediate runs after pending microtasks/rejections are flushed
+      // setImmediate runs after pending microtasks/rejections are flushed.
+      // If the error were unhandled, the test process would emit an
+      // 'unhandledRejection' event and vitest would fail the suite.
+      // Reaching this line without a crash is the behavioral assertion.
       await new Promise((r) => setImmediate(r));
     });
 

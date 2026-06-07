@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { createGeneralConfigFeature, generalConfigSignal } from '../general-config-feature.ts';
+
+afterEach(() => {
+  generalConfigSignal.setOpen(false);
+});
 
 describe('generalConfigSignal', () => {
   it('starts closed', () => {
@@ -27,9 +31,7 @@ describe('createGeneralConfigFeature', () => {
   });
 
   it('execute opens generalConfigSignal', () => {
-    generalConfigSignal.setOpen(false);
     createGeneralConfigFeature().execute();
     expect(generalConfigSignal.isOpen).toBe(true);
-    generalConfigSignal.setOpen(false);
   });
 });

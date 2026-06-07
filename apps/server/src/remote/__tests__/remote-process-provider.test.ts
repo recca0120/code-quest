@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 import { Agent, FsHandler, GitHandler, ProcessHandler } from '@code-quest/summoner/connection';
 import { FakeFilesystem, FakeGit, FakeProcessProvider } from '@code-quest/test-kit';
 import { RpcChannel, type RpcChannelSocket } from '@code-quest/transport';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 import { RemoteProcessProvider } from '../process-provider.ts';
 
@@ -56,9 +56,15 @@ function makeSetup() {
   return { setup, teardown };
 }
 
+type Ctx = Awaited<ReturnType<ReturnType<typeof makeSetup>['setup']>>;
+
+async function waitForAgent(ctx: Ctx) {
+  await vi.waitFor(() => expect(ctx.agentProcessProvider.latest).toBeDefined());
+}
+
 describe('RemoteProcessProvider', () => {
   const { setup, teardown } = makeSetup();
-  let ctx: Awaited<ReturnType<ReturnType<typeof makeSetup>['setup']>>;
+  let ctx: Ctx;
 
   beforeEach(async () => {
     ctx = await setup();
@@ -72,7 +78,7 @@ describe('RemoteProcessProvider', () => {
   it('streams stdout lines from the remote process', async () => {
     const handle = ctx.remoteProvider.spawn('echo', ['hello']);
 
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await waitForAgent(ctx);
 
     ctx.agentProcessProvider.latest.emit('line-a');
     ctx.agentProcessProvider.latest.emit('line-b');
@@ -88,11 +94,13 @@ describe('RemoteProcessProvider', () => {
 
   it('sends stdin to the remote process', async () => {
     const handle = ctx.remoteProvider.spawn('cat', []);
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await waitForAgent(ctx);
 
     const data = JSON.stringify({ type: 'user', message: 'hi' });
     handle.send(data);
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await vi.waitFor(() =>
+      expect(ctx.agentProcessProvider.latest.received('user')).toHaveLength(1),
+    );
 
     const received = ctx.agentProcessProvider.latest.received('user');
     expect(received[0]).toMatchObject({ type: 'user', message: 'hi' });
@@ -100,7 +108,7 @@ describe('RemoteProcessProvider', () => {
 
   it('abort() stops the line stream', async () => {
     const handle = ctx.remoteProvider.spawn('sleep', ['10']);
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await waitForAgent(ctx);
 
     const collected: string[] = [];
     const iterDone = (async () => {
@@ -111,16 +119,15 @@ describe('RemoteProcessProvider', () => {
 
     handle.abort();
     await iterDone;
-    await new Promise<void>((r) => setTimeout(r, 20));
 
     expect(handle.signal.aborted).toBe(true);
-    expect(ctx.agentProcessProvider.latest.signal.aborted).toBe(true);
+    await vi.waitFor(() => expect(ctx.agentProcessProvider.latest.signal.aborted).toBe(true));
   });
 
   it('runOnce collects lines and returns exit code from process/exit notification', async () => {
     const promise = ctx.remoteProvider.runOnce('echo', ['hello']);
 
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await waitForAgent(ctx);
     ctx.agentProcessProvider.latest.emit('line-a');
     ctx.agentProcessProvider.latest.emit('line-b');
     ctx.agentProcessProvider.latest.abort();
@@ -133,7 +140,7 @@ describe('RemoteProcessProvider', () => {
   it('runOnce collects stderr from process/stderr notifications', async () => {
     const promise = ctx.remoteProvider.runOnce('warn', []);
 
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await waitForAgent(ctx);
     ctx.agentProcessProvider.latest.emit('out-line');
     ctx.agentProcessProvider.latest.emitStderr('err-line');
     ctx.agentProcessProvider.latest.abort();
@@ -146,7 +153,6 @@ describe('RemoteProcessProvider', () => {
   it('lines iterator terminates when aborted before iteration begins', async () => {
     const handle = ctx.remoteProvider.spawn('sleep', ['999']);
     handle.abort();
-    await new Promise<void>((r) => setTimeout(r, 20));
 
     const lines: string[] = [];
     for await (const line of handle.lines) {
@@ -157,7 +163,7 @@ describe('RemoteProcessProvider', () => {
 
   it('propagates numeric exit code to handle.signal.reason', async () => {
     const handle = ctx.remoteProvider.spawn('exit', ['42']);
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await waitForAgent(ctx);
     ctx.agentProcessProvider.latest.abort(42);
 
     for await (const _ of handle.lines) {
@@ -169,7 +175,7 @@ describe('RemoteProcessProvider', () => {
 
   it('maps non-numeric abort reason to null exit code (process killed)', async () => {
     const handle = ctx.remoteProvider.spawn('kill', []);
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await waitForAgent(ctx);
     ctx.agentProcessProvider.latest.abort(); // no reason → null exit code
 
     for await (const _ of handle.lines) {

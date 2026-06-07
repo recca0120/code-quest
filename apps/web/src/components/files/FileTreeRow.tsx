@@ -4,21 +4,13 @@ import { forwardRef, type HTMLAttributes, type MouseEvent } from 'react';
 import { TextField } from '@/components/chat/ui/TextField';
 import { cn } from '@/utils/cn';
 import { getFileIcon } from '@/utils/getFileIcon';
+import { gitStatusMark } from '@/utils/git-status';
 
 interface EntryItem {
   name: string;
   path: string;
   kind: 'directory' | 'file';
 }
-
-const GIT_MARK_CLASS: Record<string, string> = {
-  M: 'text-warning',
-  A: 'text-success',
-  D: 'text-danger',
-  R: 'text-info',
-  '??': 'text-success/70',
-  U: 'text-success/70',
-};
 
 interface RowRenameState {
   value: string;
@@ -129,7 +121,7 @@ export const FileTreeRow: React.ForwardRefExoticComponent<
           aria-label={`git-mark-${data.path}`}
           className={cn(
             'ml-2 font-mono text-xs px-1 rounded bg-hover-tint',
-            GIT_MARK_CLASS[gitMark] ?? 'text-muted',
+            gitStatusMark(gitMark).cls,
           )}
         >
           {gitMark}

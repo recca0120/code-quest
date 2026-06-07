@@ -80,10 +80,7 @@ export class GitCommands {
 
   async add(cwd: string, paths?: string[]): Promise<{ ok: true } | { error: string }> {
     const args = paths && paths.length > 0 ? ['add', '--', ...paths] : ['add', '-A'];
-    const result = await rawGit(createGit(cwd), args, this.logger);
-    return result.exitCode === 0
-      ? { ok: true }
-      : { error: result.stdout.trim() || `git ${args.join(' ')} failed` };
+    return this.runGitCmd(cwd, args);
   }
 
   async commit(
@@ -111,15 +108,11 @@ export class GitCommands {
   }
 
   async fetch(cwd: string): Promise<{ ok: true } | { error: string }> {
-    const result = await rawGit(createGit(cwd), ['fetch', '--all'], this.logger);
-    if (result.exitCode === 0) return { ok: true };
-    return { error: result.stdout.trim() || 'git fetch failed' };
+    return this.runGitCmd(cwd, ['fetch', '--all']);
   }
 
   async discardFile(cwd: string, file: string): Promise<{ ok: true } | { error: string }> {
-    const result = await rawGit(createGit(cwd), ['checkout', '--', file], this.logger);
-    if (result.exitCode === 0) return { ok: true };
-    return { error: result.stdout.trim() || `git checkout -- ${file} failed` };
+    return this.runGitCmd(cwd, ['checkout', '--', file]);
   }
 
   async pull(cwd: string): Promise<{ ok: true; fastForwarded: boolean } | { error: string }> {
@@ -132,6 +125,13 @@ export class GitCommands {
     if (RE_NON_FF.test(out)) return { error: 'non-ff' };
     if (RE_NO_TRACKING.test(out)) return { error: 'no-upstream' };
     return { error: result.stdout.trim() || 'git pull failed' };
+  }
+
+  private async runGitCmd(cwd: string, args: string[]): Promise<{ ok: true } | { error: string }> {
+    const result = await rawGit(createGit(cwd), args, this.logger);
+    return result.exitCode === 0
+      ? { ok: true }
+      : { error: result.stdout.trim() || `git ${args.join(' ')} failed` };
   }
 
   async getRepoRoot(cwd: string): Promise<string | null> {

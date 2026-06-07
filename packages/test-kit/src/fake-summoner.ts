@@ -49,7 +49,7 @@ export class FakeSummoner {
     this._socket.emit = (event: string, ...args: unknown[]) => {
       this._sentEvents.push({ event, payload: args[0] });
 
-      if (this._heldEmits.has(event) && this._heldEmits.get(event) === null) {
+      if (this._heldEmits.get(event) === null) {
         return this._interceptHeldEmit(event, args);
       }
 

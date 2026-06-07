@@ -55,7 +55,7 @@ describe('BottomSheet', () => {
 });
 
 describe('BottomSheetItem', () => {
-  it('calls onClick when clicked', async () => {
+  it('fires onClick callback when item button is clicked', async () => {
     const onClick = vi.fn();
     render(
       <BottomSheet open onClose={() => {}}>

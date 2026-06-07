@@ -1,44 +1,37 @@
 import type { GitFileChange } from '@code-quest/git';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useGitActions, useGitStatus } from '@/contexts/GitContext';
+import { useSocket } from '@/contexts/SocketContext';
 import { cn } from '@/utils/cn';
+import { gitStatusMark } from '@/utils/git-status';
 import type { DiffFile } from '@/utils/parse-unified-diff';
 import { ActionButton } from '../ui/ActionButton.tsx';
 import { CommandHint } from '../ui/CommandHint.tsx';
+import { InlinePlaceholder } from '../ui/InlinePlaceholder.tsx';
+import { PaneSection } from '../ui/PaneSection.tsx';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
+import { RowActionButton } from '../ui/RowActionButton.tsx';
 import { Spinner } from '../ui/Spinner.tsx';
 import { CommitComposer } from './CommitComposer.tsx';
+import { createGitPaneActions } from './createGitPaneActions.ts';
 import { DiffDrawer } from './DiffDrawer.tsx';
-import { useGitPaneActions } from './useGitPaneActions.ts';
 
 interface GitPaneProps {
   cwd: string;
 }
 
-const STATUS_LABEL: Record<string, { mark: string; cls: string }> = {
-  M: { mark: 'M', cls: 'text-warning' },
-  A: { mark: 'A', cls: 'text-success' },
-  D: { mark: 'D', cls: 'text-danger' },
-  R: { mark: 'R', cls: 'text-info' },
-  '??': { mark: '?', cls: 'text-success/70' },
-  U: { mark: 'U', cls: 'text-success/70' },
-};
-
-function statusFor(s: string): { mark: string; cls: string } {
-  return STATUS_LABEL[s] ?? { mark: s.slice(0, 1) || '·', cls: 'text-muted' };
-}
-
 export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
-  const { refetchGitStatus } = useGitActions();
+  const { socket } = useSocket();
+  const gitActions = useGitActions();
   const data = useGitStatus(cwd);
-  const refetch = () => refetchGitStatus(cwd);
   const [diffFile, setDiffFile] = useState<DiffFile | null>(null);
 
-  const { stageAll, commit, runFetch, runPull, push, openDiff, handleDiscard } = useGitPaneActions(
-    cwd,
-    { onDiffOpen: setDiffFile },
+  const { stageAll, commit, runFetch, runPull, push, openDiff, handleDiscard } = useMemo(
+    () => createGitPaneActions(cwd, socket, gitActions, { onDiffOpen: setDiffFile }),
+    [cwd, socket, gitActions],
   );
+  const refetch = () => gitActions.refetchGitStatus(cwd);
 
   // ── Early returns (must follow ALL hook calls above) ──
   if (data && 'notARepo' in data) {
@@ -66,23 +59,22 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
     );
   }
 
-  const status = data;
-  const hasChanges = !status.isClean;
-  const changedCount = status.changedFiles.length;
-  const ahead = status.ahead ?? 0;
-  const behind = status.behind ?? 0;
+  const hasChanges = !data.isClean;
+  const changedCount = data.changedFiles.length;
+  const ahead = data.ahead ?? 0;
+  const behind = data.behind ?? 0;
   const diffFileStatus = diffFile
-    ? status.changedFiles.find((f) => f.file === diffFile.path)?.status
+    ? data.changedFiles.find((f) => f.file === diffFile.path)?.status
     : undefined;
   const canDiscardDiffFile = diffFileStatus !== undefined && diffFileStatus !== '??';
 
   return (
     <section className="flex flex-col h-full" aria-label="git-pane">
       <div className="flex-1 min-h-0 overflow-auto">
-        <section className="px-3 py-2 border-b border-border text-sm">
-          <div className="flex items-center justify-between mb-1">
-            <h4 className="section-label m-0">Changes ({changedCount})</h4>
-            {hasChanges && (
+        <PaneSection
+          title={`Changes (${changedCount})`}
+          action={
+            hasChanges && (
               <ActionButton
                 onClick={stageAll}
                 variant="ghost"
@@ -91,20 +83,22 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
               >
                 Stage all
               </ActionButton>
-            )}
-          </div>
+            )
+          }
+          bordered
+          className="text-sm"
+        >
           <ChangedFiles
-            files={status.changedFiles}
+            files={data.changedFiles}
             onPick={openDiff}
             onDiscard={(filePath) => void handleDiscard(filePath, refetch)}
           />
           {hasChanges && (
             <CommitComposer onCommit={(msg) => void commit(msg)} count={changedCount} />
           )}
-        </section>
+        </PaneSection>
 
-        <section className="px-3 py-2">
-          <h4 className="section-label m-0 mb-1">Actions</h4>
+        <PaneSection title="Actions">
           <div className="flex gap-2 text-xs">
             <ActionButton onClick={runFetch} variant="secondary" size="xs">
               Fetch
@@ -116,10 +110,10 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
               Push
             </ActionButton>
           </div>
-        </section>
+        </PaneSection>
       </div>
       <PaneStatusFooter>
-        <span>{status.branch ?? 'unknown'}</span>
+        <span>{data.branch ?? 'unknown'}</span>
         <span>·</span>
         <span>
           {changedCount} {changedCount === 1 ? 'change' : 'changes'}
@@ -156,7 +150,7 @@ function FileRow({
   onPick: (path: string, status: string) => void;
   onDiscard?: (path: string) => void;
 }) {
-  const { mark, cls } = statusFor(file.status);
+  const { mark, cls } = gitStatusMark(file.status);
   const canDiscard = file.status !== '??';
   return (
     <li className="group relative flex items-center">
@@ -169,17 +163,13 @@ function FileRow({
         <span className="font-mono text-xs truncate">{file.file}</span>
       </button>
       {onDiscard && canDiscard && (
-        <button
-          type="button"
+        <RowActionButton
           aria-label={`Discard ${file.file}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDiscard(file.file);
-          }}
-          className="shrink-0 px-1 text-subtle hover:text-danger opacity-0 group-hover:opacity-100"
+          onClick={() => onDiscard(file.file)}
+          className="text-subtle hover:text-danger opacity-0 group-hover:opacity-100"
         >
           ×
-        </button>
+        </RowActionButton>
       )}
     </li>
   );
@@ -195,7 +185,7 @@ function ChangedFiles({
   onDiscard?: (path: string) => void;
 }) {
   if (files.length === 0) {
-    return <div className="text-muted text-xs px-1">No changes</div>;
+    return <InlinePlaceholder>No changes</InlinePlaceholder>;
   }
   return (
     <ul className="flex flex-col">

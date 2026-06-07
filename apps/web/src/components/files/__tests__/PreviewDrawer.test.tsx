@@ -115,7 +115,7 @@ describe('PreviewDrawer', () => {
 
   it('renders no footer when actions not provided', () => {
     renderDrawer({ kind: 'loading' });
-    expect(screen.queryByRole('button', { name: /mention/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('drawer-footer')).not.toBeInTheDocument();
   });
 
   it('resets viewMode to preview when drawer reopens', async () => {

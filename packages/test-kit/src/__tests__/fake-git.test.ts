@@ -212,6 +212,18 @@ describe('FakeGit', () => {
   });
 });
 
+describe('FakeGit reset', () => {
+  it('clears per-cwd branch overrides set via setBranchForCwd', async () => {
+    const git = new FakeGit();
+    git.setBranchForCwd('/worktree', 'feature-x');
+    expect((await git.status('/worktree')).branch).toBe('feature-x');
+
+    git.reset();
+
+    expect((await git.status('/worktree')).branch).toBe('main');
+  });
+});
+
 // ── Contract tests (run the same suite against the real Git too) ──
 import { type ContractSetup, gitContract } from '@code-quest/git/contract';
 

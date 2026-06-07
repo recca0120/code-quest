@@ -13,9 +13,12 @@ import { TYPES } from '../../types.ts';
 describe('ChannelManager', () => {
   describe('create', () => {
     it('spawns runner, initializes, and stores channel', async () => {
-      const { channelId } = await setupSession('test-session-001');
-      // Channel exists — init event was received
+      const { channelId, claude } = await setupSession('test-session-001');
+      // Channel exists — init event was received and channel is stored
       expect(channelId).toBeTruthy();
+      const initEvents = claude.receivedEvents('session:init');
+      expect(initEvents.length).toBeGreaterThan(0);
+      expect(initEvents[0]!.channelId).toBe(channelId);
     });
 
     it('creates multiple channels', async () => {
@@ -126,7 +129,8 @@ describe('ChannelManager', () => {
 
       const statesEvents = claude.receivedEvents('session:states');
       expect(statesEvents.length).toBeGreaterThan(0);
-      expect(statesEvents[0]!.sessions).toBeDefined();
+      const sessions = statesEvents[0]!.sessions;
+      expect(sessions.some((s: { channelId: string }) => s.channelId === 'ch-1')).toBe(true);
     });
   });
 
@@ -151,9 +155,13 @@ describe('ChannelManager', () => {
       const { claude, channelId } = await setupSession('test-session-001');
 
       await claude.send('chat:send', { channelId, message: 'hello' });
+      await claude.emitSegment(s.assistant('hi there'));
+      await claude.emitSegment(s.result());
 
-      // User message was sent to Claude
+      // stdin: user message was sent to Claude
       expect(claude.received('user').length).toBeGreaterThan(0);
+      // stdout: assistant message was received from Claude
+      expect(claude.receivedEvents('message:assistant').length).toBeGreaterThan(0);
     });
   });
 

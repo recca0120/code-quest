@@ -98,7 +98,7 @@ describe('WsTransport.connect() client mode', () => {
     await expect(transport.connect(url(), [rejectMiddleware])).rejects.toThrow('rejected');
   });
 
-  it('heartbeat middleware works after connect', async () => {
+  it('middleware can access context.socket after connect', async () => {
     wss.on('connection', () => {});
 
     let socketAvailable = false;

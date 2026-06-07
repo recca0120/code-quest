@@ -30,8 +30,12 @@ export class GitHandler implements AgentHandler {
   }
 
   attach(rpc: AgentTransport): void {
-    const git = this.git;
+    this.registerCwdHandlers(rpc);
+    this.registerWorktreeHandlers(rpc);
+  }
 
+  private registerCwdHandlers(rpc: AgentTransport): void {
+    const git = this.git;
     rpc.onRequest(REMOTE_METHODS.git.status, async (p) => git.status(parseCwd(p)));
     rpc.onRequest(REMOTE_METHODS.git.checkout, async (p) => {
       const { cwd, branch } = gitCheckoutParamsSchema.parse(p);
@@ -64,6 +68,10 @@ export class GitHandler implements AgentHandler {
     rpc.onRequest(REMOTE_METHODS.git.getRepoRoot, async (p) => git.getRepoRoot(parseCwd(p)));
     rpc.onRequest(REMOTE_METHODS.git.getProjectRoot, async (p) => git.getProjectRoot(parseCwd(p)));
     rpc.onRequest(REMOTE_METHODS.git.initRepo, async (p) => git.initRepo(parseCwd(p)));
+  }
+
+  private registerWorktreeHandlers(rpc: AgentTransport): void {
+    const git = this.git;
     rpc.onRequest(REMOTE_METHODS.git.listBranches, async (p) =>
       git.listBranches(gitListBranchesParamsSchema.parse(p).repoRoot),
     );

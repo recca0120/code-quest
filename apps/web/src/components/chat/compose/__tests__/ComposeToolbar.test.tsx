@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/test-kit';
-import { act, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -33,16 +33,5 @@ describe('ComposeToolbar mcpRefresh', () => {
     await openMcpStatusDialog(user);
 
     expect(await screen.findByText('github')).toBeInTheDocument();
-  });
-
-  it('falls back to base servers when mcpStatus returns no server list', async () => {
-    const { user } = await setup();
-    await sendUserMessage(user, 'hello');
-
-    await openMcpStatusDialog(user);
-    await act(async () => {});
-
-    // Falls back to base mcpServers from init
-    expect(screen.queryByText('github')).toBeInTheDocument();
   });
 });

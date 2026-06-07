@@ -31,13 +31,21 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps): React.
     );
   }
 
+  function reset() {
+    setSubject('');
+    setBody('');
+    setExpanded(false);
+  }
+
   function submit() {
     const message = body ? `${subject.trim()}\n\n${body.trim()}` : subject.trim();
     if (!message) return;
     onCommit(message);
-    setSubject('');
-    setBody('');
-    setExpanded(false);
+    reset();
+  }
+
+  function submitOnMetaEnter(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit();
   }
 
   return (
@@ -52,7 +60,7 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps): React.
         placeholder="Subject"
         onChange={(e) => setSubject(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit();
+          submitOnMetaEnter(e);
           if (e.key === 'Escape') setExpanded(false);
         }}
         className="px-2 py-1 rounded border border-border bg-surface text-xs font-mono"
@@ -62,20 +70,11 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps): React.
         placeholder="Body (optional)"
         rows={3}
         onChange={(e) => setBody(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit();
-        }}
+        onKeyDown={submitOnMetaEnter}
         className="px-2 py-1 rounded border border-border bg-surface text-xs font-mono resize-none"
       />
       <div className="flex justify-end gap-2 mt-1">
-        <InlineAction
-          className="px-2 py-0.5"
-          onClick={() => {
-            setExpanded(false);
-            setSubject('');
-            setBody('');
-          }}
-        >
+        <InlineAction className="px-2 py-0.5" onClick={reset}>
           Cancel
         </InlineAction>
         <Button
@@ -85,7 +84,7 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps): React.
           className="py-0.5"
           onClick={submit}
         >
-          {count !== undefined && count > 0 ? `Commit ${count}` : 'Commit'}
+          {count ? `Commit ${count}` : 'Commit'}
         </Button>
       </div>
     </section>

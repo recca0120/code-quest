@@ -32,23 +32,7 @@ describe('TimelineItem', () => {
       </TimelineItem>,
     );
     expect(screen.getByText('content')).toBeInTheDocument();
-  });
-
-  it('renders a dot', () => {
-    render(
-      <TimelineItem position="only" dotClass="bg-success">
-        <span>x</span>
-      </TimelineItem>,
-    );
     expect(screen.getByTestId('timeline-dot')).toBeInTheDocument();
-  });
-
-  it('renders a timeline line', () => {
-    render(
-      <TimelineItem position="first" dotClass="bg-success">
-        <span>x</span>
-      </TimelineItem>,
-    );
     expect(screen.getByTestId('timeline-line')).toBeInTheDocument();
   });
 

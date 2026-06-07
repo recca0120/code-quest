@@ -39,7 +39,6 @@ export function PreviewDrawer({
   }, [open]);
 
   const isMarkdown = state.kind === 'ready' && isMarkdownMime(state.contentType);
-  const language = state.kind === 'ready' ? langForMime(state.contentType, title) : undefined;
 
   return (
     <RightDrawer
@@ -49,6 +48,7 @@ export function PreviewDrawer({
       onClose={onClose}
       footer={actions}
       overlayTestId="preview-drawer-overlay"
+      footerTestId="drawer-footer"
     >
       {isMarkdown && (
         <div className="flex gap-1 px-4 pt-2 shrink-0">
@@ -68,35 +68,57 @@ export function PreviewDrawer({
           </Button>
         </div>
       )}
-      {state.kind === 'pdf' ? (
-        <Suspense fallback={<div className="p-4 text-sm text-muted">Loading…</div>}>
-          <PdfViewer data={state.data} className="flex-1 min-h-0 px-4 py-2" />
-        </Suspense>
-      ) : (
-        <div className="flex-1 min-h-0 overflow-auto p-4">
-          {state.kind === 'image' ? (
-            <div className="flex items-center justify-center">
-              <img src={state.src} alt={title} className="max-w-full object-contain rounded" />
-            </div>
-          ) : state.kind === 'loading' ? (
-            <div className="text-sm text-muted">Loading…</div>
-          ) : state.kind === 'too-large' ? (
-            <div className="text-sm text-muted">File too large to preview (over 2 MB).</div>
-          ) : state.kind === 'error' ? (
-            <div className="text-sm text-warning">{state.message}</div>
-          ) : isMarkdown && viewMode === 'preview' ? (
-            <MarkdownContent content={state.content} />
-          ) : language ? (
-            <div className="text-xs">
-              <CodeBlock code={state.content} language={language} />
-            </div>
-          ) : (
-            <VirtualLineTable content={state.content} className="flex-1 min-h-0" />
-          )}
-        </div>
-      )}
+      <PreviewContent state={state} title={title} isMarkdown={isMarkdown} viewMode={viewMode} />
     </RightDrawer>
   );
+}
+
+function PreviewContent({
+  state,
+  title,
+  isMarkdown,
+  viewMode,
+}: {
+  state: PreviewState;
+  title: string;
+  isMarkdown: boolean;
+  viewMode: 'preview' | 'raw';
+}): React.JSX.Element {
+  const language = state.kind === 'ready' ? langForMime(state.contentType, title) : undefined;
+  if (state.kind === 'pdf') {
+    return (
+      <Suspense fallback={<div className="p-4 text-sm text-muted">Loading…</div>}>
+        <PdfViewer data={state.data} className="flex-1 min-h-0 px-4 py-2" />
+      </Suspense>
+    );
+  }
+
+  let body: React.ReactNode;
+  if (state.kind === 'loading') {
+    body = <div className="text-sm text-muted">Loading…</div>;
+  } else if (state.kind === 'too-large') {
+    body = <div className="text-sm text-muted">File too large to preview (over 2 MB).</div>;
+  } else if (state.kind === 'error') {
+    body = <div className="text-sm text-warning">{state.message}</div>;
+  } else if (state.kind === 'image') {
+    body = (
+      <div className="flex items-center justify-center">
+        <img src={state.src} alt={title} className="max-w-full object-contain rounded" />
+      </div>
+    );
+  } else if (isMarkdown && viewMode === 'preview') {
+    body = <MarkdownContent content={state.content} />;
+  } else if (language) {
+    body = (
+      <div className="text-xs">
+        <CodeBlock code={state.content} language={language} />
+      </div>
+    );
+  } else {
+    body = <VirtualLineTable content={state.content} className="flex-1 min-h-0" />;
+  }
+
+  return <div className="flex-1 min-h-0 overflow-auto p-4">{body}</div>;
 }
 
 const LINE_HEIGHT = 20;

@@ -153,7 +153,7 @@ describe('RewindDialog', () => {
     expect(items[0]).toHaveTextContent('echoed-q');
   });
 
-  it('shows keyboard shortcut separately from button label in Phase 2', async () => {
+  it('confirm dialog shows Continue and Never mind buttons', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();

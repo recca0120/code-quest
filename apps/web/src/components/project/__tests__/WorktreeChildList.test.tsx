@@ -1,7 +1,7 @@
 import type { WorktreeInfo } from '@code-quest/git';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
 import { createTestWrapper } from '@/test/create-test-wrapper';
 import { setupMatchMedia } from '@/test/fake-match-media';
@@ -83,40 +83,31 @@ describe('WorktreeChildList', () => {
     expect(await screen.findByRole('menuitem', { name: /open in new chat/i })).toBeInTheDocument();
   });
 
-  it('shows "Open past session…" in desktop dropdown', async () => {
-    setupMatchMedia(1280);
-    const { Wrapper } = makeWrapper();
-    render(
-      <Wrapper>
-        <WorktreeChildList worktrees={[worktrees[0]!]} projectCwd="/repo" />
-      </Wrapper>,
-    );
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByLabelText('More actions'));
-    expect(await screen.findByRole('menuitem', { name: /open past session/i })).toBeInTheDocument();
-  });
+  describe.each([
+    [1280, (label: RegExp) => screen.findByRole('menuitem', { name: label })] as const,
+    [375, (label: RegExp) => screen.findByText(label)] as const,
+  ])('at viewport %i', (width, findItem) => {
+    beforeEach(() => {
+      setupMatchMedia(width);
+      const { Wrapper } = makeWrapper();
+      render(
+        <Wrapper>
+          <WorktreeChildList worktrees={[worktrees[0]!]} projectCwd="/repo" />
+        </Wrapper>,
+      );
+    });
 
-  it('shows "Open past session…" in mobile BottomSheet', async () => {
-    setupMatchMedia(375);
-    const { Wrapper } = makeWrapper();
-    render(
-      <Wrapper>
-        <WorktreeChildList worktrees={[worktrees[0]!]} projectCwd="/repo" />
-      </Wrapper>,
-    );
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByLabelText('More actions'));
-    expect(await screen.findByText('Open past session…')).toBeInTheDocument();
-  });
+    it('shows "Open past session…"', async () => {
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      await user.click(screen.getByLabelText('More actions'));
+      expect(await findItem(/open past session/i)).toBeInTheDocument();
+    });
 
-  it('shows "Switch branch…" in desktop dropdown', async () => {
-    setupMatchMedia(1280);
-    const { Wrapper } = makeWrapper();
-    render(
-      <Wrapper>
-        <WorktreeChildList worktrees={[worktrees[0]!]} projectCwd="/repo" />
-      </Wrapper>,
-    );
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByLabelText('More actions'));
-    expect(await screen.findByRole('menuitem', { name: /switch branch/i })).toBeInTheDocument();
+    it('shows "Switch branch…"', async () => {
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      await user.click(screen.getByLabelText('More actions'));
+      expect(await findItem(/switch branch/i)).toBeInTheDocument();
+    });
   });
 
   describe('navigation memory', () => {
@@ -184,17 +175,5 @@ describe('WorktreeChildList', () => {
         .click(screen.getByLabelText('Open worktree feat/x'));
       expect(state!.pendingActivateChannel).toBeNull();
     });
-  });
-
-  it('shows "Switch branch…" in mobile BottomSheet', async () => {
-    setupMatchMedia(375);
-    const { Wrapper } = makeWrapper();
-    render(
-      <Wrapper>
-        <WorktreeChildList worktrees={[worktrees[0]!]} projectCwd="/repo" />
-      </Wrapper>,
-    );
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByLabelText('More actions'));
-    expect(await screen.findByText('Switch branch…')).toBeInTheDocument();
   });
 });

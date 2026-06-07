@@ -13,7 +13,7 @@ describe('PanelHeader', () => {
     expect(screen.getByRole('button', { name: '×' })).toBeInTheDocument();
   });
 
-  it('applies border-b for visual separation', () => {
+  it('renders with a bottom border for visual separation', () => {
     const { container } = render(<PanelHeader title="Files" />);
     const root = container.firstChild as HTMLElement;
     expect(root.className).toMatch(/border-b/);
