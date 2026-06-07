@@ -68,19 +68,11 @@ function WrappedToolUseBlock({
 
 describe('tool-use', () => {
   describe('ToolUseBlock', () => {
-    it('Bash renders with a heroicon SVG (not emoji)', () => {
-      const { container } = render(
-        <WrappedToolUseBlock toolName="Bash" input={{ command: 'ls' }} />,
-      );
-      const button = container.querySelector('button')!;
-      expect(button.querySelector('svg')).toBeInTheDocument();
-      expect(button.textContent).not.toContain('⚙');
-    });
-
-    it('Read renders with a heroicon SVG', () => {
-      const { container } = render(
-        <WrappedToolUseBlock toolName="Read" input={{ file_path: '/src/index.ts' }} />,
-      );
+    it.each([
+      ['Bash', { command: 'ls' }],
+      ['Read', { file_path: '/src/index.ts' }],
+    ] as const)('%s tool header shows an SVG icon instead of emoji', (toolName, input) => {
+      const { container } = render(<WrappedToolUseBlock toolName={toolName} input={input} />);
       const button = container.querySelector('button')!;
       expect(button.querySelector('svg')).toBeInTheDocument();
       expect(button.textContent).not.toContain('⚙');
@@ -205,7 +197,7 @@ describe('tool-use', () => {
       expect(screen.getByText('Result: Read')).toBeInTheDocument();
     });
 
-    it('ToolResultBlock uses heroicon SVG (not ✓ emoji)', () => {
+    it('ToolResultBlock header shows an SVG icon instead of emoji', () => {
       const { container } = render(
         <ToolResultBlock content="file contents here" toolId="tu-1" name="Read" />,
       );
@@ -237,7 +229,7 @@ describe('tool-use', () => {
       expect(screen.getByText('1 turns')).toBeInTheDocument();
     });
 
-    it('streamlined_tool_use_summary uses heroicon SVG (not ⚡ emoji)', () => {
+    it('streamlined_tool_use_summary shows an SVG icon instead of emoji', () => {
       const { container } = render(<StreamlinedToolSummaryContent content="some summary" />);
       const button = container.querySelector('button')!;
       expect(button.querySelector('svg')).toBeInTheDocument();
@@ -272,13 +264,13 @@ describe('tool-use', () => {
       expect(screen.getByText(/Running hook: pre-commit/)).toBeInTheDocument();
     });
 
-    it('hook_started uses heroicon SVG (not ⚙ emoji)', () => {
+    it('hook_started shows an SVG icon instead of emoji', () => {
       const { container } = render(<HookStartedContent content="pre-commit" />);
       expect(container.querySelector('svg')).toBeInTheDocument();
       expect(container.textContent).not.toContain('⚙');
     });
 
-    it('hook_response uses heroicon SVG (not 🔗 emoji)', () => {
+    it('hook_response shows an SVG icon instead of emoji', () => {
       const { container } = render(<HookResponseContent content="pre-commit" />);
       expect(container.querySelector('svg')).toBeInTheDocument();
       expect(container.textContent).not.toContain('🔗');

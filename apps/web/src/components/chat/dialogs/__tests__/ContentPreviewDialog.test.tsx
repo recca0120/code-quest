@@ -4,34 +4,34 @@ import { describe, expect, it, vi } from 'vitest';
 import { ContentPreviewDialog } from '../ContentPreviewDialog.tsx';
 
 describe('ContentPreviewDialog', () => {
-  it('render title', () => {
+  it('renders title', () => {
     render(<ContentPreviewDialog content="test" title="My Preview" onClose={vi.fn()} />);
     expect(screen.getByText('My Preview')).toBeInTheDocument();
   });
 
-  it('render content', () => {
+  it('renders content', () => {
     render(<ContentPreviewDialog content="Hello world" onClose={vi.fn()} />);
     expect(screen.getByText('Hello world')).toBeInTheDocument();
   });
 
-  it('call onClose when close button clicked', async () => {
+  it('calls onClose when close button clicked', async () => {
     const onClose = vi.fn();
     render(<ContentPreviewDialog content="test" onClose={onClose} />);
     await userEvent.click(screen.getByRole('button', { name: /close/i }));
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('render without title', () => {
+  it('renders without title', () => {
     render(<ContentPreviewDialog content="no title" onClose={vi.fn()} />);
     expect(screen.getByText('no title')).toBeInTheDocument();
   });
 
-  it('render markdown content when no diffs provided', () => {
+  it('renders markdown content when no diffs provided', () => {
     render(<ContentPreviewDialog content="# Heading" onClose={vi.fn()} />);
     expect(screen.getByText('Heading')).toBeInTheDocument();
   });
 
-  it('render DiffViewer for each diff entry when diffs provided', () => {
+  it('renders DiffViewer for each diff entry when diffs provided', () => {
     const diffs = [
       { filePath: 'src/foo.ts', oldContent: 'old foo', newContent: 'new foo' },
       { filePath: 'src/bar.ts', oldContent: 'old bar', newContent: 'new bar' },
@@ -41,7 +41,7 @@ describe('ContentPreviewDialog', () => {
     expect(filenames).toHaveLength(2);
   });
 
-  it('show file paths in diff headers', () => {
+  it('shows file paths in diff headers', () => {
     const diffs = [{ filePath: 'src/hello.ts', oldContent: 'a', newContent: 'b' }];
     render(<ContentPreviewDialog content="" diffs={diffs} onClose={vi.fn()} />);
     expect(screen.getByText('src/hello.ts')).toBeInTheDocument();

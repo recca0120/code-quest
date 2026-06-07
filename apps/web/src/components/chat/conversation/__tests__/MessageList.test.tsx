@@ -238,7 +238,7 @@ describe('MessageList', () => {
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
   });
 
-  it('clicking stop subagent does not crash', async () => {
+  it('stop subagent button remains visible after click', async () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {

@@ -107,29 +107,6 @@ describe('session:history client rendering (A sends, B joins)', () => {
     await waitFor(() => {
       expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
     });
-    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
-  });
-
-  it('B does NOT see "Running..." fallback text after task completes', async () => {
-    const { windowA, windowB, channelId } = await setupClientWindows();
-
-    await windowA.send('chat:send', { channelId, message: 'verify' });
-    await windowA.claude().emitSegment(s.agent('toolu_agent', 'Verify tokens'));
-    await windowA
-      .claude()
-      .emitSegment(s.taskStarted('toolu_agent', 'Verify tokens', { taskType: 'local_agent' }));
-    await windowA
-      .claude()
-      .emitSegment(s.taskNotification('task-1', { toolUseId: 'toolu_agent', status: 'completed' }));
-    await windowA.claude().emitSegment(s.toolResult('toolu_agent', 'All correct'));
-    await windowA.claude().emitSegment(s.result());
-
-    await renderAndJoinB(windowB, channelId);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
-    });
-    // The body "Running..." fallback should NOT show
     expect(screen.queryByText('Running...')).not.toBeInTheDocument();
     expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
   });

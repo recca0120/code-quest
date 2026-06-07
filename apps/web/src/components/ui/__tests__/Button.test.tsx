@@ -4,9 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { Button } from '../Button.tsx';
 
 describe('Button', () => {
-  it('renders children', () => {
+  it('renders provided children as the button label', () => {
     render(<Button>Submit</Button>);
-    expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument();
+    const btn = screen.getByRole('button', { name: 'Submit' });
+    expect(btn).toBeInTheDocument();
+    expect(btn.className).toMatch(/transition-all/);
   });
 
   it('defaults to variant="primary" with accent background', () => {
@@ -73,10 +75,5 @@ describe('Button', () => {
   it('variant="info" uses button token', () => {
     render(<Button variant="info">X</Button>);
     expect(screen.getByRole('button').className).toMatch(/bg-button/);
-  });
-
-  it('base includes transition-all', () => {
-    render(<Button>X</Button>);
-    expect(screen.getByRole('button').className).toMatch(/transition-all/);
   });
 });

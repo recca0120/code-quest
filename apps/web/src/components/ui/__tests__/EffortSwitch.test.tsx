@@ -32,15 +32,22 @@ describe('EffortSwitch behavior', () => {
     expect(onSelect).toHaveBeenLastCalledWith('low');
   });
 
-  it('Home / End jump to extremes', async () => {
+  it('Home key jumps to first level', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(<EffortSwitch level="medium" levels={LEVELS} onSelect={onSelect} />);
+    screen.getByRole('slider').focus();
+    await user.keyboard('{Home}');
+    expect(onSelect).toHaveBeenLastCalledWith('low');
+  });
+
+  it('End key jumps to last level', async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     render(<EffortSwitch level="medium" levels={LEVELS} onSelect={onSelect} />);
     screen.getByRole('slider').focus();
     await user.keyboard('{End}');
     expect(onSelect).toHaveBeenLastCalledWith('max');
-    await user.keyboard('{Home}');
-    expect(onSelect).toHaveBeenLastCalledWith('low');
   });
 
   it('click at the visible right edge picks max (linear mapping across full pill)', () => {

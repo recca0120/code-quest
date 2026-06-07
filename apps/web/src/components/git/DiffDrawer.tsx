@@ -65,14 +65,13 @@ export function DiffDrawer({
     setPendingConfirm(false);
   }
 
-  const filePath = file.path;
-  const title = `${filePath}  +${file.added} -${file.removed}`;
+  const title = `${file.path}  +${file.added} -${file.removed}`;
   const truncated = file.lines.length > LINE_LIMIT;
   const lines = truncated ? file.lines.slice(0, LINE_LIMIT) : file.lines;
 
   const footer = (
     <>
-      <Button variant="secondary" size="sm" onClick={() => void copyToClipboard(filePath)}>
+      <Button variant="secondary" size="sm" onClick={() => void copyToClipboard(file.path)}>
         Copy path
       </Button>
       {onDiscard && (

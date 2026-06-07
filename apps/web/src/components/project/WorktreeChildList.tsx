@@ -50,15 +50,18 @@ export function WorktreeChildList({
 
   const closeDialog = () => setDialog(null);
 
-  const openWorktreeInChat = (pCwd: string, wCwd: string, forceNew = false) => {
+  function activateWorktree(pCwd: string, wCwd: string) {
     setActiveProject(pCwd);
     setSelectedWorktree(pCwd, wCwd);
+  }
+
+  const openWorktreeInChat = (pCwd: string, wCwd: string, forceNew = false) => {
+    activateWorktree(pCwd, wCwd);
     requestOpenWorktree(pCwd, wCwd, forceNew);
   };
 
   const selectWorktree = (pCwd: string, wCwd: string) => {
-    setActiveProject(pCwd);
-    setSelectedWorktree(pCwd, wCwd);
+    activateWorktree(pCwd, wCwd);
     recordLastWorktree(pCwd, wCwd);
     const lastTab = lastTabByWorktree[wCwd];
     if (lastTab) requestActivateChannel(pCwd, lastTab);

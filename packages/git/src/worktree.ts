@@ -10,6 +10,10 @@ import { noopLogger } from './types.ts';
 const WORKTREE_PATH_RE = /[/\\]\.claude[/\\]worktrees[/\\]([^/\\]+)$/;
 const WORKTREE_BRANCH_PREFIX = 'worktree-';
 
+function worktreeDir(repoRoot: string, name: string): string {
+  return join(repoRoot, '.claude', 'worktrees', name);
+}
+
 export function assertWorktreeName(name: string): void {
   const err = validateWorktreeName(name);
   if (err) throw new Error(`Invalid worktree name: ${err}`);
@@ -98,7 +102,7 @@ export class GitWorktreeOps {
     const { worktreeName, branch, createBranch } = this.resolveWorktreeParams(opts);
     assertWorktreeName(worktreeName);
 
-    const worktreePath = path ?? join(repoRoot, '.claude', 'worktrees', worktreeName);
+    const worktreePath = path ?? worktreeDir(repoRoot, worktreeName);
 
     if (await this.isExistingWorktree(worktreePath)) {
       return { name: worktreeName, path: worktreePath, branch };
@@ -129,7 +133,7 @@ export class GitWorktreeOps {
 
   async deleteWorktree(repoRoot: string, name: string): Promise<void> {
     assertWorktreeName(name);
-    const worktreePath = join(repoRoot, '.claude', 'worktrees', name);
+    const worktreePath = worktreeDir(repoRoot, name);
     const branchName = `${WORKTREE_BRANCH_PREFIX}${name}`;
     const git = createGit(repoRoot);
 
@@ -154,7 +158,7 @@ export class GitWorktreeOps {
     opts?: { force?: boolean },
   ): Promise<{ ok: true } | { error: string }> {
     assertWorktreeName(name);
-    const worktreePath = join(repoRoot, '.claude', 'worktrees', name);
+    const worktreePath = worktreeDir(repoRoot, name);
     const args = ['worktree', 'remove', worktreePath];
     if (opts?.force) args.push('--force');
     const result = await rawGit(createGit(repoRoot), args);
@@ -201,11 +205,14 @@ export class GitWorktreeOps {
     const defaultBranch = baseBranchOverride ?? (await this.getDefaultBranch(repoRoot));
     let base = defaultBranch;
     if (!baseBranchOverride) {
-      const fetchResult = await rawGit(git, ['fetch', 'origin', defaultBranch]);
+      const [fetchResult] = await Promise.all([
+        rawGit(git, ['fetch', 'origin', defaultBranch]),
+        rawGit(git, ['worktree', 'prune']),
+      ]);
       base = fetchResult.exitCode === 0 ? `origin/${defaultBranch}` : 'HEAD';
+    } else {
+      await rawGit(git, ['worktree', 'prune']);
     }
-
-    await rawGit(git, ['worktree', 'prune']);
     if (allowBranchNuke) {
       await rawGit(git, ['branch', '-D', branchName]);
     }

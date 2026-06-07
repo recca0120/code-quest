@@ -89,7 +89,7 @@ describe('slash command integration', () => {
       expect(screen.queryByLabelText('mention-dropdown')).not.toBeInTheDocument();
     });
 
-    it('single Escape closes / menu without leaving menu open', async () => {
+    it('Escape closes the slash menu and keeps / in textarea with focus', async () => {
       const user = userEvent.setup();
       await renderChatInputArea({ slashCommands: ['compact'] });
       const textarea = screen.getByRole('textbox');
@@ -99,17 +99,6 @@ describe('slash command integration', () => {
 
       await user.keyboard('{Escape}');
       expect(screen.queryByText('Slash Commands')).not.toBeInTheDocument();
-      expect(textarea).toHaveFocus();
-    });
-
-    it('Escape keeps / in textarea and keeps focus', async () => {
-      const user = userEvent.setup();
-      await renderChatInputArea({ slashCommands: ['compact'] });
-      const textarea = screen.getByRole('textbox');
-
-      await user.type(textarea, '/');
-      await user.keyboard('{Escape}');
-
       expect(textarea).toHaveValue('/');
       expect(textarea).toHaveFocus();
     });

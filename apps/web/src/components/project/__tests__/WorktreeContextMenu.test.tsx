@@ -83,7 +83,7 @@ describe('WorktreeContextMenu (Dropdown variant)', () => {
     expect(onCopyPath).toHaveBeenCalled();
   });
 
-  it('Delete item has danger colour (bg-danger/10 on highlight)', async () => {
+  it('Delete item has danger styling', async () => {
     render(
       <WorktreeDropdownMenu
         trigger={TRIGGER}

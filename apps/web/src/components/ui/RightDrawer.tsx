@@ -13,6 +13,7 @@ interface RightDrawerProps {
   children: ReactNode;
   footer?: ReactNode;
   overlayTestId?: string;
+  footerTestId?: string;
 }
 
 export function RightDrawer({
@@ -23,6 +24,7 @@ export function RightDrawer({
   children,
   footer,
   overlayTestId,
+  footerTestId,
 }: RightDrawerProps): React.JSX.Element {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +64,12 @@ export function RightDrawer({
           </RadixDialog.Title>
           {children}
           {footer && (
-            <div className="flex gap-2 px-4 py-3 border-t border-border shrink-0">{footer}</div>
+            <div
+              data-testid={footerTestId}
+              className="flex gap-2 px-4 py-3 border-t border-border shrink-0"
+            >
+              {footer}
+            </div>
           )}
         </RadixDialog.Content>
       </RadixDialog.Portal>

@@ -111,4 +111,19 @@ describe('FakeProcessProvider', () => {
     expect(provider.all).toEqual([h1, h2]);
     expect(provider.latest).toBe(h2);
   });
+
+  it('reset() clears handles, spawnCalls, runOnceCalls, and queued responses', async () => {
+    const provider = new FakeProcessProvider();
+    provider.spawn('claude', ['--json']);
+    provider.enqueueRunOnce({ exitCode: 0, stdout: 'out', stderr: '' });
+
+    provider.reset();
+
+    expect(provider.all).toHaveLength(0);
+    expect(provider.spawnCalls).toHaveLength(0);
+    expect(provider.runOnceCalls).toHaveLength(0);
+    // Queued response was cleared — next runOnce returns default
+    const result = await provider.runOnce('x', []);
+    expect(result).toEqual({ exitCode: 0, stdout: '', stderr: '' });
+  });
 });

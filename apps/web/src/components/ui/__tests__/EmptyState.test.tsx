@@ -34,7 +34,7 @@ describe('EmptyState', () => {
   it('renders hint slot below message when provided', () => {
     render(<EmptyState message="No openspec/ directory" hint={<code>openspec init</code>} />);
     expect(screen.getByText('No openspec/ directory')).toBeInTheDocument();
-    expect(screen.getByText('openspec init')).toHaveTextContent('openspec init');
+    expect(screen.getByText('openspec init').tagName).toBe('CODE');
   });
 
   it('constrains the message width with max-w-xs', () => {

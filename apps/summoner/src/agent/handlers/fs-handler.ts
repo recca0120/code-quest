@@ -26,18 +26,51 @@ export class FsHandler implements AgentHandler {
   }
 
   attach(rpc: AgentTransport): void {
+    this.registerReadHandlers(rpc);
+    this.registerMutationHandlers(rpc);
+  }
+
+  private registerReadHandlers(rpc: AgentTransport): void {
     const fs = this.filesystem;
 
     rpc.onRequest(REMOTE_METHODS.fs.browseDirectories, async (params) => {
       const p = fsBrowseDirectoriesParamsSchema.parse(params);
-      const entries = await fs.browseDirectories(p.path);
-      return { entries };
+      return { entries: await fs.browseDirectories(p.path) };
     });
 
     rpc.onRequest(REMOTE_METHODS.fs.browseEntries, async (params) => {
       const p = fsBrowseEntriesParamsSchema.parse(params);
       return fs.browseEntries(p.path, { showHidden: p.showHidden });
     });
+
+    rpc.onRequest(REMOTE_METHODS.fs.list, async (params) => {
+      const p = fsListParamsSchema.parse(params);
+      return { files: await fs.listFiles(p.cwd, p.pattern) };
+    });
+
+    rpc.onRequest(REMOTE_METHODS.fs.read, async (params) => {
+      const p = fsReadParamsSchema.parse(params);
+      return fs.readFile(p.file, { cwd: p.cwd, maxBytes: p.maxBytes });
+    });
+
+    rpc.onRequest(REMOTE_METHODS.fs.exists, async (params) => {
+      const p = fsExistsParamsSchema.parse(params);
+      return { exists: await fs.exists(p.path) };
+    });
+
+    rpc.onRequest(REMOTE_METHODS.fs.isDirectory, async (params) => {
+      const p = fsIsDirectoryParamsSchema.parse(params);
+      return { isDirectory: await fs.isDirectory(p.path) };
+    });
+
+    rpc.onRequest(REMOTE_METHODS.fs.statKind, async (params) => {
+      const p = fsStatKindParamsSchema.parse(params);
+      return { kind: await fs.statKind(p.path) };
+    });
+  }
+
+  private registerMutationHandlers(rpc: AgentTransport): void {
+    const fs = this.filesystem;
 
     rpc.onRequest(REMOTE_METHODS.fs.writeFile, async (params) => {
       const p = fsWriteFileAbsoluteParamsSchema.parse(params);
@@ -67,35 +100,6 @@ export class FsHandler implements AgentHandler {
     rpc.onRequest(REMOTE_METHODS.fs.move, async (params) => {
       const p = fsMoveParamsSchema.parse(params);
       return fs.move(p.from, p.to);
-    });
-
-    rpc.onRequest(REMOTE_METHODS.fs.list, async (params) => {
-      const p = fsListParamsSchema.parse(params);
-      const files = await fs.listFiles(p.cwd, p.pattern);
-      return { files };
-    });
-
-    rpc.onRequest(REMOTE_METHODS.fs.read, async (params) => {
-      const p = fsReadParamsSchema.parse(params);
-      return fs.readFile(p.file, { cwd: p.cwd, maxBytes: p.maxBytes });
-    });
-
-    rpc.onRequest(REMOTE_METHODS.fs.exists, async (params) => {
-      const p = fsExistsParamsSchema.parse(params);
-      const exists = await fs.exists(p.path);
-      return { exists };
-    });
-
-    rpc.onRequest(REMOTE_METHODS.fs.isDirectory, async (params) => {
-      const p = fsIsDirectoryParamsSchema.parse(params);
-      const isDirectory = await fs.isDirectory(p.path);
-      return { isDirectory };
-    });
-
-    rpc.onRequest(REMOTE_METHODS.fs.statKind, async (params) => {
-      const p = fsStatKindParamsSchema.parse(params);
-      const kind = await fs.statKind(p.path);
-      return { kind };
     });
   }
 }

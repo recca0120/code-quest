@@ -30,7 +30,7 @@ describe('ProjectList', () => {
     expect(screen.getByText(/DQ/)).toBeInTheDocument();
   });
 
-  it('renders "+ Add Project" button matching mockup', () => {
+  it('renders Add Project button with dashed border style', () => {
     render(
       <ProjectList projects={[]} activeProjectCwd={null} onSelect={() => {}} onAdd={() => {}} />,
     );

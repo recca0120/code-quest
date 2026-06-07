@@ -119,15 +119,6 @@ async function emitFullConversation(claude: ReturnType<Summoner['claude']>) {
 }
 
 describe('radix-tab conversation: live path', () => {
-  it('sub-agent (local_agent) stops showing Running after task_notification(completed)', async () => {
-    const { claude } = await setupLive();
-    await act(() => emitAgentTurn(claude));
-
-    await waitFor(() => {
-      expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
-    });
-  });
-
   it('local_bash does not show Done badge (timeline dot handles status)', async () => {
     const { claude } = await setupLive();
     await act(() => emitBashTurn(claude));

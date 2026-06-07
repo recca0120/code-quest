@@ -12,7 +12,7 @@ describe('SessionProvider (global config only)', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('settings:update config updates are processed without crash', async () => {
+  it('assistant reply is rendered after emitting an assistant turn', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();
@@ -58,7 +58,7 @@ describe('SessionProvider (global config only)', () => {
     expect(await screen.findByText(/Connection refused/i)).toBeInTheDocument();
   });
 
-  it('does not crash on reconnect', async () => {
+  it('reconnects successfully', async () => {
     const { claude, addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();
@@ -71,5 +71,6 @@ describe('SessionProvider (global config only)', () => {
     });
 
     expect(claude.connected).toBe(true);
+    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 });

@@ -70,6 +70,7 @@ describe('ActionButton', () => {
       </ActionButton>,
     );
     const btn = screen.getByRole('button', { name: 'Delete' });
-    expect(btn).toBeInTheDocument();
+    expect(btn.className).toMatch(/bg-danger/);
+    expect(btn.className).toMatch(/py-1/);
   });
 });

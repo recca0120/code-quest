@@ -1,13 +1,7 @@
-import type { FileWatcher } from '@code-quest/file-watcher';
 import { describe, expect, it, vi } from 'vitest';
 import { LocalFileWatcher } from '../local-file-watcher.ts';
 
 describe('LocalFileWatcher', () => {
-  it('satisfies FileWatcher interface', () => {
-    const service: FileWatcher = new LocalFileWatcher();
-    expect(typeof service.subscribe).toBe('function');
-  });
-
   it('subscribe returns an unsubscribe function', () => {
     const service = new LocalFileWatcher();
     const unsub = service.subscribe('/tmp', vi.fn());
@@ -24,7 +18,7 @@ describe('LocalFileWatcher', () => {
     }).not.toThrow();
   });
 
-  it('multiple subscribers for the same cwd are all registered', () => {
+  it('unsubscribing multiple callbacks for same cwd does not throw', () => {
     const service = new LocalFileWatcher();
     const cb1 = vi.fn();
     const cb2 = vi.fn();
@@ -48,7 +42,7 @@ describe('LocalFileWatcher', () => {
     expect(() => service.subscribe('/tmp', vi.fn())()).not.toThrow();
   });
 
-  it('accepts an optional logger', () => {
+  it('constructs without error when logger is provided', () => {
     const logger = {
       debug: vi.fn(),
       warn: vi.fn(),

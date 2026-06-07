@@ -146,6 +146,13 @@ export class FakeProcessProvider implements ProcessProvider {
     this.runOnceResponses.push(result);
   }
 
+  reset(): void {
+    this.handles.length = 0;
+    this._spawnCalls.length = 0;
+    this._runOnceCalls.length = 0;
+    this.runOnceResponses.length = 0;
+  }
+
   spawn(command: string, args: string[], options?: SpawnOptions): FakeProcessHandle {
     this._spawnCalls.push({ command, args, options });
     const handle = new FakeProcessHandle();

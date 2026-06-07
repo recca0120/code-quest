@@ -15,13 +15,6 @@ function Wrapper({ onAddComment }: { onAddComment: (comment: PlanCommentData) =>
 }
 
 describe('PlanCommentPopover', () => {
-  it('renders without crashing', () => {
-    const onAddComment = vi.fn<(comment: PlanCommentData) => void>();
-    const { container } = render(<Wrapper onAddComment={onAddComment} />);
-    // No comment overlay shown by default (no selection)
-    expect(container.querySelector('textarea')).toBeNull();
-  });
-
   it('does not show overlay when no selection', () => {
     const onAddComment = vi.fn<(comment: PlanCommentData) => void>();
     render(<Wrapper onAddComment={onAddComment} />);

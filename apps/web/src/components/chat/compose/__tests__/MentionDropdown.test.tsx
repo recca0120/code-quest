@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MentionDropdown } from '../MentionDropdown.tsx';
 
 function createBaseProps() {
@@ -16,6 +16,8 @@ function createBaseProps() {
 const baseProps = createBaseProps();
 
 describe('MentionDropdown', () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it('renders file item with icon + name + directory path', () => {
     render(
       <MentionDropdown

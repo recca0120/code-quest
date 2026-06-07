@@ -84,8 +84,10 @@ export class LocalOpenspec implements Openspec {
       return { error: 'no-openspec' };
     }
     try {
-      const changesRaw = await this.process.runOnce('openspec', ['list', '--json'], { cwd });
-      const specsRaw = await this.process.runOnce('openspec', ['spec', 'list', '--json'], { cwd });
+      const [changesRaw, specsRaw] = await Promise.all([
+        this.process.runOnce('openspec', ['list', '--json'], { cwd }),
+        this.process.runOnce('openspec', ['spec', 'list', '--json'], { cwd }),
+      ]);
       const changesParsed = cliListChangesSchema.safeParse(safeJsonParse(changesRaw.stdout));
       // `openspec spec list --json` outputs plain text when there are no specs (CLI bug).
       // Treat any non-JSON response as an empty list rather than a hard error.
@@ -120,12 +122,7 @@ export class LocalOpenspec implements Openspec {
 
   async changeNew(cwd: string, name: string): Promise<OpenspecChangeNewResult> {
     if (!isSlug(name)) return { error: 'invalid-name' };
-    if (!this.process) return { error: 'process-runner-unavailable' };
-    const r = await this.process.runOnce('openspec', ['new', 'change', name], { cwd });
-    if (r.exitCode !== 0) {
-      return { error: r.stderr.trim() || `openspec new change exited ${r.exitCode}` };
-    }
-    return { ok: true };
+    return this.runOpenspecCmd(cwd, ['new', 'change', name]);
   }
 
   async archive(
@@ -134,12 +131,19 @@ export class LocalOpenspec implements Openspec {
     opts: OpenspecArchiveOptions = {},
   ): Promise<OpenspecArchiveResult> {
     if (!isSlug(name)) return { error: 'invalid-name' };
-    if (!this.process) return { error: 'process-runner-unavailable' };
     const args = ['archive', name, '-y'];
     if (opts.skipSpecs) args.push('--skip-specs');
+    return this.runOpenspecCmd(cwd, args);
+  }
+
+  private async runOpenspecCmd(
+    cwd: string,
+    args: string[],
+  ): Promise<{ ok: true } | { error: string }> {
+    if (!this.process) return { error: 'process-runner-unavailable' };
     const r = await this.process.runOnce('openspec', args, { cwd });
     if (r.exitCode !== 0) {
-      return { error: r.stderr.trim() || `openspec archive exited ${r.exitCode}` };
+      return { error: r.stderr.trim() || `openspec ${args[0]} exited ${r.exitCode}` };
     }
     return { ok: true };
   }
@@ -161,6 +165,7 @@ export class LocalOpenspec implements Openspec {
     const match = lines[lineIndex]?.match(TASK_LINE_RE);
     if (!match) return { error: 'not-a-task-line' };
     const [, prefix, mark, rest] = match;
+    if (!prefix || !rest) return { error: 'not-a-task-line' };
     const checked = mark === ' ';
     lines[lineIndex] = `${prefix}${checked ? 'x' : ' '}${rest}`;
     const write = await this.fs.writeFile(path, lines.join('\n'));

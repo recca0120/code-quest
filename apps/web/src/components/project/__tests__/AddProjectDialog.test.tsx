@@ -30,7 +30,7 @@ function setup() {
 }
 
 describe('AddProjectDialog', () => {
-  it('renders dialog with title and tree', async () => {
+  it('shows the directory picker when opened', async () => {
     const { Wrapper } = setup();
     render(<AddProjectDialog open onSelect={() => {}} onClose={() => {}} />, { wrapper: Wrapper });
 

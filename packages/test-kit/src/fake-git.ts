@@ -166,6 +166,7 @@ export class FakeGit implements Git {
     this._discardedFiles = [];
     this._commitHashCounter = 0;
     this._initializedRepos = new Set<string>(['/repo']);
+    this._branchByCwd.clear();
   }
 
   // ── Git interface ──

@@ -1,13 +1,15 @@
+import type { SessionBroadcastState } from '@code-quest/schemas';
 import { useMemo } from 'react';
 import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useSession } from '@/contexts/SessionContext';
+import { ClickableRowOverlay } from '../ui/ClickableRowOverlay.tsx';
+import { RowActionButton } from '../ui/RowActionButton.tsx';
 import { StatusDot } from '../ui/StatusDot.tsx';
 
 type DotProps = { color: 'accent' | 'success' | 'danger' | 'muted'; pulse?: boolean };
-const DOT_BY_STATE: Record<string, DotProps> = {
+const DOT_BY_STATE: Partial<Record<SessionBroadcastState, DotProps>> = {
   busy: { color: 'accent', pulse: true },
-  processing: { color: 'accent', pulse: true },
-  connecting: { color: 'accent', pulse: true },
+  launching: { color: 'accent', pulse: true },
   idle: { color: 'success' },
   disconnected: { color: 'danger' },
 };
@@ -44,25 +46,19 @@ export function WorktreeSessionList({
             key={s.channelId}
             className="group relative flex items-center gap-1.5 px-2 py-1 text-xs rounded text-muted hover:bg-hover-tint hover:text-text"
           >
-            <button
-              type="button"
+            <ClickableRowOverlay
               aria-label={`Session: ${label}`}
               onClick={() => requestActivateChannel(s.projectRoot, s.channelId)}
-              className="absolute inset-0"
             />
             <StatusDot color={color} pulse={pulse} className="relative z-10 shrink-0" />
             <span className="relative z-10 truncate flex-1">{label}</span>
-            <button
-              type="button"
+            <RowActionButton
               aria-label={`Close session: ${label}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                closeSession(s.channelId);
-              }}
-              className="relative z-10 shrink-0 px-0.5 rounded text-subtle hover:text-danger opacity-0 group-hover:opacity-100"
+              onClick={() => closeSession(s.channelId)}
+              className="px-0.5 rounded text-subtle hover:text-danger opacity-0 group-hover:opacity-100"
             >
               ×
-            </button>
+            </RowActionButton>
           </div>
         );
       })}

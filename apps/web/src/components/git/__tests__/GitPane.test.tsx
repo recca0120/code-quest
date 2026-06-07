@@ -245,11 +245,13 @@ describe('GitPane', () => {
     render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
 
     await user.click(await screen.findByText('foo.ts'));
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(dialog.textContent).toMatch(/foo\.ts/);
     expect(screen.getByRole('button', { name: /copy path/i })).toBeInTheDocument();
   });
 
-  it('renders two labeled sections: Changes, Actions (Branch section removed)', async () => {
+  it('renders Changes and Actions section headings', async () => {
     const { summoner, Wrapper } = setup();
     summoner.git()!.setBranch('main');
     summoner.git()!.setClean(false);

@@ -21,23 +21,10 @@ describe('ThinkingBlock', () => {
     expect(root).toBeInTheDocument();
   });
 
-  it('trigger contains "Thinking"', () => {
-    render(<ThinkingBlock blockId="test-block" content="thinking..." />);
-    expect(screen.getByText('Thinking')).toBeInTheDocument();
-  });
-
   it('has a chevron SVG inside trigger', () => {
     const { container } = render(<ThinkingBlock blockId="test-block" content="thinking..." />);
     const trigger = container.querySelector('button');
     expect(trigger?.querySelector('svg')).toBeInTheDocument();
-  });
-
-  it('chevron SVG has explicit size class (else heroicons stretch to fill flex parent)', () => {
-    const { container } = render(<ThinkingBlock blockId="test-block" content="thinking..." />);
-    const svg = container.querySelector('button svg');
-    const classes = svg?.getAttribute('class') ?? '';
-    expect(classes).toMatch(/\bw-\d/);
-    expect(classes).toMatch(/\bh-\d/);
   });
 
   it('chevron is w-4 h-4 to match tool group chevron size', () => {

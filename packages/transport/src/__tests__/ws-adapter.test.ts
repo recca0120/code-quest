@@ -68,5 +68,10 @@ describe('wsAdapter — createSocket', () => {
     const closed = vi.fn();
     socket.onClose(closed);
     await vi.waitFor(() => expect(closed).toHaveBeenCalled());
+
+    // The post-connect error must not propagate to the initial connect promise;
+    // any error surfaced through onError is handled by the caller's error handler,
+    // not as an unhandled rejection from connect().
+    expect(errorHandler).not.toHaveBeenCalled();
   });
 });
