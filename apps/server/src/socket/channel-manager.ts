@@ -199,6 +199,14 @@ export class ChannelManager {
     return [...this.channels].filter(([, ch]) => !ch.exited);
   }
 
+  /** Destroy all channels — for test teardown only. Clears timers without killing processes. */
+  destroyAll(): void {
+    for (const [channelId, channel] of [...this.channels]) {
+      channel.destroy();
+      this.channels.delete(channelId);
+    }
+  }
+
   getFirstAlive(): Channel | undefined {
     return this.getAliveChannels()[0]?.[1];
   }

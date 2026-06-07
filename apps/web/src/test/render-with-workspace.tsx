@@ -1,10 +1,12 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness */
 
 import { EVENTS } from '@code-quest/schemas';
+import { createFakeServer } from '@code-quest/server/test';
 import type { FakeClaude } from '@code-quest/test-kit';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Toaster } from 'sonner';
+import { onTestFinished } from 'vitest';
 import { WorkspaceLayout } from '../components/workspace/WorkspaceLayout.tsx';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { FsProvider } from '../contexts/FsContext.tsx';
@@ -112,7 +114,9 @@ async function addProject(
 export async function renderWithWorkspace(
   opts?: RenderWithWorkspaceOptions,
 ): Promise<RenderWithWorkspaceResult> {
-  const summoner = opts?.summoner ?? createFakeSummoner();
+  const ownedServer = opts?.summoner ? null : createFakeServer();
+  const summoner = opts?.summoner ?? createFakeSummoner(ownedServer!);
+  onTestFinished(() => ownedServer?.destroy());
   const claude = summoner.claude() as FakeClaude;
   const user = userEvent.setup({ pointerEventsCheck: 0 });
 

@@ -63,6 +63,7 @@ export default defineConfig({
         },
       },
     ],
+    testTimeout: 3000,
     passWithNoTests: false,
     exclude: ['node_modules', 'dist'],
   },
