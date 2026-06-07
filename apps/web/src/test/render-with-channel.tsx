@@ -1,6 +1,8 @@
+import { createFakeServer } from '@code-quest/server/test';
 import { type FakeClaude, segments as s } from '@code-quest/test-kit';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
+import { onTestFinished } from 'vitest';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { CommandPaletteProvider } from '../contexts/CommandPaletteContext.tsx';
 import { ChannelProvider, type SessionMode } from '../contexts/channel/ChannelContext.tsx';
@@ -41,7 +43,12 @@ export async function renderWithChannel(
   ui: ReactElement,
   options: RenderWithChannelOptions = {},
 ): Promise<RenderWithChannelResult> {
-  const summoner = options.summoner ?? createFakeSummoner();
+  // Create server explicitly when not shared so we can destroy it after the test.
+  // Destroying clears pending ControlRequestTracker timers that would otherwise
+  // keep the Node.js event loop busy in singleFork mode, slowing subsequent tests.
+  const ownedServer = options.summoner ? null : createFakeServer();
+  const summoner = options.summoner ?? createFakeSummoner(ownedServer!);
+  onTestFinished(() => ownedServer?.destroy());
   const claude = summoner.claude() as FakeClaude;
   const channelId = options.channelId ?? crypto.randomUUID();
   // Used only for the launch-payload default. ChannelProvider keeps

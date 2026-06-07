@@ -49,6 +49,19 @@ export class FakeServer {
     });
   }
 
+  /**
+   * Destroy all channels and disconnect all sockets.
+   * Call in test teardown (afterEach / onTestFinished) to prevent timer leaks
+   * that slow down subsequent tests in the same singleFork process.
+   */
+  destroy(): void {
+    for (const serverSocket of this._allServerSockets) {
+      serverSocket.emit('disconnect');
+    }
+    const manager = this._container.get<ChannelManager>(TYPES.ChannelManager);
+    manager.destroyAll();
+  }
+
   /** Create a new window connection — returns socket, provider, filesystem, git. */
   connect(): {
     socket: FakeSocket;
