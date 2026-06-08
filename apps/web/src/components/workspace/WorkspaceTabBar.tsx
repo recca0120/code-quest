@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { collectSessionsInPaneTree, useTabState, useWorkspaceTab } from '@/contexts/TabContext';
+import { useSessionManager } from './SessionManagerContext';
 
 const BUSY_STATUSES = new Set(['processing', 'busy', 'cancelling']);
 
@@ -15,6 +16,7 @@ export function WorkspaceTabBar(): React.JSX.Element {
   const { tabs } = useTabState();
   const [renamingTabId, setRenamingTabId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const { open: openSessionManager } = useSessionManager();
 
   return (
     <div
@@ -93,6 +95,15 @@ export function WorkspaceTabBar(): React.JSX.Element {
         className="px-2 py-0.5 text-xs opacity-60 hover:opacity-100"
       >
         +
+      </button>
+      <button
+        type="button"
+        aria-label="Open session manager"
+        onClick={openSessionManager}
+        className="ml-auto px-2 py-0.5 text-xs opacity-60 hover:opacity-100"
+        title="Session Manager (⌘⇧M)"
+      >
+        ⊞
       </button>
     </div>
   );

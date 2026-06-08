@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   firstLeafId,
   type PaneNode,
@@ -8,6 +8,7 @@ import {
   useTabState,
 } from '@/contexts/TabContext';
 import { SessionManager } from './SessionManager';
+import { SessionManagerContext } from './SessionManagerContext';
 import { useMobileMode } from './useMobileMode';
 
 function findAdjacentLeafId(
@@ -175,10 +176,11 @@ export function KeyboardShortcutsProvider({
 }): React.JSX.Element {
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
   useKeyboardShortcuts(sessionManagerOpen, setSessionManagerOpen);
+  const ctxValue = useMemo(() => ({ open: () => setSessionManagerOpen(() => true) }), []);
   return (
-    <>
+    <SessionManagerContext.Provider value={ctxValue}>
       {children}
       {sessionManagerOpen && <SessionManager onClose={() => setSessionManagerOpen(() => false)} />}
-    </>
+    </SessionManagerContext.Provider>
   );
 }

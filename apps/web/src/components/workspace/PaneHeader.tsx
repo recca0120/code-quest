@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePaneState } from '@/contexts/TabContext';
+import { FilesPane, GitPane, SpecPane } from './ToolPanes';
 import { useMobileMode } from './useMobileMode';
 
 type ContextTool = 'files' | 'git' | 'spec';
@@ -184,8 +185,16 @@ export function PaneHeader({
               </button>
             ))}
           </div>
-          <div className="p-2 text-xs text-muted-foreground">
-            {activeTool} — {cwd}
+          <div className="flex flex-col min-h-0 overflow-auto">
+            {activeTool === 'files' && (
+              <FilesPane cwd={cwd} paneId={`${paneId}-ctx`} availableCwds={[cwd]} />
+            )}
+            {activeTool === 'git' && (
+              <GitPane cwd={cwd} paneId={`${paneId}-ctx`} availableCwds={[cwd]} />
+            )}
+            {activeTool === 'spec' && (
+              <SpecPane cwd={cwd} paneId={`${paneId}-ctx`} availableCwds={[cwd]} />
+            )}
           </div>
         </div>
       )}

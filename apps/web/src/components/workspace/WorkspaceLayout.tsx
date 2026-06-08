@@ -15,6 +15,7 @@ import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { CreateWorktreeDialog } from '../project/CreateWorktreeDialog.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
 import { GlobalBar } from './GlobalBar.tsx';
+import { KeyboardShortcutsProvider } from './KeyboardShortcutsProvider.tsx';
 import { TabContainer } from './TabContainer.tsx';
 
 const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
@@ -124,13 +125,15 @@ function WorkspaceLayoutInner() {
               activeProjectCwd ? (selectedWorktreeCwd[activeProjectCwd] ?? undefined) : undefined
             }
           >
-            <main aria-label="project-container" className="flex flex-1 min-w-0 overflow-hidden">
-              <TabContainer
-                projectCwd={activeProjectCwd ?? ''}
-                pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
-                onSessionCreated={() => setPendingSession(null)}
-              />
-            </main>
+            <KeyboardShortcutsProvider>
+              <main aria-label="project-container" className="flex flex-1 min-w-0 overflow-hidden">
+                <TabContainer
+                  projectCwd={activeProjectCwd ?? ''}
+                  pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
+                  onSessionCreated={() => setPendingSession(null)}
+                />
+              </main>
+            </KeyboardShortcutsProvider>
           </TabProvider>
         </>
       )}
