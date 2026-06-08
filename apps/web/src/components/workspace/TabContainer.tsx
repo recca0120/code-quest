@@ -6,7 +6,7 @@ const NOOP = (): void => {};
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ChannelProvider } from '@/contexts/channel';
-import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
+import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import {
@@ -205,7 +205,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   const { createNewTab, removeTab } = useTabActions();
   const { closeSession } = useSession();
   const { setActiveCwd } = useNavigationActions();
-  const { selectedWorktreeCwd } = useNavigationState();
+
   const { activeProjectCwd } = useProjectState();
   const { isDesktop } = useBreakpoint();
   const [rightOpen, setRightOpen] = useState(() => isDesktop);
@@ -218,9 +218,13 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   const projectName = basename(projectCwd);
 
   const focusedLeaf = focusedPaneId ? findPaneLeaf(paneRoot, focusedPaneId) : null;
-  const focusedSession =
-    focusedLeaf?.content.type === 'session' ? focusedLeaf.content.sessionId : null;
-  const focusedTabCwd = focusedSession ? (tabs[focusedSession]?.cwd ?? null) : null;
+  const focusedTabCwd = (() => {
+    if (!focusedLeaf) return null;
+    const c = focusedLeaf.content;
+    if (c.type === 'session') return c.sessionId ? (tabs[c.sessionId]?.cwd ?? null) : null;
+    if ('cwd' in c) return (c as { cwd: string }).cwd;
+    return null;
+  })();
 
   // Create a new tab and immediately assign it to the focused pane (or first empty leaf)
   // Both updates are dispatched in the same event handler → React 18 batches them into one render
@@ -277,7 +281,6 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   }, [isThisActive, setActiveCwd]);
 
   const tabEntries = Object.entries(tabs);
-  const worktreeFilter = selectedWorktreeCwd[projectCwd];
 
   // Sessions in INACTIVE workspace tabs' pane trees — must stay mounted to avoid double-mount
   // when switching tabs (React would unmount from pane and remount in pool simultaneously)
@@ -321,14 +324,12 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   // Sessions not in the ACTIVE tab's pane tree AND not in any inactive tab's pane tree
   const allPaneSessions = new Set([...sessionsInPanes, ...inactiveTabSessionIds]);
 
-  const sessionBarItems = tabEntries
-    .filter(([, meta]) => !worktreeFilter || meta.cwd === worktreeFilter)
-    .map(([id, meta]) => ({
-      channelId: id,
-      title: meta.title,
-      tabStatus: meta.tabStatus,
-      branch: meta.branch,
-    }));
+  const sessionBarItems = tabEntries.map(([id, meta]) => ({
+    channelId: id,
+    title: meta.title,
+    tabStatus: meta.tabStatus,
+    branch: meta.branch,
+  }));
 
   return (
     <PaneZoomProvider>

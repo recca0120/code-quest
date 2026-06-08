@@ -120,12 +120,14 @@ describe('PaneDragDrop (D.2) drop swaps pane contents', () => {
     const headers = screen.getAllByTestId('pane-header');
     expect(headers).toHaveLength(2);
 
-    // Simulate drag from left header to right header
+    // Simulate drag from left header to right header using dataTransfer
     const leftHeader = headers[0]!;
     const rightHeader = headers[1]!;
+    const dt = new DataTransfer();
 
-    fireEvent.dragStart(leftHeader);
-    fireEvent.drop(rightHeader);
+    fireEvent.dragStart(leftHeader, { dataTransfer: dt });
+    // dt.getData returns the paneId set by dragStart handler
+    fireEvent.drop(rightHeader, { dataTransfer: dt });
 
     expect(swappedPairs).toHaveLength(1);
   });

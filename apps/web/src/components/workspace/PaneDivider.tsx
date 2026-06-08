@@ -21,7 +21,10 @@ export function PaneDivider({
     function handleMove(moveEvent: PointerEvent) {
       const currentPos = isHorizontal ? moveEvent.clientX : moveEvent.clientY;
       const delta = currentPos - startPos;
-      const ratio = Math.max(0.1, Math.min(0.9, 0.5 + delta / totalSize));
+      const minPx = 200;
+      const minRatio = totalSize > 0 ? minPx / totalSize : 0.1;
+      const maxRatio = totalSize > 0 ? (totalSize - minPx) / totalSize : 0.9;
+      const ratio = Math.max(minRatio, Math.min(maxRatio, 0.5 + delta / totalSize));
       onRatioChange(ratio);
     }
 

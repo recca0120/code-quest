@@ -4,8 +4,6 @@ import { useMobileMode } from './useMobileMode';
 
 type ContextTool = 'files' | 'git' | 'spec';
 
-let dragSourceId: string | null = null;
-
 interface PaneHeaderProps {
   paneId: string;
   branch?: string;
@@ -40,23 +38,22 @@ export function PaneHeader({
     setActiveTool((prev) => (prev === tool ? null : tool));
   }
 
-  function handleDragStart() {
+  function handleDragStart(e: React.DragEvent) {
     setIsDragging(true);
-    // store paneId in a module-level variable for cross-component communication
-    dragSourceId = paneId;
+    e.dataTransfer.setData('text/plain', paneId);
+    e.dataTransfer.effectAllowed = 'move';
   }
 
   function handleDragEnd() {
     setIsDragging(false);
-    dragSourceId = null;
   }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
-    if (dragSourceId && dragSourceId !== paneId && onSwap) {
-      onSwap(dragSourceId);
+    const sourceId = e.dataTransfer.getData('text/plain');
+    if (sourceId && sourceId !== paneId && onSwap) {
+      onSwap(sourceId);
     }
-    dragSourceId = null;
   }
 
   return (
@@ -71,7 +68,7 @@ export function PaneHeader({
         onDragEnd={handleDragEnd}
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
-        className="flex items-center gap-1 px-2 py-1 text-xs border-b border-border"
+        className="flex items-center gap-1 px-2 py-1 text-xs border-b border-border data-[focused]:ring-1 data-[focused]:ring-primary"
       >
         {isZoomed && (
           <span data-testid="pane-zoomed-indicator" className="text-accent">

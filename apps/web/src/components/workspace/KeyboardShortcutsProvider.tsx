@@ -5,6 +5,7 @@ import {
   usePaneActions,
   usePaneState,
   useTabActions,
+  useTabState,
 } from '@/contexts/TabContext';
 import { SessionManager } from './SessionManager';
 import { useMobileMode } from './useMobileMode';
@@ -38,7 +39,25 @@ function useKeyboardShortcuts(
   const { paneRoot, focusedPaneId } = usePaneState();
   const { splitPane, closePane, focusPane, swapPane } = usePaneActions();
   const { createNewTab } = useTabActions();
+  const { tabs } = useTabState();
   const isMobile = useMobileMode();
+
+  const focusedLeafCwd = (() => {
+    if (!focusedPaneId) return undefined;
+    function findLeaf(node: PaneNode): Extract<PaneNode, { type: 'leaf' }> | null {
+      if (node.type === 'leaf') return node.id === focusedPaneId ? node : null;
+      return findLeaf(node.first) ?? findLeaf(node.second);
+    }
+    const leaf = findLeaf(paneRoot);
+    if (!leaf) return undefined;
+    if (leaf.content.type === 'session' && leaf.content.sessionId) {
+      return tabs[leaf.content.sessionId]?.cwd ?? undefined;
+    }
+    if (leaf.content.type !== 'session' && 'cwd' in leaf.content) {
+      return (leaf.content as { cwd: string }).cwd;
+    }
+    return undefined;
+  })();
 
   useEffect(() => {
     function handler(e: KeyboardEvent): void {
@@ -47,7 +66,7 @@ function useKeyboardShortcuts(
 
       if (e.key === 't' && !e.altKey && !e.shiftKey) {
         e.preventDefault();
-        createNewTab();
+        createNewTab(focusedLeafCwd ? { cwd: focusedLeafCwd } : undefined);
         return;
       }
 
@@ -137,6 +156,7 @@ function useKeyboardShortcuts(
   }, [
     paneRoot,
     focusedPaneId,
+    focusedLeafCwd,
     isMobile,
     sessionManagerOpen,
     splitPane,

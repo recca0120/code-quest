@@ -251,7 +251,7 @@ describe('TabContainer — worktree filtering', () => {
     expect(countSessionItems(screen.getByTestId('session-bar'))).toBe(2);
   });
 
-  it('filters SessionBar to only sessions matching selectedWorktreeCwd', async () => {
+  it('shows all sessions regardless of selectedWorktreeCwd (cross-worktree sessions visible)', async () => {
     let navActions: ReturnType<typeof useNavigationActions> | null = null;
 
     function Harness() {
@@ -270,13 +270,13 @@ describe('TabContainer — worktree filtering', () => {
     // Before filter: 2 sessions
     expect(countSessionItems(screen.getByTestId('session-bar'))).toBe(2);
 
-    // Set worktree filter to only show 'feat' sessions
+    // Set worktree filter — SessionBar no longer filters by worktree
     await act(async () => {
       navActions!.setSelectedWorktree(PROJECT_CWD, '/projects/app/feat');
     });
 
-    // After filter: only 1 session ('feat') should appear
-    expect(countSessionItems(screen.getByTestId('session-bar'))).toBe(1);
+    // All sessions remain visible even after worktree selection
+    expect(countSessionItems(screen.getByTestId('session-bar'))).toBe(2);
   });
 });
 
