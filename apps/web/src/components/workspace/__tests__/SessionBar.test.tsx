@@ -315,3 +315,61 @@ describe('SessionBar (7.8) close button', () => {
     expect(onClose).toHaveBeenCalledWith('ch-1');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Group 8: 三態視覺樣式 — focused-active / active / inactive
+// ─────────────────────────────────────────────────────────────────────────────
+describe('SessionBar (8) visual styling by data-status', () => {
+  it('focused-active item has accent highlight styling', () => {
+    render(
+      <Wrapper>
+        <SessionBar sessions={sessions} onNewSession={vi.fn()} onCloseSession={vi.fn()} />
+      </Wrapper>,
+    );
+    // Initially no pane has focus, all items are inactive
+    const item = screen.getByTestId('session-bar-item-ch-1');
+    expect(item).toHaveAttribute('data-status', 'inactive');
+    // inactive items should have reduced opacity
+    expect(item.className).toMatch(/opacity/);
+  });
+
+  it('active item (in pane but not focused pane) has muted bg class', async () => {
+    const user = userEvent.setup();
+
+    function Setup() {
+      const { setSessionInPane } = usePaneActions();
+      const { paneRoot } = usePaneState();
+      const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
+      return (
+        <button type="button" onClick={() => leafId && setSessionInPane(leafId, 'ch-1')}>
+          assign
+        </button>
+      );
+    }
+
+    render(
+      <Wrapper>
+        <Setup />
+        <SessionBar sessions={sessions} onNewSession={vi.fn()} onCloseSession={vi.fn()} />
+      </Wrapper>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'assign' }));
+
+    // ch-1 is in pane but no focusedPaneId → 'active' status with bg-muted
+    const item = screen.getByTestId('session-bar-item-ch-1');
+    expect(item).toHaveAttribute('data-status', 'active');
+    expect(item.className).toMatch(/bg-muted/);
+  });
+
+  it('focused-active item has stronger highlight than inactive', () => {
+    render(
+      <Wrapper>
+        <SessionBar sessions={sessions} onNewSession={vi.fn()} onCloseSession={vi.fn()} />
+      </Wrapper>,
+    );
+    const inactiveItem = screen.getByTestId('session-bar-item-ch-1');
+    // inactive items have opacity reduction class
+    expect(inactiveItem.className).toMatch(/opacity-60/);
+  });
+});

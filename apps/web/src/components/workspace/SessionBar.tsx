@@ -7,6 +7,7 @@ import {
   usePaneState,
 } from '@/contexts/TabContext';
 import type { SessionStatus } from '@/types/ui';
+import { cn } from '@/utils/cn';
 
 interface SessionInfo {
   channelId: string;
@@ -80,7 +81,13 @@ export function SessionBar({
             key={session.channelId}
             data-testid={`session-bar-item-${session.channelId}`}
             data-status={itemStatus}
-            className="flex items-center gap-1 px-2 py-1 text-xs rounded"
+            className={cn(
+              'flex items-center gap-1 px-2 py-1 text-xs rounded',
+              itemStatus === 'focused-active' &&
+                'bg-accent text-accent-foreground ring-1 ring-primary',
+              itemStatus === 'active' && 'bg-muted',
+              itemStatus === 'inactive' && 'opacity-60',
+            )}
           >
             <span data-busy={isBusy || undefined} className="shrink-0">
               {isBusy ? '●' : '○'}
