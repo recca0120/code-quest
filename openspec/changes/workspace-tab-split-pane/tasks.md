@@ -231,3 +231,37 @@
 
 - [x] P.1 [test] 空白 pane picker「New session in」區塊以 project 分組，與 GlobalBar `[+]` 結構一致
 - [x] P.2 [impl] 更新 `EmptyPanePicker` 的 new session 區塊，改為 grouped by project
+
+---
+
+## Phase 5：「Open in Pane」統一 Modal
+
+> 前提：Decision 7 更新後進行。
+> 核心原則：所有「開新 session 或 tool pane」入口統一到同一個 Modal；EmptyPanePicker inline 簡化，不再有「New session in...」grouped list。
+
+### OpenInPaneModal 元件（M）
+
+- [ ] M.1 [test] Modal 有四個 tab：Session / Git / Files / Spec
+- [ ] M.2 [test] Session tab 上半段列出現有 sessions（狀態 + 點擊填入 pane）
+- [ ] M.3 [test] Session tab 下半段列出「New session in」按 project 分組的 worktrees
+- [ ] M.4 [test] Session tab 每個 project 有 `[+ New worktree]` 和 `[+ Add project]`
+- [ ] M.5 [test] Tool tab（Git/Files/Spec）顯示 cwd 選擇器，預填 active project active worktree
+- [ ] M.6 [test] Tool tab cwd 可切換（dropdown 列出所有 project 的 worktrees）
+- [ ] M.7 [test] Tool tab 有 `[Open Git/Files/Spec pane]` 確認按鈕
+- [ ] M.8 [impl] 建立 `OpenInPaneModal.tsx`，讓 M.1–M.7 測試通過
+
+### 入口接線（W）
+
+- [ ] W.1 [test] GlobalBar `[+]` 點擊 → 開啟 Modal（取代原 dropdown picker）
+- [ ] W.2 [test] SessionBar `[+]` 點擊 → 開啟 Modal
+- [ ] W.3 [test] EmptyPanePicker「+ Open new session...」按鈕 → 開啟 Modal（帶 target paneId）
+- [ ] W.4 [impl] 更新 `GlobalBar`：移除 dropdown picker，改用 `onOpenModal` callback
+- [ ] W.5 [impl] 更新 `WorkspaceLayout`：管理 Modal 開關狀態，傳遞給 GlobalBar / SessionBar / EmptyPanePicker
+- [ ] W.6 [impl] 更新 `EmptyPanePicker`：移除「New session in...」grouped list，加入「+ Open new session...」按鈕
+
+### EmptyPanePicker 簡化（E）
+
+- [ ] E.1 [test] EmptyPanePicker 不再顯示「New session in...」grouped list
+- [ ] E.2 [test] EmptyPanePicker 顯示「+ Open new session...」按鈕
+- [ ] E.3 [test] Tool 按鈕（Git/Files/Spec/Worktrees）保留 inline，點擊直接填入 pane（不開 Modal）
+- [ ] E.4 [impl] 更新 `EmptyPanePicker`，讓 E.1–E.3 測試通過
