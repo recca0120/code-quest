@@ -31,7 +31,7 @@ interface WorktreeInfo {
 interface GlobalBarProps {
   projects: ProjectInfo[];
   activeProjectCwd: string | null;
-  worktrees: WorktreeInfo[];
+  allWorktrees: Record<string, WorktreeInfo[]>;
   onSelectProject: (cwd: string) => void;
   onAddProject: () => void;
   onNewSession: (cwd: string) => void;
@@ -43,7 +43,7 @@ interface GlobalBarProps {
 export function GlobalBar({
   projects,
   activeProjectCwd,
-  worktrees,
+  allWorktrees,
   onSelectProject,
   onAddProject,
   onNewSession,
@@ -139,24 +139,34 @@ export function GlobalBar({
             <div
               role="menu"
               aria-label="New session in..."
-              className="absolute top-full right-0 mt-1 min-w-44 bg-surface border border-border rounded shadow-lg z-dropdown"
+              className="absolute top-full right-0 mt-1 min-w-48 bg-surface border border-border rounded shadow-lg z-dropdown"
             >
               <div className="px-3 py-1.5 text-xs text-muted font-medium">New session in...</div>
-              {worktrees.map((wt) => (
-                <button
-                  key={wt.path}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    onNewSession(wt.path);
-                    setSessionPickerOpen(false);
-                  }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint"
-                >
-                  <span className="font-mono text-xs opacity-60">⎇</span>
-                  {wt.branch}
-                </button>
-              ))}
+              {projects.map((project, i) => {
+                const worktrees = allWorktrees[project.cwd] ?? [];
+                if (worktrees.length === 0) return null;
+                return (
+                  <div key={project.cwd}>
+                    {i > 0 && <div className="border-t border-border my-1" />}
+                    <div className="px-3 py-1 text-xs text-muted">{project.name}</div>
+                    {worktrees.map((wt) => (
+                      <button
+                        key={wt.path}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          onNewSession(wt.path);
+                          setSessionPickerOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint"
+                      >
+                        <span className="font-mono text-xs opacity-60">⎇</span>
+                        {wt.branch}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
               {onCreateWorktree && (
                 <>
                   <div className="border-t border-border my-1" />

@@ -1,3 +1,4 @@
+import type { WorktreeInfo } from '@code-quest/git';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -76,12 +77,14 @@ function WorkspaceLayoutInner() {
 
   const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
 
-  const activeWorktrees = useMemo(() => {
-    if (!activeProjectCwd) return [];
-    const entry = listing[activeProjectCwd];
-    if (!Array.isArray(entry)) return [];
-    return entry;
-  }, [listing, activeProjectCwd]);
+  const allWorktrees = useMemo(() => {
+    const result: Record<string, WorktreeInfo[]> = {};
+    for (const p of projects) {
+      const entry = listing[p.cwd];
+      if (Array.isArray(entry)) result[p.cwd] = entry;
+    }
+    return result;
+  }, [listing, projects]);
 
   const projectList = useMemo(
     () => projects.map((p) => ({ cwd: p.cwd, name: p.name })),
@@ -104,7 +107,7 @@ function WorkspaceLayoutInner() {
           <GlobalBar
             projects={projectList}
             activeProjectCwd={activeProjectCwd}
-            worktrees={activeWorktrees}
+            allWorktrees={allWorktrees}
             onSelectProject={(cwd) => setActiveProject(cwd)}
             onAddProject={() => setDialogOpen(true)}
             onNewSession={(cwd) => {

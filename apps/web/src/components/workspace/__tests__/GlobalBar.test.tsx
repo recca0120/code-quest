@@ -13,16 +13,19 @@ const PROJECTS = [
   { cwd: '/projects/other', name: 'other' },
 ];
 
-const WORKTREES = [
-  { path: '/projects/app', branch: 'main', name: 'main' },
-  { path: '/projects/app-feat', branch: 'feat-x', name: 'feat-x' },
-];
+const ALL_WORKTREES = {
+  '/projects/app': [
+    { path: '/projects/app', branch: 'main', name: 'main' },
+    { path: '/projects/app-feat', branch: 'feat-x', name: 'feat-x' },
+  ],
+  '/projects/other': [{ path: '/projects/other', branch: 'main', name: 'main' }],
+};
 
 function setup(overrides: Partial<React.ComponentProps<typeof GlobalBar>> = {}) {
   const props: React.ComponentProps<typeof GlobalBar> = {
     projects: PROJECTS,
     activeProjectCwd: '/projects/app',
-    worktrees: WORKTREES,
+    allWorktrees: ALL_WORKTREES,
     onSelectProject: vi.fn(),
     onAddProject: vi.fn(),
     onNewSession: vi.fn(),
@@ -84,11 +87,26 @@ describe('GlobalBar (10.4) add project', () => {
 
 // 10.5: [+] opens worktree quick picker
 describe('GlobalBar (10.5) new session picker', () => {
-  it('[+] button opens worktree quick picker listing worktrees', async () => {
+  it('[+] button opens worktree quick picker listing worktrees from all projects', async () => {
     const { user } = setup();
     await user.click(screen.getByRole('button', { name: 'New session' }));
     const picker = screen.getByRole('menu', { name: /new session/i });
-    expect(within(picker).getByText('main')).toBeInTheDocument();
+    expect(within(picker).getAllByText('main')).toHaveLength(2); // app/main + other/main
+    expect(within(picker).getByText('feat-x')).toBeInTheDocument();
+  });
+
+  it('[+] picker groups worktrees by project with project name header', async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    const picker = screen.getByRole('menu', { name: /new session/i });
+    expect(within(picker).getByText('app')).toBeInTheDocument();
+    expect(within(picker).getByText('other')).toBeInTheDocument();
+  });
+
+  it('[+] works when no active project — shows all projects worktrees', async () => {
+    const { user } = setup({ activeProjectCwd: null });
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    const picker = screen.getByRole('menu', { name: /new session/i });
     expect(within(picker).getByText('feat-x')).toBeInTheDocument();
   });
 });
