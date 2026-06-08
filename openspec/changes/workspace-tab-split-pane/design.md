@@ -124,20 +124,38 @@ Tab Bar 上的 tab 反映 session 與 pane 的關係，與現在「active = 正�
 
 ### 7. New Session 入口：Global Bar `[+]` + 空白 pane picker
 
+**Project / Worktree 資料模型：**
+
+一個 Project 擁有一組 Worktrees（`git worktree list` 的結果）。每個 Worktree 有自己的路徑與 branch，路徑不保證是 project root 的子目錄（`git worktree add` 可指定任意路徑）。Session 的 cwd 指向某個 Worktree 的路徑，session 所屬 project 透過 `listing` 的 key 決定，**不用路徑前綴比對**。
+
+```
+Project (repo root)
+  └── Worktree main    path: /projects/app         branch: main
+  └── Worktree feat-x  path: /projects/app-feat    branch: feat-x
+  └── Worktree hotfix  path: /tmp/hotfix            branch: hotfix
+```
+
 **兩個互補入口：**
 
 **Global Bar `[+]`**（快速開，不需要先切 pane）：
 ```
-點 [+] → 展開 quick picker：
-┌──────────────────────────┐
-│  New session in...       │
-│  ● main      (current)   │
-│  ○ feat-X                │
-│  ○ feat-Y                │
-│  ── or ──                │
-│  [+ New worktree]        │
-└──────────────────────────┘
+點 [+] → 展開 grouped picker，列出所有 project 及其 worktrees：
+┌──────────────────────────────┐
+│  New session in...           │
+│                              │
+│  ── app ──                   │
+│    ⎇ main                    │
+│    ⎇ feat-x                  │
+│    [+ New worktree]          │
+│                              │
+│  ── other-repo ──            │
+│    ⎇ main                    │
+│    [+ New worktree]          │
+│                              │
+│  [+ Add project]             │
+└──────────────────────────────┘
 選 worktree → 開新 session，填入 focused pane（若空白）或成為 Tab Bar inactive tab
+active project 自動切換為所選 worktree 所屬的 project
 ```
 
 **空白 pane picker**（開 session 同時決定放在哪個 pane）：
@@ -150,11 +168,14 @@ Tab Bar 上的 tab 反映 session 與 pane 的關係，與現在「active = 正�
 │  [🌿 Git]  [📁 Files]  [📋 Spec] │
 │  [🌲 Worktrees]                  │
 │  ── New session in ──            │
-│  [+ main]  [+ feat-X]  [+ feat-Y]│
+│  ── app ──                       │
+│    [+ main]  [+ feat-X]          │
+│  ── other-repo ──                │
+│    [+ main]                      │
 └──────────────────────────────────┘
 ```
 
-**理由**：兩個入口解決不同需求——Global Bar `[+]` 適合快速開 session 不在意 pane 位置；空白 pane picker 適合「我想在這個 pane 放什麼」的精確操作。
+**理由**：兩個入口解決不同需求——Global Bar `[+]` 適合快速開 session 不在意 pane 位置；空白 pane picker 適合「我想在這個 pane 放什麼」的精確操作。Picker grouped by project 確保即使沒有 active project 也能流暢操作，且 worktree → project 的歸屬關係明確不靠路徑推算。
 
 ---
 

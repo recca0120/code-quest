@@ -26,18 +26,6 @@ describe('ChatBreadcrumb', () => {
     expect(onToggleLeft).toHaveBeenCalled();
   });
 
-  it('calls onToggleRight when right button clicked', async () => {
-    const onToggleRight = vi.fn();
-    render(<ChatBreadcrumb onToggleRight={onToggleRight} />);
-    await userEvent.setup().click(screen.getByLabelText('Toggle right pane'));
-    expect(onToggleRight).toHaveBeenCalled();
-  });
-
-  it('does not render right toggle button when onToggleRight not provided', () => {
-    render(<ChatBreadcrumb projectName="cc-office" />);
-    expect(screen.queryByLabelText('Toggle right pane')).not.toBeInTheDocument();
-  });
-
   it('renders actions slot inside the header bar', () => {
     render(<ChatBreadcrumb actions={<button type="button">history</button>} />);
     expect(screen.getByRole('button', { name: 'history' })).toBeInTheDocument();

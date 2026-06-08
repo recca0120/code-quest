@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setupMatchMedia } from '@/test/fake-match-media';
 import { type RenderWithWorkspaceResult, renderWithWorkspace } from '@/test/render-with-workspace';
@@ -13,10 +13,6 @@ async function setup() {
 async function setupWithProject(width: number): Promise<RenderWithWorkspaceResult> {
   setupMatchMedia(width);
   return setup();
-}
-
-function rightPaneBody() {
-  return screen.queryByLabelText('right-pane-body');
 }
 
 afterEach(() => vi.restoreAllMocks());
@@ -131,60 +127,8 @@ describe('WorkspaceLayout — Desktop (≥1024px)', () => {
     expect(screen.getByTestId('global-bar')).toBeInTheDocument();
   });
 
-  it('renders the RightPane body visible by default on desktop', async () => {
-    await setupWithProject(1440);
-    expect(rightPaneBody()).toBeInTheDocument();
-  });
-
   it('shows Settings button in GlobalBar; click opens Settings dialog', async () => {
     const { user } = await setupWithProject(1440);
-    await user.click(screen.getByRole('button', { name: /settings/i }));
-    expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
-  });
-
-  it('shows Toggle right pane button in the chat header', async () => {
-    await setupWithProject(1440);
-    expect(screen.getByRole('button', { name: /toggle right pane/i })).toBeInTheDocument();
-  });
-});
-
-describe('WorkspaceLayout — Tablet (768–1023px)', () => {
-  it('right pane starts hidden on tablet', async () => {
-    await setupWithProject(800);
-    expect(rightPaneBody()).toBeNull();
-  });
-
-  it('Toggle right pane shows then hides the right pane', async () => {
-    const { user } = await setupWithProject(800);
-    await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
-    expect(rightPaneBody()).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
-    expect(rightPaneBody()).not.toBeInTheDocument();
-  });
-
-  it('shows Settings button in GlobalBar; click opens dialog', async () => {
-    const { user } = await setupWithProject(800);
-    await user.click(screen.getByRole('button', { name: /settings/i }));
-    expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
-  });
-});
-
-describe('WorkspaceLayout — Mobile (<768px)', () => {
-  it('right pane starts hidden on mobile', async () => {
-    await setupWithProject(375);
-    expect(rightPaneBody()).toBeNull();
-  });
-
-  it('Toggle right pane shows then hides right pane on mobile', async () => {
-    const { user } = await setupWithProject(375);
-    await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
-    expect(rightPaneBody()).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
-    expect(rightPaneBody()).not.toBeInTheDocument();
-  });
-
-  it('shows Settings button in GlobalBar; click opens dialog', async () => {
-    const { user } = await setupWithProject(375);
     await user.click(screen.getByRole('button', { name: /settings/i }));
     expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
   });
@@ -215,20 +159,6 @@ describe('WorkspaceLayout — state preservation across breakpoints', () => {
     const elAfter = screen.getByLabelText('project-container');
 
     expect(elAfter).toBe(elBefore);
-  });
-
-  it('crossing desktop→mobile does NOT hide right pane', async () => {
-    const fakeMM = setupMatchMedia(1440);
-    const result = await renderWithWorkspace();
-    const project = await result.addProject();
-    await project.launchSession();
-    expect(rightPaneBody()).toBeInTheDocument();
-
-    act(() => {
-      fakeMM.triggerChange(375);
-    });
-
-    expect(rightPaneBody()).toBeInTheDocument();
   });
 });
 

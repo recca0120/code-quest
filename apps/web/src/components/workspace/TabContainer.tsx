@@ -6,7 +6,6 @@ const SESSION_TAB_WIDTH_PX = 120;
 
 const NOOP = (): void => {};
 
-import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ChannelProvider } from '@/contexts/channel';
 import { useNavigationActions } from '@/contexts/NavigationContext';
@@ -22,13 +21,10 @@ import {
   useTabState,
   useWorkspaceTab,
 } from '@/contexts/TabContext';
-import { useBreakpoint } from '@/hooks/useBreakpoint';
-import { basename } from '@/utils/basename';
 import { ChatView } from '../chat/ChatView.tsx';
 import { EmptyPanePicker } from './EmptyPanePicker.tsx';
 import { PaneHeader } from './PaneHeader.tsx';
 import { PaneZoomProvider } from './PaneZoomProvider.tsx';
-import { RightPane } from './RightPane.tsx';
 import { SessionBar } from './SessionBar.tsx';
 import { SplitPane } from './SplitPane.tsx';
 import { FilesPane, GitPane, SpecPane, WorktreesPane } from './ToolPanes.tsx';
@@ -37,9 +33,7 @@ import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
 interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode' | 'branch'> {
   channelId: string;
   projectName: string;
-  rightOpen: boolean;
   onToggleLeft?: () => void;
-  onToggleRight: () => void;
   onNewChannel?: (cwd: string) => void;
 }
 
@@ -50,9 +44,7 @@ function TabContent({
   title,
   projectName,
   mode,
-  rightOpen,
   onToggleLeft,
-  onToggleRight,
   onNewChannel,
 }: TabContentProps) {
   const { setTabTitle, setTabStatus } = useTabActions();
@@ -68,17 +60,7 @@ function TabContent({
       }}
       onNewChannel={onNewChannel}
     >
-      <ChatView
-        title={title}
-        projectName={projectName}
-        onToggleLeft={onToggleLeft}
-        onToggleRight={cwd ? onToggleRight : undefined}
-        rightPane={
-          cwd && rightOpen ? (
-            <RightPane cwd={cwd} onMention={(path) => toast(`Mention queued: ${path}`)} />
-          ) : null
-        }
-      />
+      <ChatView title={title} projectName={projectName} onToggleLeft={onToggleLeft} />
     </ChannelProvider>
   );
 }
@@ -97,9 +79,7 @@ interface PaneLeafContentProps {
   node: Extract<PaneNode, { type: 'leaf' }>;
   tabs: Record<string, TabMeta>;
   projectName: string;
-  rightOpen: boolean;
   onToggleLeft?: () => void;
-  onToggleRight: () => void;
   onNewTab: (opts?: { cwd?: string; targetPaneId?: string }) => void;
 }
 
@@ -107,9 +87,7 @@ function PaneLeafContent({
   node,
   tabs,
   projectName,
-  rightOpen,
   onToggleLeft,
-  onToggleRight,
   onNewTab,
 }: PaneLeafContentProps) {
   const { paneRoot } = usePaneState();
@@ -175,9 +153,7 @@ function PaneLeafContent({
           title={meta.title}
           projectName={projectName}
           mode={meta.mode}
-          rightOpen={rightOpen}
           onToggleLeft={onToggleLeft}
-          onToggleRight={onToggleRight}
           onNewChannel={(newCwd) => onNewTab({ cwd: newCwd })}
         />
       ) : (
@@ -192,14 +168,12 @@ function PaneLeafContent({
 }
 
 interface TabContainerProps {
-  projectCwd: string;
   onToggleLeft?: () => void;
   pendingNewSessionCwd?: string | null;
   onSessionCreated?: () => void;
 }
 
 export const TabContainer: React.FC<TabContainerProps> = memo(function TabContainer({
-  projectCwd,
   onToggleLeft,
   pendingNewSessionCwd,
   onSessionCreated,
@@ -209,16 +183,12 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   const { closeSession } = useSession();
   const { setActiveCwd } = useNavigationActions();
 
-  const { activeProjectCwd } = useProjectState();
-  const { isDesktop } = useBreakpoint();
-  const [rightOpen, setRightOpen] = useState(() => isDesktop);
-  const toggleRight = useCallback(() => setRightOpen((v) => !v), []);
+  const { activeProjectCwd, projects } = useProjectState();
   const { paneRoot, focusedPaneId } = usePaneState();
   const { setSessionInPane, focusPane, splitPaneAndAssign } = usePaneActions();
   const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTab();
 
-  const isThisActive = projectCwd === activeProjectCwd;
-  const projectName = basename(projectCwd);
+  const projectName = projects.find((p) => p.cwd === activeProjectCwd)?.name ?? '';
 
   const focusedLeaf = focusedPaneId ? findPaneLeaf(paneRoot, focusedPaneId) : null;
   const focusedTabCwd = (() => {
@@ -272,16 +242,16 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   );
 
   useEffect(() => {
-    if (!isThisActive) return;
+    if (!activeProjectCwd) return;
     setActiveCwd(focusedTabCwd);
-  }, [isThisActive, focusedTabCwd, setActiveCwd]);
+  }, [activeProjectCwd, focusedTabCwd, setActiveCwd]);
 
   useEffect(() => {
-    if (!isThisActive) return;
+    if (!activeProjectCwd) return;
     return () => {
       setActiveCwd(null);
     };
-  }, [isThisActive, setActiveCwd]);
+  }, [activeProjectCwd, setActiveCwd]);
 
   const tabEntries = Object.entries(tabs);
 
@@ -320,13 +290,11 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
           node={node}
           tabs={tabs}
           projectName={projectName}
-          rightOpen={rightOpen}
           onToggleLeft={onToggleLeft}
-          onToggleRight={toggleRight}
           onNewTab={handleCreateTab}
         />
       ) : null,
-    [tabs, projectName, rightOpen, onToggleLeft, toggleRight, handleCreateTab],
+    [tabs, projectName, onToggleLeft, handleCreateTab],
   );
 
   if (tabEntries.length === 0) {
@@ -380,8 +348,6 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
                 title={meta.title}
                 projectName={projectName}
                 mode={meta.mode}
-                rightOpen={false}
-                onToggleRight={NOOP}
                 onNewChannel={NOOP}
               />
             );
@@ -401,9 +367,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
                 title={meta.title}
                 projectName={projectName}
                 mode={meta.mode}
-                rightOpen={rightOpen}
                 onToggleLeft={onToggleLeft}
-                onToggleRight={toggleRight}
                 onNewChannel={(newCwd) => handleCreateTab({ cwd: newCwd })}
               />
             ))}

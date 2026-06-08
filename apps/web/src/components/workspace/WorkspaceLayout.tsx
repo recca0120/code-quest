@@ -131,7 +131,6 @@ function WorkspaceLayoutInner() {
             <KeyboardShortcutsProvider>
               <main aria-label="project-container" className="flex flex-1 min-w-0 overflow-hidden">
                 <TabContainer
-                  projectCwd={activeProjectCwd ?? ''}
                   pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
                   onSessionCreated={() => setPendingSession(null)}
                 />

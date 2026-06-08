@@ -207,3 +207,27 @@
 - [x] D.1 [test] 拖曳 pane header 時顯示 `data-dragging` 屬性
 - [x] D.2 [test] 放到另一 pane header 上 → 兩 pane content 對調
 - [x] D.3 [impl] DnD：`draggable` header + `dragover` / `drop` handler 呼叫 `swapPane`
+
+---
+
+## Phase 4：New Session Picker 重構
+
+> 前提：釐清 Project / Worktree 資料模型後進行。
+> 核心原則：Worktree 所屬 project 透過 `listing` key 決定，不靠路徑前綴比對。
+
+### Global Bar `[+]` Grouped Picker（G）
+
+- [x] G.1 [test] `[+]` picker 以 project 分組，每組顯示 project 名稱 + 該 project 的 worktrees
+- [x] G.2 [test] 無 active project 時 picker 仍顯示所有 project 及其 worktrees
+- [x] G.3 [test] 選擇 worktree → `onNewSession(worktreePath, projectCwd)` 帶出 projectCwd（不靠 startsWith 反查）
+- [x] G.4 [test] 選擇 worktree → active project 自動切換為該 worktree 所屬 project
+- [x] G.5 [test] 每個 project 有自己的 `[+ New worktree]`，點擊開啟針對該 project 的 CreateWorktreeDialog
+- [x] G.6 [test] Picker 底部有 `[+ Add project]` 入口
+- [x] G.7 [impl] 更新 `GlobalBar` props：`allWorktrees: Record<projectCwd, WorktreeInfo[]>`，`onNewSession(cwd, projectCwd)`，`onCreateWorktree(projectCwd)`
+- [x] G.8 [impl] 更新 `WorkspaceLayout` `onNewSession` handler：直接用傳入的 `projectCwd`，移除 `startsWith` 反查
+- [x] G.9 [impl] 更新 `WorkspaceLayout` `onCreateWorktree` handler：接收 `projectCwd`，傳給 `CreateWorktreeDialog`
+
+### Empty Pane Picker 對齊（P）
+
+- [x] P.1 [test] 空白 pane picker「New session in」區塊以 project 分組，與 GlobalBar `[+]` 結構一致
+- [x] P.2 [impl] 更新 `EmptyPanePicker` 的 new session 區塊，改為 grouped by project

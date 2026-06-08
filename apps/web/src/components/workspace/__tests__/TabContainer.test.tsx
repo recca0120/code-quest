@@ -13,10 +13,10 @@ vi.mock('@/contexts/GitContext', () => ({
   useGitState: () => ({ listing: {} }),
 }));
 vi.mock('@/contexts/ProjectContext', () => ({
-  useProjectState: () => ({ activeProjectCwd: '/projects/app' }),
-}));
-vi.mock('@/hooks/useBreakpoint', () => ({
-  useBreakpoint: () => ({ isDesktop: false }),
+  useProjectState: () => ({
+    activeProjectCwd: '/projects/app',
+    projects: [{ cwd: '/projects/app', name: 'app' }],
+  }),
 }));
 // ChannelProvider / ChatView are deep — stub them out
 vi.mock('@/contexts/channel', () => ({
@@ -25,10 +25,6 @@ vi.mock('@/contexts/channel', () => ({
 vi.mock('../../chat/ChatView.tsx', () => ({
   ChatView: () => <div data-testid="chat-view" />,
 }));
-vi.mock('../RightPane.tsx', () => ({
-  RightPane: () => <div data-testid="right-pane" />,
-}));
-
 const PROJECT_CWD = '/projects/app';
 
 const INITIAL_TABS = {
@@ -59,7 +55,7 @@ describe('TabContainer — new session goes to pane, not pool (anti-double-mount
     const { container } = render(
       <NavigationProvider>
         <TabProvider>
-          <TabContainer projectCwd={PROJECT_CWD} />
+          <TabContainer />
         </TabProvider>
       </NavigationProvider>,
     );
@@ -92,7 +88,7 @@ describe('TabContainer — pendingNewSessionCwd creates session in pane', () => 
     const { rerender } = render(
       <NavigationProvider>
         <TabProvider>
-          <TabContainer projectCwd={PROJECT_CWD} />
+          <TabContainer />
         </TabProvider>
       </NavigationProvider>,
     );
@@ -105,7 +101,6 @@ describe('TabContainer — pendingNewSessionCwd creates session in pane', () => 
       <NavigationProvider>
         <TabProvider>
           <TabContainer
-            projectCwd={PROJECT_CWD}
             pendingNewSessionCwd="/projects/app/feat"
             onSessionCreated={onSessionCreated}
           />
@@ -127,7 +122,7 @@ describe('TabContainer — workspace tab switch keeps session mounted exactly on
     const { container } = render(
       <NavigationProvider>
         <TabProvider>
-          <TabContainer projectCwd={PROJECT_CWD} />
+          <TabContainer />
         </TabProvider>
       </NavigationProvider>,
     );
@@ -159,7 +154,7 @@ describe('TabContainer — EmptyPanePicker "New session here" fills that pane, n
     const { container } = render(
       <NavigationProvider>
         <TabProvider>
-          <TabContainer projectCwd={PROJECT_CWD} />
+          <TabContainer />
         </TabProvider>
       </NavigationProvider>,
     );
@@ -195,7 +190,7 @@ describe('TabContainer — new session after closing focused pane goes to pane (
     const { container } = render(
       <NavigationProvider>
         <TabProvider>
-          <TabContainer projectCwd={PROJECT_CWD} />
+          <TabContainer />
         </TabProvider>
       </NavigationProvider>,
     );
@@ -244,7 +239,7 @@ describe('TabContainer — worktree filtering', () => {
     render(
       <NavigationProvider>
         <TabProvider initialState={{ tabs: INITIAL_TABS, activeTabId: 'sess-main' }}>
-          <TabContainer projectCwd={PROJECT_CWD} />
+          <TabContainer />
         </TabProvider>
       </NavigationProvider>,
     );
@@ -256,7 +251,7 @@ describe('TabContainer — worktree filtering', () => {
 
     function Harness() {
       navActions = useNavigationActions();
-      return <TabContainer projectCwd={PROJECT_CWD} />;
+      return <TabContainer />;
     }
 
     render(
@@ -306,7 +301,7 @@ describe('TabContainer (7.4) Session Bar [+] uses focused pane cwd', () => {
           >
             setup-focus
           </button>
-          <TabContainer projectCwd={PROJECT_CWD} />
+          <TabContainer />
         </>
       );
     }
