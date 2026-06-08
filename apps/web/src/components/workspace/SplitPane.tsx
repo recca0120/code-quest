@@ -1,5 +1,6 @@
 import { type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { PaneDivider } from './PaneDivider';
+import { useMobileMode } from './useMobileMode';
 
 type RenderLeaf = (node: PaneNode) => React.ReactNode;
 
@@ -10,10 +11,13 @@ function SplitPaneLeaf({
   node: Extract<PaneNode, { type: 'leaf' }>;
   renderLeaf?: RenderLeaf;
 }) {
-  const { zoomedPaneId } = usePaneState();
+  const { zoomedPaneId, focusedPaneId } = usePaneState();
   const { focusPane } = usePaneActions();
+  const isMobile = useMobileMode();
   const isZoomed = zoomedPaneId === node.id;
-  const hidden = zoomedPaneId !== null && !isZoomed;
+  const isFocused = focusedPaneId === node.id;
+  const hidden =
+    (isMobile && focusedPaneId !== null && !isFocused) || (zoomedPaneId !== null && !isZoomed);
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: pane container handles click-to-focus; tabIndex={-1} is intentional for programmatic focus only

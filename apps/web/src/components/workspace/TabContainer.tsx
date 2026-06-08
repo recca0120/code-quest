@@ -1,6 +1,9 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+// Approximate width of one session tab item (px) — used to compute maxVisible
+const SESSION_TAB_WIDTH_PX = 120;
+
 const NOOP = (): void => {};
 
 import { toast } from 'sonner';
@@ -282,6 +285,24 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   const tabEntries = Object.entries(tabs);
 
+  // Measure session bar container width to compute maxVisible
+  const sessionBarContainerRef = useRef<HTMLDivElement>(null);
+  const [sessionBarWidth, setSessionBarWidth] = useState(0);
+  useEffect(() => {
+    const el = sessionBarContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) setSessionBarWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const maxVisible =
+    sessionBarWidth > 0
+      ? Math.max(1, Math.floor((sessionBarWidth - SESSION_TAB_WIDTH_PX) / SESSION_TAB_WIDTH_PX))
+      : undefined;
+
   // Sessions in INACTIVE workspace tabs' pane trees — must stay mounted to avoid double-mount
   // when switching tabs (React would unmount from pane and remount in pool simultaneously)
   const inactiveTabSessionIds = useMemo(
@@ -335,11 +356,14 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     <PaneZoomProvider>
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <WorkspaceTabBar />
-        <SessionBar
-          sessions={sessionBarItems}
-          onNewSession={() => handleCreateTab({ cwd: focusedTabCwd ?? undefined })}
-          onCloseSession={handleCloseSession}
-        />
+        <div ref={sessionBarContainerRef} className="contents">
+          <SessionBar
+            sessions={sessionBarItems}
+            maxVisible={maxVisible}
+            onNewSession={() => handleCreateTab({ cwd: focusedTabCwd ?? undefined })}
+            onCloseSession={handleCloseSession}
+          />
+        </div>
 
         {/* Inactive workspace tabs: keep sessions in their pane trees mounted to prevent
               double-mount when switching tabs (avoids "Channel already exists" error) */}
