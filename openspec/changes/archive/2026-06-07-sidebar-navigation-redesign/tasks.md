@@ -56,22 +56,22 @@
 
 ## 16. TabBar 還原 + live session badge 移除
 
-- [ ] 16.1 復原 `apps/web/src/components/workspace/TabBar.tsx`（從 main 取回）
-- [ ] 16.2 復原 `apps/web/src/components/workspace/__tests__/TabBar.test.tsx`（從 main 取回）
-- [ ] 16.3 `TabContainer.tsx` 在 `Tabs.Root` 內 `<div className="flex flex-1">` 之前加回 `<TabBar>` render
-- [ ] 16.4 驗證 sidebar session list 點擊後 TabBar active tab 正確切換
-- [ ] 16.5 `WorktreeRow.tsx` 移除 `liveSessions` prop 及對應的 Badge render
-- [ ] 16.6 `WorktreeChildList.tsx` 移除 `liveCountByPath` 及傳給 `WorktreeRow` 的 `liveSessions`
-- [ ] 16.7 更新所有相關測試
+- [x] 16.1 復原 `apps/web/src/components/workspace/TabBar.tsx`（從 main 取回）
+- [x] 16.2 復原 `apps/web/src/components/workspace/__tests__/TabBar.test.tsx`（從 main 取回）
+- [x] 16.3 `TabContainer.tsx` 在 `Tabs.Root` 內 `<div className="flex flex-1">` 之前加回 `<TabBar>` render
+- [x] 16.4 驗證 sidebar session list 點擊後 TabBar active tab 正確切換
+- [x] 16.5 `WorktreeRow.tsx` 移除 `liveSessions` prop 及對應的 Badge render
+- [x] 16.6 `WorktreeChildList.tsx` 移除 `liveCountByPath` 及傳給 `WorktreeRow` 的 `liveSessions`
+- [x] 16.7 更新所有相關測試
 
 ---
 
 ## 17. Project card 點擊只展開不收合
 
-- [ ] 17.1 撰寫失敗測試：點擊已展開 project card → worktree 列表維持展開（不收合）
-- [ ] 17.2 撰寫失敗測試：點擊未展開 project card → worktree 列表展開
-- [ ] 17.3 `ProjectRow.tsx` 的 `ProjectCard.onSelect` 改用 `setExpanded(project.cwd, true)`（只展開）；chevron 繼續用 `toggleExpanded`
-- [ ] 17.4 確認所有測試通過
+- [x] 17.1 撰寫失敗測試：點擊已展開 project card → worktree 列表維持展開（不收合）
+- [x] 17.2 撰寫失敗測試：點擊未展開 project card → worktree 列表展開
+- [x] 17.3 `ProjectRow.tsx` 的 `ProjectCard.onSelect` 改用 `setExpanded(project.cwd, true)`（只展開）；chevron 繼續用 `toggleExpanded`
+- [x] 17.4 確認所有測試通過
 
 ---
 

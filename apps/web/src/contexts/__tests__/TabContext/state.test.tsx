@@ -135,9 +135,9 @@ describe('TabProvider', () => {
       });
     });
 
-    it('cwd does NOT match own cwd → pending stays uncleared', async () => {
-      // Two tabs: 'ch-a' (added first, becomes active) and 'ch-target'.
-      // Request targets a different cwd → must not steal activation, must not clear.
+    it('global TabProvider activates channel regardless of intent cwd', async () => {
+      // Design Decision 4: single global TabProvider handles all channels.
+      // No cwd guard — intent with any cwd activates the channel if it's in tabs.
       renderWithProjectAndSessions(
         <ProbeAndTrigger trigger={{ cwd: '/other', channelId: 'ch-target' }} />,
         {
@@ -152,14 +152,11 @@ describe('TabProvider', () => {
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(screen.getByText('request'));
 
-      // Wait for the pending intent to land; active staying put is the
-      // negative half of the same observation.
+      // Channel is in tabs → activates immediately, pending clears
       await vi.waitFor(() => {
-        expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent(
-          '"channelId":"ch-target"',
-        );
+        expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('ch-target');
+        expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent('null');
       });
-      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('ch-a');
     });
   });
 

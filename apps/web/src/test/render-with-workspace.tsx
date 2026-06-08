@@ -3,7 +3,7 @@
 import { EVENTS } from '@code-quest/schemas';
 import { createFakeServer } from '@code-quest/server/test';
 import type { FakeClaude } from '@code-quest/test-kit';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Toaster } from 'sonner';
 import { onTestFinished } from 'vitest';
@@ -92,13 +92,15 @@ async function addProject(
   summoner.filesystem().setRoots([path]);
   summoner.filesystem().addDirectory(path, [dirName]);
 
-  // Detect entry point: EmptyState or sidebar
+  // Detect entry point: EmptyState "Add Project" or GlobalBar project switcher "Add project"
   const emptyButton = screen.queryByRole('button', { name: 'Add Project' });
   if (emptyButton) {
     await user.click(emptyButton);
   } else {
-    const sidebar = screen.getByRole('complementary', { name: 'sidebar-panel' });
-    await user.click(within(sidebar).getByText(/Add/));
+    // Open GlobalBar project switcher dropdown, then click "Add project"
+    const projectBtn = screen.getByRole('button', { name: /Project:/ });
+    await user.click(projectBtn);
+    await user.click(screen.getByRole('menuitem', { name: /Add project/ }));
   }
 
   // Browse FileTree → select → Add

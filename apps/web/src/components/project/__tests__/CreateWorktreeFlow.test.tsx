@@ -1,6 +1,6 @@
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import { FakeGit } from '@code-quest/test-kit';
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
@@ -21,18 +21,12 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
     // Sanity: chat panel is active.
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
 
-    // Act: right-click the ProjectCard (in the sidebar — disambiguates from
-    // the TopScopeSwitcher trigger which also shows project name).
-    const sidebar = screen.getByRole('complementary', { name: 'sidebar-panel' });
-    const projectButton = await within(sidebar).findByRole('button', { name: /app/i });
-    await user.pointer({ keys: '[MouseRight>]', target: projectButton });
-
-    // "Create Worktree…" menu item appears.
-    const menuItem = await screen.findByRole('menuitem', { name: /Create Worktree/i });
+    // Act: open GlobalBar [+] quick picker → "New worktree"
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    const menuItem = await screen.findByRole('menuitem', { name: /New worktree/i });
     expect(menuItem).toBeInTheDocument();
-    void sidebar;
 
-    // Click it → dialog opens (2-tab redesign, Phase 10.8c).
+    // Click it → dialog opens.
     await user.click(menuItem);
     expect(await screen.findByRole('dialog', { name: /new worktree/i })).toBeInTheDocument();
 

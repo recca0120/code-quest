@@ -259,6 +259,7 @@ export class ChannelManager {
             projectRoot: ch?.projectRoot ?? undefined,
             title,
             effort: ss.effort,
+            branch: ch?.branch,
           }),
         },
       ],

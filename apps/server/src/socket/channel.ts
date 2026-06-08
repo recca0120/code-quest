@@ -46,6 +46,7 @@ export class Channel {
   private _cwd: string;
   private _projectRoot: string | null = null;
   private _worktree: WorktreeInfo | null = null;
+  private _branch: string | undefined;
   private _lastError: string | undefined;
   private _exited = false;
 
@@ -100,6 +101,13 @@ export class Channel {
   set worktree(v: WorktreeInfo | null) {
     this._worktree = v;
     if (v) this._cwd = v.path;
+  }
+
+  get branch(): string | undefined {
+    return this._branch;
+  }
+  set branch(v: string | undefined) {
+    this._branch = v;
   }
 
   get lastError(): string | undefined {

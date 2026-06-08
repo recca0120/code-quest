@@ -1,51 +1,65 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
-import * as Tabs from '@radix-ui/react-tabs';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ChannelProvider } from '@/contexts/channel';
-import { useGitState } from '@/contexts/GitContext';
 import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
-import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext';
+import {
+  collectSessionsInPaneTree,
+  type PaneNode,
+  type TabMeta,
+  usePaneActions,
+  usePaneState,
+  useTabActions,
+  useTabState,
+  useWorkspaceTabState,
+} from '@/contexts/TabContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { basename } from '@/utils/basename';
-import { cn } from '@/utils/cn';
-import { findWorktreeByCwd } from '@/utils/worktree';
 import { ChatView } from '../chat/ChatView.tsx';
+import { EmptyPanePicker } from './EmptyPanePicker.tsx';
+import { PaneHeader } from './PaneHeader.tsx';
+import { PaneZoomProvider } from './PaneZoomProvider.tsx';
 import { RightPane } from './RightPane.tsx';
-import { TabBar } from './TabBar.tsx';
+import { SessionBar } from './SessionBar.tsx';
+import { SplitPane } from './SplitPane.tsx';
+import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
 
-interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode'> {
+interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode' | 'branch'> {
   channelId: string;
   projectName: string;
   rightOpen: boolean;
   onToggleLeft?: () => void;
   onToggleRight: () => void;
+  onNewChannel?: (cwd: string) => void;
 }
 
 function TabContent({
   channelId,
   cwd,
+  branch,
   title,
   projectName,
   mode,
   rightOpen,
   onToggleLeft,
   onToggleRight,
+  onNewChannel,
 }: TabContentProps) {
-  const { setTabTitle, setTabStatus, createNewTab } = useTabActions();
+  const { setTabTitle, setTabStatus } = useTabActions();
   return (
     <ChannelProvider
       channelId={channelId}
       cwd={cwd}
+      branch={branch}
       mode={mode}
       onChange={(update) => {
         if (update.title) setTabTitle(channelId, update.title);
         if (update.status) setTabStatus(channelId, update.status);
       }}
-      onNewChannel={(newCwd) => createNewTab({ cwd: newCwd })}
+      onNewChannel={onNewChannel}
     >
       <ChatView
         title={title}
@@ -62,114 +76,287 @@ function TabContent({
   );
 }
 
-export const TabContainer: React.FC<{ projectCwd: string; onToggleLeft?: () => void }> = memo(
-  function TabContainer({ projectCwd, onToggleLeft }) {
-    const { activeTabId, tabs } = useTabState();
-    const { setActiveTab, removeTab, createNewTab } = useTabActions();
-    const { closeSession } = useSession();
-    const { listing } = useGitState();
-    const { setActiveCwd, recordLastTab } = useNavigationActions();
-    const { selectedWorktreeCwd } = useNavigationState();
-    const { activeProjectCwd } = useProjectState();
-    const { isDesktop } = useBreakpoint();
-    const [rightOpen, setRightOpen] = useState(() => isDesktop);
-    const toggleRight = useCallback(() => setRightOpen((v) => !v), []);
+function findPaneLeaf(node: PaneNode, id: string): Extract<PaneNode, { type: 'leaf' }> | null {
+  if (node.type === 'leaf') return node.id === id ? node : null;
+  return findPaneLeaf(node.first, id) ?? findPaneLeaf(node.second, id);
+}
 
-    const isThisActive = projectCwd === activeProjectCwd;
-    const activeTabCwd = activeTabId ? (tabs[activeTabId]?.cwd ?? null) : null;
-    const projectName = basename(projectCwd);
+function findFirstLeaf(node: PaneNode): Extract<PaneNode, { type: 'leaf' }> | null {
+  if (node.type === 'leaf') return node;
+  return findFirstLeaf(node.first) ?? findFirstLeaf(node.second);
+}
 
-    useEffect(() => {
-      if (!isThisActive) return;
-      setActiveCwd(activeTabCwd);
-    }, [isThisActive, activeTabCwd, setActiveCwd]);
+interface PaneLeafContentProps {
+  node: Extract<PaneNode, { type: 'leaf' }>;
+  tabs: Record<string, TabMeta>;
+  projectName: string;
+  rightOpen: boolean;
+  onToggleLeft?: () => void;
+  onToggleRight: () => void;
+  onNewTab: (opts?: { cwd?: string; targetPaneId?: string }) => void;
+}
 
-    // Separate effect: cleanup on active→inactive must not depend on
-    // activeTabCwd, otherwise switching tabs would flap to null then new cwd.
-    useEffect(() => {
-      if (!isThisActive) return;
-      return () => {
-        setActiveCwd(null);
-      };
-    }, [isThisActive, setActiveCwd]);
+function PaneLeafContent({
+  node,
+  tabs,
+  projectName,
+  rightOpen,
+  onToggleLeft,
+  onToggleRight,
+  onNewTab,
+}: PaneLeafContentProps) {
+  const { paneRoot } = usePaneState();
+  const { splitPane, closePane, focusPane } = usePaneActions();
 
-    const handleCloseTab = (id: string) => {
-      closeSession(id);
-      removeTab(id);
-    };
+  const sessionId = node.content.type === 'session' ? node.content.sessionId : null;
+  const meta = sessionId ? tabs[sessionId] : null;
+  const isOnly = paneRoot.type === 'leaf';
 
-    const handleSelectTab = (id: string) => {
-      setActiveTab(id);
-      const cwd = tabs[id]?.cwd;
-      if (cwd) recordLastTab(cwd, id);
-    };
+  const sessionsInPanes = collectSessionsInPaneTree(paneRoot);
+  const inactiveSessions = Object.entries(tabs)
+    .filter(([id]) => !sessionsInPanes.has(id))
+    .map(([id, m]) => ({ channelId: id, title: m.title }));
 
-    const tabEntries = Object.entries(tabs);
-    const allTabs = tabEntries.map(([id, meta]) => {
-      const found = findWorktreeByCwd(listing, meta.cwd);
-      return {
-        sessionId: id,
-        cwd: meta.cwd,
-        title: meta.title,
-        status: meta.tabStatus,
-        worktree: found
-          ? { name: found.worktree.name, path: found.worktree.path, branch: found.worktree.branch }
-          : undefined,
-        projectName: found ? basename(found.projectCwd) : undefined,
-      };
-    });
-    const worktreeFilter = selectedWorktreeCwd[projectCwd];
-    const openTabs = worktreeFilter ? allTabs.filter((t) => t.cwd === worktreeFilter) : allTabs;
-
-    if (tabEntries.length === 0) {
-      return (
-        <EmptyState
-          icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}
-          message="No open sessions"
-          actionLabel="New Session"
-          onAction={() => createNewTab()}
+  return (
+    <div className="flex flex-col flex-1 min-w-0 min-h-0">
+      <PaneHeader
+        paneId={node.id}
+        branch={meta?.branch}
+        title={meta?.title}
+        isOnly={isOnly}
+        onSplitH={() => {
+          focusPane(node.id);
+          splitPane('h');
+        }}
+        onSplitV={() => {
+          focusPane(node.id);
+          splitPane('v');
+        }}
+        onClose={() => closePane(node.id)}
+      />
+      {sessionId && meta ? (
+        <TabContent
+          channelId={sessionId}
+          cwd={meta.cwd}
+          branch={meta.branch}
+          title={meta.title}
+          projectName={projectName}
+          mode={meta.mode}
+          rightOpen={rightOpen}
+          onToggleLeft={onToggleLeft}
+          onToggleRight={onToggleRight}
+          onNewChannel={(newCwd) => onNewTab({ cwd: newCwd })}
         />
-      );
-    }
+      ) : (
+        <EmptyPanePicker
+          paneId={node.id}
+          sessions={inactiveSessions}
+          onNewSession={() => onNewTab({ targetPaneId: node.id })}
+        />
+      )}
+    </div>
+  );
+}
 
+interface TabContainerProps {
+  projectCwd: string;
+  onToggleLeft?: () => void;
+  pendingNewSessionCwd?: string | null;
+  onSessionCreated?: () => void;
+}
+
+export const TabContainer: React.FC<TabContainerProps> = memo(function TabContainer({
+  projectCwd,
+  onToggleLeft,
+  pendingNewSessionCwd,
+  onSessionCreated,
+}) {
+  const { tabs } = useTabState();
+  const { createNewTab, removeTab } = useTabActions();
+  const { closeSession } = useSession();
+  const { setActiveCwd } = useNavigationActions();
+  const { selectedWorktreeCwd } = useNavigationState();
+  const { activeProjectCwd } = useProjectState();
+  const { isDesktop } = useBreakpoint();
+  const [rightOpen, setRightOpen] = useState(() => isDesktop);
+  const toggleRight = useCallback(() => setRightOpen((v) => !v), []);
+  const { paneRoot, focusedPaneId } = usePaneState();
+  const { setSessionInPane, focusPane, splitPaneAndAssign } = usePaneActions();
+  const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTabState();
+
+  const isThisActive = projectCwd === activeProjectCwd;
+  const projectName = basename(projectCwd);
+
+  const focusedLeaf = focusedPaneId ? findPaneLeaf(paneRoot, focusedPaneId) : null;
+  const focusedSession =
+    focusedLeaf?.content.type === 'session' ? focusedLeaf.content.sessionId : null;
+  const focusedTabCwd = focusedSession ? (tabs[focusedSession]?.cwd ?? null) : null;
+
+  // Create a new tab and immediately assign it to the focused pane (or first empty leaf)
+  // Both updates are dispatched in the same event handler → React 18 batches them into one render
+  // This avoids the double-mount "Channel already exists" error from useEffect-based assignment
+  const handleCreateTab = useCallback(
+    (opts?: { cwd?: string; targetPaneId?: string }) => {
+      const { channelId } = createNewTab(opts);
+      const effectivePaneId = opts?.targetPaneId ?? focusedPaneId;
+      const target = effectivePaneId
+        ? (findPaneLeaf(paneRoot, effectivePaneId) ?? findFirstLeaf(paneRoot))
+        : findFirstLeaf(paneRoot);
+      if (target && target.content.type === 'session') {
+        if (target.content.sessionId === null) {
+          setSessionInPane(target.id, channelId);
+          focusPane(target.id);
+        } else {
+          // Pane is occupied — split and assign to new leaf to prevent double-mount
+          splitPaneAndAssign('h', channelId);
+        }
+      }
+    },
+    // opts.targetPaneId is captured at call time — no need in deps
+    [createNewTab, focusedPaneId, paneRoot, setSessionInPane, focusPane, splitPaneAndAssign],
+  );
+
+  // Keep a ref to the latest handleCreateTab to avoid stale closure in the effect
+  const handleCreateTabRef = useRef(handleCreateTab);
+  handleCreateTabRef.current = handleCreateTab;
+
+  useEffect(() => {
+    if (!pendingNewSessionCwd) return;
+    handleCreateTabRef.current({ cwd: pendingNewSessionCwd });
+    onSessionCreated?.();
+  }, [pendingNewSessionCwd, onSessionCreated]);
+
+  const handleCloseSession = useCallback(
+    (channelId: string) => {
+      closeSession(channelId);
+      removeTab(channelId);
+    },
+    [closeSession, removeTab],
+  );
+
+  useEffect(() => {
+    if (!isThisActive) return;
+    setActiveCwd(focusedTabCwd);
+  }, [isThisActive, focusedTabCwd, setActiveCwd]);
+
+  useEffect(() => {
+    if (!isThisActive) return;
+    return () => {
+      setActiveCwd(null);
+    };
+  }, [isThisActive, setActiveCwd]);
+
+  const tabEntries = Object.entries(tabs);
+  const worktreeFilter = selectedWorktreeCwd[projectCwd];
+  const openSessions = tabEntries
+    .filter(([, meta]) => !worktreeFilter || meta.cwd === worktreeFilter)
+    .map(([id, meta]) => ({ sessionId: id, title: meta.title }));
+
+  if (tabEntries.length === 0) {
     return (
-      <Tabs.Root
-        value={activeTabId ?? undefined}
-        onValueChange={handleSelectTab}
-        className="flex flex-col flex-1 min-w-0"
-        aria-label="tab-container-root"
-      >
-        <TabBar
-          tabs={openTabs}
-          activeTabId={activeTabId}
-          onSelectTab={handleSelectTab}
-          onCloseTab={handleCloseTab}
-          onNewTab={() => createNewTab()}
+      <EmptyState
+        icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}
+        message="No open sessions"
+        actionLabel="New Session"
+        onAction={() => handleCreateTab()}
+      />
+    );
+  }
+
+  const sessionsInPanes = collectSessionsInPaneTree(paneRoot);
+
+  // Sessions in INACTIVE workspace tabs' pane trees — must stay mounted to avoid double-mount
+  // when switching tabs (React would unmount from pane and remount in pool simultaneously)
+  const inactiveTabSessionIds = workspaceTabs
+    .filter((t) => t.id !== activeWorkspaceTabId)
+    .flatMap((t) => [...collectSessionsInPaneTree(t.paneRoot)]);
+
+  // Sessions not in the ACTIVE tab's pane tree AND not in any inactive tab's pane tree
+  const allPaneSessions = new Set([...sessionsInPanes, ...inactiveTabSessionIds]);
+
+  const sessionBarItems = openSessions.map((s) => ({
+    channelId: s.sessionId,
+    title: tabs[s.sessionId]?.title,
+    tabStatus: tabs[s.sessionId]?.tabStatus,
+    branch: tabs[s.sessionId]?.branch,
+  }));
+
+  return (
+    <PaneZoomProvider>
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <WorkspaceTabBar />
+        <SessionBar
+          sessions={sessionBarItems}
+          onNewSession={() => handleCreateTab()}
+          onCloseSession={handleCloseSession}
         />
-        <div className="flex flex-1 overflow-hidden">
-          {tabEntries.map(([id, meta]) => (
-            <Tabs.Content
-              key={id}
-              value={id}
-              forceMount
-              hidden={id !== activeTabId}
-              aria-label={id === activeTabId ? 'tab-container' : undefined}
-              className={cn(id === activeTabId ? 'flex flex-1 min-w-0' : undefined)}
-            >
+
+        {/* Inactive workspace tabs: keep sessions in their pane trees mounted to prevent
+              double-mount when switching tabs (avoids "Channel already exists" error) */}
+        <div
+          data-testid="inactive-tab-sessions"
+          hidden
+          aria-hidden="true"
+          style={{ display: 'none' }}
+        >
+          {inactiveTabSessionIds.map((id) => {
+            const meta = tabs[id];
+            if (!meta) return null;
+            return (
               <TabContent
+                key={id}
                 channelId={id}
                 cwd={meta.cwd}
+                branch={meta.branch}
+                title={meta.title}
+                projectName={projectName}
+                mode={meta.mode}
+                rightOpen={false}
+                onToggleRight={() => {}}
+                onNewChannel={() => {}}
+              />
+            );
+          })}
+        </div>
+
+        {/* Pool: sessions not assigned to any pane in any workspace tab */}
+        <div data-testid="session-pool" hidden aria-hidden="true" style={{ display: 'none' }}>
+          {tabEntries
+            .filter(([id]) => !allPaneSessions.has(id))
+            .map(([id, meta]) => (
+              <TabContent
+                key={id}
+                channelId={id}
+                cwd={meta.cwd}
+                branch={meta.branch}
                 title={meta.title}
                 projectName={projectName}
                 mode={meta.mode}
                 rightOpen={rightOpen}
                 onToggleLeft={onToggleLeft}
                 onToggleRight={toggleRight}
+                onNewChannel={(newCwd) => handleCreateTab({ cwd: newCwd })}
               />
-            </Tabs.Content>
-          ))}
+            ))}
         </div>
-      </Tabs.Root>
-    );
-  },
-);
+
+        {/* SplitPane area: sessions assigned to panes render here */}
+        <SplitPane
+          renderLeaf={(node) =>
+            node.type === 'leaf' ? (
+              <PaneLeafContent
+                node={node}
+                tabs={tabs}
+                projectName={projectName}
+                rightOpen={rightOpen}
+                onToggleLeft={onToggleLeft}
+                onToggleRight={toggleRight}
+                onNewTab={handleCreateTab}
+              />
+            ) : null
+          }
+        />
+      </div>
+    </PaneZoomProvider>
+  );
+});

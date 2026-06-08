@@ -186,6 +186,26 @@ describe('ChannelManager', () => {
       expect(statesEvents.length).toBeGreaterThan(0);
       expect(statesEvents[0]!.sessions[0]!.cwd).toBe('/test/project');
     });
+
+    it('session:states includes branch when provided in launch payload', async () => {
+      const claude = createFakeSummoner().claude();
+
+      await claude.initialize({ launch: { channelId: 'ch-1', branch: 'feat/my-feature' } });
+
+      const statesEvents = claude.receivedEvents('session:states');
+      expect(statesEvents.length).toBeGreaterThan(0);
+      expect(statesEvents[0]!.sessions[0]!.branch).toBe('feat/my-feature');
+    });
+
+    it('session:states omits branch when not provided in launch payload', async () => {
+      const claude = createFakeSummoner().claude();
+
+      await claude.initialize({ launch: { channelId: 'ch-1' } });
+
+      const statesEvents = claude.receivedEvents('session:states');
+      expect(statesEvents.length).toBeGreaterThan(0);
+      expect(statesEvents[0]!.sessions[0]!.branch).toBeUndefined();
+    });
   });
 
   describe('getAliveSessionIds', () => {

@@ -1,4 +1,4 @@
-import { act, screen, within } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setupMatchMedia } from '@/test/fake-match-media';
 import { type RenderWithWorkspaceResult, renderWithWorkspace } from '@/test/render-with-workspace';
@@ -15,9 +15,6 @@ async function setupWithProject(width: number): Promise<RenderWithWorkspaceResul
   return setup();
 }
 
-function sidebar() {
-  return screen.getByRole('complementary', { name: 'sidebar-panel' });
-}
 function rightPaneBody() {
   return screen.queryByLabelText('right-pane-body');
 }
@@ -38,41 +35,37 @@ describe('WorkspaceLayout — with project', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('TabBar is rendered at top of chat area', async () => {
+  it('SessionBar is rendered at top of chat area', async () => {
     await setup();
-    expect(screen.getByRole('tablist', { name: 'tab-bar' })).toBeInTheDocument();
+    expect(screen.getByTestId('session-bar')).toBeInTheDocument();
   });
 
-  it('sidebar shows project list by default', async () => {
+  it('GlobalBar shows active project name', async () => {
     await setup();
-    expect(screen.getByRole('heading', { name: /Projects/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Project:/ })).toBeInTheDocument();
   });
 
-  it('TabBar shows multiple tabs and clicking a non-active tab switches active session', async () => {
+  it('SessionBar shows multiple sessions, each auto-assigned to a pane (split)', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
+
+    result.claude.prepareInit();
     await project.launchSession();
 
-    const tabBar = screen.getByRole('tablist', { name: 'tab-bar' });
-    const allTabs = within(tabBar).getAllByRole('tab');
-    expect(allTabs).toHaveLength(2);
+    const sessionBar = screen.getByTestId('session-bar');
+    const sessionItems = Array.from(sessionBar.querySelectorAll<HTMLElement>('[data-status]'));
+    expect(sessionItems).toHaveLength(2);
 
-    // Last launched is active — click the first tab
-    const activeTab = within(tabBar).getByRole('tab', { selected: true });
-    const inactiveTab = allTabs.find((t) => t !== activeTab)!;
-
-    await act(async () => {
-      inactiveTab.click();
-    });
-
-    expect(inactiveTab).toHaveAttribute('aria-selected', 'true');
-    expect(activeTab).not.toHaveAttribute('aria-selected', 'true');
+    // Both sessions are in panes (split happened) — neither should be inactive
+    const statuses = sessionItems.map((el) => el.getAttribute('data-status'));
+    expect(statuses).not.toContain('inactive');
+    // The second session (most recently created) should be focused-active
+    expect(statuses).toContain('focused-active');
   });
 
   it('shows empty state when no sessions open', async () => {
     await renderWithWorkspace();
-    // No project yet — empty state for project
     expect(screen.getByRole('button', { name: 'Add Project' })).toBeInTheDocument();
   });
 });
@@ -90,19 +83,39 @@ describe('WorkspaceLayout — multi-project', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('switching project keeps both tab groups mounted', async () => {
+  it('sessions from two projects appear in the same SessionBar (cross-project)', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
 
     result.claude.prepareInit();
     const project2 = await result.addProject({ path: '/projects', dirName: 'other-project' });
-
-    const sidebarEl = screen.getByRole('complementary', { name: 'sidebar-panel' });
-    await result.user.click(within(sidebarEl).getByText(/other-project/));
     await project2.launchSession();
 
-    expect(screen.getAllByPlaceholderText(/Esc to focus/i).length).toBe(2);
+    // Design Decision 4: Tab Bar and Split Pane are cross-project.
+    // Both sessions should be visible in a SINGLE session bar.
+    const sessionBar = screen.getByTestId('session-bar');
+    expect(sessionBar.querySelectorAll('[data-status]').length).toBe(2);
+  });
+
+  it('switching project via GlobalBar does NOT change pane layout', async () => {
+    const result = await renderWithWorkspace();
+    const project = await result.addProject();
+    await project.launchSession();
+
+    result.claude.prepareInit();
+    const project2 = await result.addProject({ path: '/projects', dirName: 'other-project' });
+    await project2.launchSession();
+
+    // Both sessions in same session bar before switching
+    expect(screen.getByTestId('session-bar').querySelectorAll('[data-status]').length).toBe(2);
+
+    // Switch back to project 1 via GlobalBar
+    await result.user.click(screen.getByRole('button', { name: /Project:/ }));
+    await result.user.click(screen.getByRole('menuitem', { name: /app/ }));
+
+    // Sessions still visible — project switch only changes [+] default cwd, not layout
+    expect(screen.getByTestId('session-bar').querySelectorAll('[data-status]').length).toBe(2);
   });
 });
 
@@ -113,10 +126,9 @@ describe('WorkspaceLayout — Desktop (≥1024px)', () => {
     expect(screen.queryByTitle('Projects')).toBeNull();
   });
 
-  it('renders sidebar as docked column by default', async () => {
+  it('GlobalBar is visible', async () => {
     await setupWithProject(1440);
-    expect(sidebar()).toBeInTheDocument();
-    expect(sidebar()).toHaveAttribute('data-open');
+    expect(screen.getByTestId('global-bar')).toBeInTheDocument();
   });
 
   it('renders the RightPane body visible by default on desktop', async () => {
@@ -124,41 +136,22 @@ describe('WorkspaceLayout — Desktop (≥1024px)', () => {
     expect(rightPaneBody()).toBeInTheDocument();
   });
 
-  it('shows Toggle sidebar in the topbar', async () => {
-    await setupWithProject(1440);
-    expect(screen.getByRole('button', { name: /toggle sidebar/i })).toBeInTheDocument();
+  it('shows Settings button in GlobalBar; click opens Settings dialog', async () => {
+    const { user } = await setupWithProject(1440);
+    await user.click(screen.getByRole('button', { name: /settings/i }));
+    expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
   });
 
   it('shows Toggle right pane button in the chat header', async () => {
     await setupWithProject(1440);
     expect(screen.getByRole('button', { name: /toggle right pane/i })).toBeInTheDocument();
   });
-
-  it('shows Settings button in topbar; click opens Settings dialog', async () => {
-    const { user } = await setupWithProject(1440);
-    await user.click(screen.getByRole('button', { name: /settings/i }));
-    expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
-  });
 });
 
 describe('WorkspaceLayout — Tablet (768–1023px)', () => {
-  it('sidebar element exists in DOM and starts closed', async () => {
-    await setupWithProject(800);
-    expect(sidebar()).toBeInTheDocument();
-    expect(sidebar()).not.toHaveAttribute('data-open');
-  });
-
   it('right pane starts hidden on tablet', async () => {
     await setupWithProject(800);
     expect(rightPaneBody()).toBeNull();
-  });
-
-  it('Toggle sidebar opens then closes the sidebar drawer', async () => {
-    const { user } = await setupWithProject(800);
-    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
-    expect(sidebar()).toHaveAttribute('data-open');
-    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
-    expect(sidebar()).not.toHaveAttribute('data-open');
   });
 
   it('Toggle right pane shows then hides the right pane', async () => {
@@ -169,23 +162,7 @@ describe('WorkspaceLayout — Tablet (768–1023px)', () => {
     expect(rightPaneBody()).not.toBeInTheDocument();
   });
 
-  it('clicking backdrop closes the sidebar drawer after opening', async () => {
-    const { user } = await setupWithProject(800);
-    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
-    expect(sidebar()).toHaveAttribute('data-open');
-    await user.click(screen.getByRole('button', { name: /dismiss sidebar/i }));
-    expect(sidebar()).not.toHaveAttribute('data-open');
-  });
-
-  it('sidebar has a close button that closes the drawer', async () => {
-    const { user } = await setupWithProject(800);
-    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
-    expect(sidebar()).toHaveAttribute('data-open');
-    await user.click(screen.getByRole('button', { name: /close sidebar/i }));
-    expect(sidebar()).not.toHaveAttribute('data-open');
-  });
-
-  it('shows Settings button in topbar; click opens dialog', async () => {
+  it('shows Settings button in GlobalBar; click opens dialog', async () => {
     const { user } = await setupWithProject(800);
     await user.click(screen.getByRole('button', { name: /settings/i }));
     expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
@@ -193,18 +170,9 @@ describe('WorkspaceLayout — Tablet (768–1023px)', () => {
 });
 
 describe('WorkspaceLayout — Mobile (<768px)', () => {
-  it('sidebar starts closed and right pane starts hidden', async () => {
+  it('right pane starts hidden on mobile', async () => {
     await setupWithProject(375);
-    expect(sidebar()).not.toHaveAttribute('data-open');
     expect(rightPaneBody()).toBeNull();
-  });
-
-  it('Toggle sidebar opens then closes drawer on mobile', async () => {
-    const { user } = await setupWithProject(375);
-    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
-    expect(sidebar()).toHaveAttribute('data-open');
-    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
-    expect(sidebar()).not.toHaveAttribute('data-open');
   });
 
   it('Toggle right pane shows then hides right pane on mobile', async () => {
@@ -215,7 +183,7 @@ describe('WorkspaceLayout — Mobile (<768px)', () => {
     expect(rightPaneBody()).not.toBeInTheDocument();
   });
 
-  it('shows Settings button in mobile topbar; click opens dialog', async () => {
+  it('shows Settings button in GlobalBar; click opens dialog', async () => {
     const { user } = await setupWithProject(375);
     await user.click(screen.getByRole('button', { name: /settings/i }));
     expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
@@ -249,28 +217,18 @@ describe('WorkspaceLayout — state preservation across breakpoints', () => {
     expect(elAfter).toBe(elBefore);
   });
 
-  it('crossing desktop→mobile does NOT auto-collapse sidebar or hide right pane', async () => {
+  it('crossing desktop→mobile does NOT hide right pane', async () => {
     const fakeMM = setupMatchMedia(1440);
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
-    expect(sidebar()).toHaveAttribute('data-open');
     expect(rightPaneBody()).toBeInTheDocument();
 
     act(() => {
       fakeMM.triggerChange(375);
     });
 
-    expect(sidebar()).toHaveAttribute('data-open');
     expect(rightPaneBody()).toBeInTheDocument();
-  });
-
-  it('sidebar element is always present in the DOM (visibility CSS-driven)', async () => {
-    setupMatchMedia(800);
-    const result = await renderWithWorkspace();
-    const project = await result.addProject();
-    await project.launchSession();
-    expect(sidebar()).toBeInTheDocument();
   });
 });
 
@@ -280,8 +238,8 @@ describe('WorkspaceLayout — layout width constraints', () => {
     expect(screen.getByLabelText('project-container')).toHaveClass('min-w-0');
   });
 
-  it('tab container has min-w-0 to prevent content forcing parent wider than viewport', async () => {
+  it('split pane root has min-w-0 to prevent content forcing parent wider than viewport', async () => {
     await setupWithProject(375);
-    expect(screen.getByLabelText('tab-container')).toHaveClass('min-w-0');
+    expect(screen.getByTestId('split-pane-root')).toHaveClass('min-w-0');
   });
 });

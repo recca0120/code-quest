@@ -1,31 +1,26 @@
-import type { SessionStateSummary } from '@code-quest/schemas';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
-import { DrawerAside } from '@/components/ui/DrawerAside';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CommandPaletteProvider, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
+import { useGitState } from '@/contexts/GitContext';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import { TabProvider } from '@/contexts/TabContext';
-import { useBreakpoint } from '@/hooks/useBreakpoint';
-import { cn } from '@/utils/cn';
 import { NO_FORM } from '@/utils/hotkey-options';
 import { CommandPalette } from '../palette/CommandPalette.tsx';
 import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
-import { ProjectTree } from '../project/ProjectTree.tsx';
+import { CreateWorktreeDialog } from '../project/CreateWorktreeDialog.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
+import { GlobalBar } from './GlobalBar.tsx';
 import { TabContainer } from './TabContainer.tsx';
-import { WorkspaceTopbar } from './WorkspaceTopbar.tsx';
 
 const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
   path_not_found: (p) => `Path not found: ${p}`,
   path_not_directory: (p) => `Not a directory: ${p}`,
 };
-
-const EMPTY_SESSIONS: SessionStateSummary[] = [];
 
 function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   const isBusy = sessions.some((s) => s.state === 'busy');
@@ -35,19 +30,6 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   return null;
 }
 
-/**
- * Workspace shell — single component tree across all viewport widths. The
- * sidebar and right pane are mounted exactly once each; CSS responsive
- * modifiers decide whether they appear as docked columns (lg+) or as
- * fixed-positioned slide-in drawers (<lg). This preserves component-local
- * state (file-tree expansion, scroll, draft text, etc.) when the user
- * resizes across the 768/1024 breakpoints.
- *
- * Resize-to-taste of the sidebar / right-pane widths is intentionally
- * deferred — the previous react-resizable-panels integration was the
- * source of the breakpoint-state-loss bug because Panels can't be both a
- * docked column and a fixed-positioned drawer.
- */
 export function WorkspaceLayout(): React.JSX.Element {
   return (
     <CommandPaletteProvider>
@@ -61,6 +43,11 @@ function WorkspaceLayoutInner() {
   useHotkeys('mod+k', () => openPalette(), NO_FORM);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
+  const [pendingSession, setPendingSession] = useState<{
+    projectCwd: string;
+    sessionCwd: string;
+  } | null>(null);
 
   useEffect(() => {
     registerActions({
@@ -68,12 +55,12 @@ function WorkspaceLayoutInner() {
       onOpenSettings: () => setSettingsOpen(true),
     });
   }, [registerActions]);
+
   const { projects, activeProjectCwd } = useProjectState();
-  const { sessions, sessionsMap } = useSession();
+  const { sessions } = useSession();
   const { selectedWorktreeCwd } = useNavigationState();
   const { addProject, setActiveProject } = useProjectActions();
-  const { isMobile, isDesktop } = useBreakpoint();
-  const [leftOpen, setLeftOpen] = useState(() => isDesktop);
+  const { listing } = useGitState();
 
   async function handleAddProject(cwd: string) {
     const res = await addProject(cwd);
@@ -86,24 +73,19 @@ function WorkspaceLayoutInner() {
     setDialogOpen(false);
   }
 
-  function handleActivateSession(channelId: string) {
-    const s = sessionsMap.get(channelId);
-    if (s) setActiveProject(s.projectRoot);
-  }
-
-  function onToggleLeft() {
-    setLeftOpen((v) => !v);
-  }
   const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
-  const sessionsByProject = useMemo(() => {
-    const m = new Map<string, typeof sessions>();
-    for (const s of sessions) {
-      const list = m.get(s.projectRoot) ?? [];
-      list.push(s);
-      m.set(s.projectRoot, list);
-    }
-    return m;
-  }, [sessions]);
+
+  const activeWorktrees = useMemo(() => {
+    if (!activeProjectCwd) return [];
+    const entry = listing[activeProjectCwd];
+    if (!Array.isArray(entry)) return [];
+    return entry;
+  }, [listing, activeProjectCwd]);
+
+  const projectList = useMemo(
+    () => projects.map((p) => ({ cwd: p.cwd, name: p.name })),
+    [projects],
+  );
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -118,63 +100,38 @@ function WorkspaceLayoutInner() {
         />
       ) : (
         <>
-          <WorkspaceTopbar
-            mode={isMobile ? 'mobile' : 'desktop'}
-            onOpenSettings={() => setSettingsOpen(true)}
+          <GlobalBar
+            projects={projectList}
+            activeProjectCwd={activeProjectCwd}
+            worktrees={activeWorktrees}
+            onSelectProject={(cwd) => setActiveProject(cwd)}
+            onAddProject={() => setDialogOpen(true)}
+            onNewSession={(cwd) => {
+              const matchingProject = projects.find((p) => cwd.startsWith(p.cwd));
+              if (matchingProject) {
+                setActiveProject(matchingProject.cwd);
+                setPendingSession({ projectCwd: matchingProject.cwd, sessionCwd: cwd });
+              }
+            }}
+            onCreateWorktree={() => setWorktreeDialogOpen(true)}
             onOpenSearch={() => openPalette()}
-            onToggleLeft={onToggleLeft}
-            sessions={sessions}
-            onActivateSession={handleActivateSession}
+            onOpenSettings={() => setSettingsOpen(true)}
           />
-          <div className="relative flex flex-1 overflow-hidden">
-            {leftOpen && (
-              <button
-                type="button"
-                aria-label="Dismiss sidebar"
-                onClick={() => setLeftOpen(false)}
-                className="lg:hidden fixed inset-0 z-overlay bg-overlay"
+          <TabProvider
+            sessions={sessions}
+            cwd={activeProjectCwd ?? undefined}
+            selectedCwd={
+              activeProjectCwd ? (selectedWorktreeCwd[activeProjectCwd] ?? undefined) : undefined
+            }
+          >
+            <main aria-label="project-container" className="flex flex-1 min-w-0 overflow-hidden">
+              <TabContainer
+                projectCwd={activeProjectCwd ?? ''}
+                pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
+                onSessionCreated={() => setPendingSession(null)}
               />
-            )}
-            <DrawerAside
-              side="left"
-              open={leftOpen}
-              mobileWidthClass="w-[min(85vw,320px)]"
-              dockedWidthClass="lg:w-65"
-              label="sidebar-panel"
-              closeLabel="sidebar"
-              onClose={() => setLeftOpen(false)}
-            >
-              <ProjectTree
-                projects={projects}
-                activeProjectCwd={activeProjectCwd}
-                onSelectProject={(cwd) => {
-                  setActiveProject(cwd);
-                  if (!isDesktop) setLeftOpen(false);
-                }}
-                onAdd={() => setDialogOpen(true)}
-              />
-            </DrawerAside>
-
-            <main className="flex flex-1 min-w-0 h-full">
-              {projects.map((project) => (
-                <section
-                  key={project.cwd}
-                  aria-label={project.cwd === activeProjectCwd ? 'project-container' : undefined}
-                  className={cn(
-                    project.cwd === activeProjectCwd ? 'flex flex-1 min-w-0 h-full' : 'hidden',
-                  )}
-                >
-                  <TabProvider
-                    sessions={sessionsByProject.get(project.cwd) ?? EMPTY_SESSIONS}
-                    cwd={project.cwd}
-                    selectedCwd={selectedWorktreeCwd[project.cwd] ?? undefined}
-                  >
-                    <TabContainer projectCwd={project.cwd} onToggleLeft={onToggleLeft} />
-                  </TabProvider>
-                </section>
-              ))}
             </main>
-          </div>
+          </TabProvider>
         </>
       )}
       <AddProjectDialog
@@ -184,6 +141,13 @@ function WorkspaceLayoutInner() {
         addedProjectCwds={addedProjectCwds}
       />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {worktreeDialogOpen && activeProjectCwd && (
+        <CreateWorktreeDialog
+          open
+          cwd={activeProjectCwd}
+          onClose={() => setWorktreeDialogOpen(false)}
+        />
+      )}
     </div>
   );
 }

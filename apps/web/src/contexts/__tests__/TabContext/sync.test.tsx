@@ -36,6 +36,29 @@ function renderWithSessions(ui: ReactElement, initialSessions: SessionStateSumma
 
 describe('TabProvider', () => {
   describe('tab creation from sessions', () => {
+    it('preserves branch from session sync (pane header needs this)', () => {
+      function Test() {
+        const { tabs, activeTabId } = useTabState();
+        const branch = activeTabId ? tabs[activeTabId]?.branch : undefined;
+        return (
+          <span role="status" aria-label="branch">
+            {branch ?? 'none'}
+          </span>
+        );
+      }
+      const { setSessions } = renderWithSessions(<Test />);
+      setSessions([
+        {
+          channelId: 'ch-1',
+          state: 'idle',
+          cwd: '/my/project',
+          projectRoot: '/my/project',
+          branch: 'feat/my-feature',
+        },
+      ]);
+      expect(screen.getByRole('status', { name: 'branch' })).toHaveTextContent('feat/my-feature');
+    });
+
     it('preserves cwd from session sync (resume / fork need this)', () => {
       function Test() {
         const { tabs, activeTabId } = useTabState();

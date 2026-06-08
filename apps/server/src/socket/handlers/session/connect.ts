@@ -241,6 +241,7 @@ export function create({
         cwd,
         onBeforeSpawn: (ch) => {
           ch.projectRoot = projectRoot;
+          if (parsed.branch) ch.branch = parsed.branch;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });

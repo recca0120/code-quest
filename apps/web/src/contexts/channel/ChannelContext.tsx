@@ -29,6 +29,7 @@ export function ChannelProvider({
   onChange,
   onNewChannel,
   cwd,
+  branch,
   mode = 'resume',
   initialState,
 }: {
@@ -37,6 +38,7 @@ export function ChannelProvider({
   onChange?: (update: ChannelChangeUpdate) => void;
   onNewChannel?: (cwd: string) => void;
   cwd?: string;
+  branch?: string;
   mode?: SessionMode;
   initialState?: Partial<ChannelStateType>;
 }): React.JSX.Element {
@@ -50,21 +52,37 @@ export function ChannelProvider({
   const spawnedRef = useRef(false);
 
   function launch() {
-    if (!cwd) return;
+    if (!cwd) {
+      setState({
+        status: 'error',
+        message: 'No working directory set. Please select a project first.',
+      });
+      return;
+    }
     spawnedRef.current = true;
     setState({ status: 'connecting' });
-    socket.emit(EVENTS.session.launch, { channelId, cwd }, (raw: unknown) => {
-      const parsed = sessionLaunchResponseSchema.safeParse(raw);
-      if (!parsed.success) {
-        setState({ status: 'error', message: 'Failed to connect' });
-        return;
-      }
-      if (!parsed.data.ok) {
-        setState({ status: 'error', message: parsed.data.error });
-        return;
-      }
-      setState({ status: 'ready' });
-    });
+    socket.emit(
+      EVENTS.session.launch,
+      { channelId, cwd, ...(branch ? { branch } : {}) },
+      (raw: unknown) => {
+        const parsed = sessionLaunchResponseSchema.safeParse(raw);
+        if (!parsed.success) {
+          setState({ status: 'error', message: 'Failed to connect' });
+          return;
+        }
+        if (!parsed.data.ok) {
+          // Pane splits unmount+remount ChannelProvider — the channel already exists on the
+          // server, so skip re-launching and fall through to joinSession() instead.
+          if (parsed.data.error === `Channel already exists: ${channelId}`) {
+            setState({ status: 'ready' });
+            return;
+          }
+          setState({ status: 'error', message: parsed.data.error });
+          return;
+        }
+        setState({ status: 'ready' });
+      },
+    );
   }
 
   function handleJoinSettled() {

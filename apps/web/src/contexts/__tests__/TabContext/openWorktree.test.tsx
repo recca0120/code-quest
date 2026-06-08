@@ -98,7 +98,9 @@ describe('TabProvider: pendingOpenWorktree consumption', () => {
     expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('2');
   });
 
-  it('intent with non-matching projectCwd → ignored by this TabProvider', async () => {
+  it('global TabProvider handles worktree intents for any projectCwd', async () => {
+    // Design Decision 4: single global TabProvider handles all projects.
+    // No projectCwd guard — cross-project intents are processed normally.
     render(
       <Wrapper projectCwd="/repo">
         <Probe />
@@ -110,6 +112,9 @@ describe('TabProvider: pendingOpenWorktree consumption', () => {
       screen.getByRole('button', { name: 'open' }).click();
     });
 
-    expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('0');
+    expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('1');
+    expect(screen.getByRole('status', { name: 'active-cwd' }).textContent).toBe(
+      '/other/.claude/worktrees/x',
+    );
   });
 });

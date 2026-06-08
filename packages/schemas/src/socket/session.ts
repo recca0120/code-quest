@@ -191,25 +191,14 @@ export const launchOptionsSchema: z.ZodOptional<
   })
   .optional();
 
-export const sessionLaunchPayloadSchema: z.ZodObject<
-  {
-    channelId: z.ZodOptional<z.ZodString>;
-    initialPrompt: z.ZodOptional<z.ZodString>;
-    model: z.ZodOptional<z.ZodString>;
-    permissionMode: z.ZodOptional<z.ZodString>;
-    thinkingLevel: z.ZodOptional<z.ZodString>;
-    cwd: z.ZodOptional<z.ZodString>;
-    initOptions: z.ZodOptional<typeof initializeOptionsSchema>;
-    launchOptions: typeof launchOptionsSchema;
-  },
-  z.core.$strip
-> = z.object({
+export const sessionLaunchPayloadSchema = z.object({
   channelId: z.string().optional(),
   initialPrompt: z.string().optional(),
   model: z.string().optional(),
   permissionMode: z.string().optional(),
   thinkingLevel: z.string().optional(),
   cwd: z.string().optional(),
+  branch: z.string().optional(),
   initOptions: initializeOptionsSchema.optional(),
   launchOptions: launchOptionsSchema,
 });
@@ -352,6 +341,7 @@ export const sessionStateSummarySchema: z.ZodObject<
     effort: z.ZodOptional<typeof effortLevelSchema>;
     cwd: z.ZodOptional<z.ZodString>;
     projectRoot: z.ZodString;
+    branch: z.ZodOptional<z.ZodString>;
   },
   z.core.$strip
 > = z.object({
@@ -361,6 +351,7 @@ export const sessionStateSummarySchema: z.ZodObject<
   effort: effortLevelSchema.optional(),
   cwd: z.string().optional(),
   projectRoot: z.string(),
+  branch: z.string().optional(),
 });
 export type SessionStateSummary = z.infer<typeof sessionStateSummarySchema>;
 

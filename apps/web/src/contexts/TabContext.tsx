@@ -8,10 +8,221 @@ import type { SessionMode } from './channel/ChannelContext.tsx';
 import { NavigationActionsContext, NavigationStateContext } from './NavigationContext.tsx';
 import { TERMINAL_STATES } from './session-states.ts';
 
+// ── Pane tree types ──
+
+export type PaneContent =
+  | { type: 'session'; sessionId: string | null }
+  | { type: 'git'; cwd: string }
+  | { type: 'files'; cwd: string }
+  | { type: 'spec'; cwd: string }
+  | { type: 'worktrees' };
+
+export type PaneNode =
+  | { type: 'leaf'; id: string; content: PaneContent }
+  | {
+      type: 'split';
+      id: string;
+      direction: 'h' | 'v';
+      ratio: number;
+      first: PaneNode;
+      second: PaneNode;
+    };
+
+// ── Pane state context ──
+
+interface PaneStateValue {
+  paneRoot: PaneNode;
+  focusedPaneId: string | null;
+  zoomedPaneId: string | null;
+}
+
+const PaneStateContext: React.Context<PaneStateValue | null> = createContext<PaneStateValue | null>(
+  null,
+);
+
+export function usePaneState(): PaneStateValue {
+  const ctx = useContext(PaneStateContext);
+  if (!ctx) throw new Error('usePaneState must be used within a TabProvider');
+  return ctx;
+}
+
+// ── Pane actions context ──
+
+interface PaneActionsValue {
+  splitPane: (direction: 'h' | 'v') => void;
+  splitPaneAndAssign: (direction: 'h' | 'v', sessionId: string) => void;
+  closePane: (paneId: string) => void;
+  focusPane: (paneId: string) => void;
+  updateRatio: (splitNodeId: string, ratio: number) => void;
+  setSessionInPane: (paneId: string, sessionId: string | null) => void;
+  zoomPane: (paneId: string | null) => void;
+}
+
+const PaneActionsContext: React.Context<PaneActionsValue | null> =
+  createContext<PaneActionsValue | null>(null);
+
+export function usePaneActions(): PaneActionsValue {
+  const ctx = useContext(PaneActionsContext);
+  if (!ctx) throw new Error('usePaneActions must be used within a TabProvider');
+  return ctx;
+}
+
+// ── Pane tree helpers ──
+
+function makeLeaf(content: PaneContent = { type: 'session', sessionId: null }): PaneNode {
+  return { type: 'leaf', id: crypto.randomUUID(), content };
+}
+
+function splitNode(root: PaneNode, focusedId: string | null, direction: 'h' | 'v'): PaneNode {
+  const targetId = focusedId ?? (root.type === 'leaf' ? root.id : null);
+  if (!targetId) return root;
+  return mapNode(root, (node) => {
+    if (node.type === 'leaf' && node.id === targetId) {
+      return {
+        type: 'split',
+        id: crypto.randomUUID(),
+        direction,
+        ratio: 0.5,
+        first: node,
+        second: makeLeaf(),
+      };
+    }
+    return node;
+  });
+}
+
+function firstLeafId(node: PaneNode): string | null {
+  if (node.type === 'leaf') return node.id;
+  return firstLeafId(node.first) ?? firstLeafId(node.second);
+}
+
+function hasLeaf(node: PaneNode, id: string): boolean {
+  if (node.type === 'leaf') return node.id === id;
+  return hasLeaf(node.first, id) || hasLeaf(node.second, id);
+}
+
+function splitNodeAndAssign(
+  root: PaneNode,
+  focusedId: string | null,
+  direction: 'h' | 'v',
+  sessionId: string,
+): { root: PaneNode; newLeafId: string } {
+  // Guard against stale focused IDs (e.g. from close-button click bubbling to SplitPaneLeaf)
+  const validFocusedId = focusedId && hasLeaf(root, focusedId) ? focusedId : null;
+  const targetId = validFocusedId ?? firstLeafId(root);
+  if (!targetId) return { root, newLeafId: '' };
+  const newLeaf = makeLeaf({ type: 'session', sessionId });
+  const newRoot = mapNode(root, (node) => {
+    if (node.type === 'leaf' && node.id === targetId) {
+      return {
+        type: 'split',
+        id: crypto.randomUUID(),
+        direction,
+        ratio: 0.5,
+        first: node,
+        second: newLeaf,
+      };
+    }
+    return node;
+  });
+  return { root: newRoot, newLeafId: newLeaf.id };
+}
+
+function closeNode(root: PaneNode, paneId: string): PaneNode {
+  if (root.type === 'leaf') return root; // can't close the only pane
+  return collapseRemove(root, paneId) ?? root;
+}
+
+function collapseRemove(node: PaneNode, paneId: string): PaneNode | null {
+  if (node.type === 'leaf') return node.id === paneId ? null : node;
+  const first = collapseRemove(node.first, paneId);
+  const second = collapseRemove(node.second, paneId);
+  if (first === null) return second;
+  if (second === null) return first;
+  return { ...node, first, second };
+}
+
+export function collectSessionsInPaneTree(node: PaneNode): Set<string> {
+  const ids = new Set<string>();
+  function walk(n: PaneNode) {
+    if (n.type === 'leaf') {
+      if (n.content.type === 'session' && n.content.sessionId) ids.add(n.content.sessionId);
+      return;
+    }
+    walk(n.first);
+    walk(n.second);
+  }
+  walk(node);
+  return ids;
+}
+
+function mapNode(node: PaneNode, fn: (n: PaneNode) => PaneNode): PaneNode {
+  const mapped = fn(node);
+  if (mapped !== node) return mapped;
+  if (node.type === 'split') {
+    const first = mapNode(node.first, fn);
+    const second = mapNode(node.second, fn);
+    if (first === node.first && second === node.second) return node;
+    return { ...node, first, second };
+  }
+  return node;
+}
+
+// ── WorkspaceTab (tmux window) ──
+
+export interface WorkspaceTab {
+  id: string;
+  label?: string;
+  paneRoot: PaneNode;
+  focusedPaneId: string | null;
+  zoomedPaneId: string | null;
+}
+
+function makeWorkspaceTab(label?: string): WorkspaceTab {
+  return {
+    id: crypto.randomUUID(),
+    label,
+    paneRoot: makeLeaf(),
+    focusedPaneId: null,
+    zoomedPaneId: null,
+  };
+}
+
+interface WorkspaceTabStateValue {
+  workspaceTabs: WorkspaceTab[];
+  activeWorkspaceTabId: string | null;
+}
+
+const WorkspaceTabStateContext: React.Context<WorkspaceTabStateValue | null> =
+  createContext<WorkspaceTabStateValue | null>(null);
+
+export function useWorkspaceTabState(): WorkspaceTabStateValue {
+  const ctx = useContext(WorkspaceTabStateContext);
+  if (!ctx) throw new Error('useWorkspaceTabState must be used within a TabProvider');
+  return ctx;
+}
+
+interface WorkspaceTabActionsValue {
+  addWorkspaceTab: (label?: string) => void;
+  removeWorkspaceTab: (id: string) => void;
+  switchWorkspaceTab: (id: string) => void;
+  renameWorkspaceTab: (id: string, label: string) => void;
+}
+
+const WorkspaceTabActionsContext: React.Context<WorkspaceTabActionsValue | null> =
+  createContext<WorkspaceTabActionsValue | null>(null);
+
+export function useWorkspaceTabActions(): WorkspaceTabActionsValue {
+  const ctx = useContext(WorkspaceTabActionsContext);
+  if (!ctx) throw new Error('useWorkspaceTabActions must be used within a TabProvider');
+  return ctx;
+}
+
 export interface TabMeta {
   title?: string;
   tabStatus: SessionStatus;
   cwd?: string;
+  branch?: string;
   mode: SessionMode;
 }
 
@@ -35,13 +246,13 @@ export function useTabState(): TabStateValue {
 // ── Actions context (stable references) ──
 
 interface TabActionsValue {
-  addTab: (id: string, cwd?: string) => void;
+  addTab: (id: string, cwd?: string, branch?: string) => void;
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
   createNewTab: (opts?: { cwd?: string }) => { channelId: string };
-  replaceActiveTab: (newChannelId: string, cwd?: string) => void;
+  replaceActiveTab: (newChannelId: string, cwd?: string, branch?: string) => void;
   replaceTab: (oldChannelId: string, newChannelId: string) => void;
 }
 
@@ -87,10 +298,10 @@ export function TabProvider({
   selectedCwdRef.current = selectedCwd;
 
   const [actions] = useState<TabActionsValue>(() => ({
-    addTab: (id, cwd) => {
+    addTab: (id, cwd, branch) => {
       setState((prev) => {
         if (id in prev.tabs) return prev;
-        const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd } };
+        const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd, branch } };
         return { ...prev, tabs, activeTabId: prev.activeTabId ?? id };
       });
     },
@@ -133,13 +344,13 @@ export function TabProvider({
       }));
       return { channelId };
     },
-    replaceActiveTab: (newChannelId, cwd) => {
+    replaceActiveTab: (newChannelId, cwd, branch) => {
       setState((prev) => {
         if (!prev.activeTabId) return prev;
         const { [prev.activeTabId]: _, ...rest } = prev.tabs;
         return {
           ...prev,
-          tabs: { ...rest, [newChannelId]: { ...DEFAULT_META, cwd } },
+          tabs: { ...rest, [newChannelId]: { ...DEFAULT_META, cwd, branch } },
           activeTabId: newChannelId,
         };
       });
@@ -168,10 +379,10 @@ export function TabProvider({
     );
     const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
     if (added.length === 1 && removed.length === 1 && added[0] && removed[0]) {
-      actions.replaceActiveTab(added[0].channelId, added[0].cwd);
+      actions.replaceActiveTab(added[0].channelId, added[0].cwd, added[0].branch);
     } else {
       for (const s of added) {
-        actions.addTab(s.channelId, s.cwd);
+        actions.addTab(s.channelId, s.cwd, s.branch);
       }
       for (const id of removed) {
         actions.removeTab(id);
@@ -192,20 +403,18 @@ export function TabProvider({
   // biome-ignore lint/correctness/useExhaustiveDependencies: setActiveTab is a local closure that only calls setState; navActions identity is preserved by NavigationProvider's useState initializer
   useEffect(() => {
     if (!pendingActivateChannel || !navActions) return;
-    if (pendingActivateChannel.cwd !== cwd) return;
+    // Global TabProvider handles all channels — no cwd guard needed
     if (!(pendingActivateChannel.channelId in state.tabs)) return;
     actions.setActiveTab(pendingActivateChannel.channelId);
     navActions.clearPendingActivate();
-  }, [pendingActivateChannel, state.tabs, cwd]);
+  }, [pendingActivateChannel, state.tabs]);
 
   // Consume pendingOpenWorktree intent — sidebar clicked a worktree row.
-  // Fires when projectCwd matches our own; finds an existing tab with
-  // matching cwd and switches, else creates a new tab on that worktree.
+  // Global TabProvider handles all projects — no projectCwd guard needed.
   const pendingOpenWorktree = navState?.pendingOpenWorktree ?? null;
   // biome-ignore lint/correctness/useExhaustiveDependencies: same reasoning as pendingActivateChannel effect — actions identity is stable
   useEffect(() => {
     if (!pendingOpenWorktree || !navActions) return;
-    if (pendingOpenWorktree.projectCwd !== cwd) return;
     const existingId = pendingOpenWorktree.forceNew
       ? undefined
       : Object.entries(state.tabs).find(
@@ -221,9 +430,128 @@ export function TabProvider({
     navActions.clearPendingOpenWorktree();
   }, [pendingOpenWorktree, state.tabs, cwd]);
 
+  const initialWorkspaceTab = makeWorkspaceTab();
+  const [wsState, setWsState] = useState<WorkspaceTabStateValue>(() => ({
+    workspaceTabs: [initialWorkspaceTab],
+    activeWorkspaceTabId: initialWorkspaceTab.id,
+  }));
+
+  function updateActiveTab(updater: (tab: WorkspaceTab) => WorkspaceTab) {
+    setWsState((prev) => ({
+      ...prev,
+      workspaceTabs: prev.workspaceTabs.map((t) =>
+        t.id === prev.activeWorkspaceTabId ? updater(t) : t,
+      ),
+    }));
+  }
+
+  const [wsActions] = useState<WorkspaceTabActionsValue>(() => ({
+    addWorkspaceTab: (label) => {
+      const tab = makeWorkspaceTab(label);
+      setWsState((prev) => ({
+        workspaceTabs: [...prev.workspaceTabs, tab],
+        activeWorkspaceTabId: tab.id,
+      }));
+    },
+    removeWorkspaceTab: (id) => {
+      setWsState((prev) => {
+        const remaining = prev.workspaceTabs.filter((t) => t.id !== id);
+        if (remaining.length === 0) return prev; // keep at least one
+        const newActive =
+          prev.activeWorkspaceTabId === id
+            ? (remaining[remaining.length - 1]?.id ?? null)
+            : prev.activeWorkspaceTabId;
+        return { workspaceTabs: remaining, activeWorkspaceTabId: newActive };
+      });
+    },
+    switchWorkspaceTab: (id) => {
+      setWsState((prev) =>
+        prev.activeWorkspaceTabId === id ? prev : { ...prev, activeWorkspaceTabId: id },
+      );
+    },
+    renameWorkspaceTab: (id, label) => {
+      setWsState((prev) => ({
+        ...prev,
+        workspaceTabs: prev.workspaceTabs.map((t) => (t.id === id ? { ...t, label } : t)),
+      }));
+    },
+  }));
+
+  const [paneActions] = useState<PaneActionsValue>(() => ({
+    splitPane: (direction) => {
+      updateActiveTab((t) => ({
+        ...t,
+        paneRoot: splitNode(t.paneRoot, t.focusedPaneId, direction),
+      }));
+    },
+    splitPaneAndAssign: (direction, sessionId) => {
+      updateActiveTab((t) => {
+        const { root: newRoot, newLeafId } = splitNodeAndAssign(
+          t.paneRoot,
+          t.focusedPaneId,
+          direction,
+          sessionId,
+        );
+        return { ...t, paneRoot: newRoot, focusedPaneId: newLeafId };
+      });
+    },
+    closePane: (paneId) => {
+      updateActiveTab((t) => {
+        const next = closeNode(t.paneRoot, paneId);
+        return {
+          ...t,
+          paneRoot: next,
+          focusedPaneId: t.focusedPaneId === paneId ? null : t.focusedPaneId,
+          zoomedPaneId: t.zoomedPaneId === paneId ? null : t.zoomedPaneId,
+        };
+      });
+    },
+    focusPane: (paneId) => {
+      updateActiveTab((t) => (t.focusedPaneId === paneId ? t : { ...t, focusedPaneId: paneId }));
+    },
+    updateRatio: (splitNodeId, ratio) => {
+      updateActiveTab((t) => ({
+        ...t,
+        paneRoot: mapNode(t.paneRoot, (node) =>
+          node.type === 'split' && node.id === splitNodeId ? { ...node, ratio } : node,
+        ),
+      }));
+    },
+    setSessionInPane: (paneId, sessionId) => {
+      updateActiveTab((t) => ({
+        ...t,
+        paneRoot: mapNode(t.paneRoot, (node) =>
+          node.type === 'leaf' && node.id === paneId
+            ? { ...node, content: { type: 'session', sessionId } }
+            : node,
+        ),
+      }));
+    },
+    zoomPane: (paneId) => {
+      updateActiveTab((t) => (t.zoomedPaneId === paneId ? t : { ...t, zoomedPaneId: paneId }));
+    },
+  }));
+
+  const activeWsTab = wsState.workspaceTabs.find((t) => t.id === wsState.activeWorkspaceTabId);
+  const paneState: PaneStateValue = activeWsTab ?? {
+    paneRoot: makeLeaf(),
+    focusedPaneId: null,
+    zoomedPaneId: null,
+  };
+
   return (
     <TabStateContext.Provider value={state}>
-      <TabActionsContext.Provider value={actions}>{children}</TabActionsContext.Provider>
+      <TabActionsContext.Provider value={actions}>
+        <WorkspaceTabStateContext.Provider value={wsState}>
+          <WorkspaceTabActionsContext.Provider value={wsActions}>
+            <PaneStateContext.Provider value={paneState}>
+              <PaneActionsContext.Provider value={paneActions}>
+                {children}
+              </PaneActionsContext.Provider>
+            </PaneStateContext.Provider>
+          </WorkspaceTabActionsContext.Provider>
+        </WorkspaceTabStateContext.Provider>
+      </TabActionsContext.Provider>
     </TabStateContext.Provider>
   );
 }
