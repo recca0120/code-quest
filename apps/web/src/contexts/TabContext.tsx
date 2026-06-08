@@ -55,6 +55,7 @@ interface PaneActionsValue {
   focusPane: (paneId: string) => void;
   updateRatio: (splitNodeId: string, ratio: number) => void;
   setSessionInPane: (paneId: string, sessionId: string | null) => void;
+  setContentInPane: (paneId: string, content: PaneContent) => void;
   zoomPane: (paneId: string | null) => void;
 }
 
@@ -91,7 +92,7 @@ function splitNode(root: PaneNode, focusedId: string | null, direction: 'h' | 'v
   });
 }
 
-function firstLeafId(node: PaneNode): string | null {
+export function firstLeafId(node: PaneNode): string | null {
   if (node.type === 'leaf') return node.id;
   return firstLeafId(node.first) ?? firstLeafId(node.second);
 }
@@ -99,6 +100,13 @@ function firstLeafId(node: PaneNode): string | null {
 function hasLeaf(node: PaneNode, id: string): boolean {
   if (node.type === 'leaf') return node.id === id;
   return hasLeaf(node.first, id) || hasLeaf(node.second, id);
+}
+
+export function findPaneBySession(node: PaneNode, channelId: string): string | null {
+  if (node.type === 'leaf') {
+    return node.content.type === 'session' && node.content.sessionId === channelId ? node.id : null;
+  }
+  return findPaneBySession(node.first, channelId) ?? findPaneBySession(node.second, channelId);
 }
 
 function splitNodeAndAssign(
@@ -196,7 +204,7 @@ interface WorkspaceTabStateValue {
 const WorkspaceTabStateContext: React.Context<WorkspaceTabStateValue | null> =
   createContext<WorkspaceTabStateValue | null>(null);
 
-export function useWorkspaceTabState(): WorkspaceTabStateValue {
+function useWorkspaceTabState(): WorkspaceTabStateValue {
   const ctx = useContext(WorkspaceTabStateContext);
   if (!ctx) throw new Error('useWorkspaceTabState must be used within a TabProvider');
   return ctx;
@@ -212,10 +220,14 @@ interface WorkspaceTabActionsValue {
 const WorkspaceTabActionsContext: React.Context<WorkspaceTabActionsValue | null> =
   createContext<WorkspaceTabActionsValue | null>(null);
 
-export function useWorkspaceTabActions(): WorkspaceTabActionsValue {
+function useWorkspaceTabActions(): WorkspaceTabActionsValue {
   const ctx = useContext(WorkspaceTabActionsContext);
   if (!ctx) throw new Error('useWorkspaceTabActions must be used within a TabProvider');
   return ctx;
+}
+
+export function useWorkspaceTab(): WorkspaceTabStateValue & WorkspaceTabActionsValue {
+  return { ...useWorkspaceTabState(), ...useWorkspaceTabActions() };
 }
 
 export interface TabMeta {
@@ -524,6 +536,14 @@ export function TabProvider({
           node.type === 'leaf' && node.id === paneId
             ? { ...node, content: { type: 'session', sessionId } }
             : node,
+        ),
+      }));
+    },
+    setContentInPane: (paneId, content) => {
+      updateActiveTab((t) => ({
+        ...t,
+        paneRoot: mapNode(t.paneRoot, (node) =>
+          node.type === 'leaf' && node.id === paneId ? { ...node, content } : node,
         ),
       }));
     },

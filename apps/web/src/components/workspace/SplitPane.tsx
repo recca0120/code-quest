@@ -26,7 +26,7 @@ function SplitPaneLeaf({
         if (e.key === 'Enter' || e.key === ' ') focusPane(node.id);
       }}
       hidden={hidden}
-      style={hidden ? { display: 'none' } : { flex: 1, overflow: 'hidden' }}
+      style={hidden ? undefined : { flex: 1, overflow: 'hidden' }}
       className="flex flex-1 min-w-0 min-h-0"
     >
       {renderLeaf?.(node)}
@@ -40,12 +40,9 @@ function SplitPaneNode({ node, renderLeaf }: { node: PaneNode; renderLeaf?: Rend
   if (node.type === 'leaf') return <SplitPaneLeaf node={node} renderLeaf={renderLeaf} />;
 
   const isHorizontal = node.direction === 'h';
-  const firstStyle: React.CSSProperties = isHorizontal
-    ? { width: `${node.ratio * 100}%` }
-    : { height: `${node.ratio * 100}%` };
-  const secondStyle: React.CSSProperties = isHorizontal
-    ? { width: `${(1 - node.ratio) * 100}%` }
-    : { height: `${(1 - node.ratio) * 100}%` };
+  const dimension = isHorizontal ? 'width' : 'height';
+  const firstStyle: React.CSSProperties = { [dimension]: `${node.ratio * 100}%` };
+  const secondStyle: React.CSSProperties = { [dimension]: `${(1 - node.ratio) * 100}%` };
 
   return (
     <div

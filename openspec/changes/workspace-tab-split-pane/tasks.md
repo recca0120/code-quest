@@ -132,9 +132,49 @@
 
 > 前提：Phase 1 驗證完，確認 split pane 操作合理後再做。
 
-- [ ] 空白 pane picker 加入 tool 選項（Git / Files / Spec / Worktrees）
-- [ ] Tool Pane 元件（各自的 pane header + cwd switcher）
-- [ ] Context Panel（session pane header toolbar `[📁][🌿][📋]` → 側邊展開）
+### Phase 1 延期補齊
+
+- [x] 6.4 [test] tab 顯示 busy indicator `●` 當該 tab 內有 running session
+- [x] 6.5 [test] tab 標題雙擊進入 inline rename
+- [x] 7.2 [test] 點擊 active session tab（已在某 pane）→ focus 移到該 pane，不重複填入
+- [x] 7.4 [test] Session Bar `[+]` 在 focused pane 的 cwd 開新 session
+- [x] 8.2 [test] Empty Pane Picker 列出「New session in」各 worktree 快速入口
+- [x] 8.4 [test] Empty Pane Picker 選 new session → 開新 session 並填入此 pane
+
+### Session Tab Bar overflow
+
+- [x] C.1 [test] session tab 超出寬度時右側顯示 `»N` overflow 按鈕，N 為隱藏數量
+- [x] C.2 [test] 點擊 `»N` 展開選單，列出所有隱藏的 session；點擊行為與直接點 tab 相同
+- [x] C.3 [impl] 實作 SessionBar overflow，讓 C.1–C.2 測試通過
+
+### Keyboard Shortcuts
+
+- [x] K.1 [test] `⌘T` 在 focused pane 的 cwd 開新 session（無 cwd 時 fallback active project）
+- [x] K.2 [test] `⌘W` 關閉 focused pane（唯一 pane 時 no-op）
+- [x] K.3 [test] `⌘\` 將 focused pane 左右切割
+- [x] K.4 [test] `⌘-` 將 focused pane 上下切割
+- [x] K.5 [test] `⌘⌥ ←/→/↑/↓` 將 focus 移到相鄰 pane
+- [x] K.6 [impl] 實作 keyboard shortcuts provider，讓 K.1–K.5 測試通過
+
+### Tool Pane
+
+- [x] T.1 [test] 空白 pane picker 加入 tool 選項（Git / Files / Spec / Worktrees）
+- [x] T.2 [test] 選 tool → 建立對應 content type 的 pane（`{ type: 'git', cwd }` 等）
+- [x] T.3 [test] Tool Pane 開啟時 cwd 預設為 focused session 的 cwd；無 focused session 時 fallback active project cwd
+- [x] T.4 [test] Tool Pane header 顯示 emoji + cwd switcher dropdown（`🌿 Git ⎇main ▾`）
+- [x] T.5 [test] cwd switcher 切換後 pane content 的 cwd 更新
+- [x] T.6 [impl] 建立 `GitPane` / `FilesPane` / `SpecPane` / `WorktreesPane` 元件，讓 T.1–T.5 測試通過
+- [x] T.7 [impl] `SplitPane` renderLeaf 加入 tool pane 渲染分支
+
+### Context Panel
+
+- [x] E.1 [test] session pane header 顯示 `[📁][🌿][📋]` toolbar
+- [x] E.2 [test] 點擊 toolbar icon → 該 pane 右側展開 context panel，顯示對應 tool tab
+- [x] E.3 [test] context panel 的 cwd 自動跟隨該 session（無需手動指定）
+- [x] E.4 [test] 再次點擊同一 icon → context panel 收合
+- [x] E.5 [test] context panel 有 Files / Git / Spec 三個 tab，點擊切換
+- [x] E.6 [impl] 建立 `ContextPanel` 元件，讓 E.1–E.5 測試通過
+- [x] E.7 [impl] `PaneHeader` 加入 `[📁][🌿][📋]` toolbar，展開/收合 context panel
 
 ---
 

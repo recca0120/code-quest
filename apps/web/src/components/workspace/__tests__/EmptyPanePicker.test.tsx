@@ -3,7 +3,7 @@
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EmptyPanePicker } from '@/components/workspace/EmptyPanePicker';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneState } from '@/contexts/TabContext';
@@ -60,5 +60,55 @@ describe('EmptyPanePicker (8.3) select session fills pane', () => {
 
     await user.click(screen.getByText('Task A'));
     expect(leafSessionId).toBe('ch-1');
+  });
+});
+
+const worktrees = [
+  { path: '/projects/app/main', name: 'main' },
+  { path: '/projects/app/feat-x', name: 'feat-x' },
+];
+
+// 8.2: picker shows worktree quick-entry section
+describe('EmptyPanePicker (8.2) worktree new session entries', () => {
+  it('shows "New session in..." section with worktree names when worktrees prop provided', () => {
+    render(
+      <Wrapper>
+        <EmptyPanePicker paneId="pane-1" sessions={sessions} worktrees={worktrees} />
+      </Wrapper>,
+    );
+    expect(screen.getByText(/new session in/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /main/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /feat-x/ })).toBeInTheDocument();
+  });
+
+  it('does not show section when worktrees is empty or absent', () => {
+    render(
+      <Wrapper>
+        <EmptyPanePicker paneId="pane-1" sessions={sessions} />
+      </Wrapper>,
+    );
+    expect(screen.queryByText(/new session in/i)).not.toBeInTheDocument();
+  });
+});
+
+// 8.4: clicking worktree entry calls onNewSessionInWorktree with that cwd
+describe('EmptyPanePicker (8.4) new session in worktree', () => {
+  it('calls onNewSessionInWorktree with the worktree path when clicked', async () => {
+    const user = userEvent.setup();
+    const onNewSessionInWorktree = vi.fn();
+
+    render(
+      <Wrapper>
+        <EmptyPanePicker
+          paneId="pane-1"
+          sessions={sessions}
+          worktrees={worktrees}
+          onNewSessionInWorktree={onNewSessionInWorktree}
+        />
+      </Wrapper>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /feat-x/ }));
+    expect(onNewSessionInWorktree).toHaveBeenCalledWith('/projects/app/feat-x');
   });
 });

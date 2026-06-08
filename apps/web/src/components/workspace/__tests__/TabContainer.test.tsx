@@ -1,7 +1,8 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { NavigationProvider, useNavigationActions } from '@/contexts/NavigationContext';
-import { TabProvider } from '@/contexts/TabContext';
+import { TabProvider, usePaneActions, usePaneState, useTabState } from '@/contexts/TabContext';
 import { TabContainer } from '../TabContainer.tsx';
 
 // Mock heavy contexts that TabContainer uses but are irrelevant to filtering
@@ -276,5 +277,63 @@ describe('TabContainer — worktree filtering', () => {
 
     // After filter: only 1 session ('feat') should appear
     expect(countSessionItems(screen.getByTestId('session-bar'))).toBe(1);
+  });
+});
+
+// 7.4: Session Bar [+] opens new session with focused pane's cwd
+describe('TabContainer (7.4) Session Bar [+] uses focused pane cwd', () => {
+  it('[+] creates a new session with the focused pane session cwd', async () => {
+    const user = userEvent.setup();
+    let capturedTabs: Record<string, { cwd?: string }> = {};
+
+    function Harness() {
+      const { paneRoot } = usePaneState();
+      const { setSessionInPane, focusPane } = usePaneActions();
+      const { tabs } = useTabState();
+      capturedTabs = tabs;
+      const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
+
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              if (leafId) {
+                setSessionInPane(leafId, 'sess-main');
+                focusPane(leafId);
+              }
+            }}
+          >
+            setup-focus
+          </button>
+          <TabContainer projectCwd={PROJECT_CWD} />
+        </>
+      );
+    }
+
+    render(
+      <NavigationProvider>
+        <TabProvider initialState={{ tabs: INITIAL_TABS, activeTabId: 'sess-main' }}>
+          <Harness />
+        </TabProvider>
+      </NavigationProvider>,
+    );
+
+    // Setup: sess-main (cwd=/projects/app/main) is in the focused pane
+    await user.click(screen.getByRole('button', { name: 'setup-focus' }));
+
+    const tabCountBefore = Object.keys(capturedTabs).length;
+
+    // Click [+] in SessionBar
+    await user.click(screen.getByRole('button', { name: 'New tab' }));
+
+    const tabCountAfter = Object.keys(capturedTabs).length;
+    expect(tabCountAfter).toBe(tabCountBefore + 1);
+
+    // The newly created tab should inherit focused pane's cwd
+    const newTabId = Object.keys(capturedTabs).find(
+      (id) => !INITIAL_TABS[id as keyof typeof INITIAL_TABS],
+    );
+    expect(capturedTabs[newTabId!]?.cwd).toBe('/projects/app/main');
   });
 });

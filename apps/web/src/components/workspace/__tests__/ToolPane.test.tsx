@@ -1,0 +1,108 @@
+/**
+ * Tool Pane T.1–T.5
+ */
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it } from 'vitest';
+import { EmptyPanePicker } from '@/components/workspace/EmptyPanePicker';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { TabProvider, usePaneState } from '@/contexts/TabContext';
+import { createFakeSummoner } from '@/test/fake-summoner';
+
+function Wrapper({ children }: { children: React.ReactNode }) {
+  const summoner = createFakeSummoner();
+  return (
+    <SocketProvider socket={summoner.socket}>
+      <TabProvider>{children}</TabProvider>
+    </SocketProvider>
+  );
+}
+
+// T.1: EmptyPanePicker shows tool options
+describe('ToolPane (T.1) empty pane picker has tool options', () => {
+  it('shows Git, Files, Spec, Worktrees tool buttons', () => {
+    render(
+      <Wrapper>
+        <EmptyPanePicker paneId="pane-1" sessions={[]} cwd="/project" />
+      </Wrapper>,
+    );
+    expect(screen.getByRole('button', { name: /Git/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Files/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Spec/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Worktrees/i })).toBeInTheDocument();
+  });
+});
+
+// T.2: selecting a tool sets the corresponding content type in the pane
+describe('ToolPane (T.2) selecting tool sets pane content type', () => {
+  function ToolPickerWithRealPaneId({ cwd }: { cwd: string }) {
+    const { paneRoot } = usePaneState();
+    const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
+    if (!leafId) return null;
+    return <EmptyPanePicker paneId={leafId} sessions={[]} cwd={cwd} />;
+  }
+
+  it('clicking Git tool sets pane content to { type: "git", cwd }', async () => {
+    const user = userEvent.setup();
+    let paneContent: { type: string; cwd?: string } | null = null;
+
+    function Probe() {
+      const { paneRoot } = usePaneState();
+      if (paneRoot.type === 'leaf') {
+        const c = paneRoot.content;
+        if (c.type !== 'session') paneContent = c as { type: string; cwd?: string };
+      }
+      return null;
+    }
+
+    render(
+      <Wrapper>
+        <Probe />
+        <ToolPickerWithRealPaneId cwd="/project" />
+      </Wrapper>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Git/i }));
+    expect(paneContent).toEqual({ type: 'git', cwd: '/project' });
+  });
+
+  it('clicking Files tool sets pane content to { type: "files", cwd }', async () => {
+    const user = userEvent.setup();
+    let paneContent: { type: string; cwd?: string } | null = null;
+
+    function Probe() {
+      const { paneRoot } = usePaneState();
+      if (paneRoot.type === 'leaf') {
+        const c = paneRoot.content;
+        if (c.type !== 'session') paneContent = c as { type: string; cwd?: string };
+      }
+      return null;
+    }
+
+    render(
+      <Wrapper>
+        <Probe />
+        <ToolPickerWithRealPaneId cwd="/project" />
+      </Wrapper>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Files/i }));
+    expect(paneContent).toEqual({ type: 'files', cwd: '/project' });
+  });
+});
+
+// T.3: Tool pane default cwd from focused session
+describe('ToolPane (T.3) tool pane cwd defaults to focused session cwd', () => {
+  it('EmptyPanePicker receives cwd from parent, which comes from focused session', () => {
+    // This test verifies the prop contract — the parent (TabContainer/PaneLeafContent)
+    // should pass the focused session's cwd to EmptyPanePicker as the cwd prop.
+    // We verify EmptyPanePicker passes it through to tool buttons.
+    render(
+      <Wrapper>
+        <EmptyPanePicker paneId="pane-1" sessions={[]} cwd="/focused/session/cwd" />
+      </Wrapper>,
+    );
+    // The cwd should be used as data-testid or aria-description on the tool section
+    expect(screen.getByTestId('tool-options')).toHaveAttribute('data-cwd', '/focused/session/cwd');
+  });
+});

@@ -2,6 +2,21 @@ import { Cog6ToothIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/2
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/utils/cn';
 
+function useClickOutside(
+  ref: React.RefObject<HTMLElement | null>,
+  open: boolean,
+  close: () => void,
+): void {
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) close();
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [ref, open, close]);
+}
+
 interface ProjectInfo {
   cwd: string;
   name: string;
@@ -42,23 +57,8 @@ export function GlobalBar({
   const projectMenuRef = useRef<HTMLDivElement>(null);
   const sessionPickerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!projectMenuOpen) return;
-    function handler(e: MouseEvent) {
-      if (!projectMenuRef.current?.contains(e.target as Node)) setProjectMenuOpen(false);
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [projectMenuOpen]);
-
-  useEffect(() => {
-    if (!sessionPickerOpen) return;
-    function handler(e: MouseEvent) {
-      if (!sessionPickerRef.current?.contains(e.target as Node)) setSessionPickerOpen(false);
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [sessionPickerOpen]);
+  useClickOutside(projectMenuRef, projectMenuOpen, () => setProjectMenuOpen(false));
+  useClickOutside(sessionPickerRef, sessionPickerOpen, () => setSessionPickerOpen(false));
 
   const activeProject = projects.find((p) => p.cwd === activeProjectCwd);
 

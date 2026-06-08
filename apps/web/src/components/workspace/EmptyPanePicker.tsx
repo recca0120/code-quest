@@ -1,22 +1,40 @@
-import { usePaneActions } from '@/contexts/TabContext';
+import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
 
 interface SessionInfo {
   channelId: string;
   title?: string;
 }
 
+interface WorktreeInfo {
+  path: string;
+  name: string;
+}
+
+const TOOL_OPTIONS: { label: string; content: (cwd: string) => PaneContent }[] = [
+  { label: '🌿 Git', content: (cwd) => ({ type: 'git', cwd }) },
+  { label: '📁 Files', content: (cwd) => ({ type: 'files', cwd }) },
+  { label: '📋 Spec', content: (cwd) => ({ type: 'spec', cwd }) },
+  { label: '🌲 Worktrees', content: () => ({ type: 'worktrees' }) },
+];
+
 interface EmptyPanePickerProps {
   paneId: string;
   sessions: SessionInfo[];
+  cwd?: string;
+  worktrees?: WorktreeInfo[];
   onNewSession?: () => void;
+  onNewSessionInWorktree?: (cwd: string) => void;
 }
 
 export function EmptyPanePicker({
   paneId,
   sessions,
+  cwd,
+  worktrees,
   onNewSession,
+  onNewSessionInWorktree,
 }: EmptyPanePickerProps): React.JSX.Element {
-  const { setSessionInPane, focusPane } = usePaneActions();
+  const { setSessionInPane, setContentInPane, focusPane } = usePaneActions();
 
   function handleSelect(channelId: string) {
     setSessionInPane(paneId, channelId);
@@ -48,6 +66,40 @@ export function EmptyPanePicker({
           >
             + New session
           </button>
+        )}
+        <div
+          data-testid="tool-options"
+          data-cwd={cwd ?? ''}
+          className="flex flex-col gap-1 mt-2 border-t border-border pt-2"
+        >
+          {TOOL_OPTIONS.map((tool) => (
+            <button
+              key={tool.label}
+              type="button"
+              onClick={() => {
+                setContentInPane(paneId, tool.content(cwd ?? ''));
+                focusPane(paneId);
+              }}
+              className="px-3 py-2 text-sm text-left rounded hover:bg-accent text-muted-foreground"
+            >
+              {tool.label}
+            </button>
+          ))}
+        </div>
+        {worktrees && worktrees.length > 0 && (
+          <>
+            <p className="text-xs text-muted-foreground mt-2 px-1">New session in...</p>
+            {worktrees.map((wt) => (
+              <button
+                key={wt.path}
+                type="button"
+                onClick={() => onNewSessionInWorktree?.(wt.path)}
+                className="px-3 py-2 text-sm text-left rounded hover:bg-accent text-muted-foreground"
+              >
+                + {wt.name}
+              </button>
+            ))}
+          </>
         )}
       </div>
     </div>

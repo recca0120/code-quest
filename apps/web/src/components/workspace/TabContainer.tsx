@@ -1,5 +1,8 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const NOOP = (): void => {};
+
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ChannelProvider } from '@/contexts/channel';
@@ -14,7 +17,7 @@ import {
   usePaneState,
   useTabActions,
   useTabState,
-  useWorkspaceTabState,
+  useWorkspaceTab,
 } from '@/contexts/TabContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { basename } from '@/utils/basename';
@@ -25,6 +28,7 @@ import { PaneZoomProvider } from './PaneZoomProvider.tsx';
 import { RightPane } from './RightPane.tsx';
 import { SessionBar } from './SessionBar.tsx';
 import { SplitPane } from './SplitPane.tsx';
+import { FilesPane, GitPane, SpecPane, WorktreesPane } from './ToolPanes.tsx';
 import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
 
 interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode' | 'branch'> {
@@ -134,7 +138,33 @@ function PaneLeafContent({
         }}
         onClose={() => closePane(node.id)}
       />
-      {sessionId && meta ? (
+      {node.content.type === 'git' ? (
+        <GitPane
+          cwd={node.content.cwd}
+          paneId={node.id}
+          availableCwds={Object.values(tabs)
+            .map((m) => m.cwd)
+            .filter((c): c is string => !!c)}
+        />
+      ) : node.content.type === 'files' ? (
+        <FilesPane
+          cwd={node.content.cwd}
+          paneId={node.id}
+          availableCwds={Object.values(tabs)
+            .map((m) => m.cwd)
+            .filter((c): c is string => !!c)}
+        />
+      ) : node.content.type === 'spec' ? (
+        <SpecPane
+          cwd={node.content.cwd}
+          paneId={node.id}
+          availableCwds={Object.values(tabs)
+            .map((m) => m.cwd)
+            .filter((c): c is string => !!c)}
+        />
+      ) : node.content.type === 'worktrees' ? (
+        <WorktreesPane />
+      ) : sessionId && meta ? (
         <TabContent
           channelId={sessionId}
           cwd={meta.cwd}
@@ -182,7 +212,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   const toggleRight = useCallback(() => setRightOpen((v) => !v), []);
   const { paneRoot, focusedPaneId } = usePaneState();
   const { setSessionInPane, focusPane, splitPaneAndAssign } = usePaneActions();
-  const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTabState();
+  const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTab();
 
   const isThisActive = projectCwd === activeProjectCwd;
   const projectName = basename(projectCwd);
@@ -248,9 +278,32 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   const tabEntries = Object.entries(tabs);
   const worktreeFilter = selectedWorktreeCwd[projectCwd];
-  const openSessions = tabEntries
-    .filter(([, meta]) => !worktreeFilter || meta.cwd === worktreeFilter)
-    .map(([id, meta]) => ({ sessionId: id, title: meta.title }));
+
+  // Sessions in INACTIVE workspace tabs' pane trees — must stay mounted to avoid double-mount
+  // when switching tabs (React would unmount from pane and remount in pool simultaneously)
+  const inactiveTabSessionIds = useMemo(
+    () =>
+      workspaceTabs
+        .filter((t) => t.id !== activeWorkspaceTabId)
+        .flatMap((t) => [...collectSessionsInPaneTree(t.paneRoot)]),
+    [workspaceTabs, activeWorkspaceTabId],
+  );
+
+  const renderLeaf = useCallback(
+    (node: PaneNode) =>
+      node.type === 'leaf' ? (
+        <PaneLeafContent
+          node={node}
+          tabs={tabs}
+          projectName={projectName}
+          rightOpen={rightOpen}
+          onToggleLeft={onToggleLeft}
+          onToggleRight={toggleRight}
+          onNewTab={handleCreateTab}
+        />
+      ) : null,
+    [tabs, projectName, rightOpen, onToggleLeft, toggleRight, handleCreateTab],
+  );
 
   if (tabEntries.length === 0) {
     return (
@@ -265,21 +318,17 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   const sessionsInPanes = collectSessionsInPaneTree(paneRoot);
 
-  // Sessions in INACTIVE workspace tabs' pane trees — must stay mounted to avoid double-mount
-  // when switching tabs (React would unmount from pane and remount in pool simultaneously)
-  const inactiveTabSessionIds = workspaceTabs
-    .filter((t) => t.id !== activeWorkspaceTabId)
-    .flatMap((t) => [...collectSessionsInPaneTree(t.paneRoot)]);
-
   // Sessions not in the ACTIVE tab's pane tree AND not in any inactive tab's pane tree
   const allPaneSessions = new Set([...sessionsInPanes, ...inactiveTabSessionIds]);
 
-  const sessionBarItems = openSessions.map((s) => ({
-    channelId: s.sessionId,
-    title: tabs[s.sessionId]?.title,
-    tabStatus: tabs[s.sessionId]?.tabStatus,
-    branch: tabs[s.sessionId]?.branch,
-  }));
+  const sessionBarItems = tabEntries
+    .filter(([, meta]) => !worktreeFilter || meta.cwd === worktreeFilter)
+    .map(([id, meta]) => ({
+      channelId: id,
+      title: meta.title,
+      tabStatus: meta.tabStatus,
+      branch: meta.branch,
+    }));
 
   return (
     <PaneZoomProvider>
@@ -287,18 +336,13 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
         <WorkspaceTabBar />
         <SessionBar
           sessions={sessionBarItems}
-          onNewSession={() => handleCreateTab()}
+          onNewSession={() => handleCreateTab({ cwd: focusedTabCwd ?? undefined })}
           onCloseSession={handleCloseSession}
         />
 
         {/* Inactive workspace tabs: keep sessions in their pane trees mounted to prevent
               double-mount when switching tabs (avoids "Channel already exists" error) */}
-        <div
-          data-testid="inactive-tab-sessions"
-          hidden
-          aria-hidden="true"
-          style={{ display: 'none' }}
-        >
+        <div data-testid="inactive-tab-sessions" hidden aria-hidden="true">
           {inactiveTabSessionIds.map((id) => {
             const meta = tabs[id];
             if (!meta) return null;
@@ -312,8 +356,8 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
                 projectName={projectName}
                 mode={meta.mode}
                 rightOpen={false}
-                onToggleRight={() => {}}
-                onNewChannel={() => {}}
+                onToggleRight={NOOP}
+                onNewChannel={NOOP}
               />
             );
           })}
@@ -341,21 +385,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
         </div>
 
         {/* SplitPane area: sessions assigned to panes render here */}
-        <SplitPane
-          renderLeaf={(node) =>
-            node.type === 'leaf' ? (
-              <PaneLeafContent
-                node={node}
-                tabs={tabs}
-                projectName={projectName}
-                rightOpen={rightOpen}
-                onToggleLeft={onToggleLeft}
-                onToggleRight={toggleRight}
-                onNewTab={handleCreateTab}
-              />
-            ) : null
-          }
-        />
+        <SplitPane renderLeaf={renderLeaf} />
       </div>
     </PaneZoomProvider>
   );

@@ -9,13 +9,7 @@ import { PaneZoomProvider } from '@/components/workspace/PaneZoomProvider';
 import { SplitPane } from '@/components/workspace/SplitPane';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { SocketProvider } from '@/contexts/SocketContext';
-import {
-  TabProvider,
-  usePaneActions,
-  usePaneState,
-  useWorkspaceTabActions,
-  useWorkspaceTabState,
-} from '@/contexts/TabContext';
+import { TabProvider, usePaneActions, usePaneState, useWorkspaceTab } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
 
 function Wrapper({ children }: { children: React.ReactNode }) {
@@ -36,8 +30,7 @@ describe('Phase 1 integration (9.1)', () => {
     function ControlPanel() {
       const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
       const { splitPane, setSessionInPane, focusPane, zoomPane } = usePaneActions();
-      const { workspaceTabs } = useWorkspaceTabState();
-      const { addWorkspaceTab } = useWorkspaceTabActions();
+      const { workspaceTabs, addWorkspaceTab } = useWorkspaceTab();
 
       const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
       const splitSecondId =

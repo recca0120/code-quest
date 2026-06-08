@@ -159,6 +159,139 @@ describe('SessionBar (7.9b) + button position', () => {
   });
 });
 
+// 7.2: clicking active session tab focuses its pane without refilling
+describe('SessionBar (7.2) click active session focuses its pane', () => {
+  it('focuses the pane containing the session instead of reassigning it', async () => {
+    const user = userEvent.setup();
+    let capturedFocusedPaneId: string | null = null;
+
+    function Setup() {
+      const { paneRoot, focusedPaneId } = usePaneState();
+      const { splitPane, setSessionInPane, focusPane } = usePaneActions();
+      capturedFocusedPaneId = focusedPaneId;
+
+      const l1Id =
+        paneRoot.type === 'split' && paneRoot.first.type === 'leaf'
+          ? paneRoot.first.id
+          : paneRoot.type === 'leaf'
+            ? paneRoot.id
+            : '';
+      const l2Id =
+        paneRoot.type === 'split' && paneRoot.second.type === 'leaf' ? paneRoot.second.id : '';
+
+      return (
+        <>
+          <span data-testid="focused-pane-id">{focusedPaneId ?? 'none'}</span>
+          <span data-testid="l1-id">{l1Id}</span>
+          <button type="button" onClick={() => splitPane('h')}>
+            split
+          </button>
+          <button type="button" onClick={() => l1Id && setSessionInPane(l1Id, 'ch-1')}>
+            assign
+          </button>
+          <button type="button" onClick={() => l2Id && focusPane(l2Id)}>
+            focus-l2
+          </button>
+        </>
+      );
+    }
+
+    render(
+      <Wrapper>
+        <Setup />
+        <SessionBar sessions={sessions} />
+      </Wrapper>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'split' }));
+    await user.click(screen.getByRole('button', { name: 'assign' }));
+    await user.click(screen.getByRole('button', { name: 'focus-l2' }));
+
+    // ch-1 is now 'active' (in L1 but L2 is focused)
+    expect(screen.getByTestId('session-bar-item-ch-1')).toHaveAttribute('data-status', 'active');
+
+    const l1Id = screen.getByTestId('l1-id').textContent ?? '';
+
+    await user.click(screen.getByRole('button', { name: 'Task A' }));
+
+    // focusedPaneId should now be L1 (where ch-1 lives), not L2
+    expect(capturedFocusedPaneId).toBe(l1Id);
+  });
+});
+
+// C.1: overflow indicator — »N button shows count of hidden sessions
+describe('SessionBar (C.1) overflow indicator', () => {
+  const manySessions = Array.from({ length: 5 }, (_, i) => ({
+    channelId: `ch-${i + 1}`,
+    title: `Task ${i + 1}`,
+    tabStatus: 'idle' as const,
+  }));
+
+  it('shows »N button when sessions exceed maxVisible', () => {
+    render(
+      <Wrapper>
+        <SessionBar sessions={manySessions} maxVisible={3} />
+      </Wrapper>,
+    );
+    expect(screen.getByRole('button', { name: '»2' })).toBeInTheDocument();
+  });
+
+  it('does not show »N button when all sessions are visible', () => {
+    render(
+      <Wrapper>
+        <SessionBar sessions={manySessions} maxVisible={5} />
+      </Wrapper>,
+    );
+    expect(screen.queryByRole('button', { name: /^»/ })).not.toBeInTheDocument();
+  });
+});
+
+// C.2: overflow menu — click »N shows dropdown with hidden sessions
+describe('SessionBar (C.2) overflow menu', () => {
+  const manySessions = Array.from({ length: 5 }, (_, i) => ({
+    channelId: `ch-${i + 1}`,
+    title: `Task ${i + 1}`,
+    tabStatus: 'idle' as const,
+  }));
+
+  it('clicking »N shows hidden sessions in a dropdown', async () => {
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <SessionBar sessions={manySessions} maxVisible={3} />
+      </Wrapper>,
+    );
+    await user.click(screen.getByRole('button', { name: '»2' }));
+    expect(screen.getByTestId('overflow-menu')).toBeInTheDocument();
+    expect(screen.getByTestId('overflow-menu')).toHaveTextContent('Task 4');
+    expect(screen.getByTestId('overflow-menu')).toHaveTextContent('Task 5');
+  });
+
+  it('clicking a session in overflow menu assigns it to focused pane', async () => {
+    const user = userEvent.setup();
+    let focusedPaneSessionId: string | null = null;
+
+    function Probe() {
+      const { paneRoot } = usePaneState();
+      if (paneRoot.type === 'leaf') {
+        focusedPaneSessionId =
+          paneRoot.content.type === 'session' ? paneRoot.content.sessionId : null;
+      }
+      return null;
+    }
+
+    render(
+      <Wrapper>
+        <Probe />
+        <SessionBar sessions={manySessions} maxVisible={3} />
+      </Wrapper>,
+    );
+    await user.click(screen.getByRole('button', { name: '»2' }));
+    await user.click(screen.getByRole('button', { name: 'Task 4' }));
+    expect(focusedPaneSessionId).toBe('ch-4');
+  });
+});
+
 // 7.8: close button
 describe('SessionBar (7.8) close button', () => {
   it('each session has a close button', () => {
