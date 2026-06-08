@@ -122,7 +122,7 @@ Tab Bar 上的 tab 反映 session 與 pane 的關係，與現在「active = 正�
 
 ---
 
-### 7. New Session 入口：Global Bar `[+]` + 空白 pane picker
+### 7. "Open in Pane" 入口：統一 Modal + 簡化 EmptyPanePicker
 
 **Project / Worktree 資料模型：**
 
@@ -135,47 +135,82 @@ Project (repo root)
   └── Worktree hotfix  path: /tmp/hotfix            branch: hotfix
 ```
 
-**兩個互補入口：**
+**核心決定：將所有「開新 session 或 tool pane」的入口統一到同一個 Modal（「Open in Pane」），取代過去的 dropdown picker。**
 
-**Global Bar `[+]`**（快速開，不需要先切 pane）：
+**入口觸發點：**
+
+| 觸發點 | 行為 |
+|---|---|
+| Global Bar `[+]` | 開啟 Modal |
+| SessionBar `[+]` | 開啟 Modal |
+| EmptyPanePicker「+ Open new session...」 | 開啟 Modal（帶 target paneId） |
+| 沒有 active project 的任何 new session 動作 | 開啟 Modal（自然引導選 project） |
+
+**「Open in Pane」Modal 結構：**
+
 ```
-點 [+] → 展開 grouped picker，列出所有 project 及其 worktrees：
-┌──────────────────────────────┐
-│  New session in...           │
-│                              │
-│  ── app ──                   │
-│    ⎇ main                    │
-│    ⎇ feat-x                  │
-│    [+ New worktree]          │
-│                              │
-│  ── other-repo ──            │
-│    ⎇ main                    │
-│    [+ New worktree]          │
-│                              │
-│  [+ Add project]             │
-└──────────────────────────────┘
-選 worktree → 開新 session，填入 focused pane（若空白）或成為 Tab Bar inactive tab
-active project 自動切換為所選 worktree 所屬的 project
+┌─────────────────────────────────────────────┐
+│  Open in pane                        [×]   │
+├─────────────────────────────────────────────┤
+│  [ Session ]  [ 🌿 Git ]  [ 📁 Files ]  [ 📋 Spec ] │
+├─────────────────────────────────────────────┤
+│  (Session tab)                              │
+│                                             │
+│  Existing sessions                          │
+│  ──────────────────────────────             │
+│  ● ⎇main · Task A   ←在 Left pane          │
+│  ○ ⎇feat-x · Task B  ←無 pane             │
+│                                             │
+│  New session in                             │
+│  ──────────────────────────────             │
+│  ▾ app                                      │
+│      ⎇ main          [+ New session]        │
+│      ⎇ feat-x        [+ New session]        │
+│      [+ New worktree]                       │
+│  ▾ other-repo                               │
+│      ⎇ main          [+ New session]        │
+│      [+ New worktree]                       │
+│                                             │
+│  [+ Add project]                            │
+└─────────────────────────────────────────────┘
 ```
 
-**空白 pane picker**（開 session 同時決定放在哪個 pane）：
+Tool tab（Git / Files / Spec）選定後，需再選 cwd（worktree）；預設填入 active project 的 active worktree，可手動切換：
+
 ```
-┌──────────────────────────────────┐
-│  Sessions:                       │
-│  ● ⎇main · Task A  (Layout 1 左) │
-│  ○ ⎇feat-X · Task C (無 pane)    │
-│  ── Tools ──                     │
-│  [🌿 Git]  [📁 Files]  [📋 Spec] │
-│  [🌲 Worktrees]                  │
-│  ── New session in ──            │
-│  ── app ──                       │
-│    [+ main]  [+ feat-X]          │
-│  ── other-repo ──                │
-│    [+ main]                      │
-└──────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  Open in pane                        [×]   │
+├─────────────────────────────────────────────┤
+│  [ Session ]  [ 🌿 Git ]  [ 📁 Files ]  [ 📋 Spec ] │
+├─────────────────────────────────────────────┤
+│  (Git tab)                                  │
+│                                             │
+│  cwd:  ⎇ main (app)  ▾   ← 預填，可換      │
+│                                             │
+│                      [Open Git pane]        │
+└─────────────────────────────────────────────┘
 ```
 
-**理由**：兩個入口解決不同需求——Global Bar `[+]` 適合快速開 session 不在意 pane 位置；空白 pane picker 適合「我想在這個 pane 放什麼」的精確操作。Picker grouped by project 確保即使沒有 active project 也能流暢操作，且 worktree → project 的歸屬關係明確不靠路徑推算。
+**EmptyPanePicker（空白 pane 的 inline 快捷）保留但簡化：**
+
+```
+空白 pane inline picker（不彈 modal）：
+  Sessions:
+    ● ⎇main · Task A
+    ○ ⎇feat-x · Task B
+  ─────────────────────────────
+  [🌿 Git]  [📁 Files]  [📋 Spec]  [🌲 Worktrees]
+  ─────────────────────────────
+  [+ Open new session...]   ← 點擊 → 開 Modal（帶 target paneId）
+```
+
+移除舊的「+ New session」按鈕與「New session in...」grouped list，改由 Modal 統一承接。Inline picker 保留「選現有 session」和「選 tool（不需要 project 上下文）」兩個快速動作。
+
+**理由：**
+- Dropdown picker 空間不足以清楚呈現 project → worktree 層級，且無法在同一介面展示 session 清單與 tool 選項。
+- Modal 有足夠空間，同時能處理「沒有 active project」的引導場景。
+- EmptyPanePicker inline 保留「選現有 session」與「選 tool」，這兩類動作不需要 project 上下文，inline 速度更快；「開新 session」才需要完整的 project/worktree 選擇，交給 Modal。
+- 所有 new session 入口統一後，cwd 來源明確（使用者在 Modal 裡主動選擇），不再有「沒有 active project 卻建立 cwd=undefined session」的問題。
 
 ---
 
