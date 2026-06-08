@@ -34,8 +34,8 @@ interface GlobalBarProps {
   allWorktrees: Record<string, WorktreeInfo[]>;
   onSelectProject: (cwd: string) => void;
   onAddProject: () => void;
-  onNewSession: (cwd: string) => void;
-  onCreateWorktree?: () => void;
+  onNewSession: (cwd: string, projectCwd: string) => void;
+  onCreateWorktree?: (projectCwd: string) => void;
   onOpenSearch: () => void;
   onOpenSettings: () => void;
 }
@@ -142,20 +142,19 @@ export function GlobalBar({
               className="absolute top-full right-0 mt-1 min-w-48 bg-surface border border-border rounded shadow-lg z-dropdown"
             >
               <div className="px-3 py-1.5 text-xs text-muted font-medium">New session in...</div>
-              {projects.map((project, i) => {
+              {projects.map((project) => {
                 const worktrees = allWorktrees[project.cwd] ?? [];
-                if (worktrees.length === 0) return null;
                 return (
                   <div key={project.cwd}>
-                    {i > 0 && <div className="border-t border-border my-1" />}
-                    <div className="px-3 py-1 text-xs text-muted">{project.name}</div>
+                    <div className="border-t border-border my-1 first:hidden" />
+                    <div className="px-3 py-1 text-xs text-muted font-medium">{project.name}</div>
                     {worktrees.map((wt) => (
                       <button
                         key={wt.path}
                         type="button"
                         role="menuitem"
                         onClick={() => {
-                          onNewSession(wt.path);
+                          onNewSession(wt.path, project.cwd);
                           setSessionPickerOpen(false);
                         }}
                         className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint"
@@ -164,26 +163,36 @@ export function GlobalBar({
                         {wt.branch}
                       </button>
                     ))}
+                    {onCreateWorktree && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          onCreateWorktree(project.cwd);
+                          setSessionPickerOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint opacity-60 hover:opacity-100"
+                      >
+                        <span className="w-3">+</span>
+                        New worktree
+                      </button>
+                    )}
                   </div>
                 );
               })}
-              {onCreateWorktree && (
-                <>
-                  <div className="border-t border-border my-1" />
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      onCreateWorktree();
-                      setSessionPickerOpen(false);
-                    }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint"
-                  >
-                    <span className="w-3">+</span>
-                    New worktree
-                  </button>
-                </>
-              )}
+              <div className="border-t border-border my-1" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  onAddProject();
+                  setSessionPickerOpen(false);
+                }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint"
+              >
+                <span className="w-3">+</span>
+                Add project
+              </button>
             </div>
           )}
         </div>

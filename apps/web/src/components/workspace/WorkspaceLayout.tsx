@@ -110,14 +110,14 @@ function WorkspaceLayoutInner() {
             allWorktrees={allWorktrees}
             onSelectProject={(cwd) => setActiveProject(cwd)}
             onAddProject={() => setDialogOpen(true)}
-            onNewSession={(cwd) => {
-              const matchingProject = projects.find((p) => cwd.startsWith(p.cwd));
-              if (matchingProject) {
-                setActiveProject(matchingProject.cwd);
-                setPendingSession({ projectCwd: matchingProject.cwd, sessionCwd: cwd });
-              }
+            onNewSession={(cwd, projectCwd) => {
+              setActiveProject(projectCwd);
+              setPendingSession({ projectCwd, sessionCwd: cwd });
             }}
-            onCreateWorktree={() => setWorktreeDialogOpen(true)}
+            onCreateWorktree={(projectCwd) => {
+              setActiveProject(projectCwd);
+              setWorktreeDialogOpen(true);
+            }}
             onOpenSearch={() => openPalette()}
             onOpenSettings={() => setSettingsOpen(true)}
           />

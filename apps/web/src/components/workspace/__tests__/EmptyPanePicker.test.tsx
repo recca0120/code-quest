@@ -112,3 +112,53 @@ describe('EmptyPanePicker (8.4) new session in worktree', () => {
     expect(onNewSessionInWorktree).toHaveBeenCalledWith('/projects/app/feat-x');
   });
 });
+
+// P.1: New session in section grouped by project
+describe('EmptyPanePicker (P.1) new session grouped by project', () => {
+  const allWorktrees = {
+    '/projects/app': [
+      { path: '/projects/app', branch: 'main', name: 'main' },
+      { path: '/projects/app-feat', branch: 'feat-x', name: 'feat-x' },
+    ],
+    '/projects/other': [{ path: '/projects/other', branch: 'main', name: 'main' }],
+  };
+  const projects = [
+    { cwd: '/projects/app', name: 'app' },
+    { cwd: '/projects/other', name: 'other' },
+  ];
+
+  it('groups new session entries by project name', () => {
+    render(
+      <Wrapper>
+        <EmptyPanePicker
+          paneId="pane-1"
+          sessions={sessions}
+          allWorktrees={allWorktrees}
+          projects={projects}
+          onNewSessionInWorktree={vi.fn()}
+        />
+      </Wrapper>,
+    );
+    expect(screen.getByText(/new session in/i)).toBeInTheDocument();
+    expect(screen.getByText('app')).toBeInTheDocument();
+    expect(screen.getByText('other')).toBeInTheDocument();
+  });
+
+  it('calls onNewSessionInWorktree with worktreePath and projectCwd', async () => {
+    const user = userEvent.setup();
+    const onNewSessionInWorktree = vi.fn();
+    render(
+      <Wrapper>
+        <EmptyPanePicker
+          paneId="pane-1"
+          sessions={sessions}
+          allWorktrees={allWorktrees}
+          projects={projects}
+          onNewSessionInWorktree={onNewSessionInWorktree}
+        />
+      </Wrapper>,
+    );
+    await user.click(screen.getByRole('button', { name: /feat-x/ }));
+    expect(onNewSessionInWorktree).toHaveBeenCalledWith('/projects/app-feat', '/projects/app');
+  });
+});

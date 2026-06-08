@@ -111,13 +111,62 @@ describe('GlobalBar (10.5) new session picker', () => {
   });
 });
 
-// 10.6: selecting worktree calls onNewSession
-describe('GlobalBar (10.6) new session in worktree', () => {
-  it('selecting a worktree calls onNewSession with that cwd', async () => {
+// 10.6 / G.3: selecting worktree calls onNewSession with worktreePath AND projectCwd
+describe('GlobalBar (10.6/G.3) new session in worktree', () => {
+  it('selecting a worktree calls onNewSession(worktreePath, projectCwd)', async () => {
     const { user, props } = setup();
     await user.click(screen.getByRole('button', { name: 'New session' }));
     await user.click(screen.getByRole('menuitem', { name: /feat-x/ }));
-    expect(props.onNewSession).toHaveBeenCalledWith('/projects/app-feat');
+    expect(props.onNewSession).toHaveBeenCalledWith('/projects/app-feat', '/projects/app');
+  });
+
+  it('selecting a worktree from another project passes that project cwd', async () => {
+    const { user, props } = setup();
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    // Find the "other" project group then click its "main" worktree button
+    const picker = screen.getByRole('menu', { name: /new session/i });
+    const otherHeader = within(picker).getByText('other');
+    const otherSection = otherHeader.parentElement!;
+    await user.click(within(otherSection).getByRole('menuitem', { name: /main/ }));
+    expect(props.onNewSession).toHaveBeenCalledWith('/projects/other', '/projects/other');
+  });
+});
+
+// G.5: per-project [+ New worktree]
+describe('GlobalBar (G.5) per-project new worktree', () => {
+  it('each project group has its own [+ New worktree] button', async () => {
+    const onCreateWorktree = vi.fn();
+    const { user } = setup({ onCreateWorktree });
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    const newWorktreeBtns = screen.getAllByRole('menuitem', { name: /New worktree/ });
+    expect(newWorktreeBtns).toHaveLength(2); // one per project
+  });
+
+  it('clicking [+ New worktree] in app section calls onCreateWorktree with app projectCwd', async () => {
+    const onCreateWorktree = vi.fn();
+    const { user } = setup({ onCreateWorktree });
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    const newWorktreeBtns = screen.getAllByRole('menuitem', { name: /New worktree/ });
+    await user.click(newWorktreeBtns[0]!);
+    expect(onCreateWorktree).toHaveBeenCalledWith('/projects/app');
+  });
+});
+
+// G.6: [+ Add project] at bottom of picker
+describe('GlobalBar (G.6) add project in picker', () => {
+  it('[+] picker has Add project entry at the bottom', async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    const picker = screen.getByRole('menu', { name: /new session/i });
+    expect(within(picker).getByRole('menuitem', { name: /Add project/ })).toBeInTheDocument();
+  });
+
+  it('clicking Add project in picker calls onAddProject', async () => {
+    const { user, props } = setup();
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    const picker = screen.getByRole('menu', { name: /new session/i });
+    await user.click(within(picker).getByRole('menuitem', { name: /Add project/ }));
+    expect(props.onAddProject).toHaveBeenCalled();
   });
 });
 
