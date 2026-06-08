@@ -57,6 +57,7 @@ interface PaneActionsValue {
   setSessionInPane: (paneId: string, sessionId: string | null) => void;
   setContentInPane: (paneId: string, content: PaneContent) => void;
   zoomPane: (paneId: string | null) => void;
+  swapPane: (idA: string, idB: string) => void;
 }
 
 const PaneActionsContext: React.Context<PaneActionsValue | null> =
@@ -549,6 +550,27 @@ export function TabProvider({
     },
     zoomPane: (paneId) => {
       updateActiveTab((t) => (t.zoomedPaneId === paneId ? t : { ...t, zoomedPaneId: paneId }));
+    },
+    swapPane: (idA, idB) => {
+      updateActiveTab((t) => {
+        function findContent(node: PaneNode, id: string): PaneContent | null {
+          if (node.type === 'leaf') return node.id === id ? node.content : null;
+          return findContent(node.first, id) ?? findContent(node.second, id);
+        }
+        const contentA = findContent(t.paneRoot, idA);
+        const contentB = findContent(t.paneRoot, idB);
+        if (!contentA || !contentB) return t;
+        return {
+          ...t,
+          paneRoot: mapNode(t.paneRoot, (node) => {
+            if (node.type === 'leaf') {
+              if (node.id === idA) return { ...node, content: contentB };
+              if (node.id === idB) return { ...node, content: contentA };
+            }
+            return node;
+          }),
+        };
+      });
     },
   }));
 

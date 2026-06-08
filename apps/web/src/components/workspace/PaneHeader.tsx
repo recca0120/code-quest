@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { usePaneState } from '@/contexts/TabContext';
+import { useMobileMode } from './useMobileMode';
 
 type ContextTool = 'files' | 'git' | 'spec';
+
+let dragSourceId: string | null = null;
 
 interface PaneHeaderProps {
   paneId: string;
@@ -12,6 +15,7 @@ interface PaneHeaderProps {
   onSplitH?: () => void;
   onSplitV?: () => void;
   onClose?: () => void;
+  onSwap?: (targetId: string) => void;
 }
 
 export function PaneHeader({
@@ -23,21 +27,50 @@ export function PaneHeader({
   onSplitH,
   onSplitV,
   onClose,
+  onSwap,
 }: PaneHeaderProps): React.JSX.Element {
   const { focusedPaneId, zoomedPaneId } = usePaneState();
   const isFocused = focusedPaneId === paneId;
   const isZoomed = zoomedPaneId === paneId;
+  const isMobile = useMobileMode();
   const [activeTool, setActiveTool] = useState<ContextTool | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   function toggleTool(tool: ContextTool): void {
     setActiveTool((prev) => (prev === tool ? null : tool));
   }
 
+  function handleDragStart() {
+    setIsDragging(true);
+    // store paneId in a module-level variable for cross-component communication
+    dragSourceId = paneId;
+  }
+
+  function handleDragEnd() {
+    setIsDragging(false);
+    dragSourceId = null;
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    if (dragSourceId && dragSourceId !== paneId && onSwap) {
+      onSwap(dragSourceId);
+    }
+    dragSourceId = null;
+  }
+
   return (
     <>
       <div
+        role="toolbar"
         data-testid="pane-header"
         data-focused={isFocused || undefined}
+        data-dragging={isDragging || undefined}
+        draggable="true"
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
         className="flex items-center gap-1 px-2 py-1 text-xs border-b border-border"
       >
         {isZoomed && (
@@ -89,30 +122,34 @@ export function PaneHeader({
               </button>
             </>
           )}
-          <button
-            type="button"
-            data-testid="pane-split-h"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSplitH?.();
-            }}
-            className="opacity-60 hover:opacity-100"
-            title="Split horizontally"
-          >
-            ⊟
-          </button>
-          <button
-            type="button"
-            data-testid="pane-split-v"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSplitV?.();
-            }}
-            className="opacity-60 hover:opacity-100"
-            title="Split vertically"
-          >
-            ⊞
-          </button>
+          {!isMobile && (
+            <>
+              <button
+                type="button"
+                data-testid="pane-split-h"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSplitH?.();
+                }}
+                className="opacity-60 hover:opacity-100"
+                title="Split horizontally"
+              >
+                ⊟
+              </button>
+              <button
+                type="button"
+                data-testid="pane-split-v"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSplitV?.();
+                }}
+                className="opacity-60 hover:opacity-100"
+                title="Split vertically"
+              >
+                ⊞
+              </button>
+            </>
+          )}
           <button
             type="button"
             data-testid="pane-close"

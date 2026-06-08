@@ -182,7 +182,28 @@
 
 > 前提：Phase 2 驗證完，確認 tool pane / context panel 使用模式後再做。
 
-- [ ] Pane 對調（`⌘⇧方向鍵` + 右鍵選單）
-- [ ] Pane 拖拉重排（拖 header + drop zone）
-- [ ] Session Manager overlay（`⌘⇧M`）
-- [ ] Mobile 退化（強制單 pane，隱藏 split 按鈕）
+### Mobile 退化（M）
+
+- [x] M.1 [test] 小螢幕（< 768px）時 `useMobileMode()` 回傳 `true`
+- [x] M.2 [test] mobile 時 PaneHeader 隱藏 split buttons（⊟ / ⊞）
+- [x] M.3 [test] mobile 時 `⌘\` / `⌘-` 鍵盤 split 快捷鍵為 no-op
+- [x] M.4 [impl] 實作 `useMobileMode` hook + `PaneHeader` / `KeyboardShortcutsProvider` 整合
+
+### Pane 對調（S）
+
+- [x] S.1 [test] `swapPane(idA, idB)` action：交換兩 leaf 的 content
+- [x] S.2 [test] `⌘⇧→` 將 focused pane content 與右方相鄰 pane 對調
+- [x] S.3 [impl] 實作 `swapPane` action + `KeyboardShortcutsProvider` 加入 `⌘⇧方向鍵`
+
+### Session Manager Overlay（O）
+
+- [x] O.1 [test] `⌘⇧M` 開啟 Session Manager overlay（`data-testid="session-manager"`）
+- [x] O.2 [test] Overlay 列出所有 sessions（name + status）
+- [x] O.3 [test] Overlay 中點擊 session → 填入 focused pane 並關閉 overlay
+- [x] O.4 [impl] 建立 `SessionManager` 元件 + keyboard shortcut
+
+### Pane 拖拉重排（D）
+
+- [x] D.1 [test] 拖曳 pane header 時顯示 `data-dragging` 屬性
+- [x] D.2 [test] 放到另一 pane header 上 → 兩 pane content 對調
+- [x] D.3 [impl] DnD：`draggable` header + `dragover` / `drop` handler 呼叫 `swapPane`

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   firstLeafId,
   type PaneNode,
@@ -6,6 +6,8 @@ import {
   usePaneState,
   useTabActions,
 } from '@/contexts/TabContext';
+import { SessionManager } from './SessionManager';
+import { useMobileMode } from './useMobileMode';
 
 function findAdjacentLeafId(
   root: PaneNode,
@@ -29,10 +31,14 @@ function findAdjacentLeafId(
   return leaves[idx + 1] ?? null;
 }
 
-function useKeyboardShortcuts(): void {
+function useKeyboardShortcuts(
+  sessionManagerOpen: boolean,
+  setSessionManagerOpen: (fn: (prev: boolean) => boolean) => void,
+): void {
   const { paneRoot, focusedPaneId } = usePaneState();
-  const { splitPane, closePane, focusPane } = usePaneActions();
+  const { splitPane, closePane, focusPane, swapPane } = usePaneActions();
   const { createNewTab } = useTabActions();
+  const isMobile = useMobileMode();
 
   useEffect(() => {
     function handler(e: KeyboardEvent): void {
@@ -53,15 +59,43 @@ function useKeyboardShortcuts(): void {
         return;
       }
 
-      if (e.key === '\\' && !e.altKey && !e.shiftKey) {
+      if (!isMobile && e.key === '\\' && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         splitPane('h');
         return;
       }
 
-      if (e.key === '-' && !e.altKey && !e.shiftKey) {
+      if (!isMobile && e.key === '-' && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         splitPane('v');
+        return;
+      }
+
+      if (
+        e.shiftKey &&
+        (e.key === 'ArrowRight' ||
+          e.key === 'ArrowLeft' ||
+          e.key === 'ArrowUp' ||
+          e.key === 'ArrowDown')
+      ) {
+        e.preventDefault();
+        if (!focusedPaneId) return;
+        const dir =
+          e.key === 'ArrowLeft'
+            ? 'left'
+            : e.key === 'ArrowRight'
+              ? 'right'
+              : e.key === 'ArrowUp'
+                ? 'up'
+                : 'down';
+        const adjacentId = findAdjacentLeafId(paneRoot, focusedPaneId, dir);
+        if (adjacentId) swapPane(focusedPaneId, adjacentId);
+        return;
+      }
+
+      if (e.shiftKey && (e.key === 'm' || e.key === 'M')) {
+        e.preventDefault();
+        setSessionManagerOpen((prev) => !prev);
         return;
       }
 
@@ -88,9 +122,30 @@ function useKeyboardShortcuts(): void {
       }
     }
 
+    function escapeHandler(e: KeyboardEvent): void {
+      if (e.key === 'Escape' && sessionManagerOpen) {
+        setSessionManagerOpen(() => false);
+      }
+    }
+
     document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [paneRoot, focusedPaneId, splitPane, closePane, focusPane, createNewTab]);
+    document.addEventListener('keydown', escapeHandler);
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.removeEventListener('keydown', escapeHandler);
+    };
+  }, [
+    paneRoot,
+    focusedPaneId,
+    isMobile,
+    sessionManagerOpen,
+    splitPane,
+    closePane,
+    focusPane,
+    createNewTab,
+    swapPane,
+    setSessionManagerOpen,
+  ]);
 }
 
 export function KeyboardShortcutsProvider({
@@ -98,6 +153,12 @@ export function KeyboardShortcutsProvider({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  useKeyboardShortcuts();
-  return <>{children}</>;
+  const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
+  useKeyboardShortcuts(sessionManagerOpen, setSessionManagerOpen);
+  return (
+    <>
+      {children}
+      {sessionManagerOpen && <SessionManager onClose={() => setSessionManagerOpen(() => false)} />}
+    </>
+  );
 }
