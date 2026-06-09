@@ -7,7 +7,7 @@ import { renderWithWorkspace } from '@/test/render-with-workspace';
 import { rewindOpenSignal } from '../rewind-feature.ts';
 
 afterEach(() => {
-  rewindOpenSignal.setOpen(false);
+  rewindOpenSignal.setOpen(false, null);
 });
 
 type User = ReturnType<typeof userEvent.setup>;

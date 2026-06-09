@@ -10,7 +10,7 @@ export function createGeneralConfigFeature(): Feature {
     section: 'Settings',
     ui: { closeSilent: true },
     execute() {
-      generalConfigSignal.setOpen(true);
+      generalConfigSignal.setOpen(true, '__global__');
     },
   };
 }

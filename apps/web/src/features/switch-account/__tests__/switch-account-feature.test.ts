@@ -3,14 +3,14 @@ import { createSwitchAccountFeature, switchAccountSignal } from '../switch-accou
 
 describe('switchAccountSignal', () => {
   it('starts closed', () => {
-    expect(switchAccountSignal.isOpen).toBe(false);
+    expect(switchAccountSignal.isOpenFor('__global__')).toBe(false);
   });
 
   it('can be opened and closed', () => {
-    switchAccountSignal.setOpen(true);
-    expect(switchAccountSignal.isOpen).toBe(true);
-    switchAccountSignal.setOpen(false);
-    expect(switchAccountSignal.isOpen).toBe(false);
+    switchAccountSignal.setOpen(true, '__global__');
+    expect(switchAccountSignal.isOpenFor('__global__')).toBe(true);
+    switchAccountSignal.setOpen(false, null);
+    expect(switchAccountSignal.isOpenFor('__global__')).toBe(false);
   });
 });
 
@@ -27,9 +27,9 @@ describe('createSwitchAccountFeature', () => {
   });
 
   it('execute opens switchAccountSignal', () => {
-    switchAccountSignal.setOpen(false);
+    switchAccountSignal.setOpen(false, null);
     createSwitchAccountFeature().execute();
-    expect(switchAccountSignal.isOpen).toBe(true);
-    switchAccountSignal.setOpen(false);
+    expect(switchAccountSignal.isOpenFor('__global__')).toBe(true);
+    switchAccountSignal.setOpen(false, null);
   });
 });

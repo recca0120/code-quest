@@ -2,19 +2,19 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createGeneralConfigFeature, generalConfigSignal } from '../general-config-feature.ts';
 
 afterEach(() => {
-  generalConfigSignal.setOpen(false);
+  generalConfigSignal.setOpen(false, null);
 });
 
 describe('generalConfigSignal', () => {
   it('starts closed', () => {
-    expect(generalConfigSignal.isOpen).toBe(false);
+    expect(generalConfigSignal.isOpenFor('__global__')).toBe(false);
   });
 
   it('can be opened and closed', () => {
-    generalConfigSignal.setOpen(true);
-    expect(generalConfigSignal.isOpen).toBe(true);
-    generalConfigSignal.setOpen(false);
-    expect(generalConfigSignal.isOpen).toBe(false);
+    generalConfigSignal.setOpen(true, '__global__');
+    expect(generalConfigSignal.isOpenFor('__global__')).toBe(true);
+    generalConfigSignal.setOpen(false, null);
+    expect(generalConfigSignal.isOpenFor('__global__')).toBe(false);
   });
 });
 
@@ -32,6 +32,6 @@ describe('createGeneralConfigFeature', () => {
 
   it('execute opens generalConfigSignal', () => {
     createGeneralConfigFeature().execute();
-    expect(generalConfigSignal.isOpen).toBe(true);
+    expect(generalConfigSignal.isOpenFor('__global__')).toBe(true);
   });
 });

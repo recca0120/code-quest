@@ -3,14 +3,14 @@ import { createOpenSignal, type OpenSignal } from '@/lib/open-signal';
 
 export const rewindOpenSignal: OpenSignal = createOpenSignal();
 
-export function createRewindFeature(): Feature {
+export function createRewindFeature(channelId: string): Feature {
   return {
     id: 'rewind',
     label: 'Rewind',
     section: 'Context',
     order: 1,
     execute() {
-      rewindOpenSignal.setOpen(true);
+      rewindOpenSignal.setOpen(true, channelId);
     },
   };
 }

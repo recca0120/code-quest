@@ -11,7 +11,12 @@ import { z } from 'zod';
 import { CommandMenu } from '@/components/chat/compose/command-menu/CommandMenu';
 import { IconButton } from '@/components/ui/IconButton';
 import { useAppInit } from '@/contexts/AppInitContext';
-import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/contexts/channel';
+import {
+  useChannelCompose,
+  useChannelConfig,
+  useChannelId,
+  useChannelMessages,
+} from '@/contexts/channel';
 import { modelOpenSignal } from '@/features/model/model-feature';
 import { selectIsActive, useChannelStore } from '@/stores/ChannelStoreContext';
 import { cn } from '@/utils/cn';
@@ -141,9 +146,10 @@ export function ComposeToolbar({
     if (!enrichedMcpServers) mcpRefresh();
   };
 
+  const channelId = useChannelId();
   const isModelPickerOpen = useSyncExternalStore(
     (cb) => modelOpenSignal.subscribe(cb),
-    () => modelOpenSignal.isOpen,
+    () => modelOpenSignal.isOpenFor(channelId),
   );
   const modelEntry = (model ? findModel(model, availableModels) : undefined) ?? availableModels[0];
   const supportsAutoMode = modelEntry?.supportsAutoMode ?? false;
@@ -181,7 +187,10 @@ export function ComposeToolbar({
         forkSession={forkSession}
         updateValue={compose.updateValue}
       />
-      <Popover.Root open={isModelPickerOpen} onOpenChange={modelOpenSignal.setOpen}>
+      <Popover.Root
+        open={isModelPickerOpen}
+        onOpenChange={(open) => modelOpenSignal.setOpen(open, channelId)}
+      >
         <Popover.Anchor virtualRef={containerRef as React.RefObject<Element>} />
         <div className="flex items-center gap-0.5 px-2 py-1 text-xs">
           {isModelPickerOpen && (
@@ -199,7 +208,7 @@ export function ComposeToolbar({
                 availableModels={availableModels}
                 onSwitch={(v) => {
                   setModel(v);
-                  modelOpenSignal.setOpen(false);
+                  modelOpenSignal.setOpen(false, null);
                 }}
                 defaultModelDescription={providerConfig?.defaultModelDescription}
               />

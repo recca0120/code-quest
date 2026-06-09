@@ -124,7 +124,7 @@ describe('buildMenuItems', () => {
       execute: vi.fn(),
     });
     const localFeatures = [
-      createModelFeature({ modelLabel: 'Opus' }),
+      createModelFeature({ modelLabel: 'Opus', channelId: 'ch-test' }),
       createEffortFeature({ effort: null, effortLevels: ['low', 'max'], onSetEffort: vi.fn() }),
       createThinkingFeature({ isThinkingOn: false, onSetThinkingLevel: vi.fn() }),
       createFastModeFeature({ fastModeState: null, setFastMode: vi.fn() }),

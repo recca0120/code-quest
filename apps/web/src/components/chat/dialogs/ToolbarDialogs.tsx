@@ -5,6 +5,7 @@ import { AuthDialog } from '@/components/settings/AuthDialog';
 import { InitOptionsDialog } from '@/components/settings/InitOptionsDialog';
 import { ManageMcpDialog } from '@/components/settings/ManageMcpDialog';
 import { ManagePluginsDialog } from '@/components/settings/ManagePluginsDialog';
+import { useChannelId } from '@/contexts/channel';
 import type { ChannelConfigValue } from '@/contexts/channel/ChannelConfigContext';
 import type { ChannelActionsValue } from '@/contexts/channel/ChannelMessagesContext';
 import { generalConfigSignal } from '@/features/general-config/general-config-feature';
@@ -58,21 +59,22 @@ export function ToolbarDialogs({
   forkSession,
   updateValue,
 }: ToolbarDialogsProps): React.JSX.Element {
+  const channelId = useChannelId();
   const isUsageOpen = useSyncExternalStore(
     (cb) => usageOpenSignal.subscribe(cb),
-    () => usageOpenSignal.isOpen,
+    () => usageOpenSignal.isOpenFor(channelId),
   );
   const isRewindOpen = useSyncExternalStore(
     (cb) => rewindOpenSignal.subscribe(cb),
-    () => rewindOpenSignal.isOpen,
+    () => rewindOpenSignal.isOpenFor(channelId),
   );
   const isGeneralConfigOpen = useSyncExternalStore(
     (cb) => generalConfigSignal.subscribe(cb),
-    () => generalConfigSignal.isOpen,
+    () => generalConfigSignal.isOpenFor('__global__'),
   );
   const isSwitchAccountOpen = useSyncExternalStore(
     (cb) => switchAccountSignal.subscribe(cb),
-    () => switchAccountSignal.isOpen,
+    () => switchAccountSignal.isOpenFor('__global__'),
   );
   return (
     <>
@@ -100,7 +102,7 @@ export function ToolbarDialogs({
       {isGeneralConfigOpen && (
         <InitOptionsDialog
           open
-          onClose={() => generalConfigSignal.setOpen(false)}
+          onClose={() => generalConfigSignal.setOpen(false, null)}
           onSave={(opts) => setInitOptions(opts)}
           initial={initOptions}
         />
@@ -108,7 +110,7 @@ export function ToolbarDialogs({
       {isUsageOpen && (
         <AccountUsageDialog
           open
-          onClose={() => usageOpenSignal.setOpen(false)}
+          onClose={() => usageOpenSignal.setOpen(false, null)}
           usage={usageQuota ?? undefined}
           contextUsage={contextUsage ?? undefined}
           stats={stats ?? undefined}
@@ -122,14 +124,14 @@ export function ToolbarDialogs({
       )}
       {activeDialog === 'plugins' && <ManagePluginsDialog open onClose={closeDialog} />}
       {isSwitchAccountOpen && (
-        <AuthDialog open onClose={() => switchAccountSignal.setOpen(false)} />
+        <AuthDialog open onClose={() => switchAccountSignal.setOpen(false, null)} />
       )}
       {isRewindOpen && (
         <RewindDialog
           open
-          onClose={() => rewindOpenSignal.setOpen(false)}
+          onClose={() => rewindOpenSignal.setOpen(false, null)}
           onConfirm={({ messageId, promptText }) => {
-            rewindOpenSignal.setOpen(false);
+            rewindOpenSignal.setOpen(false, null);
             rewindToMessage(messageId)
               .then((result) => {
                 if (result.ok && result.data.canRewind) {

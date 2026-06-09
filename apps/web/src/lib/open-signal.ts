@@ -1,24 +1,25 @@
 export interface OpenSignal {
-  isOpen: boolean;
+  isOpenFor(channelId: string): boolean;
   subscribe(cb: () => void): () => void;
-  setOpen(open: boolean): void;
+  setOpen(open: boolean, channelId: string | null): void;
 }
 
 export function createOpenSignal(): OpenSignal {
-  let isOpen = false;
+  let openChannelId: string | null = null;
   const subscribers = new Set<() => void>();
 
   return {
-    get isOpen() {
-      return isOpen;
+    isOpenFor(channelId) {
+      return openChannelId === channelId;
     },
     subscribe(cb) {
       subscribers.add(cb);
       return () => subscribers.delete(cb);
     },
-    setOpen(open) {
-      if (isOpen === open) return;
-      isOpen = open;
+    setOpen(open, channelId) {
+      const next = open ? channelId : null;
+      if (openChannelId === next) return;
+      openChannelId = next;
       for (const cb of subscribers) cb();
     },
   };

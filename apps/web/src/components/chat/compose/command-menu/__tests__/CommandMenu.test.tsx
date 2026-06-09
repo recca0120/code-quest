@@ -37,12 +37,12 @@ async function openMenu() {
 
 describe('CommandMenu', () => {
   afterEach(() => {
-    modelOpenSignal.setOpen(false);
-    resumeOpenSignal.setOpen(false);
-    switchAccountSignal.setOpen(false);
-    generalConfigSignal.setOpen(false);
-    rewindOpenSignal.setOpen(false);
-    usageOpenSignal.setOpen(false);
+    modelOpenSignal.setOpen(false, null);
+    resumeOpenSignal.setOpen(false, null);
+    switchAccountSignal.setOpen(false, null);
+    generalConfigSignal.setOpen(false, null);
+    rewindOpenSignal.setOpen(false, null);
+    usageOpenSignal.setOpen(false, null);
   });
   it('renders / command menu button', async () => {
     await renderCommandMenu();
@@ -64,10 +64,10 @@ describe('CommandMenu', () => {
   });
 
   it('sets modelOpenSignal when Switch model clicked', async () => {
-    await renderCommandMenu();
+    const { channelId } = await renderCommandMenu();
     await userEvent.click(screen.getByTitle('Show command menu (/)'));
     await userEvent.click(screen.getByText('Switch model'));
-    expect(modelOpenSignal.isOpen).toBe(true);
+    expect(modelOpenSignal.isOpenFor(channelId)).toBe(true);
   });
 
   it('only accepts dialog callback props — no modelLabel/effort/slashCommands props', async () => {
@@ -120,38 +120,38 @@ describe('CommandMenu', () => {
     });
 
     it('clicking "Resume conversation…" sets resumeOpenSignal', async () => {
-      await renderCommandMenu();
+      const { channelId } = await renderCommandMenu();
       await openMenu();
       await userEvent.click(await screen.findByText('Resume conversation…'));
-      expect(resumeOpenSignal.isOpen).toBe(true);
+      expect(resumeOpenSignal.isOpenFor(channelId)).toBe(true);
     });
 
     it('clicking "Switch account" sets switchAccountSignal', async () => {
       await renderCommandMenu();
       await openMenu();
       await userEvent.click(await screen.findByText('Switch account'));
-      expect(switchAccountSignal.isOpen).toBe(true);
+      expect(switchAccountSignal.isOpenFor('__global__')).toBe(true);
     });
 
     it('clicking "General config…" sets generalConfigSignal', async () => {
       await renderCommandMenu();
       await openMenu();
       await userEvent.click(await screen.findByText('General config…'));
-      expect(generalConfigSignal.isOpen).toBe(true);
+      expect(generalConfigSignal.isOpenFor('__global__')).toBe(true);
     });
 
     it('clicking "Rewind" sets rewindOpenSignal', async () => {
-      await renderCommandMenu();
+      const { channelId } = await renderCommandMenu();
       await openMenu();
       await userEvent.click(await screen.findByText('Rewind'));
-      expect(rewindOpenSignal.isOpen).toBe(true);
+      expect(rewindOpenSignal.isOpenFor(channelId)).toBe(true);
     });
 
     it('clicking "Account & usage…" sets usageOpenSignal', async () => {
-      await renderCommandMenu();
+      const { channelId } = await renderCommandMenu();
       await openMenu();
       await userEvent.click(await screen.findByText('Account & usage…'));
-      expect(usageOpenSignal.isOpen).toBe(true);
+      expect(usageOpenSignal.isOpenFor(channelId)).toBe(true);
     });
 
     it('clicking "Manage MCP servers" triggers onToggleMcp callback', async () => {

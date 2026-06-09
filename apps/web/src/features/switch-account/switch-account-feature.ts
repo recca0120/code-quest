@@ -10,7 +10,7 @@ export function createSwitchAccountFeature(): Feature {
     section: 'Settings',
     ui: { closeSilent: true },
     execute() {
-      switchAccountSignal.setOpen(true);
+      switchAccountSignal.setOpen(true, '__global__');
     },
   };
 }

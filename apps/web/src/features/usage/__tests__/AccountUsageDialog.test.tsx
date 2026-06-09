@@ -8,7 +8,7 @@ import { AccountUsageDialog } from '../AccountUsageDialog.tsx';
 import { usageOpenSignal } from '../usage-feature.ts';
 
 afterEach(() => {
-  usageOpenSignal.setOpen(false);
+  usageOpenSignal.setOpen(false, null);
 });
 
 async function setupWithTurn() {

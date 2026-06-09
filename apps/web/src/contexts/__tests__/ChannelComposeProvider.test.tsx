@@ -91,7 +91,7 @@ async function setup() {
 
 describe('ChannelComposeProvider', () => {
   afterEach(() => {
-    usageOpenSignal.setOpen(false);
+    usageOpenSignal.setOpen(false, null);
   });
   it('provides initial empty state', async () => {
     await setup();
@@ -224,11 +224,11 @@ describe('ChannelComposeProvider', () => {
           </button>
         );
       };
-      const { claude } = await renderWithChannel(<UsageExecuteUI />);
+      const { claude, channelId } = await renderWithChannel(<UsageExecuteUI />);
       const before = claude.received('user').length;
       await userEvent.click(screen.getByText('ExecUsage'));
       // /usage has execute() → opens signal, no CLI message
-      expect(usageOpenSignal.isOpen).toBe(true);
+      expect(usageOpenSignal.isOpenFor(channelId)).toBe(true);
       expect(claude.received('user').length).toBe(before);
     });
   });

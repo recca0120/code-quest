@@ -116,9 +116,10 @@ function buildMessagesActions(ctx: {
   registry.register(
     createUsageFeature({
       emitRefreshUsage: () => socket.emit(EVENTS.settings.refresh_usage, { channelId }),
+      channelId,
     }),
   );
-  registry.register(createRewindFeature());
+  registry.register(createRewindFeature(channelId));
   registry.register(
     createClearFeature({
       clearMessages,
@@ -129,7 +130,7 @@ function buildMessagesActions(ctx: {
   registry.register(
     createNewConversationFeature({ sendMessage: (m) => messageActions.sendMessage(m) }),
   );
-  registry.register(createResumeFeature());
+  registry.register(createResumeFeature(channelId));
   registry.register(createCompactFeature((m) => messageActions.sendMessage(m)));
   registry.register(
     createRecapFeature({

@@ -5,9 +5,10 @@ export const modelOpenSignal: OpenSignal = createOpenSignal();
 
 interface ModelFeatureDeps {
   modelLabel: string;
+  channelId: string;
 }
 
-export function createModelFeature({ modelLabel }: ModelFeatureDeps): Feature {
+export function createModelFeature({ modelLabel, channelId }: ModelFeatureDeps): Feature {
   return {
     id: 'model',
     label: 'Switch model',
@@ -16,7 +17,7 @@ export function createModelFeature({ modelLabel }: ModelFeatureDeps): Feature {
     state: { kind: 'select', currentValue: modelLabel },
     ui: { closeSilent: true },
     execute() {
-      modelOpenSignal.setOpen(true);
+      modelOpenSignal.setOpen(true, channelId);
     },
   };
 }

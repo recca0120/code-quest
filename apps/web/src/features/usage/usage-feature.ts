@@ -5,12 +5,13 @@ export const usageOpenSignal: OpenSignal = createOpenSignal();
 
 interface UsageFeatureDeps {
   emitRefreshUsage: () => void;
+  channelId: string;
 }
 
-export function createUsageFeature({ emitRefreshUsage }: UsageFeatureDeps): Feature {
+export function createUsageFeature({ emitRefreshUsage, channelId }: UsageFeatureDeps): Feature {
   function run() {
     emitRefreshUsage();
-    usageOpenSignal.setOpen(true);
+    usageOpenSignal.setOpen(true, channelId);
   }
   return {
     id: 'usage',

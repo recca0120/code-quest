@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MenuSection } from '@/components/chat/ui/MenuSection';
 import { IconButton } from '@/components/ui/IconButton.tsx';
 import { SlashCommandIcon } from '@/components/ui/Icons.tsx';
-import { useChannelCompose, useChannelConfig } from '@/contexts/channel';
+import { useChannelCompose, useChannelConfig, useChannelId } from '@/contexts/channel';
 import { useFeatureRegistry } from '@/contexts/channel/FeatureRegistryContext';
 import { cn } from '@/utils/cn';
 import { findModel, getEffortLevels, isThinkingActive } from '@/utils/model-utils';
@@ -44,6 +44,7 @@ export function CommandMenu({
   } = useChannelConfig();
   const compose = useChannelCompose();
   const registry = useFeatureRegistry();
+  const channelId = useChannelId();
 
   const models = availableModels ?? [];
   const currentModel = model ?? null;
@@ -56,6 +57,7 @@ export function CommandMenu({
 
   const localFeatures = buildLocalFeatures({
     modelLabel,
+    channelId,
     onAttachFile,
     onMcpStatus,
     onToggleMcp,

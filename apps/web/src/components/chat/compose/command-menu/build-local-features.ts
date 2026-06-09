@@ -17,6 +17,7 @@ import { openUrl } from '@/utils/open-url';
 
 interface BuildLocalFeaturesParams {
   modelLabel: string;
+  channelId: string;
   onAttachFile?: () => void;
   onMcpStatus?: () => void;
   onToggleMcp?: () => void;
@@ -38,7 +39,7 @@ export function buildLocalFeatures(params: BuildLocalFeaturesParams): Feature[] 
   const btwBaseFeature = params.registry.getFeatures().find((f) => f.id === 'btw');
 
   return [
-    createModelFeature({ modelLabel: params.modelLabel }),
+    createModelFeature({ modelLabel: params.modelLabel, channelId: params.channelId }),
     createAttachFileFeature({ onAttachFile: params.onAttachFile }),
     createMcpStatusFeature({ onMcpStatus: params.onMcpStatus }),
     createMcpServersFeature({ onToggleMcp: params.onToggleMcp }),
