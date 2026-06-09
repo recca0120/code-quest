@@ -24,4 +24,25 @@ describe('PaneLeafContent (CT2.2/CT2.3) activeTool state', () => {
     await user.click(screen.getByRole('button', { name: /Git/i }));
     expect(screen.queryByRole('region', { name: 'right-pane-body' })).not.toBeInTheDocument();
   });
+
+  it('clicking files icon shows RightPane with Files tab active', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const { launchSession } = await addProject();
+    await launchSession();
+
+    await user.click(screen.getByRole('button', { name: /Files/i }));
+    expect(screen.getByRole('tab', { name: /Files/i })).toHaveAttribute('data-state', 'active');
+  });
+
+  it('switching from files to git shows Git tab active', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const { launchSession } = await addProject();
+    await launchSession();
+
+    await user.click(screen.getByRole('button', { name: /Files/i }));
+    expect(screen.getByRole('tab', { name: /Files/i })).toHaveAttribute('data-state', 'active');
+
+    await user.click(screen.getByRole('button', { name: /Git/i }));
+    expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
+  });
 });

@@ -200,6 +200,42 @@ describe('PaneHeader (CT2.1) controlled activeTool', () => {
   });
 });
 
+// CT2.1b: active tool button gets text-primary class; inactive tools do not
+describe('PaneHeader (CT2.1b) active tool visual state', () => {
+  it('active tool button has text-primary class', () => {
+    render(
+      <Wrapper>
+        <PaneHeader paneId="p1" cwd="/test" activeTool="files" onToolSelect={vi.fn()} />
+      </Wrapper>,
+    );
+    const filesBtn = screen.getByRole('button', { name: /Files/i });
+    expect(filesBtn.className).toContain('text-primary');
+  });
+
+  it('inactive tool buttons do not have text-primary class', () => {
+    render(
+      <Wrapper>
+        <PaneHeader paneId="p1" cwd="/test" activeTool="files" onToolSelect={vi.fn()} />
+      </Wrapper>,
+    );
+    const gitBtn = screen.getByRole('button', { name: /Git/i });
+    expect(gitBtn.className).not.toContain('text-primary');
+    const specBtn = screen.getByRole('button', { name: /Spec/i });
+    expect(specBtn.className).not.toContain('text-primary');
+  });
+
+  it('no button has text-primary when activeTool is null', () => {
+    render(
+      <Wrapper>
+        <PaneHeader paneId="p1" cwd="/test" activeTool={null} onToolSelect={vi.fn()} />
+      </Wrapper>,
+    );
+    for (const name of [/Files/i, /Git/i, /Spec/i]) {
+      expect(screen.getByRole('button', { name }).className).not.toContain('text-primary');
+    }
+  });
+});
+
 // 3.7: zoomed pane shows zoom indicator
 describe('PaneHeader (3.7) zoom indicator', () => {
   it('shows zoom indicator when pane is zoomed', async () => {
