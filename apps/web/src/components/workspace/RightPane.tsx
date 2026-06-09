@@ -1,9 +1,11 @@
 import { ClipboardDocumentListIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useState } from 'react';
+import { FilesPane } from '@/components/files/FilesPane';
+import { GitPane } from '@/components/git/GitPane';
+import { SpecPane } from '@/components/spec/SpecPane';
 import { cn } from '@/utils/cn';
 import { tabTrigger } from '../ui/_tokens.ts';
-import { ContextPanelFiles, ContextPanelGit, ContextPanelSpec } from './ContextPanel';
 
 type TabKind = 'files' | 'git' | 'spec';
 
@@ -30,7 +32,11 @@ const TRIGGER_BASE = cn(
   'flex-1 h-9 inline-flex items-center justify-center gap-1.5 text-xs outline-none',
 );
 
-export function RightPane({ cwd, initialTab = 'files' }: RightPaneProps): React.JSX.Element {
+export function RightPane({
+  cwd,
+  initialTab = 'files',
+  onMention,
+}: RightPaneProps): React.JSX.Element {
   const [active, setActive] = useState<TabKind>(initialTab);
   const [mounted, setMounted] = useState<ReadonlySet<TabKind>>(() => new Set([initialTab]));
 
@@ -39,6 +45,8 @@ export function RightPane({ cwd, initialTab = 'files' }: RightPaneProps): React.
     setActive(next);
     setMounted((prev) => (prev.has(next) ? prev : new Set([...prev, next])));
   }
+
+  const handleMention = onMention ?? (() => {});
 
   return (
     <Tabs.Root
@@ -56,13 +64,13 @@ export function RightPane({ cwd, initialTab = 'files' }: RightPaneProps): React.
       </Tabs.List>
       <section aria-label="right-pane-body" className="flex-1 min-h-0 flex flex-col" data-cwd={cwd}>
         <TabContent value="files" active={active === 'files'}>
-          {mounted.has('files') && <ContextPanelFiles cwd={cwd} />}
+          {mounted.has('files') && <FilesPane cwd={cwd} onMention={handleMention} />}
         </TabContent>
         <TabContent value="git" active={active === 'git'}>
-          {mounted.has('git') && <ContextPanelGit cwd={cwd} />}
+          {mounted.has('git') && <GitPane cwd={cwd} />}
         </TabContent>
         <TabContent value="spec" active={active === 'spec'}>
-          {mounted.has('spec') && <ContextPanelSpec cwd={cwd} />}
+          {mounted.has('spec') && <SpecPane cwd={cwd} />}
         </TabContent>
       </section>
     </Tabs.Root>

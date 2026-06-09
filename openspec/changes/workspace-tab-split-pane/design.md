@@ -574,13 +574,45 @@ PaneLeafContent
                                       └─ Radix Tabs（files / git / spec），forceMount 保留 scroll
 ```
 
+**RightPane 的 tab 內容使用 main branch 的完整實作：**
+
+| Tab | 元件 | 來源 |
+|---|---|---|
+| Files | `FilesPane` | `apps/web/src/components/files/FilesPane.tsx` |
+| Git | `GitPane` | `apps/web/src/components/git/GitPane.tsx` |
+| Spec | `SpecPane` | `apps/web/src/components/spec/SpecPane.tsx` |
+
+`FilesPane`、`GitPane`、`SpecPane` 是完整功能實作（git diff、commit、file preview、spec CRUD），
+`ContextPanel.tsx` 中的輕量版（`ContextPanelGit/Files/Spec`）已廢棄。
+
+**`RightPane` 與 Tool Pane 共用同一套元件：**
+
+```
+RightPane（Context Panel inline side panel）
+  ├─ Files tab → <FilesPane cwd={cwd} />
+  ├─ Git tab   → <GitPane cwd={cwd} />
+  └─ Spec tab  → <SpecPane cwd={cwd} />
+
+ToolPanes（split pane 獨立型）
+  ├─ FilesPane（直接渲染，pane header 可切換 worktree）
+  ├─ GitPane
+  └─ SpecPane
+```
+
+兩個進入點共用同一個元件實作，沒有重複邏輯。
+
+**RightPane 的 `onMention` 處理：**
+
+`FilesPane` 需要 `onMention(path)` callback。在 `RightPane` context 中，
+`onMention` 應把 `@path` 插入當前 session 的 compose 欄，透過 `useChannelComposeActions` 實現。
+
 **與 Tool Pane（進 split）的差異：**
 
-| | Context Panel | Tool Pane（split）|
+| | Context Panel（RightPane） | Tool Pane（split）|
 |---|---|---|
-| 觸發方式 | session header toolbar | 空白 pane picker |
-| cwd | 自動跟 session | 手動指定 |
-| 同時開多個 | ✗（同 session 只能一個）| ✓ |
+| 觸發方式 | session header toolbar icon | 空白 pane picker |
+| cwd | 自動跟 session，不可改 | 手動指定，可在 pane header 切換 |
+| 同時開多個 | ✗（同 session 只能一個） | ✓ |
 | 空間佔用 | inline，附著在 session pane 右側 | 獨立 pane |
 | 適合 | 快速查看，不想切 pane | 長時間參考，需要固定位置 |
 

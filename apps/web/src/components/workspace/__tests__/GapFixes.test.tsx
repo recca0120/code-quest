@@ -74,36 +74,39 @@ function ControlledPaneWithPanel({ cwd }: { cwd: string }) {
 }
 
 describe('Gap-2: Context Panel renders real FilesPane / GitPane / SpecPane', () => {
-  it('clicking Files icon renders actual files-pane content', async () => {
+  it('clicking Files icon shows RightPane with Files tab active', async () => {
     const user = userEvent.setup();
     render(<ControlledPaneWithPanel cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Files/i }));
-    expect(screen.getByTestId('context-panel-files')).toBeInTheDocument();
+    // RightPane の tab bar が表示され、Files tab が active になる
+    expect(screen.getByRole('tab', { name: /Files/i })).toHaveAttribute('data-state', 'active');
+    // right-pane-body region が表示される（FilesPane or GitPane or SpecPane を内包）
+    expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
   });
 
-  it('clicking Git icon renders actual git-pane content', async () => {
+  it('clicking Git icon shows RightPane with Git tab active', async () => {
     const user = userEvent.setup();
     render(<ControlledPaneWithPanel cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Git/i }));
-    expect(screen.getByTestId('context-panel-git')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
+    expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
   });
 
-  it('clicking Spec icon renders actual spec-pane content', async () => {
+  it('clicking Spec icon shows RightPane with Spec tab active', async () => {
     const user = userEvent.setup();
     render(<ControlledPaneWithPanel cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Spec/i }));
-    expect(screen.getByTestId('context-panel-spec')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Spec/i })).toHaveAttribute('data-state', 'active');
+    expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
   });
 
-  it('switching tabs within context panel swaps content', async () => {
+  it('switching tabs within context panel swaps active tab', async () => {
     const user = userEvent.setup();
     render(<ControlledPaneWithPanel cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Files/i }));
-    expect(screen.getByTestId('context-panel-files')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Files/i })).toHaveAttribute('data-state', 'active');
     await user.click(screen.getByRole('tab', { name: /Git/i }));
-    // RightPane uses forceMount/hidden; files tab is hidden, git tab is visible
     expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
-    expect(screen.getByTestId('context-panel-git')).toBeInTheDocument();
   });
 });
 

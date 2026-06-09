@@ -590,3 +590,33 @@
 - [x] IV.3 [test] 點擊 `[📄 Claude JSONL]` 呼叫 `onImport('claude-jsonl', worktreePath)`
 - [x] IV.4 [test] `[←]` 從 Import view 返回 AI picker
 - [x] IV.5 [impl] 實作 Import view（架構支援未來加其他格式）
+
+---
+
+## Phase 16：RightPane 換用 main branch 完整 Pane 實作
+
+> **動機**：Phase 10/15 的 `ContextPanel.tsx`（`ContextPanelGit/Files/Spec`）是自行輕量重寫，
+> 功能不完整（無 git commit、無 file preview、無 spec CRUD）。
+> main branch 的 `FilesPane`/`GitPane`/`SpecPane` 已有完整功能，且同一 branch 已存在。
+> 直接換用，廢棄 `ContextPanel.tsx` 中的輕量版實作。
+>
+> **目標**：`RightPane` 的三個 tab 改用 `FilesPane`/`GitPane`/`SpecPane`；
+> `FilesPane.onMention` 透過 `useChannelComposeActions` 插入 compose 欄；
+> `ContextPanel.tsx` 棄用，相關測試遷移。
+
+### 換用完整 Pane 元件（RP）
+
+- [ ] RP.1 [test] `RightPane` Files tab 渲染 `FilesPane`（`aria-label="files-pane"` 可見）
+- [ ] RP.2 [test] `RightPane` Git tab 渲染 `GitPane`（`aria-label="git-pane"` 可見）
+- [ ] RP.3 [test] `RightPane` Spec tab 渲染 `SpecPane`（`aria-label="spec-pane"` 可見）
+- [ ] RP.4 [test] `FilesPane.onMention` 呼叫 `useChannelComposeActions().appendMention(path)`，插入 compose 欄
+- [ ] RP.5 [impl] `RightPane.tsx`：將 `ContextPanelFiles/Git/Spec` 換成 `FilesPane/GitPane/SpecPane`
+- [ ] RP.6 [impl] `RightPane.tsx`：傳入 `onMention={(path) => appendMention(path)}` 給 `FilesPane`
+- [ ] RP.7 [impl] 確認 `FilesPane`/`GitPane`/`SpecPane` 所需 context（`FsProvider`、`GitProvider`、`OpenspecProvider`）已在 `ChannelProvider` 或更上層 provide
+
+### 棄用 ContextPanel.tsx（DP）
+
+- [ ] DP.1 [impl] 將 `ContextPanel.tsx` 中的 `ContextPanelGit/Files/Spec` 標記為 deprecated（或直接刪除）
+- [ ] DP.2 [impl] 確認 `ContextPanel.tsx` 沒有其他 consumer，若有則一併遷移
+- [ ] DP.3 [impl] 更新 `ContextPanel.test.tsx`：移除對 `ContextPanelGit/Files/Spec` 的直接測試，改測 `RightPane` 整合行為
+- [ ] DP.4 [impl] 確認所有測試綠燈（`pnpm test`）
