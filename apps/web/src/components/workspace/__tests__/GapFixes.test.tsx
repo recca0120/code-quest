@@ -10,6 +10,9 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { PaneHeader } from '@/components/workspace/PaneHeader';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
+import { FsProvider } from '@/contexts/FsContext';
+import { GitProvider } from '@/contexts/GitContext';
+import { OpenspecProvider } from '@/contexts/OpenspecContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -19,7 +22,13 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   const summoner = createFakeSummoner();
   return (
     <SocketProvider socket={summoner.socket}>
-      <TabProvider>{children}</TabProvider>
+      <GitProvider>
+        <FsProvider>
+          <OpenspecProvider>
+            <TabProvider>{children}</TabProvider>
+          </OpenspecProvider>
+        </FsProvider>
+      </GitProvider>
     </SocketProvider>
   );
 }
@@ -60,7 +69,7 @@ describe('Gap-2: Context Panel renders real FilesPane / GitPane / SpecPane', () 
       </Wrapper>,
     );
     await user.click(screen.getByRole('button', { name: /Files/i }));
-    expect(screen.getByTestId('files-pane')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-files')).toBeInTheDocument();
   });
 
   it('clicking Git icon renders actual git-pane content', async () => {
@@ -71,7 +80,7 @@ describe('Gap-2: Context Panel renders real FilesPane / GitPane / SpecPane', () 
       </Wrapper>,
     );
     await user.click(screen.getByRole('button', { name: /Git/i }));
-    expect(screen.getByTestId('git-pane')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-git')).toBeInTheDocument();
   });
 
   it('clicking Spec icon renders actual spec-pane content', async () => {
@@ -82,7 +91,7 @@ describe('Gap-2: Context Panel renders real FilesPane / GitPane / SpecPane', () 
       </Wrapper>,
     );
     await user.click(screen.getByRole('button', { name: /Spec/i }));
-    expect(screen.getByTestId('spec-pane')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-spec')).toBeInTheDocument();
   });
 
   it('switching tabs within context panel swaps content', async () => {
@@ -93,10 +102,10 @@ describe('Gap-2: Context Panel renders real FilesPane / GitPane / SpecPane', () 
       </Wrapper>,
     );
     await user.click(screen.getByRole('button', { name: /Files/i }));
-    expect(screen.getByTestId('files-pane')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-files')).toBeInTheDocument();
     await user.click(screen.getByTestId('context-tab-git'));
-    expect(screen.queryByTestId('files-pane')).not.toBeInTheDocument();
-    expect(screen.getByTestId('git-pane')).toBeInTheDocument();
+    expect(screen.queryByTestId('context-panel-files')).not.toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-git')).toBeInTheDocument();
   });
 });
 

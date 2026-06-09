@@ -22,43 +22,30 @@ interface ProjectInfo {
   name: string;
 }
 
-interface WorktreeInfo {
-  path: string;
-  branch?: string;
-  name: string;
-}
-
 interface GlobalBarProps {
   projects: ProjectInfo[];
   activeProjectCwd: string | null;
-  allWorktrees: Record<string, WorktreeInfo[]>;
   onSelectProject: (cwd: string) => void;
   onAddProject: () => void;
-  onNewSession: (cwd: string, projectCwd: string) => void;
-  onCreateWorktree?: (projectCwd: string) => void;
+  onOpenModal: () => void;
   onOpenSearch: () => void;
   onOpenSettings: () => void;
+  onToggleSidebar?: () => void;
 }
 
 export function GlobalBar({
   projects,
   activeProjectCwd,
-  allWorktrees,
   onSelectProject,
   onAddProject,
-  onNewSession,
-  onCreateWorktree,
+  onOpenModal,
   onOpenSearch,
   onOpenSettings,
+  onToggleSidebar,
 }: GlobalBarProps): React.JSX.Element {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
-  const [sessionPickerOpen, setSessionPickerOpen] = useState(false);
-
   const projectMenuRef = useRef<HTMLDivElement>(null);
-  const sessionPickerRef = useRef<HTMLDivElement>(null);
-
   useClickOutside(projectMenuRef, projectMenuOpen, () => setProjectMenuOpen(false));
-  useClickOutside(sessionPickerRef, sessionPickerOpen, () => setSessionPickerOpen(false));
 
   const activeProject = projects.find((p) => p.cwd === activeProjectCwd);
 
@@ -67,6 +54,16 @@ export function GlobalBar({
       data-testid="global-bar"
       className="flex items-center gap-2 h-9 px-3 border-b border-border bg-surface shrink-0"
     >
+      {onToggleSidebar && (
+        <button
+          type="button"
+          aria-label="Toggle sidebar"
+          onClick={onToggleSidebar}
+          className="flex items-center justify-center w-7 h-7 rounded hover:bg-hover-tint text-muted hover:text-text"
+        >
+          ☰
+        </button>
+      )}
       {/* Project switcher */}
       <div ref={projectMenuRef} className="relative">
         <button
@@ -123,79 +120,14 @@ export function GlobalBar({
       </div>
 
       <div className="flex items-center gap-1 ml-auto">
-        {/* New session picker */}
-        <div ref={sessionPickerRef} className="relative">
-          <button
-            type="button"
-            aria-label="New session"
-            aria-haspopup="menu"
-            aria-expanded={sessionPickerOpen}
-            onClick={() => setSessionPickerOpen((v) => !v)}
-            className="flex items-center justify-center w-7 h-7 rounded hover:bg-hover-tint text-muted hover:text-text"
-          >
-            <PlusIcon className="w-4 h-4" />
-          </button>
-          {sessionPickerOpen && (
-            <div
-              role="menu"
-              aria-label="New session in..."
-              className="absolute top-full right-0 mt-1 min-w-48 bg-surface border border-border rounded shadow-lg z-dropdown"
-            >
-              <div className="px-3 py-1.5 text-xs text-muted font-medium">New session in...</div>
-              {projects.map((project) => {
-                const worktrees = allWorktrees[project.cwd] ?? [];
-                return (
-                  <div key={project.cwd}>
-                    <div className="border-t border-border my-1 first:hidden" />
-                    <div className="px-3 py-1 text-xs text-muted font-medium">{project.name}</div>
-                    {worktrees.map((wt) => (
-                      <button
-                        key={wt.path}
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          onNewSession(wt.path, project.cwd);
-                          setSessionPickerOpen(false);
-                        }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint"
-                      >
-                        <span className="font-mono text-xs opacity-60">⎇</span>
-                        {wt.branch}
-                      </button>
-                    ))}
-                    {onCreateWorktree && (
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          onCreateWorktree(project.cwd);
-                          setSessionPickerOpen(false);
-                        }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint opacity-60 hover:opacity-100"
-                      >
-                        <span className="w-3">+</span>
-                        New worktree
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              <div className="border-t border-border my-1" />
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  onAddProject();
-                  setSessionPickerOpen(false);
-                }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-hover-tint"
-              >
-                <span className="w-3">+</span>
-                Add project
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          aria-label="New session"
+          onClick={onOpenModal}
+          className="flex items-center justify-center w-7 h-7 rounded hover:bg-hover-tint text-muted hover:text-text"
+        >
+          <PlusIcon className="w-4 h-4" />
+        </button>
 
         <button
           type="button"

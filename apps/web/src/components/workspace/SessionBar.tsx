@@ -8,6 +8,7 @@ import {
 } from '@/contexts/TabContext';
 import type { SessionStatus } from '@/types/ui';
 import { cn } from '@/utils/cn';
+import type { WorktreeOption } from './ToolPanes.tsx';
 
 interface SessionInfo {
   channelId: string;
@@ -16,11 +17,20 @@ interface SessionInfo {
   branch?: string;
 }
 
+interface ProjectInfo {
+  cwd: string;
+  name: string;
+}
+
 interface SessionBarProps {
   sessions: SessionInfo[];
-  onNewSession?: () => void;
   onCloseSession?: (channelId: string) => void;
   maxVisible?: number;
+  onOpenModal?: () => void;
+  availableWorktrees?: WorktreeOption[];
+  projects?: ProjectInfo[];
+  onNewSession?: (cwd: string, projectCwd?: string) => void;
+  onNewWorktree?: (projectCwd: string) => void;
 }
 
 function getSessionStatusInTree(
@@ -35,21 +45,29 @@ function getSessionStatusInTree(
     return 'inactive';
   }
   const first = getSessionStatusInTree(node.first, channelId, focusedPaneId);
-  if (first !== 'inactive') return first;
-  return getSessionStatusInTree(node.second, channelId, focusedPaneId);
+  if (first === 'focused-active') return first;
+  const second = getSessionStatusInTree(node.second, channelId, focusedPaneId);
+  if (second === 'focused-active') return second;
+  if (first === 'active' || second === 'active') return 'active';
+  return 'inactive';
 }
 
 const BUSY_STATUSES: Set<SessionStatus> = new Set(['processing', 'busy', 'cancelling']);
 
 export function SessionBar({
   sessions,
-  onNewSession,
   onCloseSession,
   maxVisible,
+  onOpenModal,
+  availableWorktrees,
+  projects,
+  onNewSession,
+  onNewWorktree,
 }: SessionBarProps): React.JSX.Element {
   const { paneRoot, focusedPaneId } = usePaneState();
   const { setSessionInPane, focusPane } = usePaneActions();
   const [overflowOpen, setOverflowOpen] = useState(false);
+  const [newSessionDropdownOpen, setNewSessionDropdownOpen] = useState(false);
 
   const visibleSessions = maxVisible != null ? sessions.slice(0, maxVisible) : sessions;
   const overflowSessions = maxVisible != null ? sessions.slice(maxVisible) : [];
@@ -153,11 +171,66 @@ export function SessionBar({
           )}
         </div>
       )}
-      {onNewSession && (
+      {availableWorktrees !== undefined && (
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            aria-label="New session"
+            onClick={() => setNewSessionDropdownOpen((v) => !v)}
+            className="px-2 py-1 text-xs rounded opacity-60 hover:opacity-100"
+          >
+            +
+          </button>
+          {newSessionDropdownOpen && (
+            <div
+              data-testid="new-session-dropdown"
+              className="absolute top-full left-0 z-50 bg-popover border border-border rounded shadow-md py-1 min-w-48"
+            >
+              {(projects ?? []).map((project) => {
+                const wts = availableWorktrees.filter((wt) => wt.projectName === project.name);
+                return (
+                  <div key={project.cwd}>
+                    <p className="px-3 py-1 text-xs font-medium opacity-60">{project.name}</p>
+                    {wts.map((wt) => (
+                      <button
+                        key={wt.path}
+                        type="button"
+                        onClick={() => {
+                          onNewSession?.(wt.path, project.cwd);
+                          setNewSessionDropdownOpen(false);
+                        }}
+                        className="w-full px-3 py-1.5 text-xs text-left hover:bg-accent font-mono"
+                      >
+                        ⎇ {wt.branch ?? wt.name}
+                      </button>
+                    ))}
+                    {onNewWorktree && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onNewWorktree(project.cwd);
+                          setNewSessionDropdownOpen(false);
+                        }}
+                        className="w-full px-3 py-1.5 text-xs text-left hover:bg-accent text-muted-foreground"
+                      >
+                        + New worktree
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              {availableWorktrees.length === 0 && (projects ?? []).length === 0 && (
+                <p className="px-3 py-1.5 text-xs text-muted-foreground">No worktrees</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      {!availableWorktrees && onOpenModal && (
         <button
           type="button"
           aria-label="New tab"
-          onClick={onNewSession}
+          onClick={onOpenModal}
           className="px-2 py-1 text-xs rounded opacity-60 hover:opacity-100 shrink-0"
         >
           +

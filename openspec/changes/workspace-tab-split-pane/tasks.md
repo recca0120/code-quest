@@ -78,17 +78,17 @@
 - [x] 6.1 [test] Feature test：新增 tab → Tab Bar 出現新 tab，pane area 切換到新 pane tree
 - [x] 6.2 [test] Feature test：`WorkspaceTabBar` render 正確數量 tab
 - [x] 6.3 [test] Feature test：關閉 tab → tab 消失
-- [ ] 6.4 [test] tab 顯示 busy indicator 當該 tab 內有 running session（Phase 2）
-- [ ] 6.5 [test] tab 標題雙擊進入 inline rename（Phase 2）
+- [x] 6.4 [test] tab 顯示 busy indicator 當該 tab 內有 running session（Phase 2）
+- [x] 6.5 [test] tab 標題雙擊進入 inline rename（Phase 2）
 - [x] 6.6 [impl] 切換 tab 時 paneRoot 各自獨立（per-tab pane tree 在 wsState 中）
 - [x] 6.7 [impl] 建立 `WorkspaceTabBar` 元件，讓 6.1–6.3 測試通過
 
 ### 7. Session Tab Bar（C）
 
 - [x] 7.1 [test] 點擊 inactive session tab → 填入 `focusedPane`
-- [ ] 7.2 [test] 點擊 active session tab（已在某 pane）→ focus 移到該 pane（Phase 2）
+- [x] 7.2 [test] 點擊 active session tab（已在某 pane）→ focus 移到該 pane（Phase 2）
 - [x] 7.3 [test] session tab 三種狀態樣式：focused-active / active / inactive
-- [ ] 7.4 [test] Session Bar `[+]` 在 focused pane 的 cwd 開新 session（Phase 2）
+- [x] 7.4 [test] Session Bar `[+]` 在 focused pane 的 cwd 開新 session（Phase 2）
 - [x] 7.5 [impl] 建立 `SessionBar` 元件，讓 7.1, 7.3 測試通過
 - [x] 7.6 [test] session tab 顯示 `●/○` status dot（busy 時 ●，其他 ○）
 - [x] 7.7 [test] session tab 顯示 `⎇ branch`（有 branch 時）
@@ -98,9 +98,9 @@
 ### 8. 空白 Pane Picker
 
 - [x] 8.1 [test] 空白 pane 顯示 picker，列出所有 inactive session
-- [ ] 8.2 [test] picker 列出「New session in」各 worktree 快速入口（Phase 2）
+- [x] 8.2 [test] picker 列出「New session in」各 worktree 快速入口（Phase 2）
 - [x] 8.3 [test] 選 session → `setSessionInPane`；pane 顯示該 session
-- [ ] 8.4 [test] 選 new session → 開新 session 並填入此 pane（Phase 2）
+- [x] 8.4 [test] 選 new session → 開新 session 並填入此 pane（Phase 2）
 - [x] 8.5 [impl] 建立 `EmptyPanePicker`，讓 8.1, 8.3 測試通過
 
 ### 10. Global Bar（A）— 取代 WorkspaceTopbar + Sidebar
@@ -241,27 +241,242 @@
 
 ### OpenInPaneModal 元件（M）
 
-- [ ] M.1 [test] Modal 有四個 tab：Session / Git / Files / Spec
-- [ ] M.2 [test] Session tab 上半段列出現有 sessions（狀態 + 點擊填入 pane）
-- [ ] M.3 [test] Session tab 下半段列出「New session in」按 project 分組的 worktrees
-- [ ] M.4 [test] Session tab 每個 project 有 `[+ New worktree]` 和 `[+ Add project]`
-- [ ] M.5 [test] Tool tab（Git/Files/Spec）顯示 cwd 選擇器，預填 active project active worktree
-- [ ] M.6 [test] Tool tab cwd 可切換（dropdown 列出所有 project 的 worktrees）
-- [ ] M.7 [test] Tool tab 有 `[Open Git/Files/Spec pane]` 確認按鈕
-- [ ] M.8 [impl] 建立 `OpenInPaneModal.tsx`，讓 M.1–M.7 測試通過
+- [x] M.1 [test] Modal 有四個 tab：Session / Git / Files / Spec
+- [x] M.2 [test] Session tab 上半段列出現有 sessions（狀態 + 點擊填入 pane）
+- [x] M.3 [test] Session tab 下半段列出「New session in」按 project 分組的 worktrees
+- [x] M.4 [test] Session tab 每個 project 有 `[+ New worktree]` 和 `[+ Add project]`
+- [x] M.5 [test] Tool tab（Git/Files/Spec）顯示 cwd 選擇器，預填 active project active worktree
+- [x] M.6 [test] Tool tab cwd 可切換（dropdown 列出所有 project 的 worktrees）
+- [x] M.7 [test] Tool tab 有 `[Open Git/Files/Spec pane]` 確認按鈕
+- [x] M.8 [impl] 建立 `OpenInPaneModal.tsx`，讓 M.1–M.7 測試通過
 
 ### 入口接線（W）
 
-- [ ] W.1 [test] GlobalBar `[+]` 點擊 → 開啟 Modal（取代原 dropdown picker）
-- [ ] W.2 [test] SessionBar `[+]` 點擊 → 開啟 Modal
-- [ ] W.3 [test] EmptyPanePicker「+ Open new session...」按鈕 → 開啟 Modal（帶 target paneId）
-- [ ] W.4 [impl] 更新 `GlobalBar`：移除 dropdown picker，改用 `onOpenModal` callback
-- [ ] W.5 [impl] 更新 `WorkspaceLayout`：管理 Modal 開關狀態，傳遞給 GlobalBar / SessionBar / EmptyPanePicker
-- [ ] W.6 [impl] 更新 `EmptyPanePicker`：移除「New session in...」grouped list，加入「+ Open new session...」按鈕
+- [x] W.1 [test] GlobalBar `[+]` 點擊 → 開啟 Modal（取代原 dropdown picker）
+- [x] W.2 [test] SessionBar `[+]` 點擊 → 直接呼叫 `onNewSession`（不開 Modal，保留直接建立行為）
+- [x] W.3 [test] EmptyPanePicker「+ Open new session...」按鈕 → 開啟 Modal（帶 target paneId）
+- [x] W.4 [impl] 更新 `GlobalBar`：移除 dropdown picker，改用 `onOpenModal` callback
+- [x] W.5 [impl] 更新 `WorkspaceLayout`：管理 Modal 開關狀態，傳遞給 GlobalBar / EmptyPanePicker（SessionBar 保留直接建立）
+- [x] W.6 [impl] 更新 `EmptyPanePicker`：移除「New session in...」grouped list，加入「+ Open new session...」按鈕
 
 ### EmptyPanePicker 簡化（E）
 
-- [ ] E.1 [test] EmptyPanePicker 不再顯示「New session in...」grouped list
-- [ ] E.2 [test] EmptyPanePicker 顯示「+ Open new session...」按鈕
-- [ ] E.3 [test] Tool 按鈕（Git/Files/Spec/Worktrees）保留 inline，點擊直接填入 pane（不開 Modal）
-- [ ] E.4 [impl] 更新 `EmptyPanePicker`，讓 E.1–E.3 測試通過
+- [x] E.1 [test] EmptyPanePicker 不再顯示「New session in...」grouped list
+- [x] E.2 [test] EmptyPanePicker 顯示「+ Open new session...」按鈕
+- [x] E.3 [test] Tool 按鈕（Git/Files/Spec/Worktrees）保留 inline，點擊直接填入 pane（不開 Modal）
+- [x] E.4 [impl] 更新 `EmptyPanePicker`，讓 E.1–E.3 測試通過
+
+---
+
+## Phase 6：漏實作與 Bug 補齊
+
+> 從 design 審查發現的未實作項目。
+
+### Global Bar Sidebar Toggle（S）
+
+- [x] S.1 [test] GlobalBar 有 `[☰]` 按鈕，點擊呼叫 `onToggleSidebar`
+- [x] S.2 [test] `⌘⌥S` 快捷鍵觸發 sidebar toggle
+- [x] S.3 [impl] 在 `GlobalBar` 加入 `[☰]` 按鈕與 `onToggleSidebar` prop
+- [x] S.4 [impl] 在 `WorkspaceLayout` 接線 sidebar open/close 狀態，傳給 GlobalBar
+
+### OpenInPaneModal 補齊（P）
+
+- [x] P.1 [test] Modal Session tab 列出現有 sessions 時顯示 branch 資訊（`⎇ branch · title`）
+- [x] P.2 [impl] `WorkspaceLayout` 將 active sessions 清單傳入 `OpenInPaneModal`（目前 `sessions` prop 為空）
+- [x] P.3 [impl] `OpenInPaneModal` Session tab session 項目顯示 branch
+
+### SessionBar `[+]` 接線補齊（SB）
+
+- [x] SB.1 [impl] `TabContainer` 將 `onOpenModal` 傳給 `SessionBar`（design 決策 7：SessionBar `[+]` 開 Modal）
+- [x] SB.2 [impl] 清除 `SessionBar` 的 `onNewSession` prop（已無使用者，改由 Modal 承接）
+
+---
+
+## Phase 7：Design vs Code 一致性修復
+
+> 從 design spec / production code 比對後發現的不一致項目，用 TDD 方式修復。
+
+### Context Panel Toolbar 顯示問題（E）
+
+- [x] E.1 [test] `PaneHeader` 有 `cwd` 時顯示 `[📁][🌿][📋]` toolbar（`aria-label="Files/Git/Spec"` 按鈕可見）
+- [x] E.2 [impl] `TabContainer` 的 `PaneLeafContent` 將 `cwd={meta?.cwd}` 傳給 `PaneHeader`（先前遺漏）
+
+### EmptyPanePicker cwd 傳遞問題（T）
+
+- [x] T.1 [test] `EmptyPanePicker` 的 `data-cwd` 使用 focused session cwd（focused pane 有 session 時）
+- [x] T.2 [test] `EmptyPanePicker` 的 `data-cwd` fallback 到 `activeProjectCwd`（focused pane 無 session 時）
+- [x] T.3 [impl] `TabContainer` 計算 `defaultCwd = focusedTabCwd ?? activeProjectCwd`，傳給 `EmptyPanePicker`
+
+### Empty State "New Session" 統一走 Modal（DD7）
+
+- [x] DD7.1 [test] 空白狀態 "New Session" 按鈕在 `onOpenModal` 存在時呼叫 `onOpenModal(undefined)`（不直接建立 session）
+- [x] DD7.2 [test] `onOpenModal` 不存在時 fallback 直接建立（向後相容）
+- [x] DD7.3 [impl] `TabContainer` empty state `onAction` 改為 `onOpenModal ? () => onOpenModal(undefined) : () => handleCreateTab()`
+
+### ConnectedOpenInPaneModal 接線（W）
+
+- [x] W.1 [test] `WorkspaceLayout` 的 Modal `onSelectSession` 將 session 填入 focused pane 並關閉 Modal
+- [x] W.2 [test] `WorkspaceLayout` 的 Modal `onOpenToolPane` 建立 tool content pane 並關閉 Modal
+- [x] W.3 [impl] 在 `TabProvider` 內建立 `ConnectedOpenInPaneModal`，透過 `usePaneActions`/`usePaneState` 接線
+
+### SessionBar focused-active 狀態修復（SB）
+
+- [x] SB.1 [test] session 在多個 pane 時，只有 focused pane 的 session 顯示 `focused-active`，其餘顯示 `active`
+- [x] SB.2 [impl] 修復 `getSessionStatusInTree` DFS 邏輯：不提前 return `active`，繼續搜尋找 `focused-active`
+
+### splitPane 後 focus 移到新 pane（SP）
+
+- [x] SP.1 [test] `splitPane('h')` 後 `focusedPaneId` 移到新建立的 empty leaf
+- [x] SP.2 [impl] 修改 `splitNode` 回傳 `{ root, newLeafId }`；`splitPane` action 更新 `focusedPaneId: newLeafId`
+
+---
+
+## Phase 8：Tool Pane Branch Display 修復
+
+> Tool pane header 和 Modal tool tab 應顯示 `⎇ branch` 而非 raw `basename(cwd)`。
+> 來源從 session tab cwds 改為 `GitContext.listing`（所有已知 worktree）。
+
+### Tool Pane Header（T.4–T.5 更新）
+
+- [x] T.4 [test] `ToolPaneHeader` button 顯示 `⎇ branch`（而非 `basename(cwd)`）；dropdown 顯示 `⎇ branch (project)` 格式；aria-label 改為 `worktree switcher`
+- [x] T.5 [test] 點擊 worktree dropdown 選項後，pane content cwd 更新為對應 path（行為不變，只是 prop 型別從 `string[]` 改 `WorktreeOption[]`）
+- [x] T.6 [impl] `ToolPanes.tsx` 新增 `WorktreeOption` 介面（`path / branch / name / projectName`）；`ToolPaneHeader` 以 `branchLabel()` 顯示 `⎇ branch`；dropdown 顯示 `⎇ branch (project)`
+
+### Modal Tool Tab（M.5–M.6 更新）
+
+- [x] M.5 [test] Git / Files / Spec tab selector label 改為 `Worktree:`（原為 `cwd:`）；aria-label 改為 `worktree`
+- [x] M.6 [test] selector options 顯示 `⎇ branch (project)` 格式（原缺 `⎇` 前綴）
+- [x] M.8 [impl] `OpenInPaneModal.tsx` ToolTab label 改為 `Worktree:`；option label 加 `⎇ ` 前綴
+
+### TabContainer Wiring（TW）
+
+- [x] TW.1 [impl] `TabContainer` 引入 `useGitState`；改傳 `availableWorktrees: WorktreeOption[]`（從 `listing` 建，含 `projectName`）給 `PaneLeafContent`，取代原本從 session tabs 收集的 raw cwds
+- [x] TW.2 [impl] `PaneLeafContent` 介面新增 `availableWorktrees?: WorktreeOption[]`；傳給 `GitPane` / `FilesPane` / `SpecPane`
+
+---
+
+## Phase 9：Entry Point 重構
+
+> 移除 Global Bar，Session Tab Bar `[+]` 改為 inline dropdown，EmptyPanePicker 補齊設計。
+> 參考 design Decision 7。
+
+### GlobalBar 移除（GB）
+
+- [x] GB.1 [test] WorkspaceLayout 不再渲染 GlobalBar（`data-testid="global-bar"` 不存在）
+- [x] GB.2 [test] Settings 按鈕移至 WorkspaceTabBar（`aria-label="Settings"` 在 `workspace-tab-bar` 內）
+- [x] GB.3 [test] WorkspaceTabBar 有 `[+ Add project]` 按鈕
+- [x] GB.4 [impl] 移除 `WorkspaceLayout.tsx` 的 `<GlobalBar>` render
+- [x] GB.5 [impl] `WorkspaceTabBar` 新增 `onOpenSettings` / `onAddProject` props；渲染對應按鈕
+- [x] GB.6 [impl] `TabContainer` 新增 `onOpenSettings` / `onAddProject` / `onNewWorktree` props，傳給 WorkspaceTabBar / SessionBar
+
+### SessionBar `[+]` Inline Dropdown（SD）
+
+- [x] SD.1 [test] 點擊 `[+]`（`aria-label="New session"`）顯示 `data-testid="new-session-dropdown"`
+- [x] SD.2 [test] Dropdown 以 project 分組，顯示各 worktree `⎇ branch` 按鈕
+- [x] SD.3 [test] Dropdown 每個 project 有 `[+ New worktree]` 按鈕
+- [x] SD.4 [impl] `SessionBar.tsx` 新增 `availableWorktrees` / `projects` / `onNewSession` / `onNewWorktree` props；`[+]` 切換 inline dropdown
+- [x] SD.5 [impl] `TabContainer` 傳 `availableWorktrees` / `projects` / `onNewSession` / `onNewWorktree` 給 SessionBar
+
+### EmptyPanePicker 補齊（EP）
+
+- [x] EP.1 [test] `"+ Open new session..."` → `"More options..."` 按鈕
+- [x] EP.2 [test] EmptyPanePicker 有 `── New session in ──` 區塊，列出各 project 的 worktree `[+ branch]` 按鈕（design 要求，未實作）
+- [x] EP.3 [test] 點擊 `[+ branch]` → 在該 pane 建立 session（不需開 modal）
+- [x] EP.4 [impl] `EmptyPanePicker` 新增 `availableWorktrees` / `projects` props；渲染 `[+ branch]` 按鈕
+- [x] EP.5 [impl] `TabContainer` 傳 `availableWorktrees` / `projects` 給 `EmptyPanePicker`
+
+---
+
+## Phase 10：Context Panel（session 附著型 tool panel）
+
+> session 是核心。Git / Files / Spec 是 session 的 context view，cwd 自動跟 session，不需手動指定。
+> Context Panel 是 99% 使用情境的主要入口。
+> 參考 design Section E。
+
+### Session Pane Header Toolbar（CT）
+
+- [x] CT.1 [test] session pane header 有 `[📁][🌿][📋]` toolbar 按鈕（`aria-label="Toggle Files panel"` 等）
+- [x] CT.2 [test] 點擊 `[🌿]` → `data-testid="context-panel"` 出現在 session pane 右側
+- [x] CT.3 [test] Context Panel 預設顯示 Git tab；header 有 `[📁 Files][🌿 Git][📋 Spec]` tab 切換
+- [x] CT.4 [test] 再次點擊同一個 toolbar 按鈕 → context panel 收合
+- [x] CT.5 [test] context panel 的 cwd 自動等於該 session 的 `cwd`（不需使用者手動指定）
+- [x] CT.6 [impl] `PaneHeader` 新增 toolbar 按鈕；渲染三個 toolbar 按鈕
+- [x] CT.7 [impl] `PaneHeader` 管理 context panel state；render `<ContextPanelGit/Files/Spec cwd={cwd} />`
+
+### Context Panel — Git Tab（CG）
+
+- [x] CG.1 [test] Git tab mount 時呼叫 `GitContext.status(cwd)`
+- [x] CG.2 [test] 顯示 branch 名稱 + clean/dirty 狀態
+- [x] CG.3 [test] 顯示 changed files 清單（status code `M`/`A`/`D`/`??` + 檔名）
+- [x] CG.4 [test] 顯示 ahead/behind upstream（有 upstream 時）
+- [x] CG.5 [test] 點擊 file → inline 顯示 diff（使用 EVENTS.git.diff）
+- [x] CG.6 [test] `[↺]` 按鈕重新呼叫 status
+- [x] CG.7 [impl] 實作 `ContextPanelGit`（`ContextPanel.tsx`）
+- [x] CG.8 [impl] `GitContext` 補齊 `diff(cwd, filePath?)` action（目前直接用 rpc，可優化）
+
+### Context Panel — Files Tab（CF）
+
+- [x] CF.1 [test] Files tab mount 時呼叫 `FsContext.browse(cwd)`
+- [x] CF.2 [test] 顯示目錄 + 檔案清單（directories 優先）
+- [x] CF.3 [test] 點擊目錄 → 導覽進入，顯示麵包屑
+- [x] CF.4 [test] 麵包屑可點擊回上層
+- [x] CF.5 [impl] 實作 `ContextPanelFiles`（`ContextPanel.tsx`）
+
+### Context Panel — Spec Tab（CS）
+
+- [x] CS.1 [test] Spec tab mount 時呼叫 `OpenspecContext.getOpenspecList(cwd)`
+- [x] CS.2 [test] 顯示 changes 清單（name + task progress `done/total`）
+- [x] CS.3 [test] 顯示 specs 清單（capability 名稱）
+- [x] CS.4 [test] 點擊 change → 顯示 tasks.md 內容（需要 openspec:read RPC，未接）
+- [x] CS.5 [impl] 實作 `ContextPanelSpec`（`ContextPanel.tsx`）
+
+---
+
+## Phase 11：Independent Tool Pane（split tree 獨立型）
+
+> 進階使用情境：需要並排查看不同 worktree 的 git diff，或在固定位置長時間參考 tool pane。
+> cwd 預設為 focused session 的 cwd，可在 pane header 手動切換 worktree。
+> 參考 design Decision 8 + EmptyPanePicker tool 按鈕。
+
+### GitPane — 接 server（GP）
+
+- [x] GP.1 [test] GitPane mount 時呼叫 `GitContext.status(cwd)`（複用 ContextPanelGit）
+- [x] GP.2 [test] 顯示 changed files + branch + ahead/behind
+- [x] GP.3 [test] Pane header `⎇ branch ▾` 下拉可切換 worktree（更新 cwd）
+- [x] GP.4 [impl] `GitPane` 內嵌 `ContextPanelGit`
+
+### FilesPane — 接 server（FP）
+
+- [x] FP.1 [test] FilesPane mount 時呼叫 `FsContext.browse(cwd)`（複用 ContextPanelFiles）
+- [x] FP.2 [test] 顯示目錄 + 檔案清單 + 麵包屑
+- [x] FP.3 [test] Pane header `⎇ branch ▾` 下拉可切換 worktree
+- [x] FP.4 [impl] `FilesPane` 內嵌 `ContextPanelFiles`
+
+### SpecPane — 接 server（SP）
+
+- [x] SP.1 [test] SpecPane mount 時呼叫 `OpenspecContext.getOpenspecList(cwd)`（複用 ContextPanelSpec）
+- [x] SP.2 [test] 顯示 changes + specs
+- [x] SP.3 [test] Pane header `⎇ branch ▾` 下拉可切換 worktree
+- [x] SP.4 [impl] `SpecPane` 內嵌 `ContextPanelSpec`
+
+### WorktreesPane — 接 server（WP）
+
+- [x] WP.1 [test] WorktreesPane 顯示所有 project 的 worktrees（branch + path）
+- [x] WP.2 [test] 每個 worktree 有 `[+]` 按鈕 → 在 focused pane 建立 session
+- [x] WP.3 [test] 有 session 的 worktree 顯示 session 標題
+- [x] WP.4 [test] `[+ New worktree]` 按鈕呼叫 `onNewWorktree`
+- [x] WP.5 [impl] 實作 `WorktreesPane` 接 `GitContext` + `ProjectContext`
+
+---
+
+## Phase 12：Workspace Overview
+
+> 取代 SessionManager + Project List，統一管理 sessions + projects + worktrees。
+> 參考 design Section F。
+
+- [x] WO.1 [test] `⌘⇧M` / Tab Bar `[⊞]` 開啟 Workspace Overview overlay
+- [x] WO.2 [test] Overlay 以 Layout Tab 分組顯示 sessions
+- [x] WO.3 [test] 點擊 session card → 填入 focused pane 並關閉 overlay
+- [x] WO.4 [test] Projects 區塊：每個 project 列出 worktrees；有 session 者顯示 session title；無 session 者顯示 `[+ New session]`
+- [x] WO.5 [test] Projects 區塊：`[+ New worktree]` / `[+ Add project]` 入口
+- [x] WO.6 [impl] 擴充 `SessionManager.tsx` 成 Workspace Overview，讓 WO.1–WO.5 通過

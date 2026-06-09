@@ -14,14 +14,14 @@
 - Tool Pane：Git / Files / Spec / Worktrees 可作為 pane 類型放入 split 區域，需要時才開
 - Tab = Session：Tab Bar 是 session 清單，點擊填入 focused pane，不再是 active 切換器
 - Focus Model：click pane → focus
-- New Session：Global Bar `[+]` 快速開 session；空白 pane picker 一站式選 session / tool / new
-- Global Bar：project switcher、search、settings、new session 統一入口
+- New Session：Session Tab Bar `[+]` 是唯一的開 session 入口；空白 pane picker 一站式選 session / tool / new
 - Tab：每個 tab 是獨立工作場景（類似 tmux window），有自己的 pane 排列
 - Context Panel：session pane header toolbar 快速展開 Files / Git / Spec，cwd 自動跟 session
-- Session Manager：overlay 總覽所有 tab / session，含最新訊息預覽、拖曳重排、tab 管理
+- Workspace Overview：overlay 總覽所有 tab / session + project/worktree 管理，含最新訊息預覽、拖曳重排、新 session 入口（取代原 Session Manager + Project List）
 - Mobile 退化：小螢幕強制單 pane，不顯示 split 功能
 
 **Non-Goals:**
+- Global Bar（已移除，project switcher / active project 概念不需要）
 - 固定左側 Sidebar 或固定右側 Right Pane（改為 tool pane 進入 split area）
 - 同一個 session 出現在多個 pane（不允許，點 tab 只 focus 既有 pane）
 - Pane layout 持久化（layout 是臨時的，不儲存）
@@ -90,12 +90,11 @@ Split Pane 範例（session + tool 並排）：
 
 | 區塊 | Project 綁定？ | 說明 |
 |---|---|---|
-| Global Bar | ✓ | 顯示 active project，切換影響 new session 預設 cwd |
 | Tab Bar | ✗ | 所有 session，跨 project / worktree |
 | Split Pane | ✗ | 任意 session / tool pane 可並排，跨 project / worktree |
 | Tool Pane | 自訂 | 各 tool pane 有自己的 cwd，由使用者在 pane header 切換 |
 
-**理由**：使用者用 tmux 管理多個工作 context 的習慣，反映在 UI 上就是 Tab Bar 和 Split Pane 不設 project 邊界。移除固定 Sidebar 後，project context 由 Global Bar 的 active project 決定，影響 new session 的預設 cwd。
+**理由**：使用者用 tmux 管理多個工作 context 的習慣，反映在 UI 上就是 Tab Bar 和 Split Pane 不設 project 邊界。無 Global Bar 後，不存在「active project」概念；所有 project / worktree 的選擇都發生在開 session 的當下。
 
 ---
 
@@ -122,7 +121,7 @@ Tab Bar 上的 tab 反映 session 與 pane 的關係，與現在「active = 正�
 
 ---
 
-### 7. "Open in Pane" 入口：統一 Modal + 簡化 EmptyPanePicker
+### 7. "Open in Pane" 入口：Session Tab Bar `[+]` + EmptyPanePicker
 
 **Project / Worktree 資料模型：**
 
@@ -135,18 +134,69 @@ Project (repo root)
   └── Worktree hotfix  path: /tmp/hotfix            branch: hotfix
 ```
 
-**核心決定：將所有「開新 session 或 tool pane」的入口統一到同一個 Modal（「Open in Pane」），取代過去的 dropdown picker。**
+**核心決定：移除 Global Bar，無 active project 概念。所有「開新 session」的入口在 Session Tab Bar `[+]` 和 EmptyPanePicker；「開 tool pane」在 EmptyPanePicker inline。**
 
 **入口觸發點：**
 
 | 觸發點 | 行為 |
 |---|---|
-| Global Bar `[+]` | 開啟 Modal |
-| SessionBar `[+]` | 開啟 Modal |
-| EmptyPanePicker「+ Open new session...」 | 開啟 Modal（帶 target paneId） |
-| 沒有 active project 的任何 new session 動作 | 開啟 Modal（自然引導選 project） |
+| Session Tab Bar `[+]` | 彈出 "New Session" dropdown（列出所有 project 的 worktrees，inline 快速選） |
+| EmptyPanePicker worktree 按鈕 | 直接在該 pane 建立 session（不需 modal） |
+| EmptyPanePicker tool 按鈕 | 直接在該 pane 開 tool pane（不需 modal） |
+| EmptyPanePicker「More options...」 | 開啟完整 Modal（跨 project、選 tool worktree 等複雜場景） |
 
-**「Open in Pane」Modal 結構：**
+**Session Tab Bar `[+]` dropdown（快速開 session）：**
+
+```
+┌──────────────────────────────────────┐
+│  New session in...                   │
+│                                      │
+│  app                                 │
+│  ─────────────────────────────────   │
+│  ⎇ main                        [+]   │
+│  ⎇ feat-x                      [+]   │
+│  [+ New worktree]                    │
+│                                      │
+│  other-repo                          │
+│  ─────────────────────────────────   │
+│  ⎇ main                        [+]   │
+│  [+ New worktree]                    │
+│                                      │
+│  [+ Add project]                     │
+└──────────────────────────────────────┘
+```
+
+點 `[+]` 旁的 worktree → 直接在 focused pane 建立 session，dropdown 關閉。
+
+**EmptyPanePicker（空白 pane 的 inline 一站式）：**
+
+```
+┌──────────────────────────────────┐
+│                       [⊟][⊞][×] │
+├──────────────────────────────────┤
+│                                  │
+│  Sessions:                       │
+│  ● ⎇main · Task A  (Layout 1 左) │
+│  ○ ⎇feat-X · Task C (無 pane)    │
+│                                  │
+│  ── Tools ──                     │
+│  [🌿 Git]  [📁 Files]  [📋 Spec] │
+│  [🌲 Worktrees]                  │
+│                                  │
+│  ── New session in ──            │
+│  app: [+ main]  [+ feat-X]       │
+│  other: [+ main]                 │
+│                                  │
+│  [More options...]               │
+└──────────────────────────────────┘
+```
+
+- Sessions：點擊 → 填入該 pane
+- Tool 按鈕（Git/Files/Spec）：直接以 focused session cwd 開 tool pane（不需 modal）
+- `[+ branch]`：直接在該 pane 建立 session
+- `[More options...]`：開啟完整 "Open in Pane" Modal（需要跨 project 或指定 tool pane 的 worktree 時）
+
+**「Open in Pane」Modal（進階 / More options）：**
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -163,11 +213,11 @@ Project (repo root)
 │                                             │
 │  New session in                             │
 │  ──────────────────────────────             │
-│  ▾ app                                      │
+│  app                                        │
 │      ⎇ main          [+ New session]        │
 │      ⎇ feat-x        [+ New session]        │
 │      [+ New worktree]                       │
-│  ▾ other-repo                               │
+│  other-repo                                 │
 │      ⎇ main          [+ New session]        │
 │      [+ New worktree]                       │
 │                                             │
@@ -175,7 +225,7 @@ Project (repo root)
 └─────────────────────────────────────────────┘
 ```
 
-Tool tab（Git / Files / Spec）選定後，需再選 cwd（worktree）；預設填入 active project 的 active worktree，可手動切換：
+Tool tab（Git / Files / Spec）選定後，需再選 worktree；預設填入 focused pane session 的 cwd，可手動切換：
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -185,32 +235,17 @@ Tool tab（Git / Files / Spec）選定後，需再選 cwd（worktree）；預設
 ├─────────────────────────────────────────────┤
 │  (Git tab)                                  │
 │                                             │
-│  cwd:  ⎇ main (app)  ▾   ← 預填，可換      │
+│  Worktree:  ⎇ main (app)  ▾  ← 預填，可換  │
 │                                             │
 │                      [Open Git pane]        │
 └─────────────────────────────────────────────┘
 ```
 
-**EmptyPanePicker（空白 pane 的 inline 快捷）保留但簡化：**
-
-```
-空白 pane inline picker（不彈 modal）：
-  Sessions:
-    ● ⎇main · Task A
-    ○ ⎇feat-x · Task B
-  ─────────────────────────────
-  [🌿 Git]  [📁 Files]  [📋 Spec]  [🌲 Worktrees]
-  ─────────────────────────────
-  [+ Open new session...]   ← 點擊 → 開 Modal（帶 target paneId）
-```
-
-移除舊的「+ New session」按鈕與「New session in...」grouped list，改由 Modal 統一承接。Inline picker 保留「選現有 session」和「選 tool（不需要 project 上下文）」兩個快速動作。
-
 **理由：**
-- Dropdown picker 空間不足以清楚呈現 project → worktree 層級，且無法在同一介面展示 session 清單與 tool 選項。
-- Modal 有足夠空間，同時能處理「沒有 active project」的引導場景。
-- EmptyPanePicker inline 保留「選現有 session」與「選 tool」，這兩類動作不需要 project 上下文，inline 速度更快；「開新 session」才需要完整的 project/worktree 選擇，交給 Modal。
-- 所有 new session 入口統一後，cwd 來源明確（使用者在 Modal 裡主動選擇），不再有「沒有 active project 卻建立 cwd=undefined session」的問題。
+- 無 Global Bar 後，Session Tab Bar `[+]` 是唯一的頂層 new session 入口，inline dropdown 比全 modal 快。
+- EmptyPanePicker 已是「在這個 pane 做什麼」的一站式，直接列 worktree 按鈕不需多一層 modal。
+- Modal 保留給「需要指定 tool worktree」或「需要跨 project」等複雜場景。
+- 不存在 active project 概念，所有選擇都發生在使用者點擊的當下。
 
 ---
 
@@ -227,7 +262,7 @@ Tool pane（git / files / spec）有自己的 cwd，**不跟著 focused pane 走
 └─────────────────────────────────┘
 ```
 
-**開啟時預設 cwd**：focused pane 的 session cwd（若 focused pane 為 session）；否則 active project cwd。
+**開啟時預設 cwd**：focused pane 的 session cwd（若 focused pane 為 session）；否則第一個已知 project 的第一個 worktree。
 
 **理由**：tool pane 固定跟 focused pane 走，在多 pane 情境下反而會造成困惑（切換 focus 就改變 git diff）。使用者明確指定 cwd 更可預期。
 
@@ -322,7 +357,7 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 ```
 [ Layout 1 ●]  [ Layout 2 ]  [ Layout 3 ]  [+]  [⊞]
                                                   ↑
-                                        Session Manager
+                                       Workspace Overview
 ```
 
 - `[+]`：新增空白 tab
@@ -337,7 +372,7 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 - `SplitPane` 不渲染 split 按鈕（`[⊟][⊞]`）
 - Pane tree 強制保持單 leaf（split 操作 disabled）
 - Tool pane 仍可在單 pane 內開啟，但不能與 session pane 並排
-- Global Bar 維持不動
+- Tab Bar 維持不動（含 `[⊞]` Workspace Overview 入口）
 
 ---
 
@@ -347,64 +382,25 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  A. Global Bar（36px）                                                       │
+│  A. Tab Bar（32px）                                                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  B. Tab Bar（32px）                                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  C. Session Tab Bar（40px）                                                  │
+│  B. Session Tab Bar（40px）                                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  D. Split Pane Area（flex-1，session + tool pane 任意組合）                  │
+│  C. Split Pane Area（flex-1，session + tool pane 任意組合）                  │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
----
-
-### A. Global Bar
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  cc-office ▾                                              [+]  [🔍]  [⚙]   │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-| 元素 | 功能 |
-|---|---|
-| `cc-office ▾` | 目前 project 名稱，點擊展開 project switcher dropdown |
-| `[+]` | 快速開新 session（展開 worktree quick picker） |
-| `[🔍]` | Command palette（`⌘K`） |
-| `[⚙]` | Settings |
-
-**Project Switcher Dropdown：**
-```
-┌──────────────────────┐
-│  ✓ cc-office         │
-│    other-repo        │
-│  ────────────────    │
-│  [+ Add project]     │
-└──────────────────────┘
-```
-
-**Global Bar `[+]` Quick Picker：**
-```
-┌──────────────────────────┐
-│  New session in...       │
-│  ● main      (current)   │
-│  ○ feat-X                │
-│  ○ feat-Y                │
-│  ── or ──                │
-│  [+ New worktree]        │
-└──────────────────────────┘
-```
+Global Bar 已移除。Settings `[⚙]` 移至 Tab Bar 右側；Search 純鍵盤（`⌘K`）。
 
 ---
 
-### B. Tab Bar
+### A. Tab Bar
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  [ Layout 1 ●]  [ Layout 2 ]  [ Layout 3 ]  [+]                       [⊞]  │
+│  [ Layout 1 ●]  [ Layout 2 ]  [ Layout 3 ]  [+]              [⊞]  [⚙]      │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -414,10 +410,11 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 | `●` | 該 tab 有 busy session |
 | `[+]` | 新增空白 tab |
 | `[⊞]` | 開啟 Session Manager overlay |
+| `[⚙]` | Settings（原 Global Bar，移至此） |
 
 ---
 
-### C. Session Tab Bar
+### B. Session Tab Bar
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -432,11 +429,11 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 | `Task A` | session title |
 | `×` on tab | 關閉 session（session 結束，pane 變空白） |
 | `»N` | overflow，點開列出剩餘 session |
-| `[+]` | 在 focused pane 的 cwd 新增 session |
+| `[+]` | 展開 "New session in..." dropdown，列出所有 project 的 worktrees |
 
 ---
 
-### D. Split Pane Area
+### C. Split Pane Area
 
 **單 session pane：**
 ```
@@ -565,13 +562,13 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 
 ---
 
-### F. Session Manager Overlay
+### F. Workspace Overview（原 Session Manager）
 
-透過 `⌘⇧M` 或 Tab Bar 右側的 `[⊞]` 按鈕觸發，以 overlay 形式呈現所有 tab 與 session 的總覽。
+透過 `⌘⇧M` 或 Tab Bar 右側的 `[⊞]` 按鈕觸發，以 overlay 形式同時呈現所有 session 狀態與 project/worktree 管理。**取代原本的 Project List UI，成為唯一的 project 管理入口。**
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Sessions                                          [×]      │
+│  Workspace                                         [×]      │
 ├─────────────────────────────────────────────────────────────┤
 │  Layout 1  ────────────────────────────────────────────     │
 │                                                             │
@@ -579,8 +576,7 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 │  │ ● ⎇main · Task A    │  │ ● ⎇feat · Task B    │          │
 │  │ ─────────────────── │  │ ─────────────────── │          │
 │  │ Claude: 好的，我已   │  │ Claude: 正在分析...  │          │
-│  │ 經完成了第三步，接   │  │ ██████░░░░ running  │          │
-│  │ 下來...             │  │                     │          │
+│  │ 經完成了第三步...    │  │ ██████░░░░ running  │          │
 │  └─────────────────────┘  └─────────────────────┘          │
 │                                                             │
 │  Layout 2  ────────────────────────────────────────────     │
@@ -588,18 +584,30 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 │  ┌─────────────────────┐                                    │
 │  │ ○ ⎇feat-X · Task C  │                                    │
 │  │ ─────────────────── │                                    │
-│  │ Claude: 測試全部通   │                                    │
-│  │ 過，共 42 個...      │                                    │
+│  │ Claude: 測試全部通過 │                                    │
 │  └─────────────────────┘                                    │
 │                                                             │
-│  No Tab  ───────────────────────────────────────────     │
+│  No Tab  ──────────────────────────────────────────────     │
 │                                                             │
 │  ┌─────────────────────┐                                    │
 │  │ ○ ⎇main · Task D    │                                    │
 │  │ ─────────────────── │                                    │
 │  │ You: 幫我重構這段    │                                    │
-│  │ code                │                                    │
 │  └─────────────────────┘                                    │
+│                                                             │
+│  Projects  ─────────────────────────────────────────────   │
+│                                                             │
+│  cc-office                                     [⋯]         │
+│    ⎇ main      Task A（Layout 1）                           │
+│    ⎇ feat-x    Task B（Layout 1）                           │
+│    ⎇ hotfix    ─              [+ New session]               │
+│    [+ New worktree]                                         │
+│                                                             │
+│  other-repo                                    [⋯]         │
+│    ⎇ main      ─              [+ New session]               │
+│    [+ New worktree]                                         │
+│                                                             │
+│  [+ Add project]                                            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -621,6 +629,21 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 - Layout 標題可點擊 rename（inline edit）
 - Tab 區塊右側有 `[×]` 關閉整個 layout（session 移至 No Tab 區）
 
+**Projects 區塊：**
+
+| 元素 | 說明 |
+|---|---|
+| project 名稱 + `[⋯]` | 展開選單：Rename、Remove project |
+| `⎇ branch  session title` | 有 session 的 worktree，顯示在哪個 layout |
+| `⎇ branch  ─  [+ New session]` | 沒有 session 的 worktree，可直接建立 |
+| `[+ New worktree]` | 在該 project 建立新 worktree |
+| `[+ Add project]` | 加入新 project（原 Global Bar / EmptyState 入口） |
+
+**理由：**
+- Project List 與 Session Manager 的資料高度相關（session 對應 worktree 對應 project），合併為同一個 overlay 減少跳轉。
+- 移除 Global Bar 後，project 管理需要一個新家；Workspace Overview 是自然的位置。
+- 使用者可以在一個畫面看到「哪些 worktree 有 session、哪些沒有」，直接從沒有 session 的 worktree 開新工作。
+
 ---
 
 ### Viewport 狀態
@@ -628,9 +651,7 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 **Desktop 全開：**
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ cc-office ▾                                          [+] [🔍] [⚙]   │
-├──────────────────────────────────────────────────────────────────────┤
-│ [ Layout 1 ●]  [ Layout 2 ]  [+]                               [⊞]  │
+│ [ Layout 1 ●]  [ Layout 2 ]  [+]                          [⊞]  [⚙]  │
 ├──────────────────────────────────────────────────────────────────────┤
 │ [●A×][○B×][○C×]  »2  [+]                                            │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -643,8 +664,6 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 **Mobile（< 768px）：**
 ```
 ┌──────────────────────────┐
-│ cc-office ▾    [+] [⚙]  │
-├──────────────────────────┤
 │ [ L1 ●] [ L2 ]  [+] [⊞] │
 ├──────────────────────────┤
 │ [●A×][○B×]  [+]          │
@@ -669,7 +688,7 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 | `⌘⌥ ←/→/↑/↓` | 移動 focus 到相鄰 pane |
 | `⌘⇧Z` | Zoom focused pane / 取消 zoom |
 | `⌘⇧ ←/→/↑/↓` | 將 focused pane 與相鄰 pane 對調 / 移動 |
-| `⌘⇧M` | 開啟 Session Manager overlay |
+| `⌘⇧M` | 開啟 Workspace Overview overlay |
 | `⌘K` | Command palette |
 
 ---
@@ -685,22 +704,22 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 
 ## Migration Plan
 
-1. 新建 `GlobalBar`（含 project switcher、`[+]` quick picker、search、settings）
-2. 新建 `TabBar`（tab 切換、`[+]`、Session Manager 按鈕）
-3. 新建 `SplitPaneRoot` + `SplitPane` + `PaneHeader`（支援 session / git / files / spec / worktrees 內容類型）
-4. `TabContext` 加入 `paneRoot` + `focusedPaneId` + 操作 actions，PaneContent 型別擴充
-5. `TabContainer` 換成 `SplitPaneRoot`，移除舊的 `Tabs.Root` 單 content render
-6. 實作 split 行為（`[⊟]` / `[⊞]` 按鈕）
-7. 實作 resize（分隔線拖曳）
-8. 實作 pane swap / move（鍵盤 + 拖曳）
-9. 實作空白 pane picker（session + tool + new session 一站式）
-10. 新建各 tool pane 元件（`GitPane` / `FilesPane` / `SpecPane` / `WorktreesPane`）
+1. 新建 `TabBar`（tab 切換、`[+]`、`[⊞]` Workspace Overview 按鈕、`[⚙]` settings）
+2. 新建 `SplitPaneRoot` + `SplitPane` + `PaneHeader`（支援 session / git / files / spec / worktrees 內容類型）
+3. `TabContext` 加入 `paneRoot` + `focusedPaneId` + 操作 actions，PaneContent 型別擴充
+4. `TabContainer` 換成 `SplitPaneRoot`，移除舊的 `Tabs.Root` 單 content render
+5. 實作 split 行為（`[⊟]` / `[⊞]` 按鈕）
+6. 實作 resize（分隔線拖曳）
+7. 實作 pane swap / move（鍵盤 + 拖曳）
+8. 實作空白 pane picker（session + tool + new session 一站式，含 `[More options...]`）
+9. 新建各 tool pane 元件（`GitPane` / `FilesPane` / `SpecPane` / `WorktreesPane`）並接實際 server RPC
+10. Session Tab Bar `[+]` → "New session in..." inline dropdown（列所有 project/worktrees）
 11. 調整 Session Tab Bar 點擊行為（填入 focused pane）
-12. 實作 Session Manager overlay
-13. `WorkspaceLayout` 換成 `GlobalBar` + `LayoutTabBar`，移除 `WorkspaceTopbar` / `Sidebar` / `Right Pane`
-14. 更新所有相關測試
+12. 實作 Workspace Overview overlay（sessions + projects + worktrees 合一）
+13. 移除 `GlobalBar`，移除 `activeProjectCwd` / active project 概念
+14. `WorkspaceLayout` 換成 `TabBar` + `SessionTabBar`，移除 `WorkspaceTopbar` / `Sidebar` / `Right Pane`
+15. 更新所有相關測試
 
 ## Open Questions
 
-- Project switcher 切換時，現有 split layout 是否保留？（目前傾向：保留，session 不動，只改 `[+]` 的預設 cwd）
-- Session history 入口放在哪？（候選：Global Bar、Session Manager overlay 內、`⌘⇧H`）
+- Session history 入口放在哪？（候選：Workspace Overview 內、`⌘⇧H`）

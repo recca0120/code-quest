@@ -75,22 +75,30 @@ function makeLeaf(content: PaneContent = { type: 'session', sessionId: null }): 
   return { type: 'leaf', id: crypto.randomUUID(), content };
 }
 
-function splitNode(root: PaneNode, focusedId: string | null, direction: 'h' | 'v'): PaneNode {
+function splitNode(
+  root: PaneNode,
+  focusedId: string | null,
+  direction: 'h' | 'v',
+): { root: PaneNode; newLeafId: string | null } {
   const targetId = focusedId ?? (root.type === 'leaf' ? root.id : null);
-  if (!targetId) return root;
-  return mapNode(root, (node) => {
+  if (!targetId) return { root, newLeafId: null };
+  let newLeafId: string | null = null;
+  const newRoot = mapNode(root, (node) => {
     if (node.type === 'leaf' && node.id === targetId) {
+      const newLeaf = makeLeaf();
+      newLeafId = newLeaf.id;
       return {
         type: 'split',
         id: crypto.randomUUID(),
         direction,
         ratio: 0.5,
         first: node,
-        second: makeLeaf(),
+        second: newLeaf,
       };
     }
     return node;
   });
+  return { root: newRoot, newLeafId };
 }
 
 export function firstLeafId(node: PaneNode): string | null {
@@ -441,7 +449,7 @@ export function TabProvider({
       actions.createNewTab({ cwd: pendingOpenWorktree.worktreeCwd });
     }
     navActions.clearPendingOpenWorktree();
-  }, [pendingOpenWorktree, state.tabs, cwd]);
+  }, [pendingOpenWorktree, state.tabs]);
 
   const initialWorkspaceTab = makeWorkspaceTab();
   const [wsState, setWsState] = useState<WorkspaceTabStateValue>(() => ({
@@ -492,10 +500,10 @@ export function TabProvider({
 
   const [paneActions] = useState<PaneActionsValue>(() => ({
     splitPane: (direction) => {
-      updateActiveTab((t) => ({
-        ...t,
-        paneRoot: splitNode(t.paneRoot, t.focusedPaneId, direction),
-      }));
+      updateActiveTab((t) => {
+        const { root: newRoot, newLeafId } = splitNode(t.paneRoot, t.focusedPaneId, direction);
+        return { ...t, paneRoot: newRoot, focusedPaneId: newLeafId ?? t.focusedPaneId };
+      });
     },
     splitPaneAndAssign: (direction, sessionId) => {
       updateActiveTab((t) => {

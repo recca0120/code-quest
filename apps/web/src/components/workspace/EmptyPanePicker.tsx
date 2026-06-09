@@ -1,19 +1,9 @@
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
+import type { WorktreeOption } from './ToolPanes';
 
 interface SessionInfo {
   channelId: string;
   title?: string;
-}
-
-interface WorktreeInfo {
-  path: string;
-  name: string;
-  branch?: string;
-}
-
-interface ProjectInfo {
-  cwd: string;
-  name: string;
 }
 
 const TOOL_OPTIONS: { label: string; content: (cwd: string) => PaneContent }[] = [
@@ -27,24 +17,20 @@ interface EmptyPanePickerProps {
   paneId: string;
   sessions: SessionInfo[];
   cwd?: string;
-  /** Legacy: flat worktrees list (single project). Use allWorktrees+projects for grouped display. */
-  worktrees?: WorktreeInfo[];
-  /** Grouped worktrees keyed by project cwd. */
-  allWorktrees?: Record<string, WorktreeInfo[]>;
-  projects?: ProjectInfo[];
-  onNewSession?: () => void;
-  onNewSessionInWorktree?: (cwd: string, projectCwd?: string) => void;
+  onOpenModal?: (paneId: string) => void;
+  availableWorktrees?: WorktreeOption[];
+  projects?: { cwd: string; name: string }[];
+  onNewSession?: (cwd: string) => void;
 }
 
 export function EmptyPanePicker({
   paneId,
   sessions,
   cwd,
-  worktrees,
-  allWorktrees,
+  onOpenModal,
+  availableWorktrees,
   projects,
   onNewSession,
-  onNewSessionInWorktree,
 }: EmptyPanePickerProps): React.JSX.Element {
   const { setSessionInPane, setContentInPane, focusPane } = usePaneActions();
 
@@ -70,14 +56,34 @@ export function EmptyPanePicker({
             {s.title ?? s.channelId}
           </button>
         ))}
-        {onNewSession && (
-          <button
-            type="button"
-            onClick={onNewSession}
-            className="px-3 py-2 text-sm text-left rounded hover:bg-accent text-muted-foreground"
+        {availableWorktrees !== undefined && (
+          <div
+            data-testid="new-session-in-section"
+            className="flex flex-col gap-1 mt-2 border-t border-border pt-2"
           >
-            + New session
-          </button>
+            <p className="text-xs text-muted-foreground px-1">── New session in ──</p>
+            {(projects ?? []).map((project) => {
+              const wts = availableWorktrees.filter((wt) => wt.projectName === project.name);
+              if (wts.length === 0) return null;
+              return (
+                <div key={project.cwd}>
+                  <p className="text-xs text-muted-foreground px-1">{project.name}:</p>
+                  <div className="flex flex-wrap gap-1 px-1">
+                    {wts.map((wt) => (
+                      <button
+                        key={wt.path}
+                        type="button"
+                        onClick={() => onNewSession?.(wt.path)}
+                        className="px-2 py-1 text-xs rounded hover:bg-accent text-muted-foreground border border-border"
+                      >
+                        + ⎇ {wt.branch ?? wt.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
         <div
           data-testid="tool-options"
@@ -98,44 +104,15 @@ export function EmptyPanePicker({
             </button>
           ))}
         </div>
-        {allWorktrees && projects && projects.length > 0 ? (
-          <>
-            <p className="text-xs text-muted-foreground mt-2 px-1">New session in...</p>
-            {projects.map((project) => {
-              const wts = allWorktrees[project.cwd] ?? [];
-              if (wts.length === 0) return null;
-              return (
-                <div key={project.cwd}>
-                  <p className="text-xs text-muted-foreground px-1 pt-1">{project.name}</p>
-                  {wts.map((wt) => (
-                    <button
-                      key={wt.path}
-                      type="button"
-                      onClick={() => onNewSessionInWorktree?.(wt.path, project.cwd)}
-                      className="px-3 py-2 text-sm text-left rounded hover:bg-accent text-muted-foreground w-full"
-                    >
-                      + {wt.branch ?? wt.name}
-                    </button>
-                  ))}
-                </div>
-              );
-            })}
-          </>
-        ) : worktrees && worktrees.length > 0 ? (
-          <>
-            <p className="text-xs text-muted-foreground mt-2 px-1">New session in...</p>
-            {worktrees.map((wt) => (
-              <button
-                key={wt.path}
-                type="button"
-                onClick={() => onNewSessionInWorktree?.(wt.path)}
-                className="px-3 py-2 text-sm text-left rounded hover:bg-accent text-muted-foreground"
-              >
-                + {wt.name}
-              </button>
-            ))}
-          </>
-        ) : null}
+        {onOpenModal && (
+          <button
+            type="button"
+            onClick={() => onOpenModal(paneId)}
+            className="px-3 py-2 text-sm text-left rounded hover:bg-accent text-muted-foreground mt-2 border-t border-border pt-2"
+          >
+            More options...
+          </button>
+        )}
       </div>
     </div>
   );

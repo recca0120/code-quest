@@ -3,11 +3,22 @@
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { GitPane } from '@/components/workspace/ToolPanes';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
+
+vi.mock('@/contexts/GitContext', () => ({
+  useGitActions: () => ({ refetchGitStatus: vi.fn() }),
+  useGitStatus: () => undefined,
+}));
+vi.mock('@/contexts/FsContext', () => ({
+  useFsActions: () => ({ browse: vi.fn().mockResolvedValue({ directories: [], files: [] }) }),
+}));
+vi.mock('@/contexts/OpenspecContext', () => ({
+  useOpenspecList: () => undefined,
+}));
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   const summoner = createFakeSummoner();
@@ -18,55 +29,58 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
-const availableCwds = ['/project/main', '/project/feature'];
+const availableWorktrees = [
+  { path: '/project/main', branch: 'main', name: 'main', projectName: 'app' },
+  { path: '/project/feature', branch: 'feat-auth', name: 'feature', projectName: 'app' },
+];
 
-// T.4: Tool Pane header shows emoji + cwd switcher
-describe('ToolPaneHeader (T.4) header shows emoji and cwd switcher', () => {
+// T.4: Tool Pane header shows emoji + branch switcher (⎇ branch)
+describe('ToolPaneHeader (T.4) header shows emoji and branch switcher', () => {
   it('GitPane shows 🌿 Git title', () => {
     render(
       <Wrapper>
-        <GitPane cwd="/project/main" availableCwds={availableCwds} paneId="p1" />
+        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId="p1" />
       </Wrapper>,
     );
     expect(screen.getByTestId('tool-pane-header')).toHaveTextContent('🌿 Git');
   });
 
-  it('shows current cwd basename in header', () => {
+  it('shows current branch with ⎇ prefix in header', () => {
     render(
       <Wrapper>
-        <GitPane cwd="/project/main" availableCwds={availableCwds} paneId="p1" />
+        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId="p1" />
       </Wrapper>,
     );
-    expect(screen.getByTestId('tool-pane-header')).toHaveTextContent('main');
+    expect(screen.getByTestId('tool-pane-header')).toHaveTextContent('⎇ main');
   });
 
   it('shows dropdown toggle button (▾)', () => {
     render(
       <Wrapper>
-        <GitPane cwd="/project/main" availableCwds={availableCwds} paneId="p1" />
+        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId="p1" />
       </Wrapper>,
     );
-    expect(screen.getByRole('button', { name: /cwd switcher/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /worktree switcher/i })).toBeInTheDocument();
   });
 
-  it('clicking ▾ shows available cwds in dropdown', async () => {
+  it('clicking ▾ shows available worktrees with ⎇ branch (project) format in dropdown', async () => {
     const user = userEvent.setup();
     render(
       <Wrapper>
-        <GitPane cwd="/project/main" availableCwds={availableCwds} paneId="p1" />
+        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId="p1" />
       </Wrapper>,
     );
-    await user.click(screen.getByRole('button', { name: /cwd switcher/i }));
+    await user.click(screen.getByRole('button', { name: /worktree switcher/i }));
     const dropdown = screen.getByTestId('cwd-dropdown');
     expect(dropdown).toBeInTheDocument();
-    expect(dropdown).toHaveTextContent('main');
-    expect(dropdown).toHaveTextContent('feature');
+    expect(dropdown).toHaveTextContent('⎇ main (app)');
+    expect(dropdown).toHaveTextContent('⎇ feat-auth (app)');
   });
 });
 
-// T.5: selecting a cwd in the dropdown updates the pane content
-describe('ToolPaneHeader (T.5) cwd switcher updates pane cwd', () => {
-  it('clicking a cwd option updates the pane content cwd', async () => {
+// T.5: selecting a worktree in the dropdown updates the pane content
+describe('ToolPaneHeader (T.5) worktree switcher updates pane cwd', () => {
+  it('clicking a worktree option updates the pane content cwd', async () => {
     const user = userEvent.setup();
     let cwdInPane = '';
 
@@ -81,7 +95,9 @@ describe('ToolPaneHeader (T.5) cwd switcher updates pane cwd', () => {
     function GitPaneWithRealId() {
       const { paneRoot } = usePaneState();
       const leafId = paneRoot.type === 'leaf' ? paneRoot.id : 'p1';
-      return <GitPane cwd="/project/main" availableCwds={availableCwds} paneId={leafId} />;
+      return (
+        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId={leafId} />
+      );
     }
 
     render(
@@ -91,8 +107,8 @@ describe('ToolPaneHeader (T.5) cwd switcher updates pane cwd', () => {
       </Wrapper>,
     );
 
-    await user.click(screen.getByRole('button', { name: /cwd switcher/i }));
-    await user.click(screen.getByRole('button', { name: 'feature' }));
+    await user.click(screen.getByRole('button', { name: /worktree switcher/i }));
+    await user.click(screen.getByRole('button', { name: /feat-auth/i }));
     expect(cwdInPane).toBe('/project/feature');
   });
 });

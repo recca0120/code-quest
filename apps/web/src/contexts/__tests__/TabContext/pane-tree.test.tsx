@@ -172,7 +172,8 @@ describe('closePane action (1.4)', () => {
 describe('focusPane action (1.5)', () => {
   it('focusPane updates focusedPaneId', async () => {
     let focusedPaneId = '';
-    let targetId = '';
+    let firstId = '';
+    let secondId = '';
 
     function Test() {
       const { paneRoot, focusedPaneId: focused } = usePaneState();
@@ -180,8 +181,8 @@ describe('focusPane action (1.5)', () => {
       focusedPaneId = focused ?? '';
 
       if (paneRoot?.type === 'split') {
-        const second = paneRoot.second;
-        if (second.type === 'leaf') targetId = second.id;
+        if (paneRoot.first.type === 'leaf') firstId = paneRoot.first.id;
+        if (paneRoot.second.type === 'leaf') secondId = paneRoot.second.id;
       }
 
       return (
@@ -189,8 +190,8 @@ describe('focusPane action (1.5)', () => {
           <button type="button" onClick={() => splitPane('h')}>
             split
           </button>
-          <button type="button" onClick={() => targetId && focusPane(targetId)}>
-            focus-second
+          <button type="button" onClick={() => firstId && focusPane(firstId)}>
+            focus-first
           </button>
         </>
       );
@@ -198,10 +199,11 @@ describe('focusPane action (1.5)', () => {
 
     const { user } = renderWithPanes(<Test />);
     await user.click(screen.getByRole('button', { name: 'split' }));
-    const beforeFocus = focusedPaneId;
-    await user.click(screen.getByRole('button', { name: 'focus-second' }));
-    expect(focusedPaneId).toBe(targetId);
-    expect(focusedPaneId).not.toBe(beforeFocus);
+    // After split, focus moves to the new (second) leaf
+    expect(focusedPaneId).toBe(secondId);
+    await user.click(screen.getByRole('button', { name: 'focus-first' }));
+    expect(focusedPaneId).toBe(firstId);
+    expect(focusedPaneId).not.toBe(secondId);
   });
 });
 

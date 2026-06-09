@@ -49,22 +49,24 @@ async function launchSession(
     });
   });
 
-  // Entry point priority: empty-state "New Session" → TabBar "New tab" → sidebar [+]
-  const emptyButton = screen.queryByRole('button', { name: /New Session/ });
-  if (emptyButton) {
-    await user.click(emptyButton);
+  // Entry point A: "New Session" EmptyState button → opens modal → click "+ New session"
+  const emptyStateBtn = screen.queryByRole('button', { name: 'New Session' });
+  if (emptyStateBtn) {
+    await user.click(emptyStateBtn);
+    const newSessionBtns = await screen.findAllByRole(
+      'button',
+      { name: /\+ New session/i },
+      { timeout: 5000 },
+    );
+    await user.click(newSessionBtns[0]!);
   } else {
-    const newTabBtn = screen.queryByRole('button', { name: 'New tab' });
-    if (newTabBtn) {
-      await user.click(newTabBtn);
-    } else {
-      const openNewChatBtns = screen.queryAllByLabelText('Open new chat');
-      if (openNewChatBtns.length > 0) {
-        await user.click(openNewChatBtns[0]!);
-      } else {
-        const fallback = await screen.findByRole('button', { name: /New Session/ });
-        await user.click(fallback);
-      }
+    // Entry point B: SessionBar [+] "New session" → inline dropdown → click worktree
+    const dropdownBtn = await screen.findByRole('button', { name: 'New session' });
+    await user.click(dropdownBtn);
+    const dropdown = await screen.findByTestId('new-session-dropdown', {}, { timeout: 3000 });
+    const worktreeBtns = dropdown.querySelectorAll('button');
+    if (worktreeBtns.length > 0) {
+      await user.click(worktreeBtns[0]!);
     }
   }
 
@@ -89,18 +91,24 @@ async function addProject(
   const path = opts?.path ?? '/projects';
   const dirName = opts?.dirName ?? 'app';
 
+  const projectCwd = `${path}/${dirName}`;
   summoner.filesystem().setRoots([path]);
   summoner.filesystem().addDirectory(path, [dirName]);
 
-  // Detect entry point: EmptyState "Add Project" or GlobalBar project switcher "Add project"
+  // Set up git worktree before project is added so GitContext can fetch it on project:added
+  const git = summoner.git();
+  if (git) {
+    git.markAsRepo(projectCwd);
+    git.setProjectRoot(projectCwd);
+    git.addWorktree({ path: projectCwd, branch: 'main', name: dirName });
+  }
+
+  // Detect entry point: EmptyState "Add Project" or WorkspaceTabBar "Add project"
   const emptyButton = screen.queryByRole('button', { name: 'Add Project' });
   if (emptyButton) {
     await user.click(emptyButton);
   } else {
-    // Open GlobalBar project switcher dropdown, then click "Add project"
-    const projectBtn = screen.getByRole('button', { name: /Project:/ });
-    await user.click(projectBtn);
-    await user.click(screen.getByRole('menuitem', { name: /Add project/ }));
+    await user.click(screen.getByRole('button', { name: /add project/i }));
   }
 
   // Browse FileTree → select → Add

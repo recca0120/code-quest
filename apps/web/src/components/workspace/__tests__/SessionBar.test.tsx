@@ -146,7 +146,7 @@ describe('SessionBar (7.9b) + button position', () => {
   it('[+] button is the last element in the session bar', () => {
     render(
       <Wrapper>
-        <SessionBar sessions={sessions} onNewSession={vi.fn()} />
+        <SessionBar sessions={sessions} onOpenModal={vi.fn()} />
       </Wrapper>,
     );
     const bar = screen.getByTestId('session-bar');
@@ -323,7 +323,7 @@ describe('SessionBar (8) visual styling by data-status', () => {
   it('focused-active item has accent highlight styling', () => {
     render(
       <Wrapper>
-        <SessionBar sessions={sessions} onNewSession={vi.fn()} onCloseSession={vi.fn()} />
+        <SessionBar sessions={sessions} onCloseSession={vi.fn()} />
       </Wrapper>,
     );
     // Initially no pane has focus, all items are inactive
@@ -350,7 +350,7 @@ describe('SessionBar (8) visual styling by data-status', () => {
     render(
       <Wrapper>
         <Setup />
-        <SessionBar sessions={sessions} onNewSession={vi.fn()} onCloseSession={vi.fn()} />
+        <SessionBar sessions={sessions} onCloseSession={vi.fn()} />
       </Wrapper>,
     );
 
@@ -365,11 +365,35 @@ describe('SessionBar (8) visual styling by data-status', () => {
   it('focused-active item has stronger highlight than inactive', () => {
     render(
       <Wrapper>
-        <SessionBar sessions={sessions} onNewSession={vi.fn()} onCloseSession={vi.fn()} />
+        <SessionBar sessions={sessions} onCloseSession={vi.fn()} />
       </Wrapper>,
     );
     const inactiveItem = screen.getByTestId('session-bar-item-ch-1');
     // inactive items have opacity reduction class
     expect(inactiveItem.className).toMatch(/opacity-60/);
+  });
+});
+
+// SB.1: SessionBar [+] opens Modal via onOpenModal (design decision 7)
+describe('SessionBar (SB.1) [+] opens modal', () => {
+  it('[+] calls onOpenModal when provided', async () => {
+    const user = userEvent.setup();
+    const onOpenModal = vi.fn();
+    render(
+      <Wrapper>
+        <SessionBar sessions={sessions} onOpenModal={onOpenModal} onCloseSession={vi.fn()} />
+      </Wrapper>,
+    );
+    await user.click(screen.getByRole('button', { name: /new tab/i }));
+    expect(onOpenModal).toHaveBeenCalled();
+  });
+
+  it('does not render [+] when onOpenModal is not provided', () => {
+    render(
+      <Wrapper>
+        <SessionBar sessions={sessions} onCloseSession={vi.fn()} />
+      </Wrapper>,
+    );
+    expect(screen.queryByRole('button', { name: /new tab/i })).not.toBeInTheDocument();
   });
 });

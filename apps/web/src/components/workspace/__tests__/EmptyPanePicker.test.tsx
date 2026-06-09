@@ -63,25 +63,9 @@ describe('EmptyPanePicker (8.3) select session fills pane', () => {
   });
 });
 
-const worktrees = [
-  { path: '/projects/app/main', name: 'main' },
-  { path: '/projects/app/feat-x', name: 'feat-x' },
-];
-
-// 8.2: picker shows worktree quick-entry section
-describe('EmptyPanePicker (8.2) worktree new session entries', () => {
-  it('shows "New session in..." section with worktree names when worktrees prop provided', () => {
-    render(
-      <Wrapper>
-        <EmptyPanePicker paneId="pane-1" sessions={sessions} worktrees={worktrees} />
-      </Wrapper>,
-    );
-    expect(screen.getByText(/new session in/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /main/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /feat-x/ })).toBeInTheDocument();
-  });
-
-  it('does not show section when worktrees is empty or absent', () => {
+// E.1: EmptyPanePicker does not show "New session in..." grouped list
+describe('EmptyPanePicker (E.1) no grouped new session list', () => {
+  it('does not show grouped "New session in..." section', () => {
     render(
       <Wrapper>
         <EmptyPanePicker paneId="pane-1" sessions={sessions} />
@@ -91,74 +75,97 @@ describe('EmptyPanePicker (8.2) worktree new session entries', () => {
   });
 });
 
-// 8.4: clicking worktree entry calls onNewSessionInWorktree with that cwd
-describe('EmptyPanePicker (8.4) new session in worktree', () => {
-  it('calls onNewSessionInWorktree with the worktree path when clicked', async () => {
-    const user = userEvent.setup();
-    const onNewSessionInWorktree = vi.fn();
-
+// E.2: EmptyPanePicker shows "More options..." button
+describe('EmptyPanePicker (E.2) more options button', () => {
+  it('shows "More options..." button when onOpenModal is provided', () => {
     render(
       <Wrapper>
-        <EmptyPanePicker
-          paneId="pane-1"
-          sessions={sessions}
-          worktrees={worktrees}
-          onNewSessionInWorktree={onNewSessionInWorktree}
-        />
+        <EmptyPanePicker paneId="pane-1" sessions={sessions} onOpenModal={vi.fn()} />
       </Wrapper>,
     );
+    expect(screen.getByRole('button', { name: /more options/i })).toBeInTheDocument();
+  });
 
-    await user.click(screen.getByRole('button', { name: /feat-x/ }));
-    expect(onNewSessionInWorktree).toHaveBeenCalledWith('/projects/app/feat-x');
+  it('calls onOpenModal with paneId when clicked', async () => {
+    const user = userEvent.setup();
+    const onOpenModal = vi.fn();
+    render(
+      <Wrapper>
+        <EmptyPanePicker paneId="pane-1" sessions={sessions} onOpenModal={onOpenModal} />
+      </Wrapper>,
+    );
+    await user.click(screen.getByRole('button', { name: /more options/i }));
+    expect(onOpenModal).toHaveBeenCalledWith('pane-1');
   });
 });
 
-// P.1: New session in section grouped by project
-describe('EmptyPanePicker (P.1) new session grouped by project', () => {
-  const allWorktrees = {
-    '/projects/app': [
-      { path: '/projects/app', branch: 'main', name: 'main' },
-      { path: '/projects/app-feat', branch: 'feat-x', name: 'feat-x' },
-    ],
-    '/projects/other': [{ path: '/projects/other', branch: 'main', name: 'main' }],
-  };
-  const projects = [
-    { cwd: '/projects/app', name: 'app' },
-    { cwd: '/projects/other', name: 'other' },
-  ];
-
-  it('groups new session entries by project name', () => {
+// EP.2: EmptyPanePicker shows new-session-in-section when availableWorktrees passed
+describe('EmptyPanePicker (EP.2) shows new-session-in section', () => {
+  it('renders new-session-in-section when availableWorktrees is provided', () => {
     render(
       <Wrapper>
         <EmptyPanePicker
           paneId="pane-1"
           sessions={sessions}
-          allWorktrees={allWorktrees}
-          projects={projects}
-          onNewSessionInWorktree={vi.fn()}
+          availableWorktrees={[
+            { path: '/repo/main', branch: 'main', name: 'main', projectName: 'app' },
+          ]}
+          projects={[{ cwd: '/repo/main', name: 'app' }]}
+          onNewSession={vi.fn()}
         />
       </Wrapper>,
     );
-    expect(screen.getByText(/new session in/i)).toBeInTheDocument();
-    expect(screen.getByText('app')).toBeInTheDocument();
-    expect(screen.getByText('other')).toBeInTheDocument();
+    expect(screen.getByTestId('new-session-in-section')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /\+ ⎇ main/i })).toBeInTheDocument();
   });
+});
 
-  it('calls onNewSessionInWorktree with worktreePath and projectCwd', async () => {
+// EP.3: clicking worktree button calls onNewSession with its path
+describe('EmptyPanePicker (EP.3) clicking worktree button calls onNewSession', () => {
+  it('calls onNewSession with the worktree path when clicked', async () => {
     const user = userEvent.setup();
-    const onNewSessionInWorktree = vi.fn();
+    const onNewSession = vi.fn();
     render(
       <Wrapper>
         <EmptyPanePicker
           paneId="pane-1"
           sessions={sessions}
-          allWorktrees={allWorktrees}
-          projects={projects}
-          onNewSessionInWorktree={onNewSessionInWorktree}
+          availableWorktrees={[
+            { path: '/repo/main', branch: 'main', name: 'main', projectName: 'app' },
+          ]}
+          projects={[{ cwd: '/repo/main', name: 'app' }]}
+          onNewSession={onNewSession}
         />
       </Wrapper>,
     );
-    await user.click(screen.getByRole('button', { name: /feat-x/ }));
-    expect(onNewSessionInWorktree).toHaveBeenCalledWith('/projects/app-feat', '/projects/app');
+    await user.click(screen.getByRole('button', { name: /\+ ⎇ main/i }));
+    expect(onNewSession).toHaveBeenCalledWith('/repo/main');
+  });
+});
+
+// EP.4: without availableWorktrees, new-session-in-section is not rendered
+describe('EmptyPanePicker (EP.4) no new-session-in section without availableWorktrees', () => {
+  it('does not render new-session-in-section when availableWorktrees is undefined', () => {
+    render(
+      <Wrapper>
+        <EmptyPanePicker paneId="pane-1" sessions={sessions} />
+      </Wrapper>,
+    );
+    expect(screen.queryByTestId('new-session-in-section')).not.toBeInTheDocument();
+  });
+});
+
+// E.3: Tool buttons remain inline, click fills pane directly (no modal)
+describe('EmptyPanePicker (E.3) tool buttons inline', () => {
+  it('still shows Git, Files, Spec, Worktrees tool buttons', () => {
+    render(
+      <Wrapper>
+        <EmptyPanePicker paneId="pane-1" sessions={sessions} onOpenModal={vi.fn()} />
+      </Wrapper>,
+    );
+    expect(screen.getByRole('button', { name: /git/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /files/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /spec/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /worktrees/i })).toBeInTheDocument();
   });
 });

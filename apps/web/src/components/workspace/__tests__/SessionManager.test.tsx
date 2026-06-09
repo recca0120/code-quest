@@ -1,21 +1,34 @@
 /**
- * Session Manager Overlay O.1–O.3
+ * Session Manager Overlay O.1–O.5
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
+import { GitProvider } from '@/contexts/GitContext';
+import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SocketProvider } from '@/contexts/SocketContext';
-import { TabProvider, usePaneState, useTabActions } from '@/contexts/TabContext';
+import {
+  TabProvider,
+  usePaneActions,
+  usePaneState,
+  useTabActions,
+  useWorkspaceTab,
+} from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   const summoner = createFakeSummoner();
   return (
     <SocketProvider socket={summoner.socket}>
-      <TabProvider>
-        <KeyboardShortcutsProvider>{children}</KeyboardShortcutsProvider>
-      </TabProvider>
+      <ProjectProvider>
+        <GitProvider>
+          <TabProvider>
+            <KeyboardShortcutsProvider>{children}</KeyboardShortcutsProvider>
+          </TabProvider>
+        </GitProvider>
+      </ProjectProvider>
     </SocketProvider>
   );
 }
@@ -113,6 +126,90 @@ describe('SessionManager (O.2) overlay lists sessions', () => {
   });
 });
 
+// O.4: Sessions grouped by workspace tab
+describe('SessionManager (O.4) sessions grouped by workspace tab', () => {
+  it('shows sessions under their workspace tab group name', async () => {
+    const user = userEvent.setup();
+
+    function Setup() {
+      const { addTab } = useTabActions();
+      const { addWorkspaceTab } = useWorkspaceTab();
+      const { setSessionInPane } = usePaneActions();
+      const { paneRoot } = usePaneState();
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            // Session in default tab (Layout 1)
+            addTab('sess-layout1', '/project-a');
+            const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
+            if (leafId) setSessionInPane(leafId, 'sess-layout1');
+            // Add a second workspace tab with a session
+            addWorkspaceTab('My Layout');
+            addTab('sess-layout2', '/project-b');
+          }}
+        >
+          setup
+        </button>
+      );
+    }
+
+    render(
+      <Wrapper>
+        <Setup />
+        <button type="button" data-testid="focus-target" aria-label="focus target" />
+      </Wrapper>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'setup' }));
+    await user.click(screen.getByTestId('focus-target'));
+    await user.keyboard('{Meta>}{Shift>}m{/Shift}{/Meta}');
+
+    const manager = screen.getByTestId('session-manager');
+    expect(manager).toBeInTheDocument();
+    // Should have a "My Layout" group heading
+    expect(manager).toHaveTextContent('My Layout');
+  });
+
+  it('shows sessions not in any pane under "No Tab" group', async () => {
+    const user = userEvent.setup();
+
+    function Setup() {
+      const { addTab } = useTabActions();
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            // Add a session that is NOT placed in any pane
+            addTab('sess-no-tab', '/project-orphan');
+          }}
+        >
+          setup
+        </button>
+      );
+    }
+
+    render(
+      <Wrapper>
+        <Setup />
+        <button type="button" data-testid="focus-target" aria-label="focus target" />
+      </Wrapper>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'setup' }));
+    await user.click(screen.getByTestId('focus-target'));
+    await user.keyboard('{Meta>}{Shift>}m{/Shift}{/Meta}');
+
+    const manager = screen.getByTestId('session-manager');
+    expect(manager).toBeInTheDocument();
+    // Should show "No Tab" section for unassigned session
+    expect(manager).toHaveTextContent('No Tab');
+    expect(
+      manager.querySelector('[data-testid="session-manager-item-sess-no-tab"]'),
+    ).toBeInTheDocument();
+  });
+});
+
 // O.3: Clicking session in overlay fills focused pane
 describe('SessionManager (O.3) clicking session fills pane and closes overlay', () => {
   it('clicking a session assigns it to the focused pane', async () => {
@@ -153,5 +250,65 @@ describe('SessionManager (O.3) clicking session fills pane and closes overlay', 
 
     expect(leafSessionId).toBe('sess-target');
     expect(screen.queryByTestId('session-manager')).not.toBeInTheDocument();
+  });
+});
+
+// O.5: Projects section
+describe('SessionManager (O.5) projects section', () => {
+  async function openSessionManager(user: ReturnType<typeof userEvent.setup>) {
+    // Wait for the workspace to stabilize (git listing may be async)
+    await waitFor(
+      () => {
+        expect(screen.queryByRole('dialog', { name: /add project/i })).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+    // Focus body to ensure keyboard shortcut fires
+    document.body.focus();
+    await user.keyboard('{Meta>}{Shift>}m{/Shift}{/Meta}');
+    return screen.findByTestId('session-manager', {}, { timeout: 3000 });
+  }
+
+  it('shows project name and worktrees in Projects section', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+
+    await addProject({ path: '/work', dirName: 'myapp' });
+
+    const manager = await openSessionManager(user);
+    expect(manager).toBeInTheDocument();
+    // Projects section heading
+    expect(manager).toHaveTextContent('Projects');
+    // Project name
+    expect(manager).toHaveTextContent('myapp');
+    // Worktree branch
+    expect(manager).toHaveTextContent('main');
+  });
+
+  it('shows [+ New session] for worktrees without a session', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+
+    await addProject({ path: '/work', dirName: 'myapp' });
+
+    const manager = await openSessionManager(user);
+    // Worktree has no session → should show "+ New session" button
+    expect(manager.querySelector('[data-testid="new-session-btn"]')).toBeInTheDocument();
+  });
+
+  it('shows [+ New worktree] button per project', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+
+    await addProject({ path: '/work', dirName: 'myapp' });
+
+    const manager = await openSessionManager(user);
+    expect(manager.querySelector('[data-testid="new-worktree-btn"]')).toBeInTheDocument();
+  });
+
+  it('shows [+ Add project] button', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+
+    await addProject({ path: '/work', dirName: 'myapp' });
+
+    const manager = await openSessionManager(user);
+    expect(manager.querySelector('[data-testid="add-project-btn"]')).toBeInTheDocument();
   });
 });

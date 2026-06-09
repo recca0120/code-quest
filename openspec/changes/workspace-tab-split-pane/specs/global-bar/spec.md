@@ -47,33 +47,18 @@ Global Bar SHALL 顯示目前 active project 名稱，點擊後展開 project sw
 
 ---
 
-### Requirement: New Session Picker（Grouped by Project）
-Global Bar `[+]` SHALL 展開一個 grouped picker，列出**所有** project 的 worktrees，無論目前是否有 active project。
+### Requirement: New Session（開啟 Open in Pane Modal）
+Global Bar `[+]` SHALL 開啟「Open in Pane」統一 Modal，取代原本的 grouped dropdown picker。Modal 內包含 Session tab（現有 sessions + 所有 project 的 worktrees）與 Tool tab（Git / Files / Spec）。
 
-#### Data Model
-- 一個 Project 擁有一組 Worktrees（`git worktree list` 結果）
-- Worktree 路徑不保證是 project root 的子目錄
-- Session 所屬 project 透過 `listing[projectCwd]` 決定，**不用路徑前綴比對**
+> **設計決策**（Phase 5）：原 grouped dropdown picker 空間不足以清楚呈現 project → worktree 層級，且無法同時展示 session 清單與 tool 選項，故改以 Modal 統一承接所有「開新 session 或 tool pane」入口。SessionBar `[+]` 亦相同行為。
+
+#### Scenario: 點擊 `[+]` 開啟 Modal
+- **WHEN** 使用者點擊 `[+]`
+- **THEN** 「Open in Pane」Modal 開啟，預設顯示 Session tab
 
 #### Scenario: 無 active project 時仍可開 session
 - **WHEN** 使用者點擊 `[+]`，且目前無 active project
-- **THEN** picker 仍顯示所有 project 及其 worktrees，使用者可直接選擇
-
-#### Scenario: Grouped 顯示所有 projects
-- **WHEN** 使用者點擊 `[+]`
-- **THEN** picker 以 project 為單位分組，每組顯示 project 名稱 + 該 project 的所有 worktrees + `[+ New worktree]`
-
-#### Scenario: 選擇 worktree 開 session
-- **WHEN** 使用者選擇某個 worktree
-- **THEN** 開新 session，cwd 為該 worktree path；active project 自動切換為該 worktree 所屬 project
-
-#### Scenario: Per-project 新增 worktree
-- **WHEN** 使用者點擊某 project 的 `[+ New worktree]`
-- **THEN** 開啟針對該 project 的 CreateWorktreeDialog
-
-#### Scenario: Worktree 尚未載入
-- **WHEN** listing 尚未 load 完畢
-- **THEN** picker 仍顯示 project 名稱，worktree 部分顯示 loading 狀態
+- **THEN** Modal 仍顯示所有 project 及其 worktrees，使用者可在 Modal 內選擇
 
 ---
 

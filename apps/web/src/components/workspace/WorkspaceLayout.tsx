@@ -5,19 +5,51 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CommandPaletteProvider, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
-import { useGitState } from '@/contexts/GitContext';
+import { useGitActions, useGitState } from '@/contexts/GitContext';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
-import { TabProvider } from '@/contexts/TabContext';
+import { TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { NO_FORM } from '@/utils/hotkey-options';
 import { CommandPalette } from '../palette/CommandPalette.tsx';
 import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { CreateWorktreeDialog } from '../project/CreateWorktreeDialog.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
-import { GlobalBar } from './GlobalBar.tsx';
 import { KeyboardShortcutsProvider } from './KeyboardShortcutsProvider.tsx';
+import { OpenInPaneModal } from './OpenInPaneModal.tsx';
 import { TabContainer } from './TabContainer.tsx';
+
+type OpenInPaneModalConfig = Omit<
+  React.ComponentProps<typeof OpenInPaneModal>,
+  'onSelectSession' | 'onOpenToolPane'
+>;
+
+function ConnectedOpenInPaneModal(props: OpenInPaneModalConfig) {
+  const { setSessionInPane, setContentInPane, focusPane } = usePaneActions();
+  const { focusedPaneId } = usePaneState();
+
+  return (
+    <OpenInPaneModal
+      {...props}
+      onSelectSession={(channelId, paneId) => {
+        const target = paneId ?? focusedPaneId;
+        if (target) {
+          setSessionInPane(target, channelId);
+          focusPane(target);
+        }
+        props.onClose();
+      }}
+      onOpenToolPane={(type, cwd, paneId) => {
+        const target = paneId ?? focusedPaneId;
+        if (target) {
+          setContentInPane(target, { type, cwd });
+          focusPane(target);
+        }
+        props.onClose();
+      }}
+    />
+  );
+}
 
 const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
   path_not_found: (p) => `Path not found: ${p}`,
@@ -46,6 +78,8 @@ function WorkspaceLayoutInner() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
+  const [openInPaneModalOpen, setOpenInPaneModalOpen] = useState(false);
+  const [openInPaneTargetPaneId, setOpenInPaneTargetPaneId] = useState<string | undefined>();
   const [pendingSession, setPendingSession] = useState<{
     projectCwd: string;
     sessionCwd: string;
@@ -63,6 +97,15 @@ function WorkspaceLayoutInner() {
   const { selectedWorktreeCwd } = useNavigationState();
   const { addProject, setActiveProject } = useProjectActions();
   const { listing } = useGitState();
+  const { list: listWorktrees } = useGitActions();
+
+  useEffect(() => {
+    for (const p of projects) {
+      if (!(p.cwd in listing)) {
+        void listWorktrees(p.cwd);
+      }
+    }
+  }, [projects, listing, listWorktrees]);
 
   async function handleAddProject(cwd: string) {
     const res = await addProject(cwd);
@@ -103,41 +146,68 @@ function WorkspaceLayoutInner() {
           onAction={() => setDialogOpen(true)}
         />
       ) : (
-        <>
-          <GlobalBar
+        <TabProvider
+          sessions={sessions}
+          cwd={activeProjectCwd ?? undefined}
+          selectedCwd={
+            activeProjectCwd ? (selectedWorktreeCwd[activeProjectCwd] ?? undefined) : undefined
+          }
+        >
+          <KeyboardShortcutsProvider>
+            <main aria-label="project-container" className="flex flex-1 min-w-0 overflow-hidden">
+              <TabContainer
+                pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
+                onSessionCreated={() => setPendingSession(null)}
+                onOpenModal={(paneId) => {
+                  setOpenInPaneTargetPaneId(paneId);
+                  setOpenInPaneModalOpen(true);
+                }}
+                onOpenSettings={() => setSettingsOpen(true)}
+                onAddProject={() => setDialogOpen(true)}
+                onNewWorktree={(projectCwd) => {
+                  setActiveProject(projectCwd);
+                  setWorktreeDialogOpen(true);
+                }}
+              />
+            </main>
+          </KeyboardShortcutsProvider>
+          <ConnectedOpenInPaneModal
+            open={openInPaneModalOpen}
+            onClose={() => setOpenInPaneModalOpen(false)}
+            sessions={sessions.map((s) => ({
+              channelId: s.channelId,
+              title: s.title,
+              status: s.state === 'busy' ? ('busy' as const) : ('idle' as const),
+              branch: s.branch,
+            }))}
             projects={projectList}
-            activeProjectCwd={activeProjectCwd}
             allWorktrees={allWorktrees}
-            onSelectProject={(cwd) => setActiveProject(cwd)}
-            onAddProject={() => setDialogOpen(true)}
+            activeProjectCwd={activeProjectCwd ?? undefined}
+            activeWorktree={
+              activeProjectCwd && allWorktrees[activeProjectCwd]?.[0]
+                ? {
+                    path: allWorktrees[activeProjectCwd][0]?.path ?? '',
+                    branch: allWorktrees[activeProjectCwd][0]?.branch,
+                  }
+                : undefined
+            }
+            targetPaneId={openInPaneTargetPaneId}
             onNewSession={(cwd, projectCwd) => {
               setActiveProject(projectCwd);
               setPendingSession({ projectCwd, sessionCwd: cwd });
+              setOpenInPaneModalOpen(false);
             }}
-            onCreateWorktree={(projectCwd) => {
+            onNewWorktree={(projectCwd) => {
               setActiveProject(projectCwd);
               setWorktreeDialogOpen(true);
+              setOpenInPaneModalOpen(false);
             }}
-            onOpenSearch={() => openPalette()}
-            onOpenSettings={() => setSettingsOpen(true)}
+            onAddProject={() => {
+              setDialogOpen(true);
+              setOpenInPaneModalOpen(false);
+            }}
           />
-          <TabProvider
-            sessions={sessions}
-            cwd={activeProjectCwd ?? undefined}
-            selectedCwd={
-              activeProjectCwd ? (selectedWorktreeCwd[activeProjectCwd] ?? undefined) : undefined
-            }
-          >
-            <KeyboardShortcutsProvider>
-              <main aria-label="project-container" className="flex flex-1 min-w-0 overflow-hidden">
-                <TabContainer
-                  pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
-                  onSessionCreated={() => setPendingSession(null)}
-                />
-              </main>
-            </KeyboardShortcutsProvider>
-          </TabProvider>
-        </>
+        </TabProvider>
       )}
       <AddProjectDialog
         open={dialogOpen}

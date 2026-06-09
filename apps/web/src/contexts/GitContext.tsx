@@ -73,6 +73,11 @@ interface WorktreeActions {
     worktreeCwd: string,
     newBranchName: string,
   ) => Promise<{ branch: string } | { error: string }>;
+  diff: (
+    cwd: string,
+    filePath?: string,
+    status?: string,
+  ) => Promise<{ diff: string } | { error: string }>;
   fetch: (cwd: string) => Promise<GitFetchResult>;
   pull: (cwd: string) => Promise<GitPullResult>;
   discardFile: (cwd: string, file: string) => Promise<{ ok: true } | { error: string }>;
@@ -223,6 +228,7 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
         });
         return res.ok ? res.data : { error: res.error };
       },
+      diff: (cwd, filePath, status) => rpc(socket, EVENTS.git.diff, { cwd, filePath, status }),
       fetch: (cwd) => rpc(socket, EVENTS.git.fetch, { cwd }),
       pull: (cwd) => rpc(socket, EVENTS.git.pull, { cwd }),
       discardFile: (cwd, file) => rpc(socket, EVENTS.git.discardFile, { cwd, file }),

@@ -21,13 +21,13 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
     // Sanity: chat panel is active.
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
 
-    // Act: open GlobalBar [+] quick picker → "New worktree"
+    // Act: open GlobalBar [+] → "Open in pane" modal → "New worktree"
     await user.click(screen.getByRole('button', { name: 'New session' }));
-    const menuItem = await screen.findByRole('menuitem', { name: /New worktree/i });
-    expect(menuItem).toBeInTheDocument();
+    const newWorktreeBtn = await screen.findByRole('button', { name: /\+ New worktree/i });
+    expect(newWorktreeBtn).toBeInTheDocument();
 
     // Click it → dialog opens.
-    await user.click(menuItem);
+    await user.click(newWorktreeBtn);
     expect(await screen.findByRole('dialog', { name: /new worktree/i })).toBeInTheDocument();
 
     // Switch to "Create new branch" tab and fill the branch name.

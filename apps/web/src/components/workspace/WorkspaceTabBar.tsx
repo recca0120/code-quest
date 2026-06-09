@@ -4,7 +4,15 @@ import { useSessionManager } from './SessionManagerContext';
 
 const BUSY_STATUSES = new Set(['processing', 'busy', 'cancelling']);
 
-export function WorkspaceTabBar(): React.JSX.Element {
+interface WorkspaceTabBarProps {
+  onOpenSettings?: () => void;
+  onAddProject?: () => void;
+}
+
+export function WorkspaceTabBar({
+  onOpenSettings,
+  onAddProject,
+}: WorkspaceTabBarProps = {}): React.JSX.Element {
   const {
     workspaceTabs,
     activeWorkspaceTabId,
@@ -105,6 +113,28 @@ export function WorkspaceTabBar(): React.JSX.Element {
       >
         ⊞
       </button>
+      {onAddProject && (
+        <button
+          type="button"
+          aria-label="Add project"
+          onClick={onAddProject}
+          className="px-2 py-0.5 text-xs opacity-60 hover:opacity-100"
+          title="Add project"
+        >
+          + Project
+        </button>
+      )}
+      {onOpenSettings && (
+        <button
+          type="button"
+          aria-label="Settings"
+          onClick={onOpenSettings}
+          className="px-2 py-0.5 text-xs opacity-60 hover:opacity-100"
+          title="Settings"
+        >
+          ⚙
+        </button>
+      )}
     </div>
   );
 }

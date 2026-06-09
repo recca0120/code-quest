@@ -183,12 +183,7 @@ describe('Gap-C: SessionBar overflow activates when maxVisible is passed', () =>
 
     render(
       <Wrapper>
-        <SessionBar
-          sessions={sessions}
-          maxVisible={3}
-          onNewSession={() => {}}
-          onCloseSession={() => {}}
-        />
+        <SessionBar sessions={sessions} maxVisible={3} onCloseSession={() => {}} />
       </Wrapper>,
     );
 
@@ -206,12 +201,7 @@ describe('Gap-C: SessionBar overflow activates when maxVisible is passed', () =>
 
     render(
       <Wrapper>
-        <SessionBar
-          sessions={sessions}
-          maxVisible={5}
-          onNewSession={() => {}}
-          onCloseSession={() => {}}
-        />
+        <SessionBar sessions={sessions} maxVisible={5} onCloseSession={() => {}} />
       </Wrapper>,
     );
 

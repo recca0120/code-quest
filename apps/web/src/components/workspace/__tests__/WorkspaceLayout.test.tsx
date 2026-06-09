@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setupMatchMedia } from '@/test/fake-match-media';
 import { type RenderWithWorkspaceResult, renderWithWorkspace } from '@/test/render-with-workspace';
@@ -36,9 +36,9 @@ describe('WorkspaceLayout — with project', () => {
     expect(screen.getByTestId('session-bar')).toBeInTheDocument();
   });
 
-  it('GlobalBar shows active project name', async () => {
+  it('does not render GlobalBar', async () => {
     await setup();
-    expect(screen.getByRole('button', { name: /Project:/ })).toBeInTheDocument();
+    expect(screen.queryByTestId('global-bar')).not.toBeInTheDocument();
   });
 
   it('SessionBar shows multiple sessions, each auto-assigned to a pane (split)', async () => {
@@ -94,7 +94,7 @@ describe('WorkspaceLayout — multi-project', () => {
     expect(sessionBar.querySelectorAll('[data-status]').length).toBe(2);
   });
 
-  it('switching project via GlobalBar does NOT change pane layout', async () => {
+  it('two projects both appear in single SessionBar with all sessions', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
@@ -103,14 +103,6 @@ describe('WorkspaceLayout — multi-project', () => {
     const project2 = await result.addProject({ path: '/projects', dirName: 'other-project' });
     await project2.launchSession();
 
-    // Both sessions in same session bar before switching
-    expect(screen.getByTestId('session-bar').querySelectorAll('[data-status]').length).toBe(2);
-
-    // Switch back to project 1 via GlobalBar
-    await result.user.click(screen.getByRole('button', { name: /Project:/ }));
-    await result.user.click(screen.getByRole('menuitem', { name: /app/ }));
-
-    // Sessions still visible — project switch only changes [+] default cwd, not layout
     expect(screen.getByTestId('session-bar').querySelectorAll('[data-status]').length).toBe(2);
   });
 });
@@ -122,14 +114,15 @@ describe('WorkspaceLayout — Desktop (≥1024px)', () => {
     expect(screen.queryByTitle('Projects')).toBeNull();
   });
 
-  it('GlobalBar is visible', async () => {
+  it('Settings button is in WorkspaceTabBar', async () => {
     await setupWithProject(1440);
-    expect(screen.getByTestId('global-bar')).toBeInTheDocument();
+    const tabBar = screen.getByTestId('workspace-tab-bar');
+    expect(tabBar.querySelector('[aria-label="Settings"]')).toBeInTheDocument();
   });
 
-  it('shows Settings button in GlobalBar; click opens Settings dialog', async () => {
+  it('shows Settings button in WorkspaceTabBar; click opens Settings dialog', async () => {
     const { user } = await setupWithProject(1440);
-    await user.click(screen.getByRole('button', { name: /settings/i }));
+    await user.click(screen.getByRole('button', { name: /^settings$/i }));
     expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
   });
 });
@@ -162,6 +155,54 @@ describe('WorkspaceLayout — state preservation across breakpoints', () => {
   });
 });
 
+describe('WorkspaceLayout — OpenInPaneModal wiring', () => {
+  it('clicking existing session in modal fills focused pane and closes modal', async () => {
+    const result = await renderWithWorkspace();
+    const project = await result.addProject();
+    await project.launchSession();
+    result.claude.prepareInit();
+    await project.launchSession();
+
+    // Split to create an empty pane, then open modal via EmptyPanePicker [More options...]
+    await result.user.click(screen.getAllByTestId('pane-split-h')[0]!);
+    await result.user.click(screen.getByRole('button', { name: /more options/i }));
+
+    // Modal has "Existing sessions" section — find session items by data-testid
+    const sessionItems = await screen.findAllByTestId(/^modal-session-item-/);
+    const sessionItem = sessionItems[0]!;
+    const channelId = sessionItem.getAttribute('data-testid')!.replace('modal-session-item-', '');
+
+    await result.user.click(sessionItem);
+
+    // Modal closes
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // The clicked session is now in the focused pane
+    const sessionBarItem = screen.getByTestId(`session-bar-item-${channelId}`);
+    expect(sessionBarItem).toHaveAttribute('data-status', 'focused-active');
+  });
+
+  it('opening a tool pane from modal creates a git pane in the target pane', async () => {
+    const result = await renderWithWorkspace();
+    const project = await result.addProject();
+    await project.launchSession();
+
+    // Split pane to create an empty second pane, then open modal from it
+    await result.user.click(screen.getByTestId('pane-split-h'));
+    await result.user.click(screen.getByRole('button', { name: /more options/i }));
+
+    // Switch to Git tab in modal
+    await result.user.click(screen.getByRole('tab', { name: /git/i }));
+
+    // Click "Open Git pane"
+    await result.user.click(screen.getByRole('button', { name: /open git pane/i }));
+
+    // Modal closes and a git pane appears
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('git-pane')).toBeInTheDocument();
+  });
+});
+
 describe('WorkspaceLayout — layout width constraints', () => {
   it('active project container has min-w-0 to prevent overflow on mobile', async () => {
     await setupWithProject(375);
@@ -171,5 +212,25 @@ describe('WorkspaceLayout — layout width constraints', () => {
   it('split pane root has min-w-0 to prevent content forcing parent wider than viewport', async () => {
     await setupWithProject(375);
     expect(screen.getByTestId('split-pane-root')).toHaveClass('min-w-0');
+  });
+});
+
+// ── Worktree listing auto-fetch ──
+// WorkspaceLayout 必須在 project 加入後自動 fetch worktree listing，
+// 讓 OpenInPaneModal 的 worktree 列表有資料（不能依賴 Sidebar/ProjectRow）。
+describe('WorkspaceLayout — worktree listing auto-fetch', () => {
+  it('fetches worktree listing after project is added so OpenInPaneModal shows branches', async () => {
+    const result = await renderWithWorkspace();
+    const project = await result.addProject();
+    await project.launchSession();
+
+    // Open pane split and then open modal
+    await result.user.click(screen.getByTestId('pane-split-h'));
+    await result.user.click(screen.getByRole('button', { name: /more options/i }));
+
+    // Modal 中 worktree branch 應出現（形如 "⎇ main"）
+    await waitFor(() => {
+      expect(screen.getAllByText(/⎇/).length).toBeGreaterThan(0);
+    });
   });
 });
