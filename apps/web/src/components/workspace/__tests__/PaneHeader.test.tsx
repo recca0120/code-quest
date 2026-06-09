@@ -164,75 +164,17 @@ describe('PaneHeader (3.6) focused pane accent', () => {
   });
 });
 
-// CT2.1: PaneHeader 是 controlled — 接收 activeTool prop，不自己管 state
-describe('PaneHeader (CT2.1) controlled activeTool', () => {
-  it('shows tools section when cwd is provided', () => {
+// TG.1: PaneHeader 不再有 tool icon（Files/Git/Spec 移至 ChatBreadcrumb）
+describe('PaneHeader (TG.1) no tool icons', () => {
+  it('does not render Files tool button even when cwd is provided', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" cwd="/test" activeTool={null} onToolSelect={vi.fn()} />
+        <PaneHeader paneId="p1" cwd="/test" />
       </Wrapper>,
     );
-    expect(screen.getByRole('button', { name: /Files/i })).toBeInTheDocument();
-  });
-
-  it('calls onToolSelect with "git" when git icon clicked', async () => {
-    const user = userEvent.setup();
-    const onToolSelect = vi.fn();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/test" activeTool={null} onToolSelect={onToolSelect} />
-      </Wrapper>,
-    );
-    await user.click(screen.getByRole('button', { name: /Git/i }));
-    expect(onToolSelect).toHaveBeenCalledWith('git');
-  });
-
-  it('calls onToolSelect with null when active tool icon clicked again (toggle off)', async () => {
-    const user = userEvent.setup();
-    const onToolSelect = vi.fn();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/test" activeTool="git" onToolSelect={onToolSelect} />
-      </Wrapper>,
-    );
-    await user.click(screen.getByRole('button', { name: /Git/i }));
-    expect(onToolSelect).toHaveBeenCalledWith(null);
-  });
-});
-
-// CT2.1b: active tool button gets text-primary class; inactive tools do not
-describe('PaneHeader (CT2.1b) active tool visual state', () => {
-  it('active tool button has text-primary class', () => {
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/test" activeTool="files" onToolSelect={vi.fn()} />
-      </Wrapper>,
-    );
-    const filesBtn = screen.getByRole('button', { name: /Files/i });
-    expect(filesBtn.className).toContain('text-primary');
-  });
-
-  it('inactive tool buttons do not have text-primary class', () => {
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/test" activeTool="files" onToolSelect={vi.fn()} />
-      </Wrapper>,
-    );
-    const gitBtn = screen.getByRole('button', { name: /Git/i });
-    expect(gitBtn.className).not.toContain('text-primary');
-    const specBtn = screen.getByRole('button', { name: /Spec/i });
-    expect(specBtn.className).not.toContain('text-primary');
-  });
-
-  it('no button has text-primary when activeTool is null', () => {
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/test" activeTool={null} onToolSelect={vi.fn()} />
-      </Wrapper>,
-    );
-    for (const name of [/Files/i, /Git/i, /Spec/i]) {
-      expect(screen.getByRole('button', { name }).className).not.toContain('text-primary');
-    }
+    expect(screen.queryByRole('button', { name: /Files/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Git/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Spec/i })).not.toBeInTheDocument();
   });
 });
 

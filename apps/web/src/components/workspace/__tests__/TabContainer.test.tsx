@@ -312,36 +312,8 @@ describe('TabContainer — empty state "New Session" opens modal', () => {
   });
 });
 
-// TabContainer passes session cwd to PaneHeader so context panel icons show
-describe('TabContainer — PaneHeader receives session cwd', () => {
-  it('context panel tool icons are visible when a session with cwd occupies the pane', async () => {
-    // Use pendingNewSessionCwd to assign a session with a known cwd to the pane
-    const { rerender } = render(
-      <NavigationProvider>
-        <TabProvider>
-          <TabContainer />
-        </TabProvider>
-      </NavigationProvider>,
-    );
-
-    rerender(
-      <NavigationProvider>
-        <TabProvider>
-          <TabContainer pendingNewSessionCwd="/projects/app/main" onSessionCreated={vi.fn()} />
-        </TabProvider>
-      </NavigationProvider>,
-    );
-
-    // Wait for session to be assigned (pendingNewSessionCwd triggers useEffect)
-    await screen.findByTestId('session-bar');
-
-    // PaneHeader should show context tool toggle buttons (📁🌿📋) when cwd is passed
-    const header = screen.getByTestId('pane-header');
-    expect(header.querySelector('[aria-label="Files"]')).toBeInTheDocument();
-    expect(header.querySelector('[aria-label="Git"]')).toBeInTheDocument();
-    expect(header.querySelector('[aria-label="Spec"]')).toBeInTheDocument();
-  });
-});
+// Note: ChatBreadcrumb "Toggle right pane" button integration is covered in PaneLeafContent.test.tsx
+// (requires renderWithWorkspace + real SocketProvider, incompatible with this file's vi.mock setup)
 
 // 7.4: Session Bar [+] shows inline dropdown with worktrees (design decision 7)
 describe('TabContainer (7.4) Session Bar [+] shows inline dropdown', () => {

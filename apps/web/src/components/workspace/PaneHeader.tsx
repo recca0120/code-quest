@@ -1,15 +1,8 @@
-import {
-  ClipboardDocumentListIcon,
-  DocumentTextIcon,
-  ViewColumnsIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
+import { ViewColumnsIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { usePaneState } from '@/contexts/TabContext';
 import { cn } from '@/utils/cn';
 import { useMobileMode } from './useMobileMode';
-
-type ContextTool = 'files' | 'git' | 'spec';
 
 interface PaneHeaderProps {
   paneId: string;
@@ -17,8 +10,6 @@ interface PaneHeaderProps {
   title?: string;
   cwd?: string;
   isOnly?: boolean;
-  activeTool?: ContextTool | null;
-  onToolSelect?: (tool: ContextTool | null) => void;
   onSplitH?: () => void;
   onSplitV?: () => void;
   onClose?: () => void;
@@ -32,10 +23,7 @@ export function PaneHeader({
   paneId,
   branch,
   title,
-  cwd,
   isOnly = false,
-  activeTool = null,
-  onToolSelect,
   onSplitH,
   onSplitV,
   onClose,
@@ -87,58 +75,6 @@ export function PaneHeader({
       {branch && title && <span className="text-muted-foreground">·</span>}
       {title && <span className="font-medium truncate">{title}</span>}
       <div className="ml-auto flex items-center gap-0.5">
-        {cwd && (
-          <>
-            <button
-              type="button"
-              aria-label="Files"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToolSelect?.(activeTool === 'files' ? null : 'files');
-              }}
-              className={cn(
-                TOOL_BTN,
-                activeTool === 'files' ? 'text-primary' : 'text-muted hover:text-text',
-              )}
-              title="Files"
-            >
-              <DocumentTextIcon className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              aria-label="Git"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToolSelect?.(activeTool === 'git' ? null : 'git');
-              }}
-              className={cn(
-                TOOL_BTN,
-                activeTool === 'git' ? 'text-primary' : 'text-muted hover:text-text',
-              )}
-              title="Git"
-            >
-              <span aria-hidden className="font-mono text-xs leading-none">
-                ⎇
-              </span>
-            </button>
-            <button
-              type="button"
-              aria-label="Spec"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToolSelect?.(activeTool === 'spec' ? null : 'spec');
-              }}
-              className={cn(
-                TOOL_BTN,
-                activeTool === 'spec' ? 'text-primary' : 'text-muted hover:text-text',
-              )}
-              title="Spec"
-            >
-              <ClipboardDocumentListIcon className="w-3.5 h-3.5" />
-            </button>
-            <span className="w-px h-3 bg-border mx-0.5" />
-          </>
-        )}
         {!isMobile && (
           <>
             <button

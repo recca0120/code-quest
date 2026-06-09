@@ -30,4 +30,22 @@ describe('ChatBreadcrumb', () => {
     render(<ChatBreadcrumb actions={<button type="button">history</button>} />);
     expect(screen.getByRole('button', { name: 'history' })).toBeInTheDocument();
   });
+
+  // TG.2–3: onToggleRight prop
+  it('renders Toggle right pane button when onToggleRight is provided', () => {
+    render(<ChatBreadcrumb onToggleRight={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /toggle right pane/i })).toBeInTheDocument();
+  });
+
+  it('does not render Toggle right pane button when onToggleRight is not provided', () => {
+    render(<ChatBreadcrumb />);
+    expect(screen.queryByRole('button', { name: /toggle right pane/i })).not.toBeInTheDocument();
+  });
+
+  it('calls onToggleRight when toggle button is clicked', async () => {
+    const onToggleRight = vi.fn();
+    render(<ChatBreadcrumb onToggleRight={onToggleRight} />);
+    await userEvent.setup().click(screen.getByRole('button', { name: /toggle right pane/i }));
+    expect(onToggleRight).toHaveBeenCalledOnce();
+  });
 });

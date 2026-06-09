@@ -20,6 +20,7 @@ interface ChatViewProps {
   title?: string;
   projectName?: string;
   onToggleLeft?: () => void;
+  onToggleRight?: () => void;
   rightPane?: React.ReactNode;
 }
 
@@ -27,6 +28,7 @@ export function ChatView({
   title,
   projectName,
   onToggleLeft,
+  onToggleRight,
   rightPane,
 }: ChatViewProps): React.JSX.Element {
   const channelId = useChannelId();
@@ -81,6 +83,7 @@ export function ChatView({
           branch={worktree?.branch}
           sessionTitle={title}
           onToggleLeft={onToggleLeft}
+          onToggleRight={onToggleRight}
           actions={<ResumeButton onResumed={handleResumed} />}
         />
         {worktree && <WorktreeBanner worktree={worktree} />}

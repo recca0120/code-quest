@@ -1,4 +1,4 @@
-import { Bars3Icon } from '@heroicons/react/24/outline';
+import { Bars3Icon, RectangleGroupIcon } from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
 import { IconButton } from '../ui/IconButton.tsx';
 
@@ -7,6 +7,7 @@ interface ChatBreadcrumbProps {
   branch?: string;
   sessionTitle?: string;
   onToggleLeft?: () => void;
+  onToggleRight?: () => void;
   /** Slot for inline action buttons (e.g. ResumeButton) rendered inside the bar. */
   actions?: ReactNode;
 }
@@ -18,6 +19,7 @@ export function ChatBreadcrumb({
   branch,
   sessionTitle,
   onToggleLeft,
+  onToggleRight,
   actions,
 }: ChatBreadcrumbProps): React.JSX.Element {
   return (
@@ -52,6 +54,16 @@ export function ChatBreadcrumb({
         )}
       </div>
       {actions}
+      {onToggleRight && (
+        <IconButton
+          variant="plain"
+          aria-label="Toggle right pane"
+          onClick={onToggleRight}
+          className={BTN_CLASS}
+        >
+          <RectangleGroupIcon className="w-4 h-4" />
+        </IconButton>
+      )}
     </header>
   );
 }

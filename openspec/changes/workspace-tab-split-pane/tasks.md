@@ -606,17 +606,42 @@
 
 ### 換用完整 Pane 元件（RP）
 
-- [ ] RP.1 [test] `RightPane` Files tab 渲染 `FilesPane`（`aria-label="files-pane"` 可見）
-- [ ] RP.2 [test] `RightPane` Git tab 渲染 `GitPane`（`aria-label="git-pane"` 可見）
-- [ ] RP.3 [test] `RightPane` Spec tab 渲染 `SpecPane`（`aria-label="spec-pane"` 可見）
-- [ ] RP.4 [test] `FilesPane.onMention` 呼叫 `useChannelComposeActions().appendMention(path)`，插入 compose 欄
-- [ ] RP.5 [impl] `RightPane.tsx`：將 `ContextPanelFiles/Git/Spec` 換成 `FilesPane/GitPane/SpecPane`
-- [ ] RP.6 [impl] `RightPane.tsx`：傳入 `onMention={(path) => appendMention(path)}` 給 `FilesPane`
-- [ ] RP.7 [impl] 確認 `FilesPane`/`GitPane`/`SpecPane` 所需 context（`FsProvider`、`GitProvider`、`OpenspecProvider`）已在 `ChannelProvider` 或更上層 provide
+- [x] RP.1 [test] `RightPane` Files tab 渲染 `FilesPane`（`aria-label="files-pane"` 可見）
+- [x] RP.2 [test] `RightPane` Git tab 渲染 `GitPane`（`aria-label="git-pane"` 可見）
+- [x] RP.3 [test] `RightPane` Spec tab 渲染 `SpecPane`（`aria-label="spec-pane"` 可見）
+- [x] RP.4 [test] `FilesPane.onMention` 呼叫 `useChannelComposeActions().appendMention(path)`，插入 compose 欄
+- [x] RP.5 [impl] `RightPane.tsx`：將 `ContextPanelFiles/Git/Spec` 換成 `FilesPane/GitPane/SpecPane`
+- [x] RP.6 [impl] `RightPane.tsx`：傳入 `onMention={(path) => appendMention(path)}` 給 `FilesPane`
+- [x] RP.7 [impl] 確認 `FilesPane`/`GitPane`/`SpecPane` 所需 context（`FsProvider`、`GitProvider`、`OpenspecProvider`）已在 `ChannelProvider` 或更上層 provide
 
 ### 棄用 ContextPanel.tsx（DP）
 
-- [ ] DP.1 [impl] 將 `ContextPanel.tsx` 中的 `ContextPanelGit/Files/Spec` 標記為 deprecated（或直接刪除）
-- [ ] DP.2 [impl] 確認 `ContextPanel.tsx` 沒有其他 consumer，若有則一併遷移
-- [ ] DP.3 [impl] 更新 `ContextPanel.test.tsx`：移除對 `ContextPanelGit/Files/Spec` 的直接測試，改測 `RightPane` 整合行為
-- [ ] DP.4 [impl] 確認所有測試綠燈（`pnpm test`）
+- [x] DP.1 [impl] 將 `ContextPanel.tsx` 中的 `ContextPanelGit/Files/Spec` 標記為 deprecated（或直接刪除）
+- [x] DP.2 [impl] 確認 `ContextPanel.tsx` 沒有其他 consumer，若有則一併遷移
+- [x] DP.3 [impl] 更新 `ContextPanel.test.tsx`：移除對 `ContextPanelGit/Files/Spec` 的直接測試，改測 `RightPane` 整合行為
+- [x] DP.4 [impl] 確認所有測試綠燈（`pnpm test`）
+
+---
+
+## Phase 17：Context Panel Toggle 移至 ChatBreadcrumb
+
+> **動機**：`PaneHeader` 的三個 tool icon（Files/Git/Spec）語義混亂——既切換 tab 又控制 panel 開關。
+> 三個 icon 是 radio 模式，但 `RightPane` 本身已有 tab bar 負責切換。
+> main branch 用單一 `RectangleGroupIcon` toggle 在 `ChatBreadcrumb`，語義清晰且一致。
+>
+> **目標**：`PaneHeader` 移除 `activeTool`/`onToolSelect` props 及三個 tool icon；
+> 改在 `ChatBreadcrumb` 加入單一 toggle（`RectangleGroupIcon`），與 main branch 對齊。
+> `PaneLeafContent` state 從 `activeTool: '...' | null` → `rightOpen: boolean`。
+
+### Toggle 搬移（TG）
+
+- [ ] TG.1 [test] `PaneHeader` 不再渲染 Files/Git/Spec tool icon（不應有 `aria-label="Files"` 等按鈕）
+- [ ] TG.2 [test] `ChatBreadcrumb` 有 `onToggleRight` prop；存在時渲染 `aria-label="Toggle right pane"` 按鈕
+- [ ] TG.3 [test] 點擊 toggle button → `onToggleRight` 被呼叫
+- [ ] TG.4 [test] `PaneLeafContent` 初始 `rightOpen=false`；點擊 toggle → `RightPane` 出現；再點擊 → 消失
+- [ ] TG.5 [impl] `PaneHeader`：移除 `activeTool`、`onToolSelect` props 及三個 tool icon 按鈕
+- [ ] TG.6 [impl] `ChatBreadcrumb`：加入 `onToggleRight?: () => void` prop；渲染 `RectangleGroupIcon` button
+- [ ] TG.7 [impl] `ChatView`：`onToggleRight` prop 傳遞給 `ChatBreadcrumb`
+- [ ] TG.8 [impl] `TabContent`（TabContainer）：加入 `onToggleRight` prop，從 `PaneLeafContent` 傳入
+- [ ] TG.9 [impl] `PaneLeafContent`：`activeTool` state → `rightOpen: boolean`；`setRightOpen(v => !v)` 傳給 `TabContent.onToggleRight`
+- [ ] TG.10 [impl] 確認所有測試綠燈

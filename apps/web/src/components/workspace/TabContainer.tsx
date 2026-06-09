@@ -35,6 +35,7 @@ interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode' | 'bran
   channelId: string;
   projectName: string;
   onToggleLeft?: () => void;
+  onToggleRight?: () => void;
   onNewChannel?: (cwd: string) => void;
   rightPane?: React.ReactNode;
 }
@@ -47,6 +48,7 @@ function TabContent({
   projectName,
   mode,
   onToggleLeft,
+  onToggleRight,
   onNewChannel,
   rightPane,
 }: TabContentProps) {
@@ -67,6 +69,7 @@ function TabContent({
         title={title}
         projectName={projectName}
         onToggleLeft={onToggleLeft}
+        onToggleRight={onToggleRight}
         rightPane={rightPane}
       />
     </ChannelProvider>
@@ -106,7 +109,7 @@ function PaneLeafContent({
 }: PaneLeafContentProps) {
   const { paneRoot } = usePaneState();
   const { splitPane, closePane, focusPane } = usePaneActions();
-  const [activeTool, setActiveTool] = useState<'files' | 'git' | 'spec' | null>(null);
+  const [rightOpen, setRightOpen] = useState(false);
 
   const sessionId = node.content.type === 'session' ? node.content.sessionId : null;
   const meta = sessionId ? tabs[sessionId] : null;
@@ -120,8 +123,6 @@ function PaneLeafContent({
         title={meta?.title}
         cwd={meta?.cwd}
         isOnly={isOnly}
-        activeTool={activeTool}
-        onToolSelect={setActiveTool}
         onSplitH={() => {
           focusPane(node.id);
           splitPane('h');
@@ -161,12 +162,9 @@ function PaneLeafContent({
           projectName={projectName}
           mode={meta.mode}
           onToggleLeft={onToggleLeft}
+          onToggleRight={meta.cwd ? () => setRightOpen((v) => !v) : undefined}
           onNewChannel={(newCwd) => onNewTab({ cwd: newCwd })}
-          rightPane={
-            activeTool && meta.cwd ? (
-              <RightPane key={activeTool} cwd={meta.cwd} initialTab={activeTool} />
-            ) : undefined
-          }
+          rightPane={rightOpen && meta.cwd ? <RightPane cwd={meta.cwd} /> : undefined}
         />
       ) : (
         <EmptyState

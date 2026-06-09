@@ -534,12 +534,20 @@ Global Bar 已移除。Settings `[⚙]` 移至 Tab Bar 右側；Search 純鍵盤
 
 ### E. Context Panel（Session Pane 內建 Tool Panel）
 
-每個 session pane 的 header 提供 `[📁][🌿][📋]` toolbar，點擊展開附著在該 pane **右側的 inline side panel**，cwd 自動跟該 session，不需手動指定。呈現方式與 main branch `RightPane` 相同：panel inline 嵌入於 pane 內部（`flex-row`），不使用 overlay。
+每個 session pane 的 `ChatBreadcrumb` 提供一個 `[⊞]` toggle icon，點擊展開附著在該 pane **右側的 inline side panel**（`RightPane`），cwd 自動跟該 session，不需手動指定。呈現方式與 main branch 完全一致：panel inline 嵌入於 pane 內部（`flex-row`），不使用 overlay。
+
+**Toggle icon 位置：`ChatBreadcrumb`（與 main branch 一致）**
+
+`PaneHeader` 負責 pane 層級控制（split、close、branch/title 顯示），**不負責** RightPane 開關。
+toggle icon 放在 `ChatBreadcrumb` 是因為：
+- RightPane 是 chat session 的 context view，語義上屬於 chat，不屬於 pane
+- 只有 `node.content.type === 'session'` 時才有意義（git/files/spec tool pane 無 RightPane）
+- 與 main branch 保持一致，降低分歧
 
 **展開狀態（inline side panel）：**
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ ⎇main·Task A   [📁][🌿][📋]              [⊟][⊞][×]     │
+│ ⎇main · Task A                            [⊞] [⊟][⊞][×] │  ← [⊞] = ChatBreadcrumb toggle
 ├────────────────────────────┬─────────────────────────────┤
 │                            │ [📁Files] [🌿Git] [📋Spec]  │
 │   Chat A                   ├─────────────────────────────┤
@@ -552,7 +560,7 @@ Global Bar 已移除。Settings `[⚙]` 移至 Tab Bar 右側；Search 純鍵盤
 **收合狀態：**
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ ⎇main·Task A   [📁][🌿][📋]              [⊟][⊞][×]     │
+│ ⎇main · Task A                            [⊞] [⊟][⊞][×] │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
 │   Chat A（全寬）                                         │
@@ -560,18 +568,19 @@ Global Bar 已移除。Settings `[⚙]` 移至 Tab Bar 右側；Search 純鍵盤
 └──────────────────────────────────────────────────────────┘
 ```
 
-**State 位置：`activeTool` 提升到 `PaneLeafContent`**
+**State 位置：`rightOpen: boolean` 在 `PaneLeafContent`**
 
-`PaneHeader` 只 fire callback（`onToolSelect`），不自己管理 panel 渲染。
-`PaneLeafContent` 持有 `activeTool: 'files' | 'git' | 'spec' | null`，傳入 `ChatView.rightPane`：
+`PaneHeader` 不再有 `activeTool`、`onToolSelect` props，不渲染 tool icon。
+`PaneLeafContent` 持有 `rightOpen: boolean`，透過 `onToggleRight` callback 傳給 `ChatView`：
 
 ```
 PaneLeafContent
-  activeTool state
-  ├─ PaneHeader onToolSelect(tool) → toggle activeTool
-  └─ ChatView
-       └─ rightPane={activeTool ? <RightPane cwd={cwd} initialTab={activeTool} /> : null}
-                                      └─ Radix Tabs（files / git / spec），forceMount 保留 scroll
+  rightOpen: boolean
+  ├─ PaneHeader（無 tool icon，只有 branch/title + split/close）
+  └─ TabContent → ChatView → ChatBreadcrumb
+                    onToggleRight={() => setRightOpen(v => !v)}
+                    rightPane={rightOpen ? <RightPane cwd={cwd} /> : null}
+                                             └─ Radix Tabs（files / git / spec）
 ```
 
 **RightPane 的 tab 內容使用 main branch 的完整實作：**

@@ -9,7 +9,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
-import { PaneHeader } from '@/components/workspace/PaneHeader';
 import { RightPane } from '@/components/workspace/RightPane';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { FsProvider } from '@/contexts/FsContext';
@@ -64,46 +63,41 @@ describe('Gap-1: KeyboardShortcutsProvider is mounted in production', () => {
 // ─────────────────────────────────────────────────────────────────────
 
 function ControlledPaneWithPanel({ cwd }: { cwd: string }) {
-  const [activeTool, setActiveTool] = useState<'files' | 'git' | 'spec' | null>(null);
+  const [rightOpen, setRightOpen] = useState(false);
   return (
     <Wrapper>
-      <PaneHeader paneId="p1" cwd={cwd} activeTool={activeTool} onToolSelect={setActiveTool} />
-      {activeTool && <RightPane cwd={cwd} initialTab={activeTool} />}
+      <button type="button" onClick={() => setRightOpen((v) => !v)} aria-label="Toggle right pane">
+        toggle
+      </button>
+      {rightOpen && <RightPane cwd={cwd} />}
     </Wrapper>
   );
 }
 
+// TG.4: PaneLeafContent toggle 行為（透過 ChatBreadcrumb toggle button）
 describe('Gap-2: Context Panel renders real FilesPane / GitPane / SpecPane', () => {
-  it('clicking Files icon shows RightPane with Files tab active', async () => {
+  it('clicking toggle shows RightPane with Files tab active by default', async () => {
     const user = userEvent.setup();
     render(<ControlledPaneWithPanel cwd="/project" />);
-    await user.click(screen.getByRole('button', { name: /Files/i }));
-    // RightPane の tab bar が表示され、Files tab が active になる
+    expect(screen.queryByRole('region', { name: 'right-pane-body' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Toggle right pane/i }));
     expect(screen.getByRole('tab', { name: /Files/i })).toHaveAttribute('data-state', 'active');
-    // right-pane-body region が表示される（FilesPane or GitPane or SpecPane を内包）
     expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
   });
 
-  it('clicking Git icon shows RightPane with Git tab active', async () => {
+  it('clicking toggle again hides RightPane', async () => {
     const user = userEvent.setup();
     render(<ControlledPaneWithPanel cwd="/project" />);
-    await user.click(screen.getByRole('button', { name: /Git/i }));
-    expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
+    await user.click(screen.getByRole('button', { name: /Toggle right pane/i }));
     expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Toggle right pane/i }));
+    expect(screen.queryByRole('region', { name: 'right-pane-body' })).not.toBeInTheDocument();
   });
 
-  it('clicking Spec icon shows RightPane with Spec tab active', async () => {
+  it('switching tabs within RightPane swaps active tab', async () => {
     const user = userEvent.setup();
     render(<ControlledPaneWithPanel cwd="/project" />);
-    await user.click(screen.getByRole('button', { name: /Spec/i }));
-    expect(screen.getByRole('tab', { name: /Spec/i })).toHaveAttribute('data-state', 'active');
-    expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
-  });
-
-  it('switching tabs within context panel swaps active tab', async () => {
-    const user = userEvent.setup();
-    render(<ControlledPaneWithPanel cwd="/project" />);
-    await user.click(screen.getByRole('button', { name: /Files/i }));
+    await user.click(screen.getByRole('button', { name: /Toggle right pane/i }));
     expect(screen.getByRole('tab', { name: /Files/i })).toHaveAttribute('data-state', 'active');
     await user.click(screen.getByRole('tab', { name: /Git/i }));
     expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
