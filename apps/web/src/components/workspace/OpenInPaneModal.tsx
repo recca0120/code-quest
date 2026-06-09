@@ -6,6 +6,7 @@ interface SessionInfo {
   title?: string;
   status?: 'idle' | 'busy';
   branch?: string;
+  paneLabel?: string;
 }
 
 interface WorktreeInfo {
@@ -78,11 +79,18 @@ function SessionTab({
                 type="button"
                 data-testid={`modal-session-item-${s.channelId}`}
                 onClick={() => onSelectSession?.(s.channelId, targetPaneId)}
-                className="px-3 py-2 text-sm text-left rounded hover:bg-accent"
+                className="px-3 py-2 text-sm text-left rounded hover:bg-accent flex items-center justify-between"
               >
-                {s.status === 'busy' ? '●' : '○'}{' '}
-                {s.branch && <span className="font-mono opacity-60">⎇ {s.branch} · </span>}
-                {s.title ?? s.channelId}
+                <span>
+                  {s.status === 'busy' ? '●' : '○'}{' '}
+                  {s.branch && <span className="font-mono opacity-60">⎇ {s.branch} · </span>}
+                  {s.title ?? s.channelId}
+                </span>
+                {s.paneLabel && (
+                  <span className="text-xs text-muted-foreground ml-2 shrink-0">
+                    ← {s.paneLabel}
+                  </span>
+                )}
               </button>
             ))}
           </div>

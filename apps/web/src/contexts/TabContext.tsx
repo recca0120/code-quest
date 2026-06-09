@@ -173,6 +173,24 @@ export function collectSessionsInPaneTree(node: PaneNode): Set<string> {
   return ids;
 }
 
+export function buildSessionPaneLabels(node: PaneNode, path = ''): Map<string, string> {
+  if (node.type === 'leaf') {
+    const map = new Map<string, string>();
+    if (node.content.type === 'session' && node.content.sessionId) {
+      map.set(node.content.sessionId, path || 'Pane');
+    }
+    return map;
+  }
+  const firstLabel =
+    node.direction === 'h' ? `${path ? `${path}/` : ''}Left` : `${path ? `${path}/` : ''}Top`;
+  const secondLabel =
+    node.direction === 'h' ? `${path ? `${path}/` : ''}Right` : `${path ? `${path}/` : ''}Bottom`;
+  return new Map([
+    ...buildSessionPaneLabels(node.first, firstLabel),
+    ...buildSessionPaneLabels(node.second, secondLabel),
+  ]);
+}
+
 function mapNode(node: PaneNode, fn: (n: PaneNode) => PaneNode): PaneNode {
   const mapped = fn(node);
   if (mapped !== node) return mapped;

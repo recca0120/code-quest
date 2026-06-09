@@ -9,7 +9,12 @@ import { useGitActions, useGitState } from '@/contexts/GitContext';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
-import { TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
+import {
+  buildSessionPaneLabels,
+  TabProvider,
+  usePaneActions,
+  usePaneState,
+} from '@/contexts/TabContext';
 import { NO_FORM } from '@/utils/hotkey-options';
 import { CommandPalette } from '../palette/CommandPalette.tsx';
 import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
@@ -26,11 +31,19 @@ type OpenInPaneModalConfig = Omit<
 
 function ConnectedOpenInPaneModal(props: OpenInPaneModalConfig) {
   const { setSessionInPane, setContentInPane, focusPane } = usePaneActions();
-  const { focusedPaneId } = usePaneState();
+  const { focusedPaneId, paneRoot } = usePaneState();
+
+  const sessionPaneLabels = buildSessionPaneLabels(paneRoot);
+
+  const enrichedSessions = props.sessions?.map((s) => ({
+    ...s,
+    paneLabel: sessionPaneLabels.get(s.channelId) ?? '無 pane',
+  }));
 
   return (
     <OpenInPaneModal
       {...props}
+      sessions={enrichedSessions}
       onSelectSession={(channelId, paneId) => {
         const target = paneId ?? focusedPaneId;
         if (target) {

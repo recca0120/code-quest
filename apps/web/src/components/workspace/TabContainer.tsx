@@ -13,6 +13,7 @@ import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import {
+  buildSessionPaneLabels,
   collectSessionsInPaneTree,
   type PaneNode,
   type TabMeta,
@@ -108,10 +109,14 @@ function PaneLeafContent({
   const meta = sessionId ? tabs[sessionId] : null;
   const isOnly = paneRoot.type === 'leaf';
 
-  const sessionsInPanes = collectSessionsInPaneTree(paneRoot);
-  const inactiveSessions = Object.entries(tabs)
-    .filter(([id]) => !sessionsInPanes.has(id))
-    .map(([id, m]) => ({ channelId: id, title: m.title }));
+  const sessionPaneLabels = buildSessionPaneLabels(paneRoot);
+  const allSessions = Object.entries(tabs).map(([id, m]) => ({
+    channelId: id,
+    title: m.title,
+    status: m.tabStatus === 'processing' ? ('busy' as const) : ('idle' as const),
+    branch: m.branch,
+    paneLabel: sessionPaneLabels.get(id) ?? '無 pane',
+  }));
 
   return (
     <div className="flex flex-col flex-1 min-w-0 min-h-0">
@@ -165,7 +170,7 @@ function PaneLeafContent({
       ) : (
         <EmptyPanePicker
           paneId={node.id}
-          sessions={inactiveSessions}
+          sessions={allSessions}
           cwd={defaultCwd}
           onOpenModal={onOpenModal}
           availableWorktrees={availableWorktrees}

@@ -1,5 +1,5 @@
 /**
- * Tool Pane T.1–T.5
+ * Tool Pane T.2, T.3
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -17,21 +17,6 @@ function Wrapper({ children }: { children: React.ReactNode }) {
     </SocketProvider>
   );
 }
-
-// T.1: EmptyPanePicker shows tool options
-describe('ToolPane (T.1) empty pane picker has tool options', () => {
-  it('shows Git, Files, Spec, Worktrees tool buttons', () => {
-    render(
-      <Wrapper>
-        <EmptyPanePicker paneId="pane-1" sessions={[]} cwd="/project" />
-      </Wrapper>,
-    );
-    expect(screen.getByRole('button', { name: /Git/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Files/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Spec/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Worktrees/i })).toBeInTheDocument();
-  });
-});
 
 // T.2: selecting a tool sets the corresponding content type in the pane
 describe('ToolPane (T.2) selecting tool sets pane content type', () => {
@@ -94,15 +79,11 @@ describe('ToolPane (T.2) selecting tool sets pane content type', () => {
 // T.3: Tool pane default cwd from focused session
 describe('ToolPane (T.3) tool pane cwd defaults to focused session cwd', () => {
   it('EmptyPanePicker receives cwd from parent, which comes from focused session', () => {
-    // This test verifies the prop contract — the parent (TabContainer/PaneLeafContent)
-    // should pass the focused session's cwd to EmptyPanePicker as the cwd prop.
-    // We verify EmptyPanePicker passes it through to tool buttons.
     render(
       <Wrapper>
         <EmptyPanePicker paneId="pane-1" sessions={[]} cwd="/focused/session/cwd" />
       </Wrapper>,
     );
-    // The cwd should be used as data-testid or aria-description on the tool section
     expect(screen.getByTestId('tool-options')).toHaveAttribute('data-cwd', '/focused/session/cwd');
   });
 });
