@@ -164,7 +164,7 @@ function PaneLeafContent({
           onNewChannel={(newCwd) => onNewTab({ cwd: newCwd })}
           rightPane={
             activeTool && meta.cwd ? (
-              <RightPane cwd={meta.cwd} initialTab={activeTool} />
+              <RightPane key={activeTool} cwd={meta.cwd} initialTab={activeTool} />
             ) : undefined
           }
         />

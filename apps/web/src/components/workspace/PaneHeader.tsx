@@ -1,5 +1,12 @@
+import {
+  ClipboardDocumentListIcon,
+  DocumentTextIcon,
+  ViewColumnsIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { usePaneState } from '@/contexts/TabContext';
+import { cn } from '@/utils/cn';
 import { useMobileMode } from './useMobileMode';
 
 type ContextTool = 'files' | 'git' | 'spec';
@@ -17,6 +24,9 @@ interface PaneHeaderProps {
   onClose?: () => void;
   onSwap?: (targetId: string) => void;
 }
+
+const TOOL_BTN =
+  'w-6 h-6 flex items-center justify-center rounded hover:bg-hover-tint transition-colors';
 
 export function PaneHeader({
   paneId,
@@ -76,7 +86,7 @@ export function PaneHeader({
       {branch && <span className="text-muted-foreground">⎇ {branch}</span>}
       {branch && title && <span className="text-muted-foreground">·</span>}
       {title && <span className="font-medium truncate">{title}</span>}
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-0.5">
         {cwd && (
           <>
             <button
@@ -86,10 +96,13 @@ export function PaneHeader({
                 e.stopPropagation();
                 onToolSelect?.(activeTool === 'files' ? null : 'files');
               }}
-              className="opacity-60 hover:opacity-100"
+              className={cn(
+                TOOL_BTN,
+                activeTool === 'files' ? 'text-primary' : 'text-muted hover:text-text',
+              )}
               title="Files"
             >
-              📁
+              <DocumentTextIcon className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
@@ -98,10 +111,15 @@ export function PaneHeader({
                 e.stopPropagation();
                 onToolSelect?.(activeTool === 'git' ? null : 'git');
               }}
-              className="opacity-60 hover:opacity-100"
+              className={cn(
+                TOOL_BTN,
+                activeTool === 'git' ? 'text-primary' : 'text-muted hover:text-text',
+              )}
               title="Git"
             >
-              🌿
+              <span aria-hidden className="font-mono text-xs leading-none">
+                ⎇
+              </span>
             </button>
             <button
               type="button"
@@ -110,11 +128,15 @@ export function PaneHeader({
                 e.stopPropagation();
                 onToolSelect?.(activeTool === 'spec' ? null : 'spec');
               }}
-              className="opacity-60 hover:opacity-100"
+              className={cn(
+                TOOL_BTN,
+                activeTool === 'spec' ? 'text-primary' : 'text-muted hover:text-text',
+              )}
               title="Spec"
             >
-              📋
+              <ClipboardDocumentListIcon className="w-3.5 h-3.5" />
             </button>
+            <span className="w-px h-3 bg-border mx-0.5" />
           </>
         )}
         {!isMobile && (
@@ -126,10 +148,10 @@ export function PaneHeader({
                 e.stopPropagation();
                 onSplitH?.();
               }}
-              className="opacity-60 hover:opacity-100"
+              className={cn(TOOL_BTN, 'text-muted hover:text-text')}
               title="Split horizontally"
             >
-              ⊟
+              <ViewColumnsIcon className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
@@ -138,10 +160,10 @@ export function PaneHeader({
                 e.stopPropagation();
                 onSplitV?.();
               }}
-              className="opacity-60 hover:opacity-100"
+              className={cn(TOOL_BTN, 'text-muted hover:text-text rotate-90')}
               title="Split vertically"
             >
-              ⊞
+              <ViewColumnsIcon className="w-3.5 h-3.5" />
             </button>
           </>
         )}
@@ -153,10 +175,10 @@ export function PaneHeader({
             onClose?.();
           }}
           disabled={isOnly}
-          className="opacity-60 hover:opacity-100 disabled:opacity-30"
+          className={cn(TOOL_BTN, 'text-muted hover:text-text disabled:opacity-30')}
           title="Close pane"
         >
-          ×
+          <XMarkIcon className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
