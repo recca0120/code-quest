@@ -234,12 +234,12 @@
 
 ---
 
-## Phase 5：「Open in Pane」統一 Modal
+## Phase 5：PanePicker統一 Modal
 
 > 前提：Decision 7 更新後進行。
 > 核心原則：所有「開新 session 或 tool pane」入口統一到同一個 Modal；EmptyPanePicker inline 簡化，不再有「New session in...」grouped list。
 
-### OpenInPaneModal 元件（M）
+### PanePicker 元件（M）
 
 - [x] M.1 [test] Modal 有四個 tab：Session / Git / Files / Spec
 - [x] M.2 [test] Session tab 上半段列出現有 sessions（狀態 + 點擊填入 pane）
@@ -248,7 +248,7 @@
 - [x] M.5 [test] Tool tab（Git/Files/Spec）顯示 cwd 選擇器，預填 active project active worktree
 - [x] M.6 [test] Tool tab cwd 可切換（dropdown 列出所有 project 的 worktrees）
 - [x] M.7 [test] Tool tab 有 `[Open Git/Files/Spec pane]` 確認按鈕
-- [x] M.8 [impl] 建立 `OpenInPaneModal.tsx`，讓 M.1–M.7 測試通過
+- [x] M.8 [impl] 建立 `PanePicker.tsx`，讓 M.1–M.7 測試通過
 
 ### 入口接線（W）
 
@@ -279,11 +279,11 @@
 - [x] S.3 [impl] 在 `GlobalBar` 加入 `[☰]` 按鈕與 `onToggleSidebar` prop
 - [x] S.4 [impl] 在 `WorkspaceLayout` 接線 sidebar open/close 狀態，傳給 GlobalBar
 
-### OpenInPaneModal 補齊（P）
+### PanePicker 補齊（P）
 
 - [x] P.1 [test] Modal Session tab 列出現有 sessions 時顯示 branch 資訊（`⎇ branch · title`）
-- [x] P.2 [impl] `WorkspaceLayout` 將 active sessions 清單傳入 `OpenInPaneModal`（目前 `sessions` prop 為空）
-- [x] P.3 [impl] `OpenInPaneModal` Session tab session 項目顯示 branch
+- [x] P.2 [impl] `WorkspaceLayout` 將 active sessions 清單傳入 `PanePicker`（目前 `sessions` prop 為空）
+- [x] P.3 [impl] `PanePicker` Session tab session 項目顯示 branch
 
 ### SessionBar `[+]` 接線補齊（SB）
 
@@ -313,11 +313,11 @@
 - [x] DD7.2 [test] `onOpenModal` 不存在時 fallback 直接建立（向後相容）
 - [x] DD7.3 [impl] `TabContainer` empty state `onAction` 改為 `onOpenModal ? () => onOpenModal(undefined) : () => handleCreateTab()`
 
-### ConnectedOpenInPaneModal 接線（W）
+### ConnectedPanePicker 接線（W）
 
 - [x] W.1 [test] `WorkspaceLayout` 的 Modal `onSelectSession` 將 session 填入 focused pane 並關閉 Modal
 - [x] W.2 [test] `WorkspaceLayout` 的 Modal `onOpenToolPane` 建立 tool content pane 並關閉 Modal
-- [x] W.3 [impl] 在 `TabProvider` 內建立 `ConnectedOpenInPaneModal`，透過 `usePaneActions`/`usePaneState` 接線
+- [x] W.3 [impl] 在 `TabProvider` 內建立 `ConnectedPanePicker`，透過 `usePaneActions`/`usePaneState` 接線
 
 ### SessionBar focused-active 狀態修復（SB）
 
@@ -346,7 +346,7 @@
 
 - [x] M.5 [test] Git / Files / Spec tab selector label 改為 `Worktree:`（原為 `cwd:`）；aria-label 改為 `worktree`
 - [x] M.6 [test] selector options 顯示 `⎇ branch (project)` 格式（原缺 `⎇` 前綴）
-- [x] M.8 [impl] `OpenInPaneModal.tsx` ToolTab label 改為 `Worktree:`；option label 加 `⎇ ` 前綴
+- [x] M.8 [impl] `PanePicker.tsx` ToolTab label 改為 `Worktree:`；option label 加 `⎇ ` 前綴
 
 ### TabContainer Wiring（TW）
 
@@ -480,3 +480,39 @@
 - [x] WO.4 [test] Projects 區塊：每個 project 列出 worktrees；有 session 者顯示 session title；無 session 者顯示 `[+ New session]`
 - [x] WO.5 [test] Projects 區塊：`[+ New worktree]` / `[+ Add project]` 入口
 - [x] WO.6 [impl] 擴充 `SessionManager.tsx` 成 Workspace Overview，讓 WO.1–WO.5 通過
+
+---
+
+## Phase 13：PanePicker 重設計（兩欄 + Resume）
+
+> 採用設計方案 C：全版兩欄 modal。左欄 worktree 樹，右欄依選定 worktree 顯示
+> Active / Resume / New session / Tools 四區。Resume 使用 session:list excludeLive + session:resume。
+
+### Props 擴充（PP）
+
+- [x] PP.1 [test] PanePicker 接受 `pastSessions` prop（SessionSummary[]），Resume 區渲染每筆項目
+- [x] PP.2 [test] PanePicker 接受 `onResume` prop，點擊 [Resume] 呼叫 `onResume(sessionId)`
+- [x] PP.3 [test] PanePicker 接受 `onShowHere` prop，點擊 [Show here] 呼叫 `onShowHere(channelId, paneId)`（取代舊 onSelectSession）
+- [x] PP.4 [impl] 更新 `PanePickerProps`，新增 `pastSessions`、`onResume`、`onShowHere`
+
+### 左欄 worktree 樹（LT）
+
+- [x] LT.1 [test] 左欄列出所有 projects，每個 project 展開顯示其 worktrees
+- [x] LT.2 [test] 有 active session 的 worktree 顯示 `●` 指示
+- [x] LT.3 [test] 點選左欄 worktree → 右欄切換到對應 worktree 內容
+- [x] LT.4 [test] 預設選中 active project 的第一個 worktree
+- [x] LT.5 [impl] 實作左欄 `WorktreeTree` 子元件
+
+### 右欄內容四區（RC）
+
+- [x] RC.1 [test] Active 區：列出 workspace 中 cwd 屬於此 worktree 的 sessions，每筆有 `[Show here]` 按鈕
+- [x] RC.2 [test] Resume 區：列出 pastSessions 中 cwd 屬於此 worktree 的項目，顯示 title + 相對時間，每筆有 `[Resume]` 按鈕
+- [x] RC.3 [test] New session 區：`[+ New session]` 按鈕，呼叫 onNewSession(worktree.path, project.cwd)
+- [x] RC.4 [test] Tools 區：`[Git]` `[Files]` `[Spec]` 按鈕，呼叫 onOpenToolPane(type, worktree.path)
+- [x] RC.5 [impl] 實作右欄 `WorktreeContent` 子元件，整合四區
+
+### WorkspaceLayout 接線（WL）
+
+- [x] WL.1 [test] PanePicker 開啟時呼叫 `session:list { excludeLive: true, cwd }` 取得 pastSessions
+- [x] WL.2 [test] `onResume` → 呼叫 `SessionContext.resume(sessionId)` → 取得 channelId → setSessionInPane
+- [x] WL.3 [impl] `ConnectedPanePicker` 新增 pastSessions fetch 與 onResume 接線

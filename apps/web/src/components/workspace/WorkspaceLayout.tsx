@@ -21,33 +21,63 @@ import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { CreateWorktreeDialog } from '../project/CreateWorktreeDialog.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
 import { KeyboardShortcutsProvider } from './KeyboardShortcutsProvider.tsx';
-import { OpenInPaneModal } from './OpenInPaneModal.tsx';
+import { PanePicker } from './PanePicker.tsx';
 import { TabContainer } from './TabContainer.tsx';
 
-type OpenInPaneModalConfig = Omit<
-  React.ComponentProps<typeof OpenInPaneModal>,
-  'onSelectSession' | 'onOpenToolPane'
+type PanePickerConfig = Omit<
+  React.ComponentProps<typeof PanePicker>,
+  'onShowHere' | 'onOpenToolPane' | 'onResume' | 'pastSessions'
 >;
 
-function ConnectedOpenInPaneModal(props: OpenInPaneModalConfig) {
+function ConnectedPanePicker(props: PanePickerConfig) {
   const { setSessionInPane, setContentInPane, focusPane } = usePaneActions();
   const { focusedPaneId, paneRoot } = usePaneState();
+  const { listSessions, resume } = useSession();
+  const [pastSessions, setPastSessions] = useState<
+    Array<{ id: string; channelId: string; title?: string; cwd?: string; createdAt: string }>
+  >([]);
+
+  useEffect(() => {
+    if (!props.open) return;
+    void listSessions({ excludeLive: true, limit: 50 }).then((res) => {
+      if (res.ok)
+        setPastSessions(
+          res.data.sessions.map((s) => ({
+            id: s.id,
+            channelId: s.channelId,
+            title: s.title,
+            cwd: s.cwd,
+            createdAt: s.createdAt,
+          })),
+        );
+    });
+  }, [props.open, listSessions]);
 
   const sessionPaneLabels = buildSessionPaneLabels(paneRoot);
 
   const enrichedSessions = props.sessions?.map((s) => ({
     ...s,
-    paneLabel: sessionPaneLabels.get(s.channelId) ?? '無 pane',
+    paneLabel: sessionPaneLabels.get(s.channelId) || undefined,
   }));
 
   return (
-    <OpenInPaneModal
+    <PanePicker
       {...props}
       sessions={enrichedSessions}
-      onSelectSession={(channelId, paneId) => {
+      pastSessions={pastSessions}
+      onShowHere={(channelId, paneId) => {
         const target = paneId ?? focusedPaneId;
         if (target) {
           setSessionInPane(target, channelId);
+          focusPane(target);
+        }
+        props.onClose();
+      }}
+      onResume={async (sessionId) => {
+        const res = await resume(sessionId);
+        const target = props.targetPaneId ?? focusedPaneId;
+        if (target) {
+          setSessionInPane(target, res.channelId);
           focusPane(target);
         }
         props.onClose();
@@ -91,7 +121,7 @@ function WorkspaceLayoutInner() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
-  const [openInPaneModalOpen, setOpenInPaneModalOpen] = useState(false);
+  const [panePickerOpen, setOpenInPaneModalOpen] = useState(false);
   const [openInPaneTargetPaneId, setOpenInPaneTargetPaneId] = useState<string | undefined>();
   const [pendingSession, setPendingSession] = useState<{
     projectCwd: string;
@@ -184,26 +214,19 @@ function WorkspaceLayoutInner() {
               />
             </main>
           </KeyboardShortcutsProvider>
-          <ConnectedOpenInPaneModal
-            open={openInPaneModalOpen}
+          <ConnectedPanePicker
+            open={panePickerOpen}
             onClose={() => setOpenInPaneModalOpen(false)}
             sessions={sessions.map((s) => ({
               channelId: s.channelId,
               title: s.title,
               status: s.state === 'busy' ? ('busy' as const) : ('idle' as const),
               branch: s.branch,
+              cwd: s.cwd,
             }))}
             projects={projectList}
             allWorktrees={allWorktrees}
             activeProjectCwd={activeProjectCwd ?? undefined}
-            activeWorktree={
-              activeProjectCwd && allWorktrees[activeProjectCwd]?.[0]
-                ? {
-                    path: allWorktrees[activeProjectCwd][0]?.path ?? '',
-                    branch: allWorktrees[activeProjectCwd][0]?.branch,
-                  }
-                : undefined
-            }
             targetPaneId={openInPaneTargetPaneId}
             onNewSession={(cwd, projectCwd) => {
               setActiveProject(projectCwd);

@@ -121,7 +121,7 @@ Tab Bar 上的 tab 反映 session 與 pane 的關係，與現在「active = 正�
 
 ---
 
-### 7. "Open in Pane" 入口：Session Tab Bar `[+]` + EmptyPanePicker
+### 7. PanePicker 入口：Session Tab Bar `[+]` + EmptyPanePicker
 
 **Project / Worktree 資料模型：**
 
@@ -194,58 +194,65 @@ Project (repo root)
 - Sessions：點擊 → 填入該 pane
 - Tool 按鈕（Git/Files/Spec）：直接以 focused session cwd 開 tool pane（不需 modal）
 - `[+ branch]`：直接在該 pane 建立 session
-- `[More options...]`：開啟完整 "Open in Pane" Modal（需要跨 project 或指定 tool pane 的 worktree 時）
+- `[More options...]`：開啟完整 "PanePicker（需要跨 project 或指定 tool pane 的 worktree 時）
 
-**「Open in Pane」Modal（進階 / More options）：**
+**PanePicker — 設計方案 C（主選，全版兩欄）：**
 
-```
-┌─────────────────────────────────────────────┐
-│  Open in pane                        [×]   │
-├─────────────────────────────────────────────┤
-│  [ Session ]  [ 🌿 Git ]  [ 📁 Files ]  [ 📋 Spec ] │
-├─────────────────────────────────────────────┤
-│  (Session tab)                              │
-│                                             │
-│  Existing sessions                          │
-│  ──────────────────────────────             │
-│  ● ⎇main · Task A   ←在 Left pane          │
-│  ○ ⎇feat-x · Task B  ←無 pane             │
-│                                             │
-│  New session in                             │
-│  ──────────────────────────────             │
-│  app                                        │
-│      ⎇ main          [+ New session]        │
-│      ⎇ feat-x        [+ New session]        │
-│      [+ New worktree]                       │
-│  other-repo                                 │
-│      ⎇ main          [+ New session]        │
-│      [+ New worktree]                       │
-│                                             │
-│  [+ Add project]                            │
-└─────────────────────────────────────────────┘
-```
-
-Tool tab（Git / Files / Spec）選定後，需再選 worktree；預設填入 focused pane session 的 cwd，可手動切換：
+全版 modal，左欄選 worktree，右欄依 worktree 顯示所有可做的動作（Active / Resume / New / Tools）。
 
 ```
-┌─────────────────────────────────────────────┐
-│  Open in pane                        [×]   │
-├─────────────────────────────────────────────┤
-│  [ Session ]  [ 🌿 Git ]  [ 📁 Files ]  [ 📋 Spec ] │
-├─────────────────────────────────────────────┤
-│  (Git tab)                                  │
-│                                             │
-│  Worktree:  ⎇ main (app)  ▾  ← 預填，可換  │
-│                                             │
-│                      [Open Git pane]        │
-└─────────────────────────────────────────────┘
+┌───────────────────┬──────────────────────────────┐
+│  Open in pane     │                        [×]  │
+├───────────────────┼──────────────────────────────┤
+│  app              │  ⎇ main (app)                │
+│  ├ ⎇ main  ●     │                              │
+│  └ ⎇ feat-x      │  Active                      │
+│                   │  ● Task A  ←Left pane        │
+│  other-repo       │               [Show here]   │
+│  └ ⎇ main         │                              │
+│                   │  Resume                      │
+│                   │  Fix login  2h ago           │
+│                   │               [Resume]      │
+│                   │  Add dash   1d ago           │
+│                   │               [Resume]      │
+│                   │                              │
+│                   │  [+ New session]             │
+│  [+ Add project]  │  [Git] [Files] [Spec]        │
+└───────────────────┴──────────────────────────────┘
+```
+
+左欄：projects + worktrees 樹狀，`●` 代表有 active session。  
+右欄四區：
+- **Active**：workspace 中已開的 session → `[Show here]` 移入此 pane  
+- **Resume**：DB 中的歷史 session（`session:list excludeLive`）→ `[Resume]` 恢復  
+- **New session**：在此 worktree 開全新 session  
+- **Tools**：`[Git]` `[Files]` `[Spec]` 以此 worktree cwd 開 tool pane  
+
+**備案 B（Worktree 平面列表）：**
+
+若兩欄實作複雜度過高，fallback 為單欄平面列表，每個 worktree 展開顯示相同四區內容：
+
+```
+┌────────────────────────────────────────────────┐
+│  Open in pane                            [×]  │
+├────────────────────────────────────────────────┤
+│  app                                           │
+│  ⎇ main                                        │
+│    Active:  ● Task A  ←Left pane  [Show here] │
+│    Resume:  Fix login  2h ago     [Resume]    │
+│    [+ New session]  [Git] [Files] [Spec]       │
+│  ⎇ feat-x                                      │
+│    Active:  ○ Task B              [Show here] │
+│    [+ New session]  [Git] [Files] [Spec]       │
+│    [+ New worktree]                            │
+│  [+ Add project]                               │
+└────────────────────────────────────────────────┘
 ```
 
 **理由：**
-- 無 Global Bar 後，Session Tab Bar `[+]` 是唯一的頂層 new session 入口，inline dropdown 比全 modal 快。
-- EmptyPanePicker 已是「在這個 pane 做什麼」的一站式，直接列 worktree 按鈕不需多一層 modal。
-- Modal 保留給「需要指定 tool worktree」或「需要跨 project」等複雜場景。
-- 不存在 active project 概念，所有選擇都發生在使用者點擊的當下。
+- Resume 作為第一等公民，與 active session 並列，使用者不需另開 modal 或 tab。
+- 工具（Git/Files/Spec）直接綁在 worktree 下，不需獨立選 cwd。
+- 左欄 worktree 切換比 tab 更符合「先選 context，再決定動作」的心智模型。
 
 ---
 

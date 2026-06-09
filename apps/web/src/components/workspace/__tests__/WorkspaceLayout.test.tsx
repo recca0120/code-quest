@@ -155,7 +155,7 @@ describe('WorkspaceLayout — state preservation across breakpoints', () => {
   });
 });
 
-describe('WorkspaceLayout — OpenInPaneModal wiring', () => {
+describe('WorkspaceLayout — PanePicker wiring', () => {
   it('clicking existing session in modal fills focused pane and closes modal', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
@@ -167,12 +167,12 @@ describe('WorkspaceLayout — OpenInPaneModal wiring', () => {
     await result.user.click(screen.getAllByTestId('pane-split-h')[0]!);
     await result.user.click(screen.getByRole('button', { name: 'New Session' }));
 
-    // Modal has "Existing sessions" section — find session items by data-testid
+    // Modal has "Active" section — find session items by data-testid, click "Show here"
     const sessionItems = await screen.findAllByTestId(/^modal-session-item-/);
     const sessionItem = sessionItems[0]!;
     const channelId = sessionItem.getAttribute('data-testid')!.replace('modal-session-item-', '');
 
-    await result.user.click(sessionItem);
+    await result.user.click(sessionItem.querySelector('button')!);
 
     // Modal closes
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -191,11 +191,8 @@ describe('WorkspaceLayout — OpenInPaneModal wiring', () => {
     await result.user.click(screen.getByTestId('pane-split-h'));
     await result.user.click(screen.getByRole('button', { name: 'New Session' }));
 
-    // Switch to Git tab in modal
-    await result.user.click(screen.getByRole('tab', { name: /git/i }));
-
-    // Click "Open Git pane"
-    await result.user.click(screen.getByRole('button', { name: /open git pane/i }));
+    // Click the Git tool button in the right panel
+    await result.user.click(await screen.findByRole('button', { name: /git/i }));
 
     // Modal closes and a git pane appears
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -217,9 +214,9 @@ describe('WorkspaceLayout — layout width constraints', () => {
 
 // ── Worktree listing auto-fetch ──
 // WorkspaceLayout 必須在 project 加入後自動 fetch worktree listing，
-// 讓 OpenInPaneModal 的 worktree 列表有資料（不能依賴 Sidebar/ProjectRow）。
+// 讓 PanePicker 的 worktree 列表有資料（不能依賴 Sidebar/ProjectRow）。
 describe('WorkspaceLayout — worktree listing auto-fetch', () => {
-  it('fetches worktree listing after project is added so OpenInPaneModal shows branches', async () => {
+  it('fetches worktree listing after project is added so PanePicker shows branches', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();

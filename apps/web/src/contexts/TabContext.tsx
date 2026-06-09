@@ -182,9 +182,13 @@ export function buildSessionPaneLabels(node: PaneNode, path = ''): Map<string, s
     return map;
   }
   const firstLabel =
-    node.direction === 'h' ? `${path ? `${path}/` : ''}Left` : `${path ? `${path}/` : ''}Top`;
+    node.direction === 'h'
+      ? `${path ? `${path}/` : ''}Left pane`
+      : `${path ? `${path}/` : ''}Top pane`;
   const secondLabel =
-    node.direction === 'h' ? `${path ? `${path}/` : ''}Right` : `${path ? `${path}/` : ''}Bottom`;
+    node.direction === 'h'
+      ? `${path ? `${path}/` : ''}Right pane`
+      : `${path ? `${path}/` : ''}Bottom pane`;
   return new Map([
     ...buildSessionPaneLabels(node.first, firstLabel),
     ...buildSessionPaneLabels(node.second, secondLabel),

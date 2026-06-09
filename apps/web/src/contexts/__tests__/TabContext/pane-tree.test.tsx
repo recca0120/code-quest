@@ -8,7 +8,13 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { SocketProvider } from '@/contexts/SocketContext';
-import { TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
+import type { PaneNode } from '@/contexts/TabContext';
+import {
+  buildSessionPaneLabels,
+  TabProvider,
+  usePaneActions,
+  usePaneState,
+} from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
 
 function renderWithPanes(ui: ReactElement) {
@@ -325,5 +331,57 @@ describe('zoomPane action (1.8)', () => {
     expect(zoomedId).not.toBeNull();
     await user.click(screen.getByRole('button', { name: 'unzoom' }));
     expect(zoomedId).toBeNull();
+  });
+});
+
+describe('buildSessionPaneLabels', () => {
+  it('single leaf with session returns "Left pane" for h-split left child', () => {
+    const tree: PaneNode = {
+      type: 'split',
+      id: 's1',
+      direction: 'h',
+      ratio: 0.5,
+      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: 'ch-1' } },
+      second: { type: 'leaf', id: 'p2', content: { type: 'session', sessionId: null } },
+    };
+    const labels = buildSessionPaneLabels(tree);
+    expect(labels.get('ch-1')).toBe('Left pane');
+  });
+
+  it('h-split right child gets "Right pane"', () => {
+    const tree: PaneNode = {
+      type: 'split',
+      id: 's1',
+      direction: 'h',
+      ratio: 0.5,
+      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: null } },
+      second: { type: 'leaf', id: 'p2', content: { type: 'session', sessionId: 'ch-2' } },
+    };
+    const labels = buildSessionPaneLabels(tree);
+    expect(labels.get('ch-2')).toBe('Right pane');
+  });
+
+  it('v-split gets "Top pane" and "Bottom pane"', () => {
+    const tree: PaneNode = {
+      type: 'split',
+      id: 's1',
+      direction: 'v',
+      ratio: 0.5,
+      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: 'ch-top' } },
+      second: { type: 'leaf', id: 'p2', content: { type: 'session', sessionId: 'ch-bot' } },
+    };
+    const labels = buildSessionPaneLabels(tree);
+    expect(labels.get('ch-top')).toBe('Top pane');
+    expect(labels.get('ch-bot')).toBe('Bottom pane');
+  });
+
+  it('single pane (no split) returns "Pane"', () => {
+    const tree: PaneNode = {
+      type: 'leaf',
+      id: 'p1',
+      content: { type: 'session', sessionId: 'ch-1' },
+    };
+    const labels = buildSessionPaneLabels(tree);
+    expect(labels.get('ch-1')).toBe('Pane');
   });
 });
