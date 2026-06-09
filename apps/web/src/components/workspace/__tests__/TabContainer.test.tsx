@@ -143,17 +143,16 @@ describe('TabContainer — workspace tab switch keeps session mounted exactly on
     const pool = container.querySelector('[data-testid="session-pool"]');
     expect(pool?.querySelectorAll('[data-testid="chat-view"]').length ?? 0).toBe(0);
 
-    // Tab 2 pane is empty → shows EmptyPanePicker
-    expect(screen.getByTestId('empty-pane-picker')).toBeInTheDocument();
+    // Tab 2 pane is empty → shows "New Session" button
+    expect(screen.getAllByRole('button', { name: 'New Session' }).length).toBeGreaterThan(0);
   });
 });
 
-describe("TabContainer — EmptyPanePicker calls onOpenModal with the empty pane's id", () => {
-  it('when a split pane has one occupied and one empty, clicking "More options..." calls onOpenModal with the empty pane id', async () => {
+describe("TabContainer — empty pane's 'New Session' calls onOpenModal with the pane's id", () => {
+  it('when a split pane has one occupied and one empty, clicking "New Session" calls onOpenModal with the empty pane id', async () => {
     const user = userEvent.setup();
     const onOpenModal = vi.fn();
 
-    // Create session via pendingNewSessionCwd (New Session now opens modal when onOpenModal is provided)
     render(
       <NavigationProvider>
         <TabProvider>
@@ -170,12 +169,12 @@ describe("TabContainer — EmptyPanePicker calls onOpenModal with the empty pane
     // Split horizontally — now there are 2 panes: first occupied, second empty
     await user.click(screen.getByTestId('pane-split-h'));
 
-    // Second pane is empty — should show EmptyPanePicker with "+ Open new session..."
-    const picker = await screen.findByTestId('empty-pane-picker');
-    expect(picker).toBeInTheDocument();
+    // Second pane is empty — should show "New Session" button
+    const newSessionBtns = await screen.findAllByRole('button', { name: 'New Session' });
+    expect(newSessionBtns.length).toBeGreaterThan(0);
 
-    // Click "More options..." in the empty pane
-    await user.click(screen.getByRole('button', { name: /more options/i }));
+    // Click "New Session" in the empty pane (last one found)
+    await user.click(newSessionBtns[newSessionBtns.length - 1]!);
 
     // onOpenModal should have been called with the empty pane's id (not undefined)
     expect(onOpenModal).toHaveBeenCalledWith(expect.any(String));
@@ -341,68 +340,6 @@ describe('TabContainer — PaneHeader receives session cwd', () => {
     expect(header.querySelector('[aria-label="Files"]')).toBeInTheDocument();
     expect(header.querySelector('[aria-label="Git"]')).toBeInTheDocument();
     expect(header.querySelector('[aria-label="Spec"]')).toBeInTheDocument();
-  });
-});
-
-// TabContainer passes defaultCwd to EmptyPanePicker (T.3: focused session cwd)
-describe('TabContainer — EmptyPanePicker receives cwd from focused session', () => {
-  it('tool-options data-cwd uses focused session cwd when session pane is focused', async () => {
-    const user = userEvent.setup();
-
-    // Create a session with a specific cwd
-    const { container, rerender } = render(
-      <NavigationProvider>
-        <TabProvider>
-          <TabContainer />
-        </TabProvider>
-      </NavigationProvider>,
-    );
-
-    rerender(
-      <NavigationProvider>
-        <TabProvider>
-          <TabContainer pendingNewSessionCwd="/projects/app/feat" onSessionCreated={vi.fn()} />
-        </TabProvider>
-      </NavigationProvider>,
-    );
-
-    // Split → new empty pane gets focus
-    await user.click(screen.getByTestId('pane-split-h'));
-
-    // Refocus the first leaf (the one with the session, cwd: /projects/app/feat)
-    const leaves = container.querySelectorAll('[data-testid="split-pane-leaf"]');
-    await user.click(leaves[0]!);
-
-    // The empty pane's tool-options should now use the focused session's cwd
-    const toolOptions = screen.getByTestId('tool-options');
-    expect(toolOptions).toHaveAttribute('data-cwd', '/projects/app/feat');
-  });
-
-  it('tool-options data-cwd falls back to activeProjectCwd when focused pane has no session', async () => {
-    const user = userEvent.setup();
-
-    const { rerender } = render(
-      <NavigationProvider>
-        <TabProvider>
-          <TabContainer />
-        </TabProvider>
-      </NavigationProvider>,
-    );
-
-    rerender(
-      <NavigationProvider>
-        <TabProvider>
-          <TabContainer pendingNewSessionCwd="/projects/app/feat" onSessionCreated={vi.fn()} />
-        </TabProvider>
-      </NavigationProvider>,
-    );
-
-    // Split → new empty pane is focused → focusedTabCwd = null → fallback activeProjectCwd
-    await user.click(screen.getByTestId('pane-split-h'));
-
-    // The empty (focused) pane's tool-options should use activeProjectCwd as fallback
-    const toolOptions = screen.getByTestId('tool-options');
-    expect(toolOptions).toHaveAttribute('data-cwd', '/projects/app');
   });
 });
 

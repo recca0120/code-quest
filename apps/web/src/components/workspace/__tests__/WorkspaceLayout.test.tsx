@@ -163,9 +163,9 @@ describe('WorkspaceLayout — OpenInPaneModal wiring', () => {
     result.claude.prepareInit();
     await project.launchSession();
 
-    // Split to create an empty pane, then open modal via EmptyPanePicker [More options...]
+    // Split to create an empty pane, then open modal via empty pane "New Session"
     await result.user.click(screen.getAllByTestId('pane-split-h')[0]!);
-    await result.user.click(screen.getByRole('button', { name: /more options/i }));
+    await result.user.click(screen.getByRole('button', { name: 'New Session' }));
 
     // Modal has "Existing sessions" section — find session items by data-testid
     const sessionItems = await screen.findAllByTestId(/^modal-session-item-/);
@@ -189,7 +189,7 @@ describe('WorkspaceLayout — OpenInPaneModal wiring', () => {
 
     // Split pane to create an empty second pane, then open modal from it
     await result.user.click(screen.getByTestId('pane-split-h'));
-    await result.user.click(screen.getByRole('button', { name: /more options/i }));
+    await result.user.click(screen.getByRole('button', { name: 'New Session' }));
 
     // Switch to Git tab in modal
     await result.user.click(screen.getByRole('tab', { name: /git/i }));
@@ -226,7 +226,7 @@ describe('WorkspaceLayout — worktree listing auto-fetch', () => {
 
     // Open pane split and then open modal
     await result.user.click(screen.getByTestId('pane-split-h'));
-    await result.user.click(screen.getByRole('button', { name: /more options/i }));
+    await result.user.click(screen.getByRole('button', { name: 'New Session' }));
 
     // Modal 中 worktree branch 應出現（形如 "⎇ main"）
     await waitFor(() => {

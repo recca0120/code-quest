@@ -13,7 +13,6 @@ import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import {
-  buildSessionPaneLabels,
   collectSessionsInPaneTree,
   type PaneNode,
   type TabMeta,
@@ -24,7 +23,6 @@ import {
   useWorkspaceTab,
 } from '@/contexts/TabContext';
 import { ChatView } from '../chat/ChatView.tsx';
-import { EmptyPanePicker } from './EmptyPanePicker.tsx';
 import { PaneHeader } from './PaneHeader.tsx';
 import { PaneZoomProvider } from './PaneZoomProvider.tsx';
 import { SessionBar } from './SessionBar.tsx';
@@ -81,9 +79,7 @@ interface PaneLeafContentProps {
   node: Extract<PaneNode, { type: 'leaf' }>;
   tabs: Record<string, TabMeta>;
   projectName: string;
-  defaultCwd?: string;
   availableWorktrees?: WorktreeOption[];
-  projects?: { cwd: string; name: string }[];
   onToggleLeft?: () => void;
   onNewTab: (opts?: { cwd?: string; targetPaneId?: string }) => void;
   onOpenModal?: (paneId?: string) => void;
@@ -94,9 +90,7 @@ function PaneLeafContent({
   node,
   tabs,
   projectName,
-  defaultCwd,
   availableWorktrees,
-  projects,
   onToggleLeft,
   onNewTab,
   onOpenModal,
@@ -108,15 +102,6 @@ function PaneLeafContent({
   const sessionId = node.content.type === 'session' ? node.content.sessionId : null;
   const meta = sessionId ? tabs[sessionId] : null;
   const isOnly = paneRoot.type === 'leaf';
-
-  const sessionPaneLabels = buildSessionPaneLabels(paneRoot);
-  const allSessions = Object.entries(tabs).map(([id, m]) => ({
-    channelId: id,
-    title: m.title,
-    status: m.tabStatus === 'processing' ? ('busy' as const) : ('idle' as const),
-    branch: m.branch,
-    paneLabel: sessionPaneLabels.get(id) ?? '無 pane',
-  }));
 
   return (
     <div className="flex flex-col flex-1 min-w-0 min-h-0">
@@ -168,14 +153,12 @@ function PaneLeafContent({
           onNewChannel={(newCwd) => onNewTab({ cwd: newCwd })}
         />
       ) : (
-        <EmptyPanePicker
-          paneId={node.id}
-          sessions={allSessions}
-          cwd={defaultCwd}
-          onOpenModal={onOpenModal}
-          availableWorktrees={availableWorktrees}
-          projects={projects}
-          onNewSession={(cwd) => onNewTab({ cwd })}
+        <EmptyState
+          data-testid="empty-pane"
+          icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}
+          message="Empty pane"
+          actionLabel="New Session"
+          onAction={onOpenModal ? () => onOpenModal(node.id) : () => onNewTab()}
         />
       )}
     </div>
@@ -307,8 +290,6 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     [workspaceTabs, activeWorkspaceTabId],
   );
 
-  const defaultCwd = focusedTabCwd ?? activeProjectCwd ?? undefined;
-
   const availableWorktrees = useMemo<WorktreeOption[]>(() => {
     return projects.flatMap((p) => {
       const wts = listing[p.cwd];
@@ -329,9 +310,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
           node={node}
           tabs={tabs}
           projectName={projectName}
-          defaultCwd={defaultCwd}
           availableWorktrees={availableWorktrees}
-          projects={projects.map((p) => ({ cwd: p.cwd, name: p.name }))}
           onToggleLeft={onToggleLeft}
           onNewTab={handleCreateTab}
           onOpenModal={onOpenModal}
@@ -341,9 +320,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     [
       tabs,
       projectName,
-      defaultCwd,
       availableWorktrees,
-      projects,
       onToggleLeft,
       handleCreateTab,
       onOpenModal,
