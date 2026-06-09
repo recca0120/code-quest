@@ -49,16 +49,19 @@ async function launchSession(
     });
   });
 
-  // Entry point A: "New Session" EmptyState button → opens modal → click "+ New session"
+  // Entry point A: "New Session" EmptyState button → opens PanePicker → [💬 AI ▶] → [+ New Session]
+  // Single provider (AI_PROVIDERS.length === 1): AI ▶ directly shows actions, no provider selection step.
   const emptyStateBtn = screen.queryByRole('button', { name: 'New Session' });
   if (emptyStateBtn) {
     await user.click(emptyStateBtn);
-    const newSessionBtns = await screen.findAllByRole(
+    const aiBtn = await screen.findAllByRole('button', { name: /💬 AI/i }, { timeout: 5000 });
+    await user.click(aiBtn[0]!);
+    const newSessionBtn = await screen.findByRole(
       'button',
-      { name: /\+ New session/i },
+      { name: /\+ New Session/i },
       { timeout: 5000 },
     );
-    await user.click(newSessionBtns[0]!);
+    await user.click(newSessionBtn);
   } else {
     // Entry point B: SessionBar [+] "New session" → inline dropdown → click worktree
     const dropdownBtn = await screen.findByRole('button', { name: 'New session' });

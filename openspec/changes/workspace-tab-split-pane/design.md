@@ -196,63 +196,68 @@ Project (repo root)
 - `[+ branch]`：直接在該 pane 建立 session
 - `[More options...]`：開啟完整 "PanePicker（需要跨 project 或指定 tool pane 的 worktree 時）
 
-**PanePicker — 設計方案 C（主選，全版兩欄）：**
+**PanePicker — 設計方案 B（主選，單欄平面列表 + view 切換）：**
 
-全版 modal，左欄選 worktree，右欄依 worktree 顯示所有可做的動作（Active / Resume / New / Tools）。
-
-```
-┌───────────────────┬──────────────────────────────┐
-│  Open in pane     │                        [×]  │
-├───────────────────┼──────────────────────────────┤
-│  app              │  ⎇ main (app)                │
-│  ├ ⎇ main  ●     │                              │
-│  └ ⎇ feat-x      │  Active                      │
-│                   │  ● Task A  ←Left pane        │
-│  other-repo       │               [Show here]   │
-│  └ ⎇ main         │                              │
-│                   │  Resume                      │
-│                   │  Fix login  2h ago           │
-│                   │               [Resume]      │
-│                   │  Add dash   1d ago           │
-│                   │               [Resume]      │
-│                   │                              │
-│                   │  [+ New session]             │
-│  [+ Add project]  │  [Git] [Files] [Spec]        │
-└───────────────────┴──────────────────────────────┘
-```
-
-左欄：projects + worktrees 樹狀，`●` 代表有 active session。  
-右欄四區：
-- **Active**：workspace 中已開的 session → `[Show here]` 移入此 pane  
-- **Resume**：DB 中的歷史 session（`session:list excludeLive`）→ `[Resume]` 恢復  
-- **New session**：在此 worktree 開全新 session  
-- **Tools**：`[Git]` `[Files]` `[Spec]` 以此 worktree cwd 開 tool pane  
-
-**備案 B（Worktree 平面列表）：**
-
-若兩欄實作複雜度過高，fallback 為單欄平面列表，每個 worktree 展開顯示相同四區內容：
+單欄 modal，每個 worktree 展開顯示 active sessions 與一列 tool pane 按鈕。
+需要再選一步的 action 以 `▶` 標示，點擊後 PanePicker **整體切換 view**（mini-router），返回用 `[←]`。
 
 ```
 ┌────────────────────────────────────────────────┐
 │  Open in pane                            [×]  │
 ├────────────────────────────────────────────────┤
 │  app                                           │
-│  ⎇ main                                        │
-│    Active:  ● Task A  ←Left pane  [Show here] │
-│    Resume:  Fix login  2h ago     [Resume]    │
-│    [+ New session]  [Git] [Files] [Spec]       │
+│  ⎇ main  ●                                     │
+│    ○ Task A  ←Left pane          [Show here]  │
+│    [💬 AI ▶] [🌿 Git] [📁 Files] [📋 Spec]    │
 │  ⎇ feat-x                                      │
-│    Active:  ○ Task B              [Show here] │
-│    [+ New session]  [Git] [Files] [Spec]       │
+│    [💬 AI ▶] [🌿 Git] [📁 Files] [📋 Spec]    │
 │    [+ New worktree]                            │
 │  [+ Add project]                               │
 └────────────────────────────────────────────────┘
 ```
 
+Resume / Import 不在主 view 出現，統一收在 `[💬 AI ▶]` 下，與 AI 種類綁定。
+
+#### Tool pane 按鈕分兩類
+
+| 類型 | 按鈕 | 行為 |
+|---|---|---|
+| **One-click** | `🌿 Git` `📁 Files` `📋 Spec` | 直接開 pane |
+| **View-switch** | `💬 AI ▶` | PanePicker 切換到 AI picker view |
+
+#### View 切換層級（mini-router）
+
+完整三層架構，但當只有一個 AI provider 時自動折疊為兩層（跳過選 provider）：
+
+```
+主 view（worktree 列表）
+│
+└─ [💬 AI ▶] → AI picker view
+     │
+     │  ── 單一 AI provider（目前只有 Claude）──
+     │  直接顯示 actions，不需選 provider（2 clicks）
+     ├─ [+ New Session]  → 立刻開 session
+     ├─ [⟳ Resume ▶]    → session 清單（3 clicks）
+     └─ [⬆ Import ▶]    → format picker（3 clicks）
+     │
+     │  ── 多個 AI provider（未來 Claude + Codex）──
+     │  先選 provider，再進 actions（3 clicks）
+     ├─ [Claude ▶] → Claude view
+     │    ├─ [+ New Session]
+     │    ├─ [⟳ Resume ▶]  → Claude session 清單（4 clicks）
+     │    └─ [⬆ Import ▶]  → Claude format picker
+     └─ [Codex ▶] → Codex view
+          ├─ [+ New Session]
+          ├─ [⟳ Resume ▶]  → Codex session 清單
+          └─ [⬆ Import ▶]  → Codex format picker
+```
+
 **理由：**
-- Resume 作為第一等公民，與 active session 並列，使用者不需另開 modal 或 tab。
-- 工具（Git/Files/Spec）直接綁在 worktree 下，不需獨立選 cwd。
-- 左欄 worktree 切換比 tab 更符合「先選 context，再決定動作」的心智模型。
+- 統一三層概念（AI → provider → action），Resume / Import 與 AI 種類綁定。
+- 單一 provider 時自動折疊，避免無意義的一個選項 picker，最常用路徑維持 2 clicks。
+- 加新 AI 只改 AI picker view，不動主 view 結構。
+- View 切換而非 sub-modal：Esc 永遠關整個 PanePicker，`[←]` 返回上一層，無 dismiss 歧義。
+- Git / Files / Spec 永遠 one-click，常用路徑不增加步驟。
 
 ---
 

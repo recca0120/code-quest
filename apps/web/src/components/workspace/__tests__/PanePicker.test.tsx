@@ -59,7 +59,7 @@ const pastSessions = [
   },
 ];
 
-// Basic open/close
+// ── open/close ──────────────────────────────────────────────────────────────
 describe('PanePicker — open/close', () => {
   it('renders when open is true', () => {
     render(<PanePicker {...defaultProps} />);
@@ -72,38 +72,29 @@ describe('PanePicker — open/close', () => {
   });
 });
 
-// LT: 左欄 worktree 樹
-describe('PanePicker (LT) — left panel worktree tree', () => {
-  it('LT.1 lists all projects and their worktrees in left panel', () => {
+// ── flat list structure ──────────────────────────────────────────────────────
+describe('PanePicker (B) — flat list structure', () => {
+  it('shows all project names', () => {
     render(<PanePicker {...defaultProps} />);
-    const left = screen.getByTestId('pane-picker-left');
-    expect(left).toBeInTheDocument();
-    expect(left).toHaveTextContent('app');
-    expect(left).toHaveTextContent('other');
-    expect(left).toHaveTextContent('main');
-    expect(left).toHaveTextContent('feat-x');
+    expect(screen.getByText('app')).toBeInTheDocument();
+    expect(screen.getByText('other')).toBeInTheDocument();
   });
 
-  it('LT.2 worktree with active session shows ● indicator (data-has-session=true)', () => {
+  it('shows all worktree branches', () => {
     render(<PanePicker {...defaultProps} />);
-    const left = screen.getByTestId('pane-picker-left');
-    expect(left.querySelector('[data-has-session="true"]')).toBeInTheDocument();
+    const branches = screen.getAllByText(/⎇/);
+    const texts = branches.map((el) => el.textContent ?? '');
+    expect(texts.some((t) => t.includes('main'))).toBe(true);
+    expect(texts.some((t) => t.includes('feat-x'))).toBe(true);
   });
 
-  it('LT.3 clicking a worktree switches right panel to that worktree', async () => {
-    const user = userEvent.setup();
+  it('worktree with active session shows data-has-session=true', () => {
     render(<PanePicker {...defaultProps} />);
-    await user.click(screen.getByRole('button', { name: /feat-x/i }));
-    expect(screen.getByTestId('pane-picker-right')).toBeInTheDocument();
+    expect(document.querySelector('[data-has-session="true"]')).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-has-session="false"]').length).toBeGreaterThan(0);
   });
 
-  it('LT.4 default selection is active project first worktree', () => {
-    render(<PanePicker {...defaultProps} />);
-    // Task A is in /projects/app (main), should be visible in right panel by default
-    expect(screen.getByTestId('modal-session-item-ch-1')).toBeInTheDocument();
-  });
-
-  it('[+ Add project] button calls onAddProject', async () => {
+  it('[+ Add project] calls onAddProject', async () => {
     const user = userEvent.setup();
     const onAddProject = vi.fn();
     render(<PanePicker {...defaultProps} onAddProject={onAddProject} />);
@@ -112,59 +103,22 @@ describe('PanePicker (LT) — left panel worktree tree', () => {
   });
 });
 
-// PP: pastSessions / onResume / onShowHere
-describe('PanePicker (PP) — pastSessions / onResume / onShowHere', () => {
-  it('PP.1 renders pastSessions in Resume section for matching worktree', () => {
-    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
-    // default worktree is /projects/app (main) — only past-1 matches
-    expect(screen.getByText('Fix login bug')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /resume/i })).toBeInTheDocument();
-    // past-2 is for feat-x, not shown yet
-    expect(screen.queryByText('Add dashboard')).not.toBeInTheDocument();
-  });
-
-  it('PP.2 clicking [Resume] calls onResume with sessionId', async () => {
-    const user = userEvent.setup();
-    const onResume = vi.fn();
-    render(<PanePicker {...defaultProps} pastSessions={pastSessions} onResume={onResume} />);
-    await user.click(screen.getByRole('button', { name: /resume/i }));
-    expect(onResume).toHaveBeenCalledWith('past-1');
-  });
-
-  it('PP.3 clicking [Show here] calls onShowHere with channelId and paneId', async () => {
-    const user = userEvent.setup();
-    const onShowHere = vi.fn();
-    render(<PanePicker {...defaultProps} onShowHere={onShowHere} targetPaneId="pane-3" />);
-    await user.click(screen.getByRole('button', { name: /show here/i }));
-    expect(onShowHere).toHaveBeenCalledWith('ch-1', 'pane-3');
-  });
-
-  it('switching worktree shows that worktree past sessions', async () => {
-    const user = userEvent.setup();
-    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
-    await user.click(screen.getByRole('button', { name: /feat-x/i }));
-    expect(screen.getByText('Add dashboard')).toBeInTheDocument();
-    expect(screen.queryByText('Fix login bug')).not.toBeInTheDocument();
-  });
-});
-
-// RC: 右欄內容
-describe('PanePicker (RC) — right panel content', () => {
-  it('RC.1 Active section shows sessions matching selected worktree', () => {
+// ── active sessions ──────────────────────────────────────────────────────────
+describe('PanePicker (B) — active sessions', () => {
+  it('shows active sessions under their worktree', () => {
     render(<PanePicker {...defaultProps} />);
-    // /projects/app (main) — Task A matches
     expect(screen.getByTestId('modal-session-item-ch-1')).toBeInTheDocument();
-    // Task B is in feat-x, not shown
-    expect(screen.queryByTestId('modal-session-item-ch-2')).not.toBeInTheDocument();
+    expect(screen.getByTestId('modal-session-item-ch-2')).toBeInTheDocument();
   });
 
-  it('RC.1 session shows branch + status indicator', () => {
+  it('session shows branch + status', () => {
     render(<PanePicker {...defaultProps} />);
-    const right = screen.getByTestId('pane-picker-right');
-    expect(right).toHaveTextContent('⎇ main');
+    const item = screen.getByTestId('modal-session-item-ch-1');
+    expect(item).toHaveTextContent('⎇ main');
+    expect(item).toHaveTextContent('Task A');
   });
 
-  it('RC.1 session with paneLabel shows ← label', () => {
+  it('session with paneLabel shows ← label', () => {
     const sessionsWithLabel = [
       {
         channelId: 'ch-1',
@@ -179,32 +133,204 @@ describe('PanePicker (RC) — right panel content', () => {
     expect(screen.getByText('← Left pane')).toBeInTheDocument();
   });
 
-  it('RC.3 has [+ New session] button', () => {
+  it('[Show here] calls onShowHere with channelId and targetPaneId', async () => {
+    const user = userEvent.setup();
+    const onShowHere = vi.fn();
+    render(<PanePicker {...defaultProps} onShowHere={onShowHere} targetPaneId="pane-3" />);
+    await user.click(screen.getAllByRole('button', { name: /show here/i })[0]!);
+    expect(onShowHere).toHaveBeenCalledWith('ch-1', 'pane-3');
+  });
+});
+
+// ── VS: view 切換基礎 ─────────────────────────────────────────────────────────
+describe('PanePicker (VS) — view switching', () => {
+  it('VS.1 default view shows worktree list (main view)', () => {
     render(<PanePicker {...defaultProps} />);
-    expect(screen.getByRole('button', { name: /\+ New session/i })).toBeInTheDocument();
+    expect(screen.getByText('app')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^←$/i })).not.toBeInTheDocument();
   });
 
-  it('RC.3 [+ New session] calls onNewSession with worktree path and projectCwd', async () => {
+  it('VS.2 non-main view shows [←] back button', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    expect(screen.getByRole('button', { name: /^←$/ })).toBeInTheDocument();
+  });
+
+  it('VS.3 clicking [←] returns to main view', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    expect(screen.queryByText('app')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^←$/ }));
+    expect(screen.getByText('app')).toBeInTheDocument();
+  });
+});
+
+// ── AI: AI picker view ────────────────────────────────────────────────────────
+describe('PanePicker (AI) — AI picker view', () => {
+  it('AI.1 each worktree has [💬 AI ▶] button', () => {
+    render(<PanePicker {...defaultProps} />);
+    expect(screen.getAllByRole('button', { name: /💬 AI/i }).length).toBe(3);
+  });
+
+  it('AI.2 clicking [💬 AI ▶] switches to AI picker view with branch title', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    expect(screen.getByText(/AI.*main/i)).toBeInTheDocument();
+    expect(screen.queryByText('app')).not.toBeInTheDocument();
+  });
+
+  // 單一 AI provider：直接顯示 actions（折疊兩層）
+  it('AI.3 single provider — AI picker shows actions directly, no provider button', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    // 不顯示 [Claude ▶] provider 選擇按鈕
+    expect(screen.queryByRole('button', { name: /claude ▶/i })).not.toBeInTheDocument();
+    // 直接顯示 actions
+    expect(screen.getByRole('button', { name: /new session/i })).toBeInTheDocument();
+  });
+
+  it('AI.4 single provider — [+ New Session] calls onNewSession', async () => {
     const user = userEvent.setup();
     const onNewSession = vi.fn();
     render(<PanePicker {...defaultProps} onNewSession={onNewSession} targetPaneId="pane-1" />);
-    await user.click(screen.getByRole('button', { name: /\+ New session/i }));
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /new session/i }));
     expect(onNewSession).toHaveBeenCalledWith('/projects/app', '/projects/app', 'pane-1');
   });
 
-  it('RC.4 has Git, Files, Spec tool buttons', () => {
-    render(<PanePicker {...defaultProps} />);
-    const right = screen.getByTestId('pane-picker-right');
-    expect(right.querySelector('[data-tool="git"]')).toBeInTheDocument();
-    expect(right.querySelector('[data-tool="files"]')).toBeInTheDocument();
-    expect(right.querySelector('[data-tool="spec"]')).toBeInTheDocument();
+  it('AI.5 AI picker shows [⟳ Resume ▶] only if worktree has past sessions', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    expect(screen.getByRole('button', { name: /resume/i })).toBeInTheDocument();
   });
 
-  it('RC.4 clicking Git button calls onOpenToolPane with worktree path', async () => {
+  it('AI.6 AI picker shows [⬆ Import ▶] always', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    expect(screen.getByRole('button', { name: /import/i })).toBeInTheDocument();
+  });
+
+  it('AI.7 main view has NO Resume, Import, or New Session buttons', () => {
+    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
+    expect(screen.queryByRole('button', { name: /new session/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /resume/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /import/i })).not.toBeInTheDocument();
+  });
+});
+
+// ── RV: Resume view ───────────────────────────────────────────────────────────
+describe('PanePicker (RV) — Resume view', () => {
+  it('RV.1 past sessions hidden in main view', () => {
+    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
+    expect(screen.queryByText('Fix login bug')).not.toBeInTheDocument();
+  });
+
+  it('RV.2 clicking [⟳ Resume ▶] in AI picker switches to Resume view', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /resume/i }));
+    expect(screen.getByText(/resume.*main/i)).toBeInTheDocument();
+    expect(screen.queryByText(/AI.*main/i)).not.toBeInTheDocument();
+  });
+
+  it('RV.3 Resume view lists past sessions with title and relative time', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /resume/i }));
+    expect(screen.getByText('Fix login bug')).toBeInTheDocument();
+    expect(screen.getByText(/2h ago/)).toBeInTheDocument();
+  });
+
+  it('RV.3 Resume view only shows sessions for that worktree', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /resume/i }));
+    expect(screen.getByText('Fix login bug')).toBeInTheDocument();
+    expect(screen.queryByText('Add dashboard')).not.toBeInTheDocument();
+  });
+
+  it('RV.4 clicking [Resume] in Resume view calls onResume(sessionId)', async () => {
+    const user = userEvent.setup();
+    const onResume = vi.fn();
+    render(<PanePicker {...defaultProps} pastSessions={pastSessions} onResume={onResume} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /resume/i }));
+    await user.click(screen.getByRole('button', { name: /^resume$/i }));
+    expect(onResume).toHaveBeenCalledWith('past-1');
+  });
+
+  it('RV.5 [←] from Resume view goes back to AI picker', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} pastSessions={pastSessions} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /resume/i }));
+    await user.click(screen.getByRole('button', { name: /^←$/ }));
+    expect(screen.getByText(/AI.*main/i)).toBeInTheDocument();
+  });
+});
+
+// ── IV: Import view ───────────────────────────────────────────────────────────
+describe('PanePicker (IV) — Import view', () => {
+  it('IV.2 clicking [⬆ Import ▶] in AI picker switches to Import view', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /import/i }));
+    expect(screen.getByText(/import.*main/i)).toBeInTheDocument();
+    expect(screen.queryByText(/AI.*main/i)).not.toBeInTheDocument();
+  });
+
+  it('IV.3 Import view shows [Claude JSONL] option', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /import/i }));
+    expect(screen.getByRole('button', { name: /claude jsonl/i })).toBeInTheDocument();
+  });
+
+  it('IV.4 clicking [Claude JSONL] calls onImport with format and worktreePath', async () => {
+    const user = userEvent.setup();
+    const onImport = vi.fn();
+    render(<PanePicker {...defaultProps} onImport={onImport} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /import/i }));
+    await user.click(screen.getByRole('button', { name: /claude jsonl/i }));
+    expect(onImport).toHaveBeenCalledWith('claude-jsonl', '/projects/app');
+  });
+
+  it('IV.5 [←] from Import view goes back to AI picker', async () => {
+    const user = userEvent.setup();
+    render(<PanePicker {...defaultProps} />);
+    await user.click(screen.getAllByRole('button', { name: /💬 AI/i })[0]!);
+    await user.click(screen.getByRole('button', { name: /import/i }));
+    await user.click(screen.getByRole('button', { name: /^←$/ }));
+    expect(screen.getByText(/AI.*main/i)).toBeInTheDocument();
+  });
+});
+
+// ── one-click tool panes ──────────────────────────────────────────────────────
+describe('PanePicker (B) — one-click tool panes', () => {
+  it('each worktree has Git, Files, Spec buttons', () => {
+    render(<PanePicker {...defaultProps} />);
+    expect(document.querySelectorAll('[data-tool="git"]').length).toBe(3);
+    expect(document.querySelectorAll('[data-tool="files"]').length).toBe(3);
+    expect(document.querySelectorAll('[data-tool="spec"]').length).toBe(3);
+  });
+
+  it('[Git] calls onOpenToolPane with worktree path', async () => {
     const user = userEvent.setup();
     const onOpenToolPane = vi.fn();
     render(<PanePicker {...defaultProps} onOpenToolPane={onOpenToolPane} targetPaneId="pane-2" />);
-    await user.click(screen.getByRole('button', { name: /git/i }));
+    await user.click(document.querySelectorAll('[data-tool="git"]')[0] as HTMLElement);
     expect(onOpenToolPane).toHaveBeenCalledWith('git', '/projects/app', 'pane-2');
   });
 
@@ -212,12 +338,12 @@ describe('PanePicker (RC) — right panel content', () => {
     const user = userEvent.setup();
     const onNewWorktree = vi.fn();
     render(<PanePicker {...defaultProps} onNewWorktree={onNewWorktree} />);
-    await user.click(screen.getByRole('button', { name: /\+ New worktree/i }));
+    await user.click(screen.getAllByRole('button', { name: /\+ New worktree/i })[0]!);
     expect(onNewWorktree).toHaveBeenCalledWith('/projects/app');
   });
 });
 
-// Design alignment
+// ── design alignment ─────────────────────────────────────────────────────────
 describe('PanePicker — design alignment', () => {
   it('dialog title is "Open in pane"', () => {
     render(<PanePicker {...defaultProps} />);

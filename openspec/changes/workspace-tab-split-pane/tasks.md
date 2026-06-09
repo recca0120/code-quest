@@ -516,3 +516,49 @@
 - [x] WL.1 [test] PanePicker 開啟時呼叫 `session:list { excludeLive: true, cwd }` 取得 pastSessions
 - [x] WL.2 [test] `onResume` → 呼叫 `SessionContext.resume(sessionId)` → 取得 channelId → setSessionInPane
 - [x] WL.3 [impl] `ConnectedPanePicker` 新增 pastSessions fetch 與 onResume 接線
+
+---
+
+## Phase 14：PanePicker view 切換 + AI picker
+
+> 設計方案 B（單欄平面列表）已實作基本結構。本階段新增 view 切換（mini-router）、
+> AI picker（Claude / Codex 層級）、Resume view、Import view。
+>
+> 規則：
+> - One-click：Git、Files、Spec → 直接開 pane（維持現況）
+> - View-switch（`▶`）：AI、Resume、Import → PanePicker 整體切換 view，`[←]` 返回
+> - Resume / Import 與 AI 種類綁定（Claude resume ≠ Codex resume）
+> - Esc 永遠關整個 PanePicker（不只關 sub-view）
+
+### View 切換基礎（VS）
+
+- [x] VS.1 [test] PanePicker 有 `view` state，預設為 `{ type: 'main' }`
+- [x] VS.2 [test] 非 main view 時顯示 `[←]` 返回按鈕，點擊回到 main view
+- [x] VS.3 [test] `[←]` 返回時 view 回到上一層（支援多層 history）
+- [x] VS.4 [impl] 實作 view stack（push / pop），reset on open
+
+### AI Picker view（AI）
+
+- [x] AI.1 [test] 每個 worktree 有 `[💬 AI ▶]` 按鈕
+- [x] AI.2 [test] 點擊 `[💬 AI ▶]` 切換到 AI picker view，顯示 `[←] AI — ⎇ <branch>`
+- [x] AI.3 [test] AI picker view 列出 `[Claude]`，點擊立刻呼叫 `onNewSession`（2 clicks）
+- [x] AI.4 [test] AI picker view 有 `[⟳ Resume ▶]`（有 pastSessions 時）和 `[⬆ Import ▶]`
+- [x] AI.5 [test] 主 view 不出現 Resume / Import 按鈕
+- [x] AI.6 [impl] 實作 AI picker view（Claude 立刻 + Resume ▶ + Import ▶ + 未來 Codex ▶）
+
+### Resume view（RV）
+
+- [x] RV.1 [test] past sessions 在主 view 隱藏
+- [x] RV.2 [test] 點擊 AI picker 內的 `[⟳ Resume ▶]` 切換到 Resume view，顯示 `[←] Resume — ⎇ <branch>`
+- [x] RV.3 [test] Resume view 列出該 worktree 的 past sessions，每筆有 title + 相對時間 + `[Resume]` 按鈕
+- [x] RV.4 [test] 點擊 `[Resume]` 呼叫 `onResume(sessionId)`
+- [x] RV.5 [test] `[←]` 從 Resume view 返回 AI picker
+- [x] RV.6 [impl] 實作 Resume view，從 AI picker 進入
+
+### Import view（IV）
+
+- [x] IV.1 [test] 點擊 AI picker 內的 `[⬆ Import ▶]` 切換到 Import view，顯示 `[←] Import — ⎇ <branch>`
+- [x] IV.2 [test] Import view 列出 `[📄 Claude JSONL]` 選項
+- [x] IV.3 [test] 點擊 `[📄 Claude JSONL]` 呼叫 `onImport('claude-jsonl', worktreePath)`
+- [x] IV.4 [test] `[←]` 從 Import view 返回 AI picker
+- [x] IV.5 [impl] 實作 Import view（架構支援未來加其他格式）
