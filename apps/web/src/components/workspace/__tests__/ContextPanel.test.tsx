@@ -4,7 +4,7 @@
 import { createFakeServer } from '@code-quest/server/test';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode, useRef } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import {
   ContextPanelFiles,
@@ -12,6 +12,7 @@ import {
   ContextPanelSpec,
 } from '@/components/workspace/ContextPanel';
 import { PaneHeader } from '@/components/workspace/PaneHeader';
+import { RightPane } from '@/components/workspace/RightPane';
 import { FsProvider } from '@/contexts/FsContext';
 import { GitProvider } from '@/contexts/GitContext';
 import { OpenspecProvider } from '@/contexts/OpenspecContext';
@@ -93,98 +94,101 @@ function makeOpenspecEnv() {
   return { OpenspecWrapper, priming };
 }
 
-// ── E.1–E.5: PaneHeader context panel toolbar (pre-existing tests) ──
+// ── ControlledPaneHeader: mirrors PaneLeafContent's stateful wiring ──
+
+function ControlledPaneHeader({
+  cwd,
+  openspecWrapper = false,
+}: {
+  cwd?: string;
+  openspecWrapper?: boolean;
+}) {
+  const [activeTool, setActiveTool] = useState<'files' | 'git' | 'spec' | null>(null);
+  const header = (
+    <PaneHeader paneId="p1" cwd={cwd} activeTool={activeTool} onToolSelect={setActiveTool} />
+  );
+  const panel = activeTool && cwd ? <RightPane cwd={cwd} initialTab={activeTool} /> : null;
+  if (openspecWrapper) {
+    return (
+      <Wrapper>
+        {header}
+        {panel}
+      </Wrapper>
+    );
+  }
+  return (
+    <Wrapper>
+      {header}
+      {panel}
+    </Wrapper>
+  );
+}
+
+// ── E.1–E.5: PaneHeader context panel toolbar ──
 
 describe('ContextPanel (E.1) PaneHeader shows context toolbar', () => {
   it('shows Files, Git, Spec toolbar icons when cwd is provided', () => {
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneHeader cwd="/project" />);
     expect(screen.getByRole('button', { name: /Files/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Git/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Spec/i })).toBeInTheDocument();
   });
 
   it('does not show toolbar when cwd is not provided', () => {
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneHeader />);
     expect(screen.queryByRole('button', { name: /Files/i })).not.toBeInTheDocument();
   });
 });
 
 describe('ContextPanel (E.2) clicking icon expands context panel', () => {
-  it('clicking Files icon shows context panel', async () => {
+  it('clicking Files icon shows right pane body', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneHeader cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Files/i }));
-    expect(screen.getByTestId('context-panel')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
   });
 
-  it('clicking Git icon shows context panel with git tab active', async () => {
+  it('clicking Git icon shows right pane body with git tab active', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneHeader cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Git/i }));
-    const panel = screen.getByTestId('context-panel');
-    expect(panel).toHaveAttribute('data-active-tool', 'git');
+    expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
   });
 });
 
 describe('ContextPanel (E.3) context panel cwd follows session', () => {
   it('context panel shows the cwd from the session', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/my/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneHeader cwd="/my/project" />);
     await user.click(screen.getByRole('button', { name: /Files/i }));
-    expect(screen.getByTestId('context-panel')).toHaveAttribute('data-cwd', '/my/project');
+    expect(screen.getByRole('region', { name: 'right-pane-body' })).toHaveAttribute(
+      'data-cwd',
+      '/my/project',
+    );
   });
 });
 
 describe('ContextPanel (E.4) clicking same icon collapses panel', () => {
   it('clicking same icon again closes the context panel', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneHeader cwd="/project" />);
     const filesBtn = screen.getByRole('button', { name: 'Files' });
     await user.click(filesBtn);
-    expect(screen.getByTestId('context-panel')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
     await user.click(filesBtn);
-    expect(screen.queryByTestId('context-panel')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'right-pane-body' })).not.toBeInTheDocument();
   });
 });
 
 describe('ContextPanel (E.5) context panel has tab navigation', () => {
   it('switching tabs in context panel changes the active tool', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneHeader cwd="/project" />);
     await user.click(screen.getByRole('button', { name: 'Files' }));
-    const panel = screen.getByTestId('context-panel');
-    expect(panel).toHaveAttribute('data-active-tool', 'files');
+    expect(screen.getByRole('tab', { name: /Files/i })).toHaveAttribute('data-state', 'active');
 
-    await user.click(screen.getByTestId('context-tab-git'));
-    expect(panel).toHaveAttribute('data-active-tool', 'git');
+    await user.click(screen.getByRole('tab', { name: /Git/i }));
+    expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
   });
 });
 

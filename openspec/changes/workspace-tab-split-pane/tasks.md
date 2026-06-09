@@ -395,6 +395,10 @@
 
 ### Session Pane Header Toolbar（CT）
 
+> **架構更正（Phase 15）**：Context Panel 改為與 main branch `RightPane` 一致的 inline side panel。
+> `activeTool` state 從 `PaneHeader` 提升到 `PaneLeafContent`，透過 `ChatView.rightPane` 渲染，
+> `PaneHeader` 只 fire `onToolSelect` callback。詳見 Phase 15。
+
 - [x] CT.1 [test] session pane header 有 `[📁][🌿][📋]` toolbar 按鈕（`aria-label="Toggle Files panel"` 等）
 - [x] CT.2 [test] 點擊 `[🌿]` → `data-testid="context-panel"` 出現在 session pane 右側
 - [x] CT.3 [test] Context Panel 預設顯示 Git tab；header 有 `[📁 Files][🌿 Git][📋 Spec]` tab 切換
@@ -429,6 +433,30 @@
 - [x] CS.3 [test] 顯示 specs 清單（capability 名稱）
 - [x] CS.4 [test] 點擊 change → 顯示 tasks.md 內容（需要 openspec:read RPC，未接）
 - [x] CS.5 [impl] 實作 `ContextPanelSpec`（`ContextPanel.tsx`）
+
+---
+
+## Phase 15：Context Panel 重構為 Inline Side Panel
+
+> **動機**：Phase 10 實作的 Context Panel 將 panel 渲染於 header 正下方（inline-under-header），
+> 與 main branch `RightPane`（inline side panel，`flex-row`）不一致，
+> 且多 pane 情境下空間利用差，`ContextPanel.tsx` 元件也重複實作了 `FilesPane/GitPane/SpecPane` 的功能。
+>
+> **目標**：`activeTool` state 提升到 `PaneLeafContent`，透過 `ChatView.rightPane` inline 渲染，
+> `PaneHeader` 只負責 icon + callback，不持有 state 也不渲染 panel。
+
+### CT2（Context Panel 重構）
+
+- [x] CT2.1 [test] `PaneHeader` 改為接收 `activeTool` prop + `onToolSelect` callback，不再自己持有 state
+- [x] CT2.2 [test] `PaneLeafContent` 持有 `activeTool` state；點 `[🌿]` → activeTool='git'
+- [x] CT2.3 [test] `PaneLeafContent` 再次點擊同一 icon → activeTool=null（toggle 收合）
+- [x] CT2.4 [test] `ChatView` 收到非 null `rightPane` prop → 渲染於 chat body 右側（`flex-row`，`w-72 shrink-0 border-l`）
+- [x] CT2.5 [test] `RightPane` 接收 `initialTab` prop → 預設顯示對應 tab（'files'|'git'|'spec'）
+- [x] CT2.6 [impl] `PaneHeader`：移除 `activeTool` useState，改為 `activeTool` prop + `onToolSelect(tool)` callback
+- [x] CT2.7 [impl] `PaneLeafContent`：加入 `activeTool` state，切換時傳給 `PaneHeader` 及 `ChatView.rightPane`
+- [x] CT2.8 [impl] 從 main branch 移植 `RightPane`（`apps/web/src/components/workspace/RightPane.tsx`），加入 `initialTab` prop
+- [x] CT2.9 [impl] `ChatView.rightPane` 以 `w-72 shrink-0 border-l border-border overflow-y-auto` 渲染（不用 overlay）
+- [x] CT2.10 [impl] 移除 `ContextPanel.tsx` 中已被 `RightPane` 取代的渲染邏輯（`ContextPanelFiles/Git/Spec` 的對應部分）
 
 ---
 

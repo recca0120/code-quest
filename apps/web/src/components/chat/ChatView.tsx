@@ -20,9 +20,15 @@ interface ChatViewProps {
   title?: string;
   projectName?: string;
   onToggleLeft?: () => void;
+  rightPane?: React.ReactNode;
 }
 
-export function ChatView({ title, projectName, onToggleLeft }: ChatViewProps): React.JSX.Element {
+export function ChatView({
+  title,
+  projectName,
+  onToggleLeft,
+  rightPane,
+}: ChatViewProps): React.JSX.Element {
   const channelId = useChannelId();
   const messages = useChannelStore((s) => s.messages);
   const { worktree } = useChannelConfig();
@@ -87,6 +93,9 @@ export function ChatView({ title, projectName, onToggleLeft }: ChatViewProps): R
               <ChatInputArea />
             </ChatPanel.Footer>
           </ChatPanel>
+          {rightPane && (
+            <div className="w-72 shrink-0 border-l border-border overflow-y-auto">{rightPane}</div>
+          )}
         </div>
       </div>
     </>

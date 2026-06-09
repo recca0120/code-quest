@@ -164,6 +164,42 @@ describe('PaneHeader (3.6) focused pane accent', () => {
   });
 });
 
+// CT2.1: PaneHeader 是 controlled — 接收 activeTool prop，不自己管 state
+describe('PaneHeader (CT2.1) controlled activeTool', () => {
+  it('shows tools section when cwd is provided', () => {
+    render(
+      <Wrapper>
+        <PaneHeader paneId="p1" cwd="/test" activeTool={null} onToolSelect={vi.fn()} />
+      </Wrapper>,
+    );
+    expect(screen.getByRole('button', { name: /Files/i })).toBeInTheDocument();
+  });
+
+  it('calls onToolSelect with "git" when git icon clicked', async () => {
+    const user = userEvent.setup();
+    const onToolSelect = vi.fn();
+    render(
+      <Wrapper>
+        <PaneHeader paneId="p1" cwd="/test" activeTool={null} onToolSelect={onToolSelect} />
+      </Wrapper>,
+    );
+    await user.click(screen.getByRole('button', { name: /Git/i }));
+    expect(onToolSelect).toHaveBeenCalledWith('git');
+  });
+
+  it('calls onToolSelect with null when active tool icon clicked again (toggle off)', async () => {
+    const user = userEvent.setup();
+    const onToolSelect = vi.fn();
+    render(
+      <Wrapper>
+        <PaneHeader paneId="p1" cwd="/test" activeTool="git" onToolSelect={onToolSelect} />
+      </Wrapper>,
+    );
+    await user.click(screen.getByRole('button', { name: /Git/i }));
+    expect(onToolSelect).toHaveBeenCalledWith(null);
+  });
+});
+
 // 3.7: zoomed pane shows zoom indicator
 describe('PaneHeader (3.7) zoom indicator', () => {
   it('shows zoom indicator when pane is zoomed', async () => {

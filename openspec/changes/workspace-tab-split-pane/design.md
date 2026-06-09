@@ -534,9 +534,9 @@ Global Bar 已移除。Settings `[⚙]` 移至 Tab Bar 右側；Search 純鍵盤
 
 ### E. Context Panel（Session Pane 內建 Tool Panel）
 
-每個 session pane 的 header 提供 `[📁][🌿][📋]` toolbar，點擊展開附著在該 pane 右側的 context panel，cwd 自動跟該 session，不需手動指定。
+每個 session pane 的 header 提供 `[📁][🌿][📋]` toolbar，點擊展開附著在該 pane **右側的 inline side panel**，cwd 自動跟該 session，不需手動指定。呈現方式與 main branch `RightPane` 相同：panel inline 嵌入於 pane 內部（`flex-row`），不使用 overlay。
 
-**展開狀態：**
+**展開狀態（inline side panel）：**
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ ⎇main·Task A   [📁][🌿][📋]              [⊟][⊞][×]     │
@@ -544,7 +544,7 @@ Global Bar 已移除。Settings `[⚙]` 移至 Tab Bar 右側；Search 純鍵盤
 │                            │ [📁Files] [🌿Git] [📋Spec]  │
 │   Chat A                   ├─────────────────────────────┤
 │   (focused)                │                             │
-│                            │   （tab 內容）               │
+│                            │   （tab 內容，w-72）         │
 │                            │                             │
 └────────────────────────────┴─────────────────────────────┘
 ```
@@ -560,6 +560,20 @@ Global Bar 已移除。Settings `[⚙]` 移至 Tab Bar 右側；Search 純鍵盤
 └──────────────────────────────────────────────────────────┘
 ```
 
+**State 位置：`activeTool` 提升到 `PaneLeafContent`**
+
+`PaneHeader` 只 fire callback（`onToolSelect`），不自己管理 panel 渲染。
+`PaneLeafContent` 持有 `activeTool: 'files' | 'git' | 'spec' | null`，傳入 `ChatView.rightPane`：
+
+```
+PaneLeafContent
+  activeTool state
+  ├─ PaneHeader onToolSelect(tool) → toggle activeTool
+  └─ ChatView
+       └─ rightPane={activeTool ? <RightPane cwd={cwd} initialTab={activeTool} /> : null}
+                                      └─ Radix Tabs（files / git / spec），forceMount 保留 scroll
+```
+
 **與 Tool Pane（進 split）的差異：**
 
 | | Context Panel | Tool Pane（split）|
@@ -567,7 +581,7 @@ Global Bar 已移除。Settings `[⚙]` 移至 Tab Bar 右側；Search 純鍵盤
 | 觸發方式 | session header toolbar | 空白 pane picker |
 | cwd | 自動跟 session | 手動指定 |
 | 同時開多個 | ✗（同 session 只能一個）| ✓ |
-| 空間佔用 | 附著在 session pane 內 | 獨立 pane |
+| 空間佔用 | inline，附著在 session pane 右側 | 獨立 pane |
 | 適合 | 快速查看，不想切 pane | 長時間參考，需要固定位置 |
 
 兩者互補，不互斥。

@@ -7,8 +7,10 @@
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { PaneHeader } from '@/components/workspace/PaneHeader';
+import { RightPane } from '@/components/workspace/RightPane';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { FsProvider } from '@/contexts/FsContext';
 import { GitProvider } from '@/contexts/GitContext';
@@ -60,51 +62,47 @@ describe('Gap-1: KeyboardShortcutsProvider is mounted in production', () => {
 // ─────────────────────────────────────────────────────────────────────
 // Gap-2: Context Panel renders real tool content, not placeholder text
 // ─────────────────────────────────────────────────────────────────────
+
+function ControlledPaneWithPanel({ cwd }: { cwd: string }) {
+  const [activeTool, setActiveTool] = useState<'files' | 'git' | 'spec' | null>(null);
+  return (
+    <Wrapper>
+      <PaneHeader paneId="p1" cwd={cwd} activeTool={activeTool} onToolSelect={setActiveTool} />
+      {activeTool && <RightPane cwd={cwd} initialTab={activeTool} />}
+    </Wrapper>
+  );
+}
+
 describe('Gap-2: Context Panel renders real FilesPane / GitPane / SpecPane', () => {
   it('clicking Files icon renders actual files-pane content', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneWithPanel cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Files/i }));
     expect(screen.getByTestId('context-panel-files')).toBeInTheDocument();
   });
 
   it('clicking Git icon renders actual git-pane content', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneWithPanel cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Git/i }));
     expect(screen.getByTestId('context-panel-git')).toBeInTheDocument();
   });
 
   it('clicking Spec icon renders actual spec-pane content', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneWithPanel cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Spec/i }));
     expect(screen.getByTestId('context-panel-spec')).toBeInTheDocument();
   });
 
   it('switching tabs within context panel swaps content', async () => {
     const user = userEvent.setup();
-    render(
-      <Wrapper>
-        <PaneHeader paneId="p1" cwd="/project" />
-      </Wrapper>,
-    );
+    render(<ControlledPaneWithPanel cwd="/project" />);
     await user.click(screen.getByRole('button', { name: /Files/i }));
     expect(screen.getByTestId('context-panel-files')).toBeInTheDocument();
-    await user.click(screen.getByTestId('context-tab-git'));
-    expect(screen.queryByTestId('context-panel-files')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /Git/i }));
+    // RightPane uses forceMount/hidden; files tab is hidden, git tab is visible
+    expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
     expect(screen.getByTestId('context-panel-git')).toBeInTheDocument();
   });
 });

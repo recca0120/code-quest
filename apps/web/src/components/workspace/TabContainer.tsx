@@ -25,6 +25,7 @@ import {
 import { ChatView } from '../chat/ChatView.tsx';
 import { PaneHeader } from './PaneHeader.tsx';
 import { PaneZoomProvider } from './PaneZoomProvider.tsx';
+import { RightPane } from './RightPane.tsx';
 import { SessionBar } from './SessionBar.tsx';
 import { SplitPane } from './SplitPane.tsx';
 import { FilesPane, GitPane, SpecPane, type WorktreeOption, WorktreesPane } from './ToolPanes.tsx';
@@ -35,6 +36,7 @@ interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode' | 'bran
   projectName: string;
   onToggleLeft?: () => void;
   onNewChannel?: (cwd: string) => void;
+  rightPane?: React.ReactNode;
 }
 
 function TabContent({
@@ -46,6 +48,7 @@ function TabContent({
   mode,
   onToggleLeft,
   onNewChannel,
+  rightPane,
 }: TabContentProps) {
   const { setTabTitle, setTabStatus } = useTabActions();
   return (
@@ -60,7 +63,12 @@ function TabContent({
       }}
       onNewChannel={onNewChannel}
     >
-      <ChatView title={title} projectName={projectName} onToggleLeft={onToggleLeft} />
+      <ChatView
+        title={title}
+        projectName={projectName}
+        onToggleLeft={onToggleLeft}
+        rightPane={rightPane}
+      />
     </ChannelProvider>
   );
 }
@@ -98,6 +106,7 @@ function PaneLeafContent({
 }: PaneLeafContentProps) {
   const { paneRoot } = usePaneState();
   const { splitPane, closePane, focusPane } = usePaneActions();
+  const [activeTool, setActiveTool] = useState<'files' | 'git' | 'spec' | null>(null);
 
   const sessionId = node.content.type === 'session' ? node.content.sessionId : null;
   const meta = sessionId ? tabs[sessionId] : null;
@@ -111,6 +120,8 @@ function PaneLeafContent({
         title={meta?.title}
         cwd={meta?.cwd}
         isOnly={isOnly}
+        activeTool={activeTool}
+        onToolSelect={setActiveTool}
         onSplitH={() => {
           focusPane(node.id);
           splitPane('h');
@@ -151,6 +162,11 @@ function PaneLeafContent({
           mode={meta.mode}
           onToggleLeft={onToggleLeft}
           onNewChannel={(newCwd) => onNewTab({ cwd: newCwd })}
+          rightPane={
+            activeTool && meta.cwd ? (
+              <RightPane cwd={meta.cwd} initialTab={activeTool} />
+            ) : undefined
+          }
         />
       ) : (
         <EmptyState
