@@ -1,10 +1,7 @@
-/**
- * Group 3: PaneHeader component tests
- */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { PaneHeader } from '@/components/workspace/PaneHeader';
+import { Pane } from '@/components/workspace/Pane';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneActions } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -19,11 +16,11 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 }
 
 // 3.1: session pane header shows branch · title
-describe('PaneHeader (3.1) session pane shows branch and title', () => {
+describe('Pane.Toolbar (3.1) session pane shows branch and title', () => {
   it('displays branch symbol and title', () => {
     render(
       <Wrapper>
-        <PaneHeader branch="feat/my-feature" title="Task A" paneId="p1" />
+        <Pane.Toolbar branch="feat/my-feature" title="Task A" paneId="p1" />
       </Wrapper>,
     );
     expect(screen.getByText(/feat\/my-feature/)).toBeInTheDocument();
@@ -33,19 +30,19 @@ describe('PaneHeader (3.1) session pane shows branch and title', () => {
   it('displays · separator between branch and title', () => {
     render(
       <Wrapper>
-        <PaneHeader branch="main" title="Task A" paneId="p1" />
+        <Pane.Toolbar branch="main" title="Task A" paneId="p1" />
       </Wrapper>,
     );
     expect(screen.getByTestId('pane-header').textContent).toMatch(/main\s*·\s*Task A/);
   });
 });
 
-// 3.2: empty pane header shows nothing — spec says "header 顯示空白或「Pick a session」提示文字", NOT "Empty"
-describe('PaneHeader (3.2) empty pane header', () => {
+// 3.2: empty pane header shows nothing
+describe('Pane.Toolbar (3.2) empty pane header', () => {
   it('does NOT show "Empty" text when no session is assigned', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" />
+        <Pane.Toolbar paneId="p1" />
       </Wrapper>,
     );
     expect(screen.getByTestId('pane-header')).toBeInTheDocument();
@@ -54,7 +51,7 @@ describe('PaneHeader (3.2) empty pane header', () => {
 });
 
 // 3.3: split horizontal button calls splitPane('h')
-describe('PaneHeader (3.3) split horizontal button', () => {
+describe('Pane.Toolbar (3.3) split horizontal button', () => {
   it('split-h button triggers splitPane h', async () => {
     const user = userEvent.setup();
     let splitDirection: string | null = null;
@@ -62,7 +59,7 @@ describe('PaneHeader (3.3) split horizontal button', () => {
     function Spy() {
       const { splitPane } = usePaneActions();
       return (
-        <PaneHeader
+        <Pane.Toolbar
           paneId="p1"
           onSplitH={() => {
             splitDirection = 'h';
@@ -83,7 +80,7 @@ describe('PaneHeader (3.3) split horizontal button', () => {
 });
 
 // 3.4: split vertical button calls splitPane('v')
-describe('PaneHeader (3.4) split vertical button', () => {
+describe('Pane.Toolbar (3.4) split vertical button', () => {
   it('split-v button triggers splitPane v', async () => {
     const user = userEvent.setup();
     let splitDirection: string | null = null;
@@ -91,7 +88,7 @@ describe('PaneHeader (3.4) split vertical button', () => {
     function Spy() {
       const { splitPane } = usePaneActions();
       return (
-        <PaneHeader
+        <Pane.Toolbar
           paneId="p1"
           onSplitV={() => {
             splitDirection = 'v';
@@ -112,14 +109,14 @@ describe('PaneHeader (3.4) split vertical button', () => {
 });
 
 // 3.5: close button calls closePane; disabled when only pane
-describe('PaneHeader (3.5) close button', () => {
+describe('Pane.Toolbar (3.5) close button', () => {
   it('close button triggers closePane', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" onClose={onClose} isOnly={false} />
+        <Pane.Toolbar paneId="p1" onClose={onClose} isOnly={false} />
       </Wrapper>,
     );
     await user.click(screen.getByTestId('pane-close'));
@@ -129,7 +126,7 @@ describe('PaneHeader (3.5) close button', () => {
   it('close button is disabled when only pane', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" isOnly={true} />
+        <Pane.Toolbar paneId="p1" isOnly={true} />
       </Wrapper>,
     );
     expect(screen.getByTestId('pane-close')).toBeDisabled();
@@ -137,7 +134,7 @@ describe('PaneHeader (3.5) close button', () => {
 });
 
 // 3.6: focused pane shows accent border via data-focused attribute
-describe('PaneHeader (3.6) focused pane accent', () => {
+describe('Pane.Toolbar (3.6) focused pane accent', () => {
   it('has data-focused when paneId matches focusedPaneId', async () => {
     const user = userEvent.setup();
 
@@ -145,7 +142,7 @@ describe('PaneHeader (3.6) focused pane accent', () => {
       const { focusPane } = usePaneActions();
       return (
         <>
-          <PaneHeader paneId="p1" />
+          <Pane.Toolbar paneId="p1" />
           <button type="button" onClick={() => focusPane('p1')}>
             focus
           </button>
@@ -164,12 +161,12 @@ describe('PaneHeader (3.6) focused pane accent', () => {
   });
 });
 
-// TG.1: PaneHeader 不再有 tool icon（Files/Git/Spec 移至 ChatBreadcrumb）
-describe('PaneHeader (TG.1) no tool icons', () => {
-  it('does not render Files tool button even when cwd is provided', () => {
+// TG.1: Pane.Toolbar 不再有 tool icon
+describe('Pane.Toolbar (TG.1) no tool icons', () => {
+  it('does not render Files/Git/Spec tool buttons', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" cwd="/test" />
+        <Pane.Toolbar paneId="p1" cwd="/test" />
       </Wrapper>,
     );
     expect(screen.queryByRole('button', { name: /Files/i })).not.toBeInTheDocument();
@@ -179,7 +176,7 @@ describe('PaneHeader (TG.1) no tool icons', () => {
 });
 
 // 3.7: zoomed pane shows zoom indicator
-describe('PaneHeader (3.7) zoom indicator', () => {
+describe('Pane.Toolbar (3.7) zoom indicator', () => {
   it('shows zoom indicator when pane is zoomed', async () => {
     const user = userEvent.setup();
 
@@ -187,7 +184,7 @@ describe('PaneHeader (3.7) zoom indicator', () => {
       const { zoomPane } = usePaneActions();
       return (
         <>
-          <PaneHeader paneId="p1" />
+          <Pane.Toolbar paneId="p1" />
           <button type="button" onClick={() => zoomPane('p1')}>
             zoom
           </button>
@@ -203,5 +200,44 @@ describe('PaneHeader (3.7) zoom indicator', () => {
     expect(screen.queryByTestId('pane-zoomed-indicator')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'zoom' }));
     expect(screen.getByTestId('pane-zoomed-indicator')).toBeInTheDocument();
+  });
+});
+
+// new: Pane.Toolbar renders children slot
+describe('Pane.Toolbar children slot', () => {
+  it('renders custom children alongside default controls', () => {
+    render(
+      <Wrapper>
+        <Pane.Toolbar paneId="p1">
+          <span data-testid="custom-tool">custom</span>
+        </Pane.Toolbar>
+      </Wrapper>,
+    );
+    expect(screen.getByTestId('custom-tool')).toBeInTheDocument();
+    expect(screen.getByTestId('pane-split-h')).toBeInTheDocument();
+  });
+
+  it('renders only default controls when no children', () => {
+    render(
+      <Wrapper>
+        <Pane.Toolbar paneId="p1" />
+      </Wrapper>,
+    );
+    expect(screen.queryByTestId('custom-tool')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pane-split-h')).toBeInTheDocument();
+  });
+});
+
+// Pane.Content
+describe('Pane.Content', () => {
+  it('renders children', () => {
+    render(
+      <Wrapper>
+        <Pane.Content>
+          <span data-testid="inner">content</span>
+        </Pane.Content>
+      </Wrapper>,
+    );
+    expect(screen.getByTestId('inner')).toBeInTheDocument();
   });
 });

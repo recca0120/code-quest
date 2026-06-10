@@ -194,9 +194,9 @@ describe('Workspace — PanePicker wiring', () => {
     // Click the Git tool button in the right panel
     await result.user.click(await screen.findByRole('button', { name: /git/i }));
 
-    // Modal closes and a git pane appears
+    // Modal closes and a git pane appears (worktree switcher with 🌿 Git label)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByTestId('git-pane')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /worktree switcher/i })).toBeInTheDocument();
   });
 });
 

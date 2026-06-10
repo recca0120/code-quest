@@ -4,7 +4,7 @@ import { usePaneState } from '@/contexts/TabContext';
 import { cn } from '@/utils/cn';
 import { useMobileMode } from './useMobileMode';
 
-interface PaneHeaderProps {
+interface ToolbarProps {
   paneId: string;
   branch?: string;
   title?: string;
@@ -14,12 +14,13 @@ interface PaneHeaderProps {
   onSplitV?: () => void;
   onClose?: () => void;
   onSwap?: (targetId: string) => void;
+  children?: React.ReactNode;
 }
 
 const TOOL_BTN =
   'w-6 h-6 flex items-center justify-center rounded hover:bg-hover-tint transition-colors';
 
-export function PaneHeader({
+function Toolbar({
   paneId,
   branch,
   title,
@@ -28,7 +29,8 @@ export function PaneHeader({
   onSplitV,
   onClose,
   onSwap,
-}: PaneHeaderProps): React.JSX.Element {
+  children,
+}: ToolbarProps): React.JSX.Element {
   const { focusedPaneId, zoomedPaneId } = usePaneState();
   const isFocused = focusedPaneId === paneId;
   const isZoomed = zoomedPaneId === paneId;
@@ -74,6 +76,7 @@ export function PaneHeader({
       {branch && <span className="text-muted-foreground">⎇ {branch}</span>}
       {branch && title && <span className="text-muted-foreground">·</span>}
       {title && <span className="font-medium truncate">{title}</span>}
+      {children && <div className="flex items-center gap-1 ml-1">{children}</div>}
       <div className="ml-auto flex items-center gap-0.5">
         {!isMobile && (
           <>
@@ -120,3 +123,19 @@ export function PaneHeader({
     </div>
   );
 }
+
+function Content({ children }: { children: React.ReactNode }): React.JSX.Element {
+  return <div className="flex-1 overflow-auto min-h-0">{children}</div>;
+}
+
+type PaneComponent = ((props: { children: React.ReactNode }) => React.JSX.Element) & {
+  Toolbar: typeof Toolbar;
+  Content: typeof Content;
+};
+
+export const Pane: PaneComponent = Object.assign(
+  function Pane({ children }: { children: React.ReactNode }): React.JSX.Element {
+    return <div className="flex flex-col flex-1 min-w-0 min-h-0">{children}</div>;
+  },
+  { Toolbar, Content },
+);

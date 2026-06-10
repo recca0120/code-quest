@@ -5,7 +5,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
-import { PaneHeader } from '@/components/workspace/PaneHeader';
+import { Pane } from '@/components/workspace/Pane';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -72,7 +72,7 @@ describe('MobileMode (M.2) PaneHeader hides split buttons on mobile', () => {
     mockMobile(false);
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" isOnly={false} onSplitH={() => {}} onSplitV={() => {}} />
+        <Pane.Toolbar paneId="p1" isOnly={false} onSplitH={() => {}} onSplitV={() => {}} />
       </Wrapper>,
     );
     expect(screen.getByTestId('pane-split-h')).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('MobileMode (M.2) PaneHeader hides split buttons on mobile', () => {
     mockMobile(true);
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" isOnly={false} onSplitH={() => {}} onSplitV={() => {}} />
+        <Pane.Toolbar paneId="p1" isOnly={false} onSplitH={() => {}} onSplitV={() => {}} />
       </Wrapper>,
     );
     expect(screen.queryByTestId('pane-split-h')).not.toBeInTheDocument();

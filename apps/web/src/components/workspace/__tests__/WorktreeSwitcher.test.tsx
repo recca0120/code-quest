@@ -1,24 +1,10 @@
-/**
- * Tool Pane Header T.4–T.5
- */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
-import { GitPane } from '@/components/workspace/ToolPanes';
+import { describe, expect, it } from 'vitest';
+import { WorktreeSwitcher } from '@/components/workspace/WorktreeSwitcher';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
-
-vi.mock('@/contexts/GitContext', () => ({
-  useGitActions: () => ({ refetchGitStatus: vi.fn() }),
-  useGitStatus: () => undefined,
-}));
-vi.mock('@/contexts/FsContext', () => ({
-  useFsActions: () => ({ browse: vi.fn().mockResolvedValue({ directories: [], files: [] }) }),
-}));
-vi.mock('@/contexts/OpenspecContext', () => ({
-  useOpenspecList: () => undefined,
-}));
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   const summoner = createFakeSummoner();
@@ -34,40 +20,54 @@ const availableWorktrees = [
   { path: '/project/feature', branch: 'feat-auth', name: 'feature', projectName: 'app' },
 ];
 
-// T.4: Tool Pane header shows emoji + branch switcher (⎇ branch)
-describe('ToolPaneHeader (T.4) header shows emoji and branch switcher', () => {
-  it('GitPane shows 🌿 Git title', () => {
+// T.4: shows emoji, label and current branch
+describe('WorktreeSwitcher (T.4) shows emoji, label and current branch', () => {
+  it('button shows emoji, label and ⎇ branch', () => {
     render(
       <Wrapper>
-        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId="p1" />
+        <WorktreeSwitcher
+          emoji="🌿"
+          label="Git"
+          cwd="/project/main"
+          paneId="p1"
+          availableWorktrees={availableWorktrees}
+          makeContent={(c) => ({ type: 'git', cwd: c })}
+        />
       </Wrapper>,
     );
-    expect(screen.getByTestId('tool-pane-header')).toHaveTextContent('🌿 Git');
-  });
-
-  it('shows current branch with ⎇ prefix in header', () => {
-    render(
-      <Wrapper>
-        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId="p1" />
-      </Wrapper>,
-    );
-    expect(screen.getByTestId('tool-pane-header')).toHaveTextContent('⎇ main');
+    const btn = screen.getByRole('button', { name: /worktree switcher/i });
+    expect(btn.textContent).toContain('🌿 Git');
+    expect(btn.textContent).toContain('⎇ main');
   });
 
   it('shows dropdown toggle button (▾)', () => {
     render(
       <Wrapper>
-        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId="p1" />
+        <WorktreeSwitcher
+          emoji="🌿"
+          label="Git"
+          cwd="/project/main"
+          paneId="p1"
+          availableWorktrees={availableWorktrees}
+          makeContent={(c) => ({ type: 'git', cwd: c })}
+        />
       </Wrapper>,
     );
     expect(screen.getByRole('button', { name: /worktree switcher/i })).toBeInTheDocument();
   });
 
-  it('clicking ▾ shows available worktrees with ⎇ branch (project) format in dropdown', async () => {
+  it('clicking button shows available worktrees with ⎇ branch (project) format in dropdown', async () => {
     const user = userEvent.setup();
     render(
       <Wrapper>
-        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId="p1" />
+        <WorktreeSwitcher
+          emoji="🌿"
+          label="Git"
+          cwd="/project/main"
+          paneId="p1"
+          availableWorktrees={availableWorktrees}
+          makeContent={(c) => ({ type: 'git', cwd: c })}
+        />
       </Wrapper>,
     );
     await user.click(screen.getByRole('button', { name: /worktree switcher/i }));
@@ -78,8 +78,8 @@ describe('ToolPaneHeader (T.4) header shows emoji and branch switcher', () => {
   });
 });
 
-// T.5: selecting a worktree in the dropdown updates the pane content
-describe('ToolPaneHeader (T.5) worktree switcher updates pane cwd', () => {
+// T.5: selecting a worktree updates the pane content
+describe('WorktreeSwitcher (T.5) selecting worktree updates pane cwd', () => {
   it('clicking a worktree option updates the pane content cwd', async () => {
     const user = userEvent.setup();
     let cwdInPane = '';
@@ -92,18 +92,25 @@ describe('ToolPaneHeader (T.5) worktree switcher updates pane cwd', () => {
       return null;
     }
 
-    function GitPaneWithRealId() {
+    function SwitcherWithRealId() {
       const { paneRoot } = usePaneState();
       const leafId = paneRoot.type === 'leaf' ? paneRoot.id : 'p1';
       return (
-        <GitPane cwd="/project/main" availableWorktrees={availableWorktrees} paneId={leafId} />
+        <WorktreeSwitcher
+          emoji="🌿"
+          label="Git"
+          cwd="/project/main"
+          paneId={leafId}
+          availableWorktrees={availableWorktrees}
+          makeContent={(c) => ({ type: 'git', cwd: c })}
+        />
       );
     }
 
     render(
       <Wrapper>
         <Setup />
-        <GitPaneWithRealId />
+        <SwitcherWithRealId />
       </Wrapper>,
     );
 

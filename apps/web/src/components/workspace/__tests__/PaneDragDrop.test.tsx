@@ -4,7 +4,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { PaneHeader } from '@/components/workspace/PaneHeader';
+import { Pane } from '@/components/workspace/Pane';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -23,7 +23,7 @@ describe('PaneDragDrop (D.1) pane header drag indicator', () => {
   it('header has draggable attribute', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" />
+        <Pane.Toolbar paneId="p1" />
       </Wrapper>,
     );
     expect(screen.getByTestId('pane-header')).toHaveAttribute('draggable', 'true');
@@ -32,7 +32,7 @@ describe('PaneDragDrop (D.1) pane header drag indicator', () => {
   it('dragstart sets data-dragging attribute', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" />
+        <Pane.Toolbar paneId="p1" />
       </Wrapper>,
     );
     const header = screen.getByTestId('pane-header');
@@ -43,7 +43,7 @@ describe('PaneDragDrop (D.1) pane header drag indicator', () => {
   it('dragend removes data-dragging attribute', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" />
+        <Pane.Toolbar paneId="p1" />
       </Wrapper>,
     );
     const header = screen.getByTestId('pane-header');
@@ -90,14 +90,14 @@ describe('PaneDragDrop (D.2) drop swaps pane contents', () => {
 
       return (
         <>
-          <PaneHeader
+          <Pane.Toolbar
             paneId={left.id}
             onSwap={(targetId) => {
               swappedPairs.push([left.id, targetId]);
               swapPane(left.id, targetId);
             }}
           />
-          <PaneHeader
+          <Pane.Toolbar
             paneId={right.id}
             onSwap={(targetId) => {
               swappedPairs.push([right.id, targetId]);

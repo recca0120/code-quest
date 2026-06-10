@@ -12,8 +12,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
+import { Pane } from '@/components/workspace/Pane';
 import { PaneDivider } from '@/components/workspace/PaneDivider';
-import { PaneHeader } from '@/components/workspace/PaneHeader';
 import { SocketProvider } from '@/contexts/SocketContext';
 import {
   TabProvider,
@@ -102,7 +102,7 @@ describe('Fix-2: Focused pane has CSS ring indicator', () => {
   it('PaneHeader className includes ring styling driven by data-focused', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="p1" />
+        <Pane.Toolbar paneId="p1" />
       </Wrapper>,
     );
     const header = screen.getByTestId('pane-header');
@@ -235,7 +235,7 @@ describe('Fix-6: PaneHeader drag uses dataTransfer (no module-level state)', () 
   it('dragstart stores paneId in dataTransfer', () => {
     render(
       <Wrapper>
-        <PaneHeader paneId="pane-abc" />
+        <Pane.Toolbar paneId="pane-abc" />
       </Wrapper>,
     );
     const header = screen.getByTestId('pane-header');
@@ -249,7 +249,7 @@ describe('Fix-6: PaneHeader drag uses dataTransfer (no module-level state)', () 
 
     render(
       <Wrapper>
-        <PaneHeader paneId="pane-target" onSwap={(id) => swapped.push(id)} />
+        <Pane.Toolbar paneId="pane-target" onSwap={(id) => swapped.push(id)} />
       </Wrapper>,
     );
     const header = screen.getByTestId('pane-header');

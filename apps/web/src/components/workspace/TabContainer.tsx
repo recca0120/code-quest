@@ -23,13 +23,17 @@ import {
   useWorkspaceTab,
 } from '@/contexts/TabContext';
 import { ChatView } from '../chat/ChatView.tsx';
-import { PaneHeader } from './PaneHeader.tsx';
+import { FilesView } from '../files/FilesView.tsx';
+import { GitView } from '../git/GitView.tsx';
+import { SpecView } from '../spec/SpecView.tsx';
+import { Pane } from './Pane.tsx';
 import { PaneZoomProvider } from './PaneZoomProvider.tsx';
 import { RightPane } from './RightPane.tsx';
 import { SessionBar } from './SessionBar.tsx';
 import { SplitPane } from './SplitPane.tsx';
-import { FilesPane, GitPane, SpecPane, type WorktreeOption, WorktreesPane } from './ToolPanes.tsx';
+import { type WorktreeOption, WorktreesPane } from './ToolPanes.tsx';
 import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
+import { WorktreeSwitcher } from './WorktreeSwitcher.tsx';
 
 interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode' | 'branch'> {
   channelId: string;
@@ -115,35 +119,86 @@ function PaneLeafContent({
   const meta = sessionId ? tabs[sessionId] : null;
   const isOnly = paneRoot.type === 'leaf';
 
+  const toolbarProps = {
+    paneId: node.id,
+    branch: meta?.branch,
+    title: meta?.title,
+    isOnly,
+    onSplitH: () => {
+      focusPane(node.id);
+      splitPane('h');
+    },
+    onSplitV: () => {
+      focusPane(node.id);
+      splitPane('v');
+    },
+    onClose: () => closePane(node.id),
+  };
+
+  if (node.content.type === 'git') {
+    return (
+      <Pane>
+        <Pane.Toolbar {...toolbarProps}>
+          <WorktreeSwitcher
+            emoji="🌿"
+            label="Git"
+            cwd={node.content.cwd}
+            paneId={node.id}
+            availableWorktrees={availableWorktrees}
+            makeContent={(c) => ({ type: 'git', cwd: c })}
+          />
+        </Pane.Toolbar>
+        <Pane.Content>
+          <GitView cwd={node.content.cwd} />
+        </Pane.Content>
+      </Pane>
+    );
+  }
+
+  if (node.content.type === 'files') {
+    return (
+      <Pane>
+        <Pane.Toolbar {...toolbarProps}>
+          <WorktreeSwitcher
+            emoji="📁"
+            label="Files"
+            cwd={node.content.cwd}
+            paneId={node.id}
+            availableWorktrees={availableWorktrees}
+            makeContent={(c) => ({ type: 'files', cwd: c })}
+          />
+        </Pane.Toolbar>
+        <Pane.Content>
+          <FilesView cwd={node.content.cwd} onMention={() => {}} />
+        </Pane.Content>
+      </Pane>
+    );
+  }
+
+  if (node.content.type === 'spec') {
+    return (
+      <Pane>
+        <Pane.Toolbar {...toolbarProps}>
+          <WorktreeSwitcher
+            emoji="📋"
+            label="Spec"
+            cwd={node.content.cwd}
+            paneId={node.id}
+            availableWorktrees={availableWorktrees}
+            makeContent={(c) => ({ type: 'spec', cwd: c })}
+          />
+        </Pane.Toolbar>
+        <Pane.Content>
+          <SpecView cwd={node.content.cwd} />
+        </Pane.Content>
+      </Pane>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 min-w-0 min-h-0">
-      <PaneHeader
-        paneId={node.id}
-        branch={meta?.branch}
-        title={meta?.title}
-        cwd={meta?.cwd}
-        isOnly={isOnly}
-        onSplitH={() => {
-          focusPane(node.id);
-          splitPane('h');
-        }}
-        onSplitV={() => {
-          focusPane(node.id);
-          splitPane('v');
-        }}
-        onClose={() => closePane(node.id)}
-      />
-      {node.content.type === 'git' ? (
-        <GitPane cwd={node.content.cwd} paneId={node.id} availableWorktrees={availableWorktrees} />
-      ) : node.content.type === 'files' ? (
-        <FilesPane
-          cwd={node.content.cwd}
-          paneId={node.id}
-          availableWorktrees={availableWorktrees}
-        />
-      ) : node.content.type === 'spec' ? (
-        <SpecPane cwd={node.content.cwd} paneId={node.id} availableWorktrees={availableWorktrees} />
-      ) : node.content.type === 'worktrees' ? (
+      <Pane.Toolbar {...toolbarProps} />
+      {node.content.type === 'worktrees' ? (
         <WorktreesPane
           sessions={Object.entries(tabs).map(([id, m]) => ({
             channelId: id,
