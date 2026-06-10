@@ -200,7 +200,7 @@ describe('Fix-5: Tool pane content has accessible cwd', () => {
       const { setContentInPane } = usePaneActions();
 
       if (paneRoot.type === 'leaf' && paneRoot.content.type === 'git') {
-        capturedCwd = paneRoot.content.cwd;
+        capturedCwd = paneRoot.content.target.cwd;
       }
 
       return (
@@ -208,7 +208,10 @@ describe('Fix-5: Tool pane content has accessible cwd', () => {
           type="button"
           onClick={() => {
             if (paneRoot.type === 'leaf') {
-              setContentInPane(paneRoot.id, { type: 'git', cwd: '/tool-cwd' });
+              setContentInPane(paneRoot.id, {
+                type: 'git',
+                target: { kind: 'fixed', cwd: '/tool-cwd' },
+              });
             }
           }}
         >

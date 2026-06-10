@@ -323,7 +323,7 @@ describe('PanePicker (B) — one-click tool panes', () => {
     render(<PanePicker {...defaultProps} />);
     expect(document.querySelectorAll('[data-tool="git"]').length).toBe(3);
     expect(document.querySelectorAll('[data-tool="files"]').length).toBe(3);
-    expect(document.querySelectorAll('[data-tool="spec"]').length).toBe(3);
+    expect(document.querySelectorAll('[data-tool="openspec"]').length).toBe(3);
   });
 
   it('[Git] calls onOpenToolPane with worktree path', async () => {

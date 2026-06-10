@@ -142,14 +142,14 @@ function PaneLeafContent({
           <WorktreeSwitcher
             emoji="🌿"
             label="Git"
-            cwd={node.content.cwd}
+            cwd={node.content.target.cwd}
             paneId={node.id}
             availableWorktrees={availableWorktrees}
-            makeContent={(c) => ({ type: 'git', cwd: c })}
+            makeContent={(c) => ({ type: 'git', target: { kind: 'fixed', cwd: c } })}
           />
         </Pane.Toolbar>
         <Pane.Content>
-          <GitView cwd={node.content.cwd} />
+          <GitView cwd={node.content.target.cwd} />
         </Pane.Content>
       </Pane>
     );
@@ -162,34 +162,34 @@ function PaneLeafContent({
           <WorktreeSwitcher
             emoji="📁"
             label="Files"
-            cwd={node.content.cwd}
+            cwd={node.content.target.cwd}
             paneId={node.id}
             availableWorktrees={availableWorktrees}
-            makeContent={(c) => ({ type: 'files', cwd: c })}
+            makeContent={(c) => ({ type: 'files', target: { kind: 'fixed', cwd: c } })}
           />
         </Pane.Toolbar>
         <Pane.Content>
-          <FilesView cwd={node.content.cwd} onMention={() => {}} />
+          <FilesView cwd={node.content.target.cwd} onMention={() => {}} />
         </Pane.Content>
       </Pane>
     );
   }
 
-  if (node.content.type === 'spec') {
+  if (node.content.type === 'openspec') {
     return (
       <Pane>
         <Pane.Toolbar {...toolbarProps}>
           <WorktreeSwitcher
             emoji="📋"
             label="Spec"
-            cwd={node.content.cwd}
+            cwd={node.content.target.cwd}
             paneId={node.id}
             availableWorktrees={availableWorktrees}
-            makeContent={(c) => ({ type: 'spec', cwd: c })}
+            makeContent={(c) => ({ type: 'openspec', target: { kind: 'fixed', cwd: c } })}
           />
         </Pane.Toolbar>
         <Pane.Content>
-          <SpecView cwd={node.content.cwd} />
+          <SpecView cwd={node.content.target.cwd} />
         </Pane.Content>
       </Pane>
     );
@@ -271,7 +271,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     if (!focusedLeaf) return null;
     const c = focusedLeaf.content;
     if (c.type === 'session') return c.sessionId ? (tabs[c.sessionId]?.cwd ?? null) : null;
-    if ('cwd' in c) return (c as { cwd: string }).cwd;
+    if (c.type === 'git' || c.type === 'files' || c.type === 'openspec') return c.target.cwd;
     return null;
   })();
 

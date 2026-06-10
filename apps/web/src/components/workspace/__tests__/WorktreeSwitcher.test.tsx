@@ -31,7 +31,7 @@ describe('WorktreeSwitcher (T.4) shows emoji, label and current branch', () => {
           cwd="/project/main"
           paneId="p1"
           availableWorktrees={availableWorktrees}
-          makeContent={(c) => ({ type: 'git', cwd: c })}
+          makeContent={(c) => ({ type: 'git', target: { kind: 'fixed', cwd: c } })}
         />
       </Wrapper>,
     );
@@ -49,7 +49,7 @@ describe('WorktreeSwitcher (T.4) shows emoji, label and current branch', () => {
           cwd="/project/main"
           paneId="p1"
           availableWorktrees={availableWorktrees}
-          makeContent={(c) => ({ type: 'git', cwd: c })}
+          makeContent={(c) => ({ type: 'git', target: { kind: 'fixed', cwd: c } })}
         />
       </Wrapper>,
     );
@@ -66,7 +66,7 @@ describe('WorktreeSwitcher (T.4) shows emoji, label and current branch', () => {
           cwd="/project/main"
           paneId="p1"
           availableWorktrees={availableWorktrees}
-          makeContent={(c) => ({ type: 'git', cwd: c })}
+          makeContent={(c) => ({ type: 'git', target: { kind: 'fixed', cwd: c } })}
         />
       </Wrapper>,
     );
@@ -87,7 +87,7 @@ describe('WorktreeSwitcher (T.5) selecting worktree updates pane cwd', () => {
     function Setup() {
       const { paneRoot } = usePaneState();
       if (paneRoot.type === 'leaf' && paneRoot.content.type === 'git') {
-        cwdInPane = paneRoot.content.cwd;
+        cwdInPane = paneRoot.content.target.cwd;
       }
       return null;
     }
@@ -102,7 +102,7 @@ describe('WorktreeSwitcher (T.5) selecting worktree updates pane cwd', () => {
           cwd="/project/main"
           paneId={leafId}
           availableWorktrees={availableWorktrees}
-          makeContent={(c) => ({ type: 'git', cwd: c })}
+          makeContent={(c) => ({ type: 'git', target: { kind: 'fixed', cwd: c } })}
         />
       );
     }

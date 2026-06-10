@@ -69,3 +69,36 @@ describe('PaneContent shape — session leaf carries cwd (1.1 / 1.2)', () => {
     expect(leaves()[0]!.content).toEqual({ type: 'session', sessionId: null, cwd: null });
   });
 });
+
+describe('PaneContent shape — tool panes use target union (1.4 / 1.5)', () => {
+  it("setContentInPane writes git content with target { kind: 'fixed', cwd }", () => {
+    const { leaves, actions } = renderProbe();
+    const paneId = leaves()[0]!.id;
+
+    act(() =>
+      actions().setContentInPane(paneId, {
+        type: 'git',
+        target: { kind: 'fixed', cwd: '/repo/feat' },
+      }),
+    );
+
+    expect(leaves()[0]!.content).toEqual({
+      type: 'git',
+      target: { kind: 'fixed', cwd: '/repo/feat' },
+    });
+  });
+
+  it("openspec content type replaces 'spec' (1.6)", () => {
+    const { leaves, actions } = renderProbe();
+    const paneId = leaves()[0]!.id;
+
+    act(() =>
+      actions().setContentInPane(paneId, {
+        type: 'openspec',
+        target: { kind: 'fixed', cwd: '/repo/main' },
+      }),
+    );
+
+    expect(leaves()[0]!.content.type).toBe('openspec');
+  });
+});

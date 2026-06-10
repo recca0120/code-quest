@@ -13,11 +13,14 @@ import { TERMINAL_STATES } from './session-states.ts';
 
 // ── Pane tree types ──
 
+// 'follow' variant joins at worktree-centric D5 — shape reserved in wire v2, not constructible yet
+export type PaneTarget = { kind: 'fixed'; cwd: string };
+
 export type PaneContent =
   | { type: 'session'; sessionId: string | null; cwd: string | null }
-  | { type: 'git'; cwd: string }
-  | { type: 'files'; cwd: string }
-  | { type: 'spec'; cwd: string }
+  | { type: 'git'; target: PaneTarget }
+  | { type: 'files'; target: PaneTarget }
+  | { type: 'openspec'; target: PaneTarget }
   | { type: 'worktrees' };
 
 export type PaneNode =
@@ -212,12 +215,10 @@ function deserializePaneNode(
     if (content.type === 'session') {
       // Permissive: preserve cwd from wire as restore hint; liveness is a render-time concern
       paneContent = { type: 'session', sessionId: null, cwd: content.cwd };
-    } else if (content.type === 'files') {
-      paneContent = { type: 'files', cwd: content.cwd };
-    } else if (content.type === 'git') {
-      paneContent = { type: 'git', cwd: content.cwd };
+    } else if (content.type === 'files' || content.type === 'git') {
+      paneContent = { type: content.type, target: { kind: 'fixed', cwd: content.cwd } };
     } else {
-      paneContent = { type: 'spec', cwd: (content as { cwd: string }).cwd };
+      paneContent = { type: 'openspec', target: { kind: 'fixed', cwd: content.cwd } };
     }
     return { type: 'leaf', id: node.id, content: paneContent };
   }
@@ -248,10 +249,12 @@ function serializePaneNode(node: PaneNode): PersistedTab['paneRoot'] {
     if (c.type === 'session') {
       return { type: 'leaf', id: node.id, content: { type: 'session', cwd: c.cwd } };
     }
-    if (c.type === 'spec') {
-      return { type: 'leaf', id: node.id, content: { type: 'openspec', cwd: c.cwd } };
+    if (c.type === 'git' || c.type === 'files' || c.type === 'openspec') {
+      return { type: 'leaf', id: node.id, content: { type: c.type, cwd: c.target.cwd } };
     }
-    return { type: 'leaf', id: node.id, content: c as { type: 'files' | 'git'; cwd: string } };
+    // worktrees: not representable in wire v1 — degrade to empty session leaf so the
+    // rest of the layout still persists (F2 mitigation until schema v2 adds the variant)
+    return { type: 'leaf', id: node.id, content: { type: 'session', cwd: null } };
   }
   return {
     type: 'split',

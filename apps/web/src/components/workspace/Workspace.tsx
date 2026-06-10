@@ -87,7 +87,7 @@ function ConnectedPanePicker(props: PanePickerConfig) {
       onOpenToolPane={(type, cwd, paneId) => {
         const target = paneId ?? focusedPaneId;
         if (target) {
-          setContentInPane(target, { type, cwd });
+          setContentInPane(target, { type, target: { kind: 'fixed', cwd } });
           focusPane(target);
         }
         props.onClose();

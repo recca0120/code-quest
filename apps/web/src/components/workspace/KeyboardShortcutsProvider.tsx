@@ -54,8 +54,12 @@ function useKeyboardShortcuts(
     if (leaf.content.type === 'session' && leaf.content.sessionId) {
       return tabs[leaf.content.sessionId]?.cwd ?? undefined;
     }
-    if (leaf.content.type !== 'session' && 'cwd' in leaf.content) {
-      return (leaf.content as { cwd: string }).cwd;
+    if (
+      leaf.content.type === 'git' ||
+      leaf.content.type === 'files' ||
+      leaf.content.type === 'openspec'
+    ) {
+      return leaf.content.target.cwd;
     }
     return undefined;
   })();

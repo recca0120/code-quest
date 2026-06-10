@@ -29,7 +29,7 @@ interface ProjectInfo {
   name: string;
 }
 
-type ToolTabType = 'git' | 'files' | 'spec';
+type ToolTabType = 'git' | 'files' | 'openspec';
 type ImportFormat = 'claude-jsonl';
 
 interface PanePickerProps {
@@ -84,7 +84,7 @@ function relativeTime(iso: string): string {
 const TOOL_LABELS: Record<ToolTabType, string> = {
   git: '🌿 Git',
   files: '📁 Files',
-  spec: '📋 Spec',
+  openspec: '📋 Spec',
 };
 
 // ── sub-views ─────────────────────────────────────────────────────────────────
@@ -382,7 +382,7 @@ function MainView({
                   >
                     💬 AI ▶
                   </button>
-                  {(['git', 'files', 'spec'] as ToolTabType[]).map((type) => (
+                  {(['git', 'files', 'openspec'] as ToolTabType[]).map((type) => (
                     <button
                       key={type}
                       type="button"
