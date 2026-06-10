@@ -21,10 +21,11 @@ describe('Create Worktree end-to-end flow (dialog → session in new worktree)',
     // Sanity: chat panel is active.
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
 
-    // Act: open GlobalBar [+] → "Open in pane" modal → "New worktree"
-    await user.click(screen.getByRole('button', { name: 'New session' }));
-    const newWorktreeBtn = await screen.findByRole('button', { name: /\+ New worktree/i });
-    expect(newWorktreeBtn).toBeInTheDocument();
+    // Act: SessionManager (⌘⇧M) → "+ New worktree"
+    // (SessionBar 的 [+] dropdown 已由 tmux-workspace-ui P1 移除)
+    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
+    await screen.findByTestId('session-manager');
+    const newWorktreeBtn = await screen.findByTestId('new-worktree-btn');
 
     // Click it → dialog opens.
     await user.click(newWorktreeBtn);

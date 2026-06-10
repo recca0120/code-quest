@@ -57,14 +57,12 @@ async function launchSession(
     );
     await user.click(newSessionBtn);
   } else {
-    // Entry point B: SessionBar [+] "New session" → inline dropdown → click worktree
-    const dropdownBtn = await screen.findByRole('button', { name: 'New session' });
-    await user.click(dropdownBtn);
-    const dropdown = await screen.findByTestId('new-session-dropdown', {}, { timeout: 3000 });
-    const worktreeBtns = dropdown.querySelectorAll('button');
-    if (worktreeBtns.length > 0) {
-      await user.click(worktreeBtns[0]!);
-    }
+    // Entry point B: SessionManager (⌘⇧M) → first worktree row "+ New session"
+    // (SessionBar was removed by tmux-workspace-ui P1; manager is the entry now)
+    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
+    await screen.findByTestId('session-manager', {}, { timeout: 3000 });
+    const newSessionBtns = await screen.findAllByTestId('new-session-btn', {}, { timeout: 3000 });
+    await user.click(newSessionBtns[0]!);
   }
 
   await act(async () => {

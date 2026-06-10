@@ -22,6 +22,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, onTestFinished } from 'vitest';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { AppConfigProvider } from '@/contexts/AppInitContext';
+import { GitProvider } from '@/contexts/GitContext';
+import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, useWorkspaceTab } from '@/contexts/TabContext';
 import { createFakeSummoner, type FakeSummoner } from '@/test/fake-summoner';
@@ -83,12 +85,16 @@ function settleDebounce() {
 function renderClient(summoner: FakeSummoner, extra?: React.ReactNode) {
   return render(
     <SocketProvider socket={summoner.socket}>
-      <AppConfigProvider>
-        <TabProvider>
-          <WorkspaceTabBar />
-          {extra}
-        </TabProvider>
-      </AppConfigProvider>
+      <ProjectProvider>
+        <GitProvider>
+          <AppConfigProvider>
+            <TabProvider>
+              <WorkspaceTabBar />
+              {extra}
+            </TabProvider>
+          </AppConfigProvider>
+        </GitProvider>
+      </ProjectProvider>
     </SocketProvider>,
   );
 }
@@ -135,13 +141,17 @@ describe('provider remount replay (client-structure-cleanup 4.1)', () => {
     function Harness({ mounted }: { mounted: boolean }) {
       return (
         <SocketProvider socket={summoner.socket}>
-          <AppConfigProvider>
-            {mounted && (
-              <TabProvider>
-                <WorkspaceTabBar />
-              </TabProvider>
-            )}
-          </AppConfigProvider>
+          <ProjectProvider>
+            <GitProvider>
+              <AppConfigProvider>
+                {mounted && (
+                  <TabProvider>
+                    <WorkspaceTabBar />
+                  </TabProvider>
+                )}
+              </AppConfigProvider>
+            </GitProvider>
+          </ProjectProvider>
         </SocketProvider>
       );
     }

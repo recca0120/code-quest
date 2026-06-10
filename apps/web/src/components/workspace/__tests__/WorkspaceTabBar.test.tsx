@@ -5,6 +5,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
+import { GitProvider } from '@/contexts/GitContext';
+import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import {
   TabProvider,
@@ -19,7 +21,11 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   const summoner = createFakeSummoner();
   return (
     <SocketProvider socket={summoner.socket}>
-      <TabProvider>{children}</TabProvider>
+      <ProjectProvider>
+        <GitProvider>
+          <TabProvider>{children}</TabProvider>
+        </GitProvider>
+      </ProjectProvider>
     </SocketProvider>
   );
 }
@@ -217,7 +223,7 @@ describe('WorkspaceTabBar (6.5) inline rename', () => {
       </Wrapper>,
     );
 
-    await user.dblClick(screen.getByRole('button', { name: /rename tab/ })!);
+    await user.dblClick(screen.getByTestId('workspace-tab-label'));
 
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
@@ -238,7 +244,7 @@ describe('WorkspaceTabBar (6.5) inline rename', () => {
       </Wrapper>,
     );
 
-    await user.dblClick(screen.getByRole('button', { name: /rename tab/ })!);
+    await user.dblClick(screen.getByTestId('workspace-tab-label'));
 
     const input = screen.getByRole('textbox');
     await user.clear(input);

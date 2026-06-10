@@ -149,6 +149,24 @@ export function hasLeaf(node: PaneNode, id: string): boolean {
   return hasLeaf(node.first, id) || hasLeaf(node.second, id);
 }
 
+function leafCwd(content: PaneContent): string | null {
+  if (content.type === 'session') return content.cwd;
+  if ('target' in content && content.target.kind === 'fixed') return content.target.cwd;
+  return null;
+}
+
+/** 第一個帶 cwd 的 leaf 的 cwd（先序）— tab 預設命名的來源。 */
+export function firstPaneCwd(node: PaneNode): string | null {
+  if (node.type === 'leaf') return leafCwd(node.content);
+  return firstPaneCwd(node.first) ?? firstPaneCwd(node.second);
+}
+
+/** 指定 pane 的 cwd — 狀態列 focused context 的來源。 */
+export function paneCwd(node: PaneNode, paneId: string): string | null {
+  if (node.type === 'leaf') return node.id === paneId ? leafCwd(node.content) : null;
+  return paneCwd(node.first, paneId) ?? paneCwd(node.second, paneId);
+}
+
 export function findPaneBySession(node: PaneNode, channelId: string): string | null {
   if (node.type === 'leaf') {
     return node.content.type === 'session' && node.content.sessionId === channelId ? node.id : null;

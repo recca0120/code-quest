@@ -5,7 +5,7 @@
  * Gap-2: Context Panel shows placeholder, not real FilesPane/GitPane/SpecPane
  * Gap-3: WorkspaceTabBar [⊞] button not connected to Session Manager
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -14,6 +14,7 @@ import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { FsProvider } from '@/contexts/FsContext';
 import { GitProvider } from '@/contexts/GitContext';
 import { OpenspecProvider } from '@/contexts/OpenspecContext';
+import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -23,13 +24,15 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   const summoner = createFakeSummoner();
   return (
     <SocketProvider socket={summoner.socket}>
-      <GitProvider>
-        <FsProvider>
-          <OpenspecProvider>
-            <TabProvider>{children}</TabProvider>
-          </OpenspecProvider>
-        </FsProvider>
-      </GitProvider>
+      <ProjectProvider>
+        <GitProvider>
+          <FsProvider>
+            <OpenspecProvider>
+              <TabProvider>{children}</TabProvider>
+            </OpenspecProvider>
+          </FsProvider>
+        </GitProvider>
+      </ProjectProvider>
     </SocketProvider>
   );
 }
@@ -43,10 +46,12 @@ describe('Gap-1: KeyboardShortcutsProvider is mounted in production', () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
-    // One session open → ⌘T should add a second
-    const before = document.querySelectorAll('[data-status]').length;
+    // One session open → ⌘T should add a second, visibly placed in a pane
+    const before = screen.getAllByTestId('split-pane-leaf').length;
     await user.keyboard('{Meta>}t{/Meta}');
-    expect(document.querySelectorAll('[data-status]').length).toBeGreaterThan(before);
+    await waitFor(() =>
+      expect(screen.getAllByTestId('split-pane-leaf').length).toBeGreaterThan(before),
+    );
   });
 
   it('⌘W closes the focused pane without throwing', async () => {

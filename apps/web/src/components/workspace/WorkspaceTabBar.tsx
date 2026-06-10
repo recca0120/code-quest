@@ -1,8 +1,34 @@
 import { useState } from 'react';
-import { collectSessionsInPaneTree, useTabState, useWorkspaceTab } from '@/contexts/TabContext';
+import {
+  collectSessionsInPaneTree,
+  firstPaneCwd,
+  useTabState,
+  useWorkspaceTab,
+  type WorkspaceTab,
+} from '@/contexts/TabContext';
 import { useSessionManager } from './SessionManagerContext';
+import { useWorktreeLookup, type WorktreeIdentity } from './useAvailableWorktrees';
 
 const BUSY_STATUSES = new Set(['processing', 'busy', 'cancelling']);
+
+/** tab 預設命名（handoff: Tab 命名）：第一個 pane 的 worktree 名，去 feat/ 等前綴。
+ * 使用者命名過（tab.label 存在）永遠優先——預設名只在 render 時推導、不寫入 state。 */
+function deriveTabLabel(
+  tab: WorkspaceTab,
+  lookup: Map<string, WorktreeIdentity>,
+  index: number,
+): string {
+  if (tab.label) return tab.label;
+  const cwd = firstPaneCwd(tab.paneRoot);
+  if (cwd) {
+    const identity = lookup.get(cwd);
+    const source = identity?.branch ?? identity?.name ?? cwd;
+    const segments = source.split('/').filter(Boolean);
+    const last = segments[segments.length - 1];
+    if (last) return last;
+  }
+  return `Tab ${index + 1}`;
+}
 
 interface WorkspaceTabBarProps {
   onOpenSettings?: () => void;
@@ -22,6 +48,7 @@ export function WorkspaceTabBar({
     renameWorkspaceTab,
   } = useWorkspaceTab();
   const { tabs } = useTabState();
+  const lookup = useWorktreeLookup();
   const [renamingTabId, setRenamingTabId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const { open: openSessionManager } = useSessionManager();
@@ -29,24 +56,50 @@ export function WorkspaceTabBar({
   return (
     <div
       data-testid="workspace-tab-bar"
-      className="flex items-center gap-1 px-2 py-1 border-b border-border overflow-x-auto"
+      role="tablist"
+      aria-label="workspace tabs"
+      className="flex items-center gap-1 px-2 border-b border-border overflow-x-auto bg-surface h-(--tabbar-h) shrink-0"
     >
       {workspaceTabs.map((tab, index) => {
         const sessionIds = collectSessionsInPaneTree(tab.paneRoot);
         const isBusy = [...sessionIds].some(
           (id) => tabs[id] && BUSY_STATUSES.has(tabs[id].tabStatus),
         );
+        const isActive = activeWorkspaceTabId === tab.id;
+        const label = deriveTabLabel(tab, lookup, index);
         return (
-          <button
+          // role=tab 的 div（非 button）：tab 內含 label/close 等真 button，button 不可巢狀
+          <div
             key={tab.id}
-            type="button"
+            role="tab"
+            aria-selected={isActive}
+            tabIndex={0}
             data-testid="workspace-tab"
-            data-active={activeWorkspaceTabId === tab.id || undefined}
+            data-active={isActive || undefined}
             data-busy={isBusy || undefined}
             onClick={() => switchWorkspaceTab(tab.id)}
-            className="flex items-center gap-1 px-2 py-0.5 text-xs rounded"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.target === e.currentTarget) switchWorkspaceTab(tab.id);
+            }}
+            className={`flex items-center gap-1.5 px-2 text-xs whitespace-nowrap rounded-t-lg h-(--tab-h) self-end border border-b-0 cursor-pointer ${
+              isActive
+                ? 'bg-bg border-border text-bright'
+                : 'border-transparent text-muted hover:bg-surface-hover'
+            }`}
           >
-            {isBusy && <span aria-hidden="true">●</span>}
+            <span
+              aria-hidden="true"
+              className={`font-mono text-2xs ${isActive ? 'text-accent' : 'text-subtle'}`}
+            >
+              {index + 1}
+            </span>
+            {isBusy && (
+              <span
+                aria-hidden="true"
+                className="size-1.5 rounded-full bg-accent animate-pulse"
+                data-testid="workspace-tab-busy-dot"
+              />
+            )}
             {renamingTabId === tab.id ? (
               <input
                 type="text"
@@ -68,18 +121,18 @@ export function WorkspaceTabBar({
                 className="bg-transparent outline-none w-20 text-xs"
               />
             ) : (
+              // 單擊冒泡到 tab 切換；雙擊進 rename
               <button
                 type="button"
-                aria-label={`rename tab ${tab.label ?? `Tab ${index + 1}`}`}
+                data-testid="workspace-tab-label"
+                className="bg-transparent"
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   setRenamingTabId(tab.id);
-                  setRenameValue(tab.label ?? `Tab ${index + 1}`);
+                  setRenameValue(label);
                 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-transparent"
               >
-                {tab.label ?? `Tab ${index + 1}`}
+                {label}
               </button>
             )}
             <button
@@ -93,7 +146,7 @@ export function WorkspaceTabBar({
             >
               ×
             </button>
-          </button>
+          </div>
         );
       })}
       <button
@@ -113,6 +166,13 @@ export function WorkspaceTabBar({
       >
         ⊞
       </button>
+      <span
+        aria-hidden="true"
+        className="font-mono text-2xs text-subtle border border-border rounded px-1 py-0.5"
+        title="Pane picker (⌘K)"
+      >
+        ⌘K
+      </span>
       {onAddProject && (
         <button
           type="button"

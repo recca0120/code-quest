@@ -187,6 +187,15 @@ function useKeyboardShortcuts(
   ]);
 }
 
+/** 狀態列快捷鍵提示（handoff §1）——單一來源：必須與本 provider 的實際綁定同步。
+ * ⌘K picker 於 P2 綁定後加項。 */
+export const WORKSPACE_SHORTCUT_HINTS = [
+  { keys: '⌘\\', label: 'split ⇄' },
+  { keys: '⌘-', label: 'split ⇵' },
+  { keys: '⌘⇧Z', label: 'zoom' },
+  { keys: '⌘⇧M', label: 'sessions' },
+] as const;
+
 export function KeyboardShortcutsProvider({
   children,
   onNewSession,

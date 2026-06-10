@@ -112,10 +112,11 @@ describe('identity 從 UI 端到端寫入（renderWithWorkspace 全真管線）'
     expect(channel.cwd).toBe(WT_FEAT);
     expect(channel.projectRoot).toBe(PROJECT);
 
-    // ④ UI 反映 identity：SessionBar chip 由 TabMeta.cwd 反查 live worktree 清單
+    // ④ UI 反映 identity：狀態列由 focused pane cwd 反查 live worktree 清單
+    //（SessionBar 已移除——⎇ 顯示由 statusline 承接）
     //    顯示 branch；breadcrumb 由 TabMeta.projectCwd 解析出 project 名稱
     expect(
-      within(screen.getByTestId(`session-bar-item-${launch.channelId}`)).getByText(/feat\/x/),
+      within(screen.getByTestId('workspace-statusline')).getByText(/feat\/x/),
     ).toBeInTheDocument();
     const breadcrumb = await screen.findByLabelText('chat-breadcrumb');
     expect(within(breadcrumb).getByText('app')).toBeInTheDocument();

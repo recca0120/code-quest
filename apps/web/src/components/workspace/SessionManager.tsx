@@ -185,7 +185,11 @@ export function SessionManager({
                 {worktreeList.map((wt) => {
                   const sessionIds = cwdToSessionIds.get(wt.path) ?? [];
                   return (
-                    <div key={wt.path} className="flex items-center gap-2 px-2 py-1 text-xs">
+                    <div
+                      key={wt.path}
+                      data-testid={`worktree-row-${wt.path}`}
+                      className="flex items-center gap-2 px-2 py-1 text-xs"
+                    >
                       <span className="opacity-70">⎇ {wt.branch ?? wt.name}</span>
                       {sessionIds.map((sessionId) => {
                         const sessionMeta = tabs[sessionId];

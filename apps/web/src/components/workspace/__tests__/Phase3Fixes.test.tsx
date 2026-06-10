@@ -4,7 +4,7 @@
  * Fix-1: ⌘T 帶 focused pane 的 cwd
  * Fix-2: Focused pane 有 CSS 視覺指示
  * Fix-3: PaneDivider resize 最小 200px
- * Fix-4: SessionBar 顯示跨 worktree session
+ * Fix-4: 跨 worktree sessions 不被過濾（state 層；顯示層由 panes/manager 承接）
  * Fix-5: RightPane cwd 跟隨 tool pane
  * Fix-6: dragSourceId 用 dataTransfer 避免 race
  */
@@ -146,10 +146,10 @@ describe('Fix-3: PaneDivider enforces 200px minimum', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────
-// Fix-4: SessionBar 顯示跨 worktree session（worktreeFilter 已移除）
+// Fix-4: 跨 worktree sessions 不被過濾（worktreeFilter 已移除；SessionBar 已由 tmux-workspace-ui P1 移除）
 // ─────────────────────────────────────────────────────────────────────
-describe('Fix-4: SessionBar shows sessions from all worktrees', () => {
-  it('tabs with different cwds both exist in state (SessionBar must not filter them)', async () => {
+describe('Fix-4: sessions from all worktrees stay in tabs state (no worktree filtering)', () => {
+  it('tabs with different cwds both exist in state (no layer may filter them by worktree)', async () => {
     let allSessionCwds: (string | null | undefined)[] = [];
 
     function Probe() {
@@ -182,7 +182,7 @@ describe('Fix-4: SessionBar shows sessions from all worktrees', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'add' }));
-    // Both cwds must be present — SessionBar must not filter by worktree
+    // Both cwds must be present — nothing may filter sessions by worktree
     expect(allSessionCwds).toContain('/project/main');
     expect(allSessionCwds).toContain('/project/feat-x');
   });

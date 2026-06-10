@@ -14,13 +14,15 @@ import { WorkspaceLayoutProvider } from './WorkspaceLayoutContext.tsx';
 
 // ── Re-exports（拆分前的公開介面維持不變）──
 
-export type { PaneContent, PaneNode } from './pane-tree.ts';
+export type { PaneContent, PaneNode, WorkspaceTab } from './pane-tree.ts';
 export {
   buildSessionPaneLabels,
   collectSessionsInPaneTree,
   findPaneBySession,
   firstLeafId,
+  firstPaneCwd,
   hasLeaf,
+  paneCwd,
 } from './pane-tree.ts';
 export {
   usePaneActions,

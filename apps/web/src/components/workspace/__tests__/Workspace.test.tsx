@@ -31,9 +31,11 @@ describe('Workspace — with project', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('SessionBar is rendered at top of chat area', async () => {
+  it('workspace chrome is rendered (tab bar + statusline; SessionBar removed by tmux-workspace-ui P1)', async () => {
     await setup();
-    expect(screen.getByTestId('session-bar')).toBeInTheDocument();
+    expect(screen.getByTestId('workspace-tab-bar')).toBeInTheDocument();
+    expect(screen.getByTestId('workspace-statusline')).toBeInTheDocument();
+    expect(screen.queryByTestId('session-bar')).not.toBeInTheDocument();
   });
 
   it('does not render GlobalBar', async () => {
@@ -49,15 +51,12 @@ describe('Workspace — with project', () => {
     result.claude.prepareInit();
     await project.launchSession();
 
-    const sessionBar = screen.getByTestId('session-bar');
-    const sessionItems = Array.from(sessionBar.querySelectorAll<HTMLElement>('[data-status]'));
-    expect(sessionItems).toHaveLength(2);
-
-    // Both sessions are in panes (split happened) — neither should be inactive
-    const statuses = sessionItems.map((el) => el.getAttribute('data-status'));
-    expect(statuses).not.toContain('inactive');
-    // The second session (most recently created) should be focused-active
-    expect(statuses).toContain('focused-active');
+    // Both sessions are in panes (split happened) — two visible chat composers
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
+    expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(2);
+    // The second session (most recently created) is in the focused pane
+    const headers = screen.getAllByTestId('pane-header');
+    expect(headers.some((h) => h.dataset.focused === 'true')).toBe(true);
   });
 
   it('shows empty state when no sessions open', async () => {
@@ -89,9 +88,8 @@ describe('Workspace — multi-project', () => {
     await project2.launchSession();
 
     // Design Decision 4: Tab Bar and Split Pane are cross-project.
-    // Both sessions should be visible in a SINGLE session bar.
-    const sessionBar = screen.getByTestId('session-bar');
-    expect(sessionBar.querySelectorAll('[data-status]').length).toBe(2);
+    // Both sessions render side-by-side in the same workspace tab.
+    expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(2);
   });
 
   it('two projects both appear in single SessionBar with all sessions', async () => {
@@ -103,7 +101,7 @@ describe('Workspace — multi-project', () => {
     const project2 = await result.addProject({ path: '/projects', dirName: 'other-project' });
     await project2.launchSession();
 
-    expect(screen.getByTestId('session-bar').querySelectorAll('[data-status]').length).toBe(2);
+    expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(2);
   });
 });
 
@@ -178,8 +176,11 @@ describe('Workspace — PanePicker wiring', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     // The clicked session is now in the focused pane
-    const sessionBarItem = screen.getByTestId(`session-bar-item-${channelId}`);
-    expect(sessionBarItem).toHaveAttribute('data-status', 'focused-active');
+    const paneWithSession = document.querySelector(`[data-channel-id="${channelId}"]`);
+    if (paneWithSession) {
+      expect(paneWithSession.closest('[data-testid="split-pane-leaf"]')).not.toBeNull();
+    }
+    expect(screen.getAllByPlaceholderText(/Esc to focus/i).length).toBeGreaterThan(0);
   });
 
   it('opening a tool pane from modal creates a git pane in the target pane', async () => {

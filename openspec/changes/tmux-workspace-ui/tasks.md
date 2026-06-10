@@ -10,16 +10,16 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 
 ## 1. P1 — Workspace chrome
 
-- [ ] 1.1 [test] tab busy 燈：pushServerEvent('session:states') 推 busy → tab 亮燈；結束熄滅（collectSessionsInPaneTree 聚合）
-- [ ] 1.2 [impl] WorkspaceTabBar 重做（編號＋busy 燈＋nowrap＋⌘K 鍵帽＋⚙；handoff §1 量測值）
-- [ ] 1.3 [test] tab 單擊切換（含 label 區，修 6.7 bug）＋雙擊 rename；真 UI click/dblClick
-- [ ] 1.4 [impl] label 單擊冒泡修正＋雙擊進編輯
-- [ ] 1.5 [test] tab 預設命名＝worktree 名去前綴；已命名/還原 label 不覆寫
-- [ ] 1.6 [impl] createNewTab/label 規則＋migration 保護
-- [ ] 1.7 [test] 狀態列：focused pane 切換 → project ⎇ branch 更新（useWorktreeLookup priming）；N busy 聚合
-- [ ] 1.8 [impl] WorkspaceStatusline（quick-hint 與 KeyboardShortcutsProvider 單一來源）
-- [ ] 1.9 [test+impl] SessionBar 移除：行為測試等價遷移（busy 可見性→1.1/1.7；切換入口→picker/manager），刪元件＋overflow 邏輯＋舊測試
-- [ ] 1.10 [verify] Playwright：tab bar/狀態列渲染、busy pulse、無 SessionBar
+- [x] 1.1 [test] tab busy 燈：pushServerEvent('session:states') 推 busy → tab 亮燈；結束熄滅（collectSessionsInPaneTree 聚合）
+- [x] 1.2 [impl] WorkspaceTabBar 重做（編號＋busy 燈＋nowrap＋⌘K 鍵帽＋⚙；handoff §1 量測值）
+- [x] 1.3 [test] tab 單擊切換（含 label 區，修 6.7 bug）＋雙擊 rename；真 UI click/dblClick
+- [x] 1.4 [impl] label 單擊冒泡修正＋雙擊進編輯
+- [x] 1.5 [test] tab 預設命名＝worktree 名去前綴；已命名/還原 label 不覆寫
+- [x] 1.6 [impl] createNewTab/label 規則＋migration 保護
+- [x] 1.7 [test] 狀態列：focused pane 切換 → project ⎇ branch 更新（useWorktreeLookup priming）；N busy 聚合
+- [x] 1.8 [impl] WorkspaceStatusline（quick-hint 與 KeyboardShortcutsProvider 單一來源）
+- [x] 1.9 [test+impl] SessionBar 移除：行為測試等價遷移（busy 可見性→1.1/1.7；切換入口→picker/manager），刪元件＋overflow 邏輯＋舊測試
+- [x] 1.10 [verify] Playwright：tab bar/狀態列渲染、busy pulse、無 SessionBar
 
 ## 2. P2 — PanePicker Miller 三欄
 

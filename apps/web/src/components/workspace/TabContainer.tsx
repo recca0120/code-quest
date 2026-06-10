@@ -4,20 +4,17 @@ import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
-import { useSession } from '@/contexts/SessionContext';
 import {
   type PaneNode,
   usePaneState,
-  useTabActions,
   useTabState,
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
 import { PaneTree } from './PaneTree.tsx';
 import { type PaneEnvironment, PaneEnvironmentProvider } from './panes/PaneEnvironmentContext.tsx';
 import { SessionPool } from './panes/SessionPool.tsx';
-import { SessionBar } from './SessionBar.tsx';
-import { useAvailableWorktrees, useWorktreeLookup } from './useAvailableWorktrees.ts';
 import { useCreateSessionInPane } from './useCreateSessionInPane.ts';
+import { WorkspaceStatusline } from './WorkspaceStatusline.tsx';
 import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
 
 type PaneLeafNode = Extract<PaneNode, { type: 'leaf' }>;
@@ -54,11 +51,9 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   onNewWorktree,
 }) {
   const { tabs } = useTabState();
-  const { removeTab } = useTabActions();
-  const { closeSession } = useSession();
   const { setActiveCwd } = useNavigationActions();
 
-  const { activeProjectCwd, projects } = useProjectState();
+  const { activeProjectCwd } = useProjectState();
   const { paneRoot, focusedPaneId } = usePaneState();
   const { workspaceTabs } = useWorkspaceTabState();
 
@@ -90,14 +85,6 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     onSessionCreated?.();
   }, [pendingNewSession, onSessionCreated]);
 
-  const handleCloseSession = useCallback(
-    (channelId: string) => {
-      closeSession(channelId);
-      removeTab(channelId);
-    },
-    [closeSession, removeTab],
-  );
-
   useEffect(() => {
     if (!activeProjectCwd) return;
     setActiveCwd(focusedTabCwd);
@@ -111,9 +98,6 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   }, [activeProjectCwd, setActiveCwd]);
 
   const tabEntries = Object.entries(tabs);
-
-  const availableWorktrees = useAvailableWorktrees();
-  const worktreeLookup = useWorktreeLookup();
 
   // Stable-identity environment for pane bodies and pools — onNewTab reads the
   // latest handleCreateTab through a ref so ratio drags / tabs ticks never churn it
@@ -148,27 +132,9 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     );
   }
 
-  const sessionBarItems = tabEntries.map(([id, meta]) => ({
-    channelId: id,
-    title: meta.title,
-    tabStatus: meta.tabStatus,
-    // live lookup first — branch renames reflect without reopening the session
-    branch: (meta.cwd ? worktreeLookup.get(meta.cwd)?.branch : undefined) ?? meta.branch,
-    cwd: meta.cwd ?? null,
-  }));
-
   return (
     <div data-testid="tab-container" className="flex flex-col flex-1 min-w-0 overflow-hidden">
       <WorkspaceTabBar onOpenSettings={onOpenSettings} onAddProject={onAddProject} />
-      <SessionBar
-        sessions={sessionBarItems}
-        availableWorktrees={availableWorktrees}
-        projects={projects.map((p) => ({ cwd: p.cwd, name: p.name }))}
-        onNewSession={(cwd, projectCwd, branch) => handleCreateTab({ cwd, projectCwd, branch })}
-        onNewWorktree={onNewWorktree}
-        onCloseSession={handleCloseSession}
-      />
-
       <PaneEnvironmentProvider value={paneEnvironment}>
         {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}
         <SessionPool />
@@ -176,6 +142,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
         {/* Pane area: sessions assigned to panes render here */}
         <PaneTree />
       </PaneEnvironmentProvider>
+      <WorkspaceStatusline />
     </div>
   );
 });
