@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { SpinnerVerb } from '@/components/chat/SpinnerVerb';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { ChannelChangeUpdate, ChannelState as ChannelStateType } from '@/types/chat';
-import { useAppInitState } from '../AppInitContext.tsx';
+import { useAppConfigState } from '../AppInitContext.tsx';
 import { useSocket } from '../SocketContext.tsx';
 import { ChannelComposeProvider } from './ChannelComposeContext.tsx';
 import { buildInitialConfig, ChannelConfigProvider } from './ChannelConfigContext.tsx';
@@ -44,7 +44,7 @@ export function ChannelProvider({
 }): React.JSX.Element {
   const messageQueueRef = useRef<string[]>([]);
   const { socket } = useSocket();
-  const { initOptions } = useAppInitState();
+  const { initOptions } = useAppConfigState();
 
   const [state, setState] = useState<ChannelState>(
     mode === 'new' ? { status: 'connecting' } : { status: 'ready' },

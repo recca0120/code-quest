@@ -109,10 +109,5 @@ export function AppConfigProvider({ children }: { children: ReactNode }): React.
   );
 }
 
-// Backward-compat aliases
-export const AppInitProvider: typeof AppConfigProvider = AppConfigProvider;
-export const useAppInitState: typeof useAppConfigState = useAppConfigState;
-export const useAppInitActions: typeof useAppConfigActions = useAppConfigActions;
-export const useAppInit: typeof useAppConfig = useAppConfig;
 /** @deprecated use AppConfigStateContext */
 export const AppInitStateContext: typeof AppConfigStateContext = AppConfigStateContext;

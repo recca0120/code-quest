@@ -25,7 +25,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import { rpc } from '../socket/rpc.ts';
-import { useAppInitActions } from './AppInitContext.tsx';
+import { useAppConfigActions } from './AppInitContext.tsx';
 import { useSocket } from './SocketContext.tsx';
 
 interface AuthState {
@@ -131,7 +131,7 @@ function applyStates(data: SessionStatesPayload): SessionUpdater {
 
 export function SessionProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
-  const { subscribeInit } = useAppInitActions();
+  const { subscribeInit } = useAppConfigActions();
 
   const [auth, setAuth] = useState<AuthState>({ status: 'idle', authUrl: null, errorMsg: null });
   const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
