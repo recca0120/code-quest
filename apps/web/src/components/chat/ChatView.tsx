@@ -10,7 +10,7 @@ import { NO_FORM } from '@/utils/hotkey-options';
 import { resumeRoute } from '@/utils/resume-route';
 import { ChannelOverlays } from './ChannelOverlays.tsx';
 import { ChatBreadcrumb } from './ChatBreadcrumb.tsx';
-import { ChatPanel } from './ChatPanel.tsx';
+import { ChatShell } from './ChatShell.tsx';
 import { ChatInputArea } from './compose/ChatInputArea.tsx';
 import { MessageList } from './conversation/MessageList.tsx';
 import { ResumeButton } from './ResumeButton.tsx';
@@ -88,14 +88,14 @@ export function ChatView({
         />
         {worktree && <WorktreeBanner worktree={worktree} />}
         <div className="flex flex-1 overflow-hidden min-h-0">
-          <ChatPanel>
-            <ChatPanel.Body>
+          <ChatShell>
+            <ChatShell.Body>
               <MessageList />
-            </ChatPanel.Body>
-            <ChatPanel.Footer>
+            </ChatShell.Body>
+            <ChatShell.Footer>
               <ChatInputArea />
-            </ChatPanel.Footer>
-          </ChatPanel>
+            </ChatShell.Footer>
+          </ChatShell>
           {rightPane && (
             <div className="w-72 shrink-0 border-l border-border overflow-y-auto">{rightPane}</div>
           )}

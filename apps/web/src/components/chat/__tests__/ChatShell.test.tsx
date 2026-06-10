@@ -1,74 +1,74 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ChatPanel } from '../ChatPanel.tsx';
+import { ChatShell } from '../ChatShell.tsx';
 
-describe('ChatPanel layout (compound component)', () => {
+describe('ChatShell layout (compound component)', () => {
   it('Header slot renders its children', () => {
     render(
-      <ChatPanel>
-        <ChatPanel.Header>
+      <ChatShell>
+        <ChatShell.Header>
           <div>My Header</div>
-        </ChatPanel.Header>
-      </ChatPanel>,
+        </ChatShell.Header>
+      </ChatShell>,
     );
     expect(screen.getByText('My Header')).toBeInTheDocument();
   });
 
   it('Body slot renders its children', () => {
     render(
-      <ChatPanel>
-        <ChatPanel.Body>
+      <ChatShell>
+        <ChatShell.Body>
           <div>Message List</div>
-        </ChatPanel.Body>
-      </ChatPanel>,
+        </ChatShell.Body>
+      </ChatShell>,
     );
     expect(screen.getByText('Message List')).toBeInTheDocument();
   });
 
   it('Footer slot renders its children', () => {
     render(
-      <ChatPanel>
-        <ChatPanel.Footer>
+      <ChatShell>
+        <ChatShell.Footer>
           <div>Compose</div>
-        </ChatPanel.Footer>
-      </ChatPanel>,
+        </ChatShell.Footer>
+      </ChatShell>,
     );
     expect(screen.getByText('Compose')).toBeInTheDocument();
   });
 
   it('Side slot renders when provided', () => {
     render(
-      <ChatPanel>
-        <ChatPanel.Side>
+      <ChatShell>
+        <ChatShell.Side>
           <div>Side Panel</div>
-        </ChatPanel.Side>
-      </ChatPanel>,
+        </ChatShell.Side>
+      </ChatShell>,
     );
     expect(screen.getByText('Side Panel')).toBeInTheDocument();
   });
 
   it('Side slot is absent when not provided', () => {
     const { container } = render(
-      <ChatPanel>
-        <ChatPanel.Header>
+      <ChatShell>
+        <ChatShell.Header>
           <div>header</div>
-        </ChatPanel.Header>
-      </ChatPanel>,
+        </ChatShell.Header>
+      </ChatShell>,
     );
     expect(container.querySelector('[data-side-panel]')).not.toBeInTheDocument();
   });
 
   it('renders without error when no children provided', () => {
-    expect(() => render(<ChatPanel />)).not.toThrow();
+    expect(() => render(<ChatShell />)).not.toThrow();
   });
 
   it('Body slot children are direct flex children of the chat column (no extra wrapper div)', () => {
     render(
-      <ChatPanel>
-        <ChatPanel.Body>
+      <ChatShell>
+        <ChatShell.Body>
           <div>body content</div>
-        </ChatPanel.Body>
-      </ChatPanel>,
+        </ChatShell.Body>
+      </ChatShell>,
     );
     const bodyChild = screen.getByText('body content');
     // Parent should be the chat column (relative flex-col), not an intermediate wrapper
@@ -79,11 +79,11 @@ describe('ChatPanel layout (compound component)', () => {
 
   it('Footer slot content appears inside the absolute footer container', () => {
     render(
-      <ChatPanel>
-        <ChatPanel.Footer>
+      <ChatShell>
+        <ChatShell.Footer>
           <div>compose input</div>
-        </ChatPanel.Footer>
-      </ChatPanel>,
+        </ChatShell.Footer>
+      </ChatShell>,
     );
     const footerContent = screen.getByText('compose input');
     // Walk up to find the absolute-positioned ancestor

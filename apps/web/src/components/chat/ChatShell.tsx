@@ -16,15 +16,15 @@ function Side({ children }: { children?: React.ReactNode }): React.JSX.Element {
   return <>{children}</>;
 }
 
-type ChatPanelComponent = ((props: { children?: React.ReactNode }) => React.JSX.Element) & {
+type ChatShellComponent = ((props: { children?: React.ReactNode }) => React.JSX.Element) & {
   Header: typeof Header;
   Body: typeof Body;
   Footer: typeof Footer;
   Side: typeof Side;
 };
 
-const ChatPanel: ChatPanelComponent = Object.assign(
-  function ChatPanel({ children }: { children?: React.ReactNode }): React.JSX.Element {
+const ChatShell: ChatShellComponent = Object.assign(
+  function ChatShell({ children }: { children?: React.ReactNode }): React.JSX.Element {
     let header: React.ReactNode = null;
     let body: React.ReactNode = null;
     let footer: React.ReactNode = null;
@@ -60,4 +60,4 @@ const ChatPanel: ChatPanelComponent = Object.assign(
   { Header, Body, Footer, Side },
 );
 
-export { ChatPanel };
+export { ChatShell };
