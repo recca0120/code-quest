@@ -4,7 +4,7 @@ import {
   collectSessionsInPaneTree,
   usePaneState,
   useTabState,
-  useWorkspaceTab,
+  useWorkspaceTabState,
 } from '@/contexts/TabContext';
 import { TabContent } from '../TabContent.tsx';
 import { usePaneEnvironment } from './PaneEnvironmentContext.tsx';
@@ -20,7 +20,7 @@ const NOOP = (): void => {};
  */
 export function SessionPool(): React.JSX.Element {
   const { tabs } = useTabState();
-  const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTab();
+  const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTabState();
   const { paneRoot } = usePaneState();
   const env = usePaneEnvironment();
   const { projects, activeProjectCwd } = useProjectState();

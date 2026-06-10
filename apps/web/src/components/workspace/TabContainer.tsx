@@ -14,7 +14,7 @@ import {
   usePaneState,
   useTabActions,
   useTabState,
-  useWorkspaceTab,
+  useWorkspaceTabState,
 } from '@/contexts/TabContext';
 import { PaneTree } from './PaneTree.tsx';
 import { type PaneEnvironment, PaneEnvironmentProvider } from './panes/PaneEnvironmentContext.tsx';
@@ -68,7 +68,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   const { activeProjectCwd, projects } = useProjectState();
   const { paneRoot, focusedPaneId } = usePaneState();
-  const { workspaceTabs } = useWorkspaceTab();
+  const { workspaceTabs } = useWorkspaceTabState();
   const { setSessionInPane, focusPane, splitPaneAndAssign } = usePaneActions();
 
   const focusedLeaf = focusedPaneId ? findPaneLeaf(paneRoot, focusedPaneId) : null;

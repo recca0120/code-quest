@@ -2,12 +2,12 @@
 
 ## 1. TabContext 拆分
 
-- [ ] 1.1 [refactor] 純樹演算法＋PaneNode/PaneContent 型別移到 `contexts/pane-tree.ts`（零 React import；消除與 pane-codecs 的 type-only cycle；TabContext re-export 型別保持 17 個 consumer 零改動）
-- [ ] 1.2 [test] `useLayoutPersistence(wsState, setWsState)` hook — echo guard／rev／applyLayout 行為與現有 layout-persistence.test.tsx 等價（測試本來就在 provider 層，零搬動）
-- [ ] 1.3 [refactor] persistence 區塊抽 hook（soft-bound socket/appConfigActions 維持「測試可不掛 SocketProvider」）
-- [ ] 1.4 [refactor] 拆 `WorkspaceLayoutProvider`(workspaceTabs+panes+persistence) 與瘦身後 `TabProvider`(session meta+sessions diff+intents)；Workspace 巢狀掛載；hooks 原路徑 re-export
-- [ ] 1.5 [refactor] export `useWorkspaceTabState` / `useWorkspaceTabActions` 細粒度 hook（比照 AppInitContext）
-- [ ] 1.6 [refactor] 測試 harness 更新（render-with-channel、story-decorator）；全套綠
+- [x] 1.1 [refactor] 純樹演算法＋PaneNode/PaneContent 型別移到 `contexts/pane-tree.ts`（零 React import；消除與 pane-codecs 的 type-only cycle；TabContext re-export 型別保持 17 個 consumer 零改動）
+- [x] 1.2 [test] `useLayoutPersistence(wsState, setWsState)` hook — echo guard／rev／applyLayout 行為與現有 layout-persistence.test.tsx 等價（測試本來就在 provider 層，零搬動）
+- [x] 1.3 [refactor] persistence 區塊抽 hook（soft-bound socket/appConfigActions 維持「測試可不掛 SocketProvider」）
+- [x] 1.4 [refactor] 拆 `WorkspaceLayoutProvider`(workspaceTabs+panes+persistence) 與瘦身後 `TabProvider`(session meta+sessions diff+intents)；Workspace 巢狀掛載；hooks 原路徑 re-export
+- [x] 1.5 [refactor] export `useWorkspaceTabState` 細粒度 hook（state-only consumers：SessionManager/TabContainer/SessionPool 已改用）；`useWorkspaceTabActions` 暫留 private——目前無 actions-only consumer，依「有 consumer 才 export」紀律
+- [x] 1.6 [refactor] 測試 harness 更新（render-with-channel、story-decorator）；全套綠
 
 ## 2. 職責歸位
 

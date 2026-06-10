@@ -6,7 +6,7 @@ import {
   usePaneActions,
   usePaneState,
   useTabState,
-  useWorkspaceTab,
+  useWorkspaceTabState,
 } from '@/contexts/TabContext';
 
 interface SessionManagerProps {
@@ -25,7 +25,7 @@ export function SessionManager({
   const { tabs } = useTabState();
   const { focusedPaneId, paneRoot } = usePaneState();
   const { setSessionInPane, focusPane } = usePaneActions();
-  const { workspaceTabs } = useWorkspaceTab();
+  const { workspaceTabs } = useWorkspaceTabState();
   const { listing } = useGitState();
   const { projects } = useProjectState();
 

@@ -12,7 +12,7 @@
  */
 import type { PersistedLayout, PersistedTab } from '@code-quest/schemas';
 import { LAYOUT_SCHEMA_VERSION } from '@code-quest/schemas';
-import type { PaneContent, PaneNode } from './TabContext.tsx';
+import type { PaneContent, PaneNode } from './pane-tree.ts';
 
 type PersistedPaneNode = PersistedTab['paneRoot'];
 type PersistedPaneContent = Extract<PersistedPaneNode, { type: 'leaf' }>['content'];
