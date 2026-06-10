@@ -8,7 +8,7 @@ import { GitProvider } from '@/contexts/GitContext';
 import { OpenspecProvider } from '@/contexts/OpenspecContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { GitPane } from '../GitPane.tsx';
+import { GitView } from '../GitView.tsx';
 
 const SAMPLE_DIFF = ['diff --git a/foo.ts b/foo.ts', '@@ -1,2 +1,2 @@', '-old', '+new'].join('\n');
 
@@ -33,10 +33,10 @@ function setup() {
   return { summoner, Wrapper };
 }
 
-describe('GitPane', () => {
+describe('GitView', () => {
   it('shows a spinner + Loading… text before git status resolves', () => {
     const { Wrapper } = setup();
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'spinner' })).toBeInTheDocument();
   });
@@ -49,7 +49,7 @@ describe('GitPane', () => {
       { status: 'M', file: 'a.ts' },
       { status: 'A', file: 'b.ts' },
     ]);
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     const footer = await screen.findByRole('status', { name: 'pane-status-footer' });
     expect(footer.textContent).toContain('main');
     expect(footer.textContent).toContain('2');
@@ -57,7 +57,7 @@ describe('GitPane', () => {
 
   it('does not render status footer while git status is loading', () => {
     const { Wrapper } = setup();
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     expect(screen.queryByRole('status', { name: 'pane-status-footer' })).toBeNull();
   });
 
@@ -69,10 +69,10 @@ describe('GitPane', () => {
     summoner.git()!.setBranchForCwd('/projA', 'main-A');
     summoner.git()!.setBranchForCwd('/projB', 'main-B');
 
-    const { rerender } = render(<GitPane cwd="/projA" />, { wrapper: Wrapper });
+    const { rerender } = render(<GitView cwd="/projA" />, { wrapper: Wrapper });
     await screen.findAllByText('main-A').then((els) => els[0]);
 
-    rerender(<GitPane cwd="/projB" />);
+    rerender(<GitView cwd="/projB" />);
     // Synchronous read after rerender — before await fires for new data.
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
@@ -85,10 +85,10 @@ describe('GitPane', () => {
     summoner.git()!.setBranchForCwd('/projA', 'main-A');
     summoner.git()!.setBranchForCwd('/projB', 'main-B');
 
-    const { rerender } = render(<GitPane cwd="/projA" />, { wrapper: Wrapper });
+    const { rerender } = render(<GitView cwd="/projA" />, { wrapper: Wrapper });
     expect(await screen.findAllByText('main-A').then((els) => els[0])).toBeInTheDocument();
 
-    rerender(<GitPane cwd="/projB" />);
+    rerender(<GitView cwd="/projB" />);
     expect(await screen.findAllByText('main-B').then((els) => els[0])).toBeInTheDocument();
     expect(screen.queryByText('main-A')).toBeNull();
   });
@@ -97,7 +97,7 @@ describe('GitPane', () => {
     const { summoner, Wrapper } = setup();
     const { NotARepoError } = await import('@code-quest/git');
     summoner.git()!.setStatusError(new NotARepoError('/repo'));
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     expect(await screen.findByText(/not a git repository/i)).toBeInTheDocument();
     // Hint includes the git init command in a code pill.
     const codeEl = screen.getByText('git init');
@@ -109,7 +109,7 @@ describe('GitPane', () => {
     summoner.git()!.setBranch('main');
     summoner.git()!.setClean(true);
     summoner.git()!.setChangedFiles([]);
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     expect(await screen.findAllByText(/main/).then((els) => els[0])).toBeInTheDocument();
     expect(screen.getByText(/no changes/i)).toBeInTheDocument();
   });
@@ -123,7 +123,7 @@ describe('GitPane', () => {
       { status: 'M', file: 'b.ts' },
       { status: '??', file: 'c.ts' },
     ]);
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     expect(await screen.findByText(/Changes \(3\)/)).toBeInTheDocument();
   });
 
@@ -135,7 +135,7 @@ describe('GitPane', () => {
       { status: 'M', file: 'src/foo.ts' },
       { status: '??', file: 'src/new.ts' },
     ]);
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     expect(await screen.findByText('src/foo.ts')).toBeInTheDocument();
     expect(screen.getByText('src/new.ts')).toBeInTheDocument();
   });
@@ -149,7 +149,7 @@ describe('GitPane', () => {
       { status: 'M', file: 'a.ts' },
       { status: '??', file: 'b.ts' },
     ]);
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     await screen.findAllByText(/main/).then((els) => els[0]);
     await user.click(screen.getByRole('button', { name: /commit message/i }));
     expect(screen.getByRole('button', { name: 'Commit 2' })).toBeInTheDocument();
@@ -163,7 +163,7 @@ describe('GitPane', () => {
       summoner.git()!.setClean(false);
       summoner.git()!.setChangedFiles([{ status: 'M', file: 'src/foo.ts' }]);
       summoner.git()!.setDiff(SAMPLE_DIFF);
-      render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<GitView cwd="/repo" />, { wrapper: Wrapper });
 
       await user.click(await screen.findByText('src/foo.ts'));
       await screen.findByRole('dialog');
@@ -185,7 +185,7 @@ describe('GitPane', () => {
       summoner.git()!.setClean(false);
       summoner.git()!.setChangedFiles([{ status: '??', file: 'src/new.ts' }]);
       summoner.git()!.setDiff('');
-      render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<GitView cwd="/repo" />, { wrapper: Wrapper });
 
       await user.click(await screen.findByText('src/new.ts'));
       await screen.findByRole('dialog');
@@ -201,7 +201,7 @@ describe('GitPane', () => {
       summoner.git()!.setBranch('main');
       summoner.git()!.setClean(false);
       summoner.git()!.setChangedFiles([{ status: 'M', file: 'src/foo.ts' }]);
-      render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<GitView cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByText('src/foo.ts');
       await user.hover(screen.getByText('src/foo.ts'));
       expect(screen.getByRole('button', { name: /discard src\/foo\.ts/i })).toBeInTheDocument();
@@ -213,7 +213,7 @@ describe('GitPane', () => {
       summoner.git()!.setBranch('main');
       summoner.git()!.setClean(false);
       summoner.git()!.setChangedFiles([{ status: '??', file: 'src/new.ts' }]);
-      render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<GitView cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByText('src/new.ts');
       await user.hover(screen.getByText('src/new.ts'));
       expect(
@@ -227,7 +227,7 @@ describe('GitPane', () => {
       summoner.git()!.setBranch('main');
       summoner.git()!.setClean(false);
       summoner.git()!.setChangedFiles([{ status: 'M', file: 'src/foo.ts' }]);
-      render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<GitView cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByText('src/foo.ts');
       await user.hover(screen.getByText('src/foo.ts'));
       await user.click(screen.getByRole('button', { name: /discard src\/foo\.ts/i }));
@@ -242,7 +242,7 @@ describe('GitPane', () => {
     summoner.git()!.setClean(false);
     summoner.git()!.setChangedFiles([{ status: 'M', file: 'foo.ts' }]);
     summoner.git()!.setDiff(SAMPLE_DIFF);
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
 
     await user.click(await screen.findByText('foo.ts'));
     const dialog = await screen.findByRole('dialog');
@@ -256,7 +256,7 @@ describe('GitPane', () => {
     summoner.git()!.setBranch('main');
     summoner.git()!.setClean(false);
     summoner.git()!.setChangedFiles([{ status: 'M', file: 'a.ts' }]);
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     await screen.findByText(/1 change/);
     expect(screen.queryByRole('button', { name: /switch branch/i })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Changes/ })).toBeInTheDocument();
@@ -266,7 +266,7 @@ describe('GitPane', () => {
   it('no Refresh button — files:dirty broadcast handles auto-refresh', async () => {
     const { summoner, Wrapper } = setup();
     summoner.git()!.setBranch('main');
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     await screen.findAllByText(/main/).then((els) => els[0]);
     expect(screen.queryByRole('button', { name: /refresh/i })).toBeNull();
   });
@@ -276,7 +276,7 @@ describe('GitPane', () => {
     const { summoner, Wrapper } = setup();
     summoner.git()!.setBranch('main');
     const fetchSpy = vi.spyOn(summoner.git()!, 'fetch');
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     await screen.findAllByText(/main/).then((els) => els[0]);
 
     await user.click(screen.getByRole('button', { name: 'Fetch' }));
@@ -288,7 +288,7 @@ describe('GitPane', () => {
     const { summoner, Wrapper } = setup();
     summoner.git()!.setBranch('main');
     summoner.git()!.setPullError('non-ff');
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     await screen.findAllByText(/main/).then((els) => els[0]);
 
     await user.click(screen.getByRole('button', { name: 'Pull' }));
@@ -300,7 +300,7 @@ describe('GitPane', () => {
   it('Fetch, Pull, Push are all enabled (no disabled placeholders)', async () => {
     const { summoner, Wrapper } = setup();
     summoner.git()!.setBranch('main');
-    render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<GitView cwd="/repo" />, { wrapper: Wrapper });
     await screen.findAllByText(/main/).then((els) => els[0]);
     for (const label of ['Fetch', 'Pull', 'Push']) {
       const btn = screen.getByRole('button', { name: label });

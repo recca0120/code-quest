@@ -35,11 +35,11 @@ async function runOpenspecAction(
   await options.refetch();
 }
 
-interface SpecPaneProps {
+interface SpecViewProps {
   cwd: string;
 }
 
-export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
+export function SpecView({ cwd }: SpecViewProps): React.JSX.Element {
   const data = useOpenspecList(cwd);
   const { changeNew, archive, refetchOpenspecList } = useOpenspecActions();
   const [open, setOpen] = useState<{ kind: OpenspecKind; name: string } | null>(null);

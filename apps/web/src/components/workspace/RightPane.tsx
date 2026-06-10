@@ -1,9 +1,9 @@
 import { ClipboardDocumentListIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useState } from 'react';
-import { FilesPane } from '@/components/files/FilesPane';
-import { GitPane } from '@/components/git/GitPane';
-import { SpecPane } from '@/components/spec/SpecPane';
+import { FilesView } from '@/components/files/FilesView';
+import { GitView } from '@/components/git/GitView';
+import { SpecView } from '@/components/spec/SpecView';
 import { cn } from '@/utils/cn';
 import { tabTrigger } from '../ui/_tokens.ts';
 
@@ -64,13 +64,13 @@ export function RightPane({
       </Tabs.List>
       <section aria-label="right-pane-body" className="flex-1 min-h-0 flex flex-col" data-cwd={cwd}>
         <TabContent value="files" active={active === 'files'}>
-          {mounted.has('files') && <FilesPane cwd={cwd} onMention={handleMention} />}
+          {mounted.has('files') && <FilesView cwd={cwd} onMention={handleMention} />}
         </TabContent>
         <TabContent value="git" active={active === 'git'}>
-          {mounted.has('git') && <GitPane cwd={cwd} />}
+          {mounted.has('git') && <GitView cwd={cwd} />}
         </TabContent>
         <TabContent value="spec" active={active === 'spec'}>
-          {mounted.has('spec') && <SpecPane cwd={cwd} />}
+          {mounted.has('spec') && <SpecView cwd={cwd} />}
         </TabContent>
       </section>
     </Tabs.Root>

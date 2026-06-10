@@ -35,14 +35,14 @@ async function loadPreview(
   return { kind: 'ready', content, contentType };
 }
 
-interface FilesPaneProps {
+interface FilesViewProps {
   cwd: string;
   onMention: (path: string) => void;
 }
 
 type PreviewFile = { path: string; size: number };
 
-export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element {
+export function FilesView({ cwd, onMention }: FilesViewProps): React.JSX.Element {
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
   const [previewState, setPreviewState] = useState<PreviewState>({ kind: 'loading' });
   const [rootError, setRootError] = useState<string | null>(null);

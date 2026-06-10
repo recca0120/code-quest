@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { FilesPane as RealFilesPane } from '@/components/files/FilesPane';
-import { GitPane as RealGitPane } from '@/components/git/GitPane';
-import { SpecPane as RealSpecPane } from '@/components/spec/SpecPane';
+import { FilesView } from '@/components/files/FilesView';
+import { GitView } from '@/components/git/GitView';
+import { SpecView } from '@/components/spec/SpecView';
 import { useGitState } from '@/contexts/GitContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
@@ -101,7 +101,7 @@ export function GitPane({ cwd, paneId, availableWorktrees }: ToolPaneProps): Rea
         makeContent={(c) => ({ type: 'git', cwd: c })}
       />
       <div className="flex-1 overflow-auto min-h-0">
-        <RealGitPane cwd={cwd} />
+        <GitView cwd={cwd} />
       </div>
     </div>
   );
@@ -119,7 +119,7 @@ export function FilesPane({ cwd, paneId, availableWorktrees }: ToolPaneProps): R
         makeContent={(c) => ({ type: 'files', cwd: c })}
       />
       <div className="flex-1 overflow-auto min-h-0">
-        <RealFilesPane cwd={cwd} onMention={() => {}} />
+        <FilesView cwd={cwd} onMention={() => {}} />
       </div>
     </div>
   );
@@ -137,7 +137,7 @@ export function SpecPane({ cwd, paneId, availableWorktrees }: ToolPaneProps): Re
         makeContent={(c) => ({ type: 'spec', cwd: c })}
       />
       <div className="flex-1 overflow-auto min-h-0">
-        <RealSpecPane cwd={cwd} />
+        <SpecView cwd={cwd} />
       </div>
     </div>
   );

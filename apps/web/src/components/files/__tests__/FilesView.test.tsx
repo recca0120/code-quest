@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
-import { FilesPane } from '../FilesPane.tsx';
+import { FilesView } from '../FilesView.tsx';
 
 function setup() {
   const summoner = createFakeSummoner();
@@ -17,10 +17,10 @@ function setup() {
   return { summoner, Wrapper };
 }
 
-describe('FilesPane', () => {
+describe('FilesView', () => {
   it('renders the file tree rooted at cwd (children, not the cwd itself)', async () => {
     const { Wrapper } = setup();
-    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
     expect(await screen.findByRole('treeitem', { name: 'README.md' })).toBeInTheDocument();
     expect(screen.queryByRole('treeitem', { name: 'repo' })).toBeNull();
   });
@@ -28,7 +28,7 @@ describe('FilesPane', () => {
   it('plain click on a file opens preview drawer (tree stays visible)', async () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
-    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
 
     await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
 
@@ -40,7 +40,7 @@ describe('FilesPane', () => {
   it('closing drawer returns focus to tree without removing it', async () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
-    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
 
     await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
     await screen.findByRole('button', { name: /mention/i });
@@ -57,13 +57,13 @@ describe('FilesPane', () => {
     function Wrapper({ children }: { children: ReactNode }) {
       return <FsProvidersWrapper socket={summoner.socket}>{children}</FsProvidersWrapper>;
     }
-    render(<FilesPane cwd="/somewhere/outside" onMention={vi.fn()} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/somewhere/outside" onMention={vi.fn()} />, { wrapper: Wrapper });
     expect(await screen.findByText(/path outside allowed roots/i)).toBeInTheDocument();
   });
 
   it('shows skeleton rows before the file tree root resolves', () => {
     const { Wrapper } = setup();
-    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
     expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
   });
 
@@ -77,12 +77,12 @@ describe('FilesPane', () => {
     function Wrapper({ children }: { children: ReactNode }) {
       return <FsProvidersWrapper socket={summoner.socket}>{children}</FsProvidersWrapper>;
     }
-    const { rerender } = render(<FilesPane cwd="/projA" onMention={vi.fn()} />, {
+    const { rerender } = render(<FilesView cwd="/projA" onMention={vi.fn()} />, {
       wrapper: Wrapper,
     });
     expect(await screen.findByRole('treeitem', { name: 'A-only.md' })).toBeInTheDocument();
 
-    rerender(<FilesPane cwd="/projB" onMention={vi.fn()} />);
+    rerender(<FilesView cwd="/projB" onMention={vi.fn()} />);
     expect(await screen.findByRole('treeitem', { name: 'B-only.md' })).toBeInTheDocument();
     expect(screen.queryByRole('treeitem', { name: 'A-only.md' })).toBeNull();
   });
@@ -91,7 +91,7 @@ describe('FilesPane', () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
     const onMention = vi.fn();
-    render(<FilesPane cwd="/repo" onMention={onMention} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/repo" onMention={onMention} />, { wrapper: Wrapper });
 
     await user.keyboard('{Meta>}');
     await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
@@ -104,7 +104,7 @@ describe('FilesPane', () => {
   it('shows file content in drawer after clicking a file', async () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
-    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
 
     await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
 
@@ -115,7 +115,7 @@ describe('FilesPane', () => {
     const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
     summoner.filesystem().addFile('/repo/huge.txt', 'x'.repeat(2 * 1024 * 1024 + 1));
-    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
 
     await user.click(await screen.findByRole('treeitem', { name: 'huge.txt' }));
 
@@ -126,7 +126,7 @@ describe('FilesPane', () => {
     const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
     summoner.filesystem().addFile('/repo/other.md', '# Other');
-    render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
+    render(<FilesView cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
 
     // open README.md and switch to raw
     await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));

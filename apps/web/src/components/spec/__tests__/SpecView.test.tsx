@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
-import { SpecPane } from '../SpecPane.tsx';
+import { SpecView } from '../SpecView.tsx';
 import { setup } from './spec-test-setup.tsx';
 
 function seedOpenspec(summoner: ReturnType<typeof setup>['summoner']) {
@@ -14,11 +14,11 @@ function seedOpenspec(summoner: ReturnType<typeof setup>['summoner']) {
   openspec.setContent('/repo', 'change', 'add-foo', 'tasks', '- [x] one\n- [ ] two\n');
 }
 
-describe('SpecPane', () => {
+describe('SpecView', () => {
   it('shows friendly empty state with code hint when project has no openspec/ directory', async () => {
     const { summoner, Wrapper } = setup();
     summoner.openspec()?.setListError('no-openspec');
-    render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
     // Hint contains the openspec init command rendered in a <code> element.
     const codeEl = await screen.findByText('openspec init');
     expect(codeEl.tagName).toBe('CODE');
@@ -29,14 +29,14 @@ describe('SpecPane', () => {
 
   it('shows skeleton placeholder rows before the openspec list resolves', () => {
     const { Wrapper } = setup();
-    render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
     // One skeleton block per Section (Active changes + Specs).
     expect(screen.getAllByRole('status', { name: 'Loading' }).length).toBeGreaterThanOrEqual(2);
   });
 
   it('renders per-section empty states when openspec dir absent', async () => {
     const { Wrapper } = setup();
-    render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
     expect(await screen.findByText(/no active changes/i)).toBeInTheDocument();
     expect(screen.getByText(/no specs$/i)).toBeInTheDocument();
   });
@@ -44,7 +44,7 @@ describe('SpecPane', () => {
   it('lists changes with progress and specs', async () => {
     const { summoner, Wrapper } = setup();
     seedOpenspec(summoner);
-    render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
 
     expect(await screen.findByText('add-foo')).toBeInTheDocument();
     expect(screen.getByText('1/2')).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('SpecPane', () => {
   it('renders status footer with change + spec counts when list loaded', async () => {
     const { summoner, Wrapper } = setup();
     seedOpenspec(summoner);
-    render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
     const footer = await screen.findByRole('status', { name: 'pane-status-footer' });
     // 1 change + 1 spec from seedOpenspec
     expect(footer.textContent).toContain('1 change');
@@ -63,7 +63,7 @@ describe('SpecPane', () => {
 
   it('does not render status footer while openspec list is loading', () => {
     const { Wrapper } = setup();
-    render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
     expect(screen.queryByRole('status', { name: 'pane-status-footer' })).toBeNull();
   });
 
@@ -71,7 +71,7 @@ describe('SpecPane', () => {
     const user = userEvent.setup();
     const { summoner, Wrapper } = setup();
     seedOpenspec(summoner);
-    render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+    render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
 
     await user.click(await screen.findByText('add-foo'));
     expect(await screen.findByText(/add foo proposal/i)).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe('SpecPane', () => {
     it('clicking + new opens NewChangeDialog', async () => {
       const user = userEvent.setup();
       const { Wrapper } = setup();
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await user.click(screen.getByRole('button', { name: /new change/i }));
       expect(
         await screen.findByRole('dialog', { name: /new openspec change/i }),
@@ -91,7 +91,7 @@ describe('SpecPane', () => {
     it('submitting a valid slug calls openspec.changeNew', async () => {
       const user = userEvent.setup();
       const { summoner, Wrapper } = setup();
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await user.click(screen.getByRole('button', { name: /new change/i }));
       const input = await screen.findByLabelText(/change name/i);
       await user.type(input, 'add-foo');
@@ -102,7 +102,7 @@ describe('SpecPane', () => {
     it('invalid slug shows inline error and does not fire RPC', async () => {
       const user = userEvent.setup();
       const { summoner, Wrapper } = setup();
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await user.click(screen.getByRole('button', { name: /new change/i }));
       const input = await screen.findByLabelText(/change name/i);
       await user.type(input, 'BadName');
@@ -116,7 +116,7 @@ describe('SpecPane', () => {
       const { summoner, Wrapper } = setup();
       summoner.openspec()!.setChangeNewError('change already exists');
       const toastSpy = vi.spyOn(toast, 'error').mockImplementation(() => 'toast-id');
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await user.click(screen.getByRole('button', { name: /new change/i }));
       const input = await screen.findByLabelText(/change name/i);
       await user.type(input, 'dup');
@@ -141,7 +141,7 @@ describe('SpecPane', () => {
     it('complete row renders Archive button next to Ready badge', async () => {
       const { summoner, Wrapper } = setup();
       seedComplete(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByLabelText('spec-ready-badge-all-done');
       expect(screen.getByRole('button', { name: /archive all-done/i })).toBeInTheDocument();
     });
@@ -149,7 +149,7 @@ describe('SpecPane', () => {
     it('in-progress row does not render Archive button', async () => {
       const { summoner, Wrapper } = setup();
       seedOpenspec(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByText('add-foo');
       expect(screen.queryByRole('button', { name: /archive/i })).toBeNull();
     });
@@ -158,7 +158,7 @@ describe('SpecPane', () => {
       const user = userEvent.setup();
       const { summoner, Wrapper } = setup();
       seedComplete(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await user.click(await screen.findByRole('button', { name: /archive all-done/i }));
       const dialog = await screen.findByRole('dialog', { name: /archive change/i });
       expect(dialog.textContent).toContain('all-done');
@@ -168,7 +168,7 @@ describe('SpecPane', () => {
       const user = userEvent.setup();
       const { summoner, Wrapper } = setup();
       seedComplete(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await user.click(await screen.findByRole('button', { name: /archive all-done/i }));
       await user.click(screen.getByRole('button', { name: /cancel/i }));
       expect(summoner.openspec()!.archiveCalls).toEqual([]);
@@ -178,7 +178,7 @@ describe('SpecPane', () => {
       const user = userEvent.setup();
       const { summoner, Wrapper } = setup();
       seedComplete(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await user.click(await screen.findByRole('button', { name: /archive all-done/i }));
       await user.click(
         within(await screen.findByRole('dialog', { name: /archive change/i })).getByRole('button', {
@@ -193,7 +193,7 @@ describe('SpecPane', () => {
     it('Archive control is a <button> element, not a [role="button"] span', async () => {
       const { summoner, Wrapper } = setup();
       seedComplete(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       const archive = await screen.findByRole('button', { name: /archive all-done/i });
       expect(archive.tagName).toBe('BUTTON');
     });
@@ -201,7 +201,7 @@ describe('SpecPane', () => {
     it('open-modal control and Archive control are siblings, not nested', async () => {
       const { summoner, Wrapper } = setup();
       seedComplete(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       const archive = await screen.findByRole('button', { name: /archive all-done/i });
       // Archive must NOT be a descendant of the open-modal button
       expect(archive.closest('button')).toBe(archive);
@@ -211,7 +211,7 @@ describe('SpecPane', () => {
       const user = userEvent.setup();
       const { summoner, Wrapper } = setup();
       seedComplete(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await user.click(await screen.findByRole('button', { name: /archive all-done/i }));
       await user.click(await screen.findByRole('checkbox', { name: /skip spec update/i }));
       await user.click(
@@ -229,7 +229,7 @@ describe('SpecPane', () => {
     it('change row has a 📋 glyph', async () => {
       const { summoner, Wrapper } = setup();
       seedOpenspec(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       const row = await screen.findByLabelText('spec-change-row-add-foo');
       expect(row.textContent).toContain('📋');
     });
@@ -237,7 +237,7 @@ describe('SpecPane', () => {
     it('spec row has a ▸ glyph', async () => {
       const { summoner, Wrapper } = setup();
       seedOpenspec(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       const row = await screen.findByLabelText('spec-capability-row-auth');
       expect(row.textContent).toContain('▸');
     });
@@ -245,7 +245,7 @@ describe('SpecPane', () => {
     it('task progress renders as a bordered pill (not plain text)', async () => {
       const { summoner, Wrapper } = setup();
       seedOpenspec(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       const pill = await screen.findByLabelText('spec-task-pill-add-foo');
       expect(pill.textContent).toBe('1/2');
       expect(pill.className).toMatch(/border/);
@@ -257,7 +257,7 @@ describe('SpecPane', () => {
       summoner
         .openspec()
         ?.setChanges([{ name: 'all-done', tasks: { done: 5, total: 5 }, status: 'complete' }]);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       const badge = await screen.findByLabelText('spec-ready-badge-all-done');
       expect(badge.textContent?.toLowerCase()).toContain('ready');
       expect(badge.className).toMatch(/success/);
@@ -266,7 +266,7 @@ describe('SpecPane', () => {
     it('no Ready badge when tasks are in progress', async () => {
       const { summoner, Wrapper } = setup();
       seedOpenspec(summoner);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByText('add-foo');
       expect(screen.queryByLabelText('spec-ready-badge-add-foo')).toBeNull();
     });
@@ -274,7 +274,7 @@ describe('SpecPane', () => {
     it('no Ready badge when tasks is null (no tasks.md)', async () => {
       const { summoner, Wrapper } = setup();
       summoner.openspec()?.setChanges([{ name: 'no-tasks', tasks: null, status: 'in-progress' }]);
-      render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
+      render(<SpecView cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByText('no-tasks');
       expect(screen.queryByLabelText('spec-ready-badge-no-tasks')).toBeNull();
       expect(screen.queryByLabelText('spec-task-pill-no-tasks')).toBeNull();

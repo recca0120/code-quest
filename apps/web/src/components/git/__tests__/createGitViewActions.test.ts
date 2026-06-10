@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { createGitPaneActions } from '../createGitPaneActions';
+import { createGitViewActions } from '../createGitViewActions';
 
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), {
@@ -17,7 +17,7 @@ function setup() {
   return summoner;
 }
 
-describe('createGitPaneActions', () => {
+describe('createGitViewActions', () => {
   describe('commit', () => {
     it('calls git.commit with cwd and message, shows success toast', async () => {
       const summoner = setup();
@@ -26,7 +26,7 @@ describe('createGitPaneActions', () => {
       summoner.git()!.setChangedFiles([{ status: 'M', file: 'a.ts' }]);
       await summoner.git()!.add('/repo');
 
-      const actions = createGitPaneActions('/repo', summoner.socket, {
+      const actions = createGitViewActions('/repo', summoner.socket, {
         discardFile: summoner.git()!.discardFile.bind(summoner.git()),
         fetch: summoner.git()!.fetch.bind(summoner.git()),
         pull: summoner.git()!.pull.bind(summoner.git()),
@@ -43,7 +43,7 @@ describe('createGitPaneActions', () => {
       summoner.git()!.setBranch('main');
       summoner.git()!.setCommitError('some-error');
 
-      const actions = createGitPaneActions('/repo', summoner.socket, {
+      const actions = createGitViewActions('/repo', summoner.socket, {
         discardFile: summoner.git()!.discardFile.bind(summoner.git()),
         fetch: summoner.git()!.fetch.bind(summoner.git()),
         pull: summoner.git()!.pull.bind(summoner.git()),
@@ -59,7 +59,7 @@ describe('createGitPaneActions', () => {
       const summoner = setup();
       summoner.git()!.setBranch('main');
 
-      const actions = createGitPaneActions('/repo', summoner.socket, {
+      const actions = createGitViewActions('/repo', summoner.socket, {
         discardFile: summoner.git()!.discardFile.bind(summoner.git()),
         fetch: summoner.git()!.fetch.bind(summoner.git()),
         pull: summoner.git()!.pull.bind(summoner.git()),
@@ -78,7 +78,7 @@ describe('createGitPaneActions', () => {
       summoner.git()!.setBranch('main');
       summoner.git()!.setChangedFiles([{ status: 'M', file: 'a.ts' }]);
 
-      const actions = createGitPaneActions('/repo', summoner.socket, {
+      const actions = createGitViewActions('/repo', summoner.socket, {
         discardFile: summoner.git()!.discardFile.bind(summoner.git()),
         fetch: summoner.git()!.fetch.bind(summoner.git()),
         pull: summoner.git()!.pull.bind(summoner.git()),
@@ -98,7 +98,7 @@ describe('createGitPaneActions', () => {
       summoner.git()!.setChangedFiles([{ status: 'M', file: 'src/foo.ts' }]);
 
       const onDiscarded = vi.fn();
-      const actions = createGitPaneActions('/repo', summoner.socket, {
+      const actions = createGitViewActions('/repo', summoner.socket, {
         discardFile: summoner.git()!.discardFile.bind(summoner.git()),
         fetch: summoner.git()!.fetch.bind(summoner.git()),
         pull: summoner.git()!.pull.bind(summoner.git()),
@@ -117,7 +117,7 @@ describe('createGitPaneActions', () => {
       summoner.git()!.setDiscardError('permission denied');
 
       const onDiscarded = vi.fn();
-      const actions = createGitPaneActions('/repo', summoner.socket, {
+      const actions = createGitViewActions('/repo', summoner.socket, {
         discardFile: summoner.git()!.discardFile.bind(summoner.git()),
         fetch: summoner.git()!.fetch.bind(summoner.git()),
         pull: summoner.git()!.pull.bind(summoner.git()),

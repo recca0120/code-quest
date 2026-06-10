@@ -14,21 +14,21 @@ import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
 import { RowActionButton } from '../ui/RowActionButton.tsx';
 import { Spinner } from '../ui/Spinner.tsx';
 import { CommitComposer } from './CommitComposer.tsx';
-import { createGitPaneActions } from './createGitPaneActions.ts';
+import { createGitViewActions } from './createGitViewActions.ts';
 import { DiffDrawer } from './DiffDrawer.tsx';
 
-interface GitPaneProps {
+interface GitViewProps {
   cwd: string;
 }
 
-export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
+export function GitView({ cwd }: GitViewProps): React.JSX.Element {
   const { socket } = useSocket();
   const gitActions = useGitActions();
   const data = useGitStatus(cwd);
   const [diffFile, setDiffFile] = useState<DiffFile | null>(null);
 
   const { stageAll, commit, runFetch, runPull, push, openDiff, handleDiscard } = useMemo(
-    () => createGitPaneActions(cwd, socket, gitActions, { onDiffOpen: setDiffFile }),
+    () => createGitViewActions(cwd, socket, gitActions, { onDiffOpen: setDiffFile }),
     [cwd, socket, gitActions],
   );
   const refetch = () => gitActions.refetchGitStatus(cwd);

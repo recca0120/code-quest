@@ -60,7 +60,7 @@ export interface GitPaneActions {
   handleDiscard: (filePath: string, onSuccess: () => void) => Promise<void>;
 }
 
-export function createGitPaneActions(
+export function createGitViewActions(
   cwd: string,
   socket: TypedSocket,
   gitActions: GitActions,
