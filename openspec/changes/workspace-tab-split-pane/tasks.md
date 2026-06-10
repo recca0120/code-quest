@@ -645,3 +645,21 @@
 - [x] TG.8 [impl] `TabContent`（TabContainer）：加入 `onToggleRight` prop，從 `PaneLeafContent` 傳入
 - [x] TG.9 [impl] `PaneLeafContent`：`activeTool` state → `rightOpen: boolean`；`setRightOpen(v => !v)` 傳給 `TabContent.onToggleRight`
 - [x] TG.10 [impl] 確認所有測試綠燈
+
+---
+
+## Phase 18：Refactor Cleanup（已完成）
+
+> 這個 phase 在實作完成後補做的結構清理，為後續 layout-persistence 和 remove-session-bar 打好基礎。
+
+- [x] 18.1 [refactor] 刪除已廢棄的 GlobalBar 和 ContextPanel components
+- [x] 18.2 [refactor] WorkspaceLayout.tsx → Workspace.tsx（rename）
+- [x] 18.3 [refactor] WorkspaceInner 合併回 Workspace，CommandPaletteProvider 移到 App.tsx provider stack
+- [x] 18.4 [refactor] Workspace 外層 div 改為 `<main>`，移除內層多餘的 `<main aria-label="project-container">` wrapper
+- [x] 18.5 [refactor] DocumentTitle 改為直接使用 useSession()，不再透過 prop 傳遞
+- [x] 18.6 [refactor] AppInitProvider → AppConfigProvider（語意更清楚），保留 backward-compat alias
+- [x] 18.7 [refactor] 抽出 AppProviders（SessionProvider + PluginProvider + ProjectProvider + NavigationProvider + GitProvider + FsProvider + OpenspecProvider + CommandPaletteProvider），App.tsx 瘦身為連線 + error boundary
+- [x] 18.8 [refactor] Workspace 成為純 UI component（不持有任何 provider）
+- [x] 18.9 [refactor] render-with-workspace 瘦身：SocketProvider > AppConfigProvider > AppProviders > Workspace
+- [x] 18.10 [refactor] TabContainer root div 加 data-testid="tab-container"，測試改用此取代 aria-label 查詢
+- [x] 18.11 [refactor] 手刻 provider stack 的測試改用 renderWithWorkspace

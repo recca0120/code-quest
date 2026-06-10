@@ -971,8 +971,77 @@ ToolPanes（split pane 獨立型）
 11. 調整 Session Tab Bar 點擊行為（填入 focused pane）
 12. 實作 Workspace Overview overlay（sessions + projects + worktrees 合一）
 13. 移除 `GlobalBar`，移除 `activeProjectCwd` / active project 概念
-14. `WorkspaceLayout` 換成 `TabBar` + `SessionTabBar`，移除 `WorkspaceTopbar` / `Sidebar` / `Right Pane`
+14. `Workspace` 取代原本的 `WorkspaceLayout`（已完成，Phase 18）
 15. 更新所有相關測試
+
+---
+
+## Phase 18 Refactor 決策記錄
+
+### 15. App / Workspace 層次劃分
+
+**決定**：
+- `App.tsx`：連線層（`SocketProvider`）+ 錯誤邊界 + `AppConfigProvider`
+- `AppProviders`（從 `App.tsx` export）：所有 workspace 層 providers（`SessionProvider`、`PluginProvider`、`ProjectProvider`、`NavigationProvider`、`GitProvider`、`FsProvider`、`OpenspecProvider`、`CommandPaletteProvider`）
+- `Workspace`：純 UI component，不持有任何 provider
+
+**理由**：`Workspace` 原本同時扮演 provider shell 和 UI 兩個角色，造成命名混淆（等於另一個 `App`）。抽出 `AppProviders` 讓 `App.tsx` 和測試 helper 共用，`Workspace` 名副其實只做 UI。
+
+**架構圖**：
+```
+App.tsx
+  AppProviders (exported)
+    SessionProvider
+    PluginProvider
+    ProjectProvider
+    NavigationProvider
+    GitProvider
+    FsProvider
+    OpenspecProvider
+    CommandPaletteProvider
+
+App (component)
+  SocketProvider
+    RemoteStatusBanner
+    AppConfigProvider
+      AppProviders
+        Workspace   ← 純 UI
+```
+
+**測試 helper**：
+```
+render-with-workspace → SocketProvider > AppConfigProvider > AppProviders > Workspace
+render-with-channel   → 自帶獨立 provider stack（不走 Workspace）
+```
+
+---
+
+### 16. AppInitProvider → AppConfigProvider
+
+**決定**：將 `AppInitProvider` 改名為 `AppConfigProvider`，hooks 對應改名（`useAppInit` → `useAppConfig` 等）。保留舊名 backward-compat alias。
+
+**理由**：`AppInit` 描述的是「做了什麼事」（發 app:init 事件），不是「提供什麼」。`AppConfig` 描述的是它提供的內容（server 回傳的 app 設定：models、capabilities、init options）。
+
+---
+
+### 17. HTML 語意調整
+
+**決定**：
+- `Workspace` 的根元素從 `<div>` 改為 `<main>`
+- 移除原本包在 `TabContainer` 外層的 `<main aria-label="project-container">` wrapper
+- `TabContainer` root div 加 `data-testid="tab-container"`
+
+**理由**：`<main>` 應該是整個 workspace 的根，不是只包 `TabContainer`。移除中間層減少 DOM 深度。`data-testid` 取代 `aria-label` 作為測試錨點，語意更明確。
+
+---
+
+### 18. 廢棄元件移除
+
+以下元件已在 Phase 18 移除：
+- `GlobalBar` — 已廢棄，功能由 `WorkspaceTabBar` 取代
+- `ContextPanel` — 已廢棄，功能由各 Tool Pane（`GitPane`、`FilesPane`、`SpecPane`）取代
+
+---
 
 ## Open Questions
 
