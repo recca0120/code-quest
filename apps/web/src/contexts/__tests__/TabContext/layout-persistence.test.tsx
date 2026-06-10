@@ -5,7 +5,7 @@ import {
   type LayoutStore,
   TYPES,
 } from '@code-quest/server/test';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { AppConfigProvider } from '@/contexts/AppInitContext';
 import { SocketProvider } from '@/contexts/SocketContext';
@@ -80,7 +80,7 @@ async function emitSync(
   rev: number,
 ) {
   await act(async () => {
-    summoner.socket.serverSocket.emit('layout:sync', { ...layout, rev });
+    summoner.claude().pushServerEvent('layout:sync', { ...layout, rev });
   });
 }
 
@@ -96,12 +96,8 @@ describe('app:init rehydrate', () => {
     const summoner = createFakeSummoner(server);
     renderFull(summoner);
 
-    // AppConfigProvider emits app:init on connect; wait for it to complete
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(screen.getByTestId('tab-count').textContent).toBe('2');
+    // AppConfigProvider emits app:init on connect — wait for the rehydrate to land
+    await waitFor(() => expect(screen.getByTestId('tab-count')).toHaveTextContent('2'));
     expect(screen.getByTestId('active-tab').textContent).toBe('tab-b');
   });
 
@@ -112,11 +108,8 @@ describe('app:init rehydrate', () => {
     const summoner = createFakeSummoner(server);
     renderFull(summoner);
 
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(screen.getByTestId('tab-count').textContent).toBe('1');
+    await act(async () => {});
+    await waitFor(() => expect(screen.getByTestId('tab-count')).toHaveTextContent('1'));
   });
 });
 
@@ -144,10 +137,7 @@ describe('provider remount replay (client-structure-cleanup 4.1)', () => {
     }
 
     const { rerender } = render(<Harness mounted />);
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 50));
-    });
-    expect(screen.getByTestId('tab-count').textContent).toBe('2');
+    await waitFor(() => expect(screen.getByTestId('tab-count')).toHaveTextContent('2'));
 
     // a newer layout arrives via sync (3 tabs, rev 2)
     const threeTabs: PersistedLayout = {
@@ -165,7 +155,7 @@ describe('provider remount replay (client-structure-cleanup 4.1)', () => {
       ],
     };
     await act(async () => {
-      summoner.socket.serverSocket.emit('layout:sync', { ...threeTabs, rev: 2 });
+      summoner.claude().pushServerEvent('layout:sync', { ...threeTabs, rev: 2 });
     });
     expect(screen.getByTestId('tab-count').textContent).toBe('3');
 
@@ -192,7 +182,7 @@ describe('layout:sync cross-device update', () => {
     const summoner = renderBare();
 
     await act(async () => {
-      summoner.socket.serverSocket.emit('layout:sync', { invalid: true });
+      summoner.claude().pushServerEvent('layout:sync', { invalid: true });
     });
 
     expect(screen.getByTestId('tab-count').textContent).toBe('1');
