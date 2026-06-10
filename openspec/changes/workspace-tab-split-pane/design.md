@@ -479,14 +479,29 @@ type PersistedLayout = { tabs: PersistedTab[]; activeTabId: string }
 
 **不持久化的欄位**：`sessionId`（runtime）、`focusedPaneId`（預設 first leaf）、`zoomedPaneId`（transient）、`rightOpen`（預設 false）。
 
-**新增的 server events**：
+**新增／修改的 server events**：
 
 | Event | 方向 | 說明 |
 |---|---|---|
+| `app:init` ack | server → client | **修改**：ack payload 加入 `layout: PersistedLayout \| null` |
 | `layout:save` | client → server | debounce 儲存當下 layout（每次 TabContext 狀態改變） |
-| `layout:load` | client → server | 連線初始化時請求上次儲存的 layout |
-| `layout:loaded` | server → client | 回傳 `PersistedLayout`（或 null，表示無 layout） |
 | `layout:sync` | server → client | 有其他 browser 更新 layout 時，廣播給其他連線（排除發送者） |
+
+`layout:load` / `layout:loaded` 不需要，改為 `app:init` 一次帶回，少一個 round trip。
+
+**連線初始化流程**：
+
+```
+Browser reload
+  ↓
+app:init  →  server ack { ...原有欄位, layout: PersistedLayout | null }
+  ↓
+null          → TabContext 用預設狀態（單一空白 Tab）
+PersistedLayout → rehydrate TabContext
+                    ├── tabs / activeTabId 恢復
+                    ├── 每個 PaneLeaf session 的 sessionId = null
+                    └── focusedPaneId = firstLeafId(paneRoot)
+```
 
 **同步策略：last-write-wins**
 
@@ -523,8 +538,8 @@ class LayoutStore {
 
 | 時機 | 行為 |
 |---|---|
+| 連線初始化（`app:init` ack） | 從 ack 的 `layout` 欄位 rehydrate TabContext |
 | Tab 狀態變動（split / close / resize / label） | debounce `layout:save(PersistedLayout)` |
-| 連線初始化 | `layout:load` → 收到 `layout:loaded` → rehydrate TabContext |
 | 收到 `layout:sync` | rehydrate TabContext（來自其他 browser） |
 | rehydrate 後 | `focusedPaneId = firstLeafId(paneRoot)`，`zoomedPaneId = null`，`sessionId = null` |
 
@@ -532,8 +547,8 @@ class LayoutStore {
 
 | 收到事件 | 處理 |
 |---|---|
+| `app:init` | 原有處理 + ack payload 加入 `layout: layoutStore.load()` |
 | `layout:save(payload)` | `layoutStore.save(payload)` → `socket.broadcast.emit("layout:sync", payload)` |
-| `layout:load` | `socket.emit("layout:loaded", layoutStore.load())` |
 
 **Session 恢復策略（保守）**：rehydrate 時所有 PaneLeaf session 的 `sessionId = null`（顯示 EmptyPanePicker + cwd 提示），使用者點擊後手動開 session。不自動建立 session，避免重整後同時開多個 session。
 
