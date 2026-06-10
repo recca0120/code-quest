@@ -3,7 +3,7 @@ import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { AppInitProvider } from '@/contexts/AppInitContext';
+import { AppConfigProvider } from '@/contexts/AppInitContext';
 import {
   NavigationProvider,
   useNavigationActions,
@@ -34,7 +34,7 @@ function renderWithProjectAndSessions(
   let sessions = initial.sessions ?? [];
   const tree = (
     <SocketProvider socket={summoner.socket}>
-      <AppInitProvider>
+      <AppConfigProvider>
         <SessionProvider>
           <ProjectProvider>
             <NavigationProvider>
@@ -44,7 +44,7 @@ function renderWithProjectAndSessions(
             </NavigationProvider>
           </ProjectProvider>
         </SessionProvider>
-      </AppInitProvider>
+      </AppConfigProvider>
     </SocketProvider>
   );
   const { rerender } = render(tree);
@@ -52,7 +52,7 @@ function renderWithProjectAndSessions(
     sessions = next;
     rerender(
       <SocketProvider socket={summoner.socket}>
-        <AppInitProvider>
+        <AppConfigProvider>
           <SessionProvider>
             <ProjectProvider>
               <NavigationProvider>
@@ -62,7 +62,7 @@ function renderWithProjectAndSessions(
               </NavigationProvider>
             </ProjectProvider>
           </SessionProvider>
-        </AppInitProvider>
+        </AppConfigProvider>
       </SocketProvider>,
     );
   }

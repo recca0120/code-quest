@@ -1,5 +1,5 @@
 import { EVENTS, type SessionStateSummary } from '@code-quest/schemas';
-import { AppInitProvider } from '../contexts/AppInitContext.tsx';
+import { AppConfigProvider } from '../contexts/AppInitContext.tsx';
 import { FsProvider } from '../contexts/FsContext.tsx';
 import { GitProvider } from '../contexts/GitContext.tsx';
 import { NavigationProvider } from '../contexts/NavigationContext.tsx';
@@ -49,7 +49,7 @@ export function withStoryWorkspaceFixtures(
 
   return (Story: () => React.ReactNode) => (
     <SocketProvider socket={socket}>
-      <AppInitProvider>
+      <AppConfigProvider>
         <SessionProvider>
           <PluginProvider>
             <ProjectProvider>
@@ -67,7 +67,7 @@ export function withStoryWorkspaceFixtures(
             </ProjectProvider>
           </PluginProvider>
         </SessionProvider>
-      </AppInitProvider>
+      </AppConfigProvider>
     </SocketProvider>
   );
 }

@@ -8,7 +8,7 @@ import { useChannelStore } from '@/stores/ChannelStoreContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
-import { AppInitProvider } from '../AppInitContext.tsx';
+import { AppConfigProvider } from '../AppInitContext.tsx';
 import { ChannelProvider } from '../channel/ChannelContext.tsx';
 import { useChannelId, useChannelMessages } from '../channel/index.ts';
 import { NavigationProvider } from '../NavigationContext.tsx';
@@ -338,7 +338,7 @@ describe('ChannelContext', () => {
       function Wrapper({ cwd }: { cwd: string }) {
         return (
           <SocketProvider socket={summoner.socket}>
-            <AppInitProvider>
+            <AppConfigProvider>
               <SessionProvider>
                 <PluginProvider>
                   <ProjectProvider>
@@ -352,7 +352,7 @@ describe('ChannelContext', () => {
                   </ProjectProvider>
                 </PluginProvider>
               </SessionProvider>
-            </AppInitProvider>
+            </AppConfigProvider>
           </SocketProvider>
         );
       }

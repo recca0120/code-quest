@@ -3,15 +3,6 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
-import { Workspace } from '@/components/workspace/Workspace';
-import { AppInitProvider } from '@/contexts/AppInitContext';
-import { FsProvider } from '@/contexts/FsContext';
-import { GitProvider } from '@/contexts/GitContext';
-import { NavigationProvider } from '@/contexts/NavigationContext';
-import { OpenspecProvider } from '@/contexts/OpenspecContext';
-import { PluginProvider } from '@/contexts/PluginContext';
-import { ProjectProvider } from '@/contexts/ProjectContext';
-import { SessionProvider } from '@/contexts/SessionContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, useTabActions, useTabState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -31,35 +22,8 @@ function renderInTab(ui: ReactElement) {
 describe('TabProvider', () => {
   describe('tab bar UI', () => {
     it('renders tab bar after adding project', async () => {
-      const summoner = createFakeSummoner();
-      summoner.filesystem().setRoots(['/projects']);
-      summoner.filesystem().addDirectory('/projects', ['my-app']);
-      render(
-        <SocketProvider socket={summoner.socket}>
-          <AppInitProvider>
-            <SessionProvider>
-              <PluginProvider>
-                <ProjectProvider>
-                  <GitProvider>
-                    <FsProvider>
-                      <OpenspecProvider>
-                        <NavigationProvider>
-                          <Workspace />
-                        </NavigationProvider>
-                      </OpenspecProvider>
-                    </FsProvider>
-                  </GitProvider>
-                </ProjectProvider>
-              </PluginProvider>
-            </SessionProvider>
-          </AppInitProvider>
-        </SocketProvider>,
-      );
-      // Add project via dialog
-      await userEvent.click(screen.getByRole('button', { name: 'Add Project' }));
-      await userEvent.click(await screen.findByRole('treeitem', { name: 'projects' }));
-      await userEvent.click(await screen.findByRole('treeitem', { name: 'my-app' }));
-      await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+      const { addProject } = await renderWithWorkspace();
+      await addProject({ path: '/projects', dirName: 'my-app' });
       expect(screen.getByRole('button', { name: /New Session/ })).toBeInTheDocument();
     });
 

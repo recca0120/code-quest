@@ -7,7 +7,7 @@ import type { PendingControl } from '@code-quest/schemas';
 import type { StoryObj } from '@storybook/react-vite';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { expect } from 'storybook/test';
-import { AppInitProvider } from '../contexts/AppInitContext.tsx';
+import { AppConfigProvider } from '../contexts/AppInitContext.tsx';
 import { CommandPaletteProvider } from '../contexts/CommandPaletteContext.tsx';
 import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContext.tsx';
 import {
@@ -63,7 +63,7 @@ function AppProviderShell({ children }: { children: React.ReactNode }) {
   if (!socket) return null;
   return (
     <SocketProvider socket={socket}>
-      <AppInitProvider>
+      <AppConfigProvider>
         <SessionProvider>
           <PluginProvider>
             <ProjectProvider>
@@ -77,7 +77,7 @@ function AppProviderShell({ children }: { children: React.ReactNode }) {
             </ProjectProvider>
           </PluginProvider>
         </SessionProvider>
-      </AppInitProvider>
+      </AppConfigProvider>
     </SocketProvider>
   );
 }

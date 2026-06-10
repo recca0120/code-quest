@@ -2,7 +2,7 @@ import { act, render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { AppInitProvider, useAppInitActions, useAppInitState } from '../AppInitContext.tsx';
+import { AppConfigProvider, useAppConfigActions, useAppConfigState } from '../AppInitContext.tsx';
 import { SessionProvider, useSession } from '../SessionContext.tsx';
 import { SocketProvider } from '../SocketContext.tsx';
 
@@ -10,7 +10,7 @@ async function renderInAppInit(ui: ReactNode, summoner?: ReturnType<typeof creat
   const s = summoner ?? createFakeSummoner();
   render(
     <SocketProvider socket={s.socket}>
-      <AppInitProvider>{ui}</AppInitProvider>
+      <AppConfigProvider>{ui}</AppConfigProvider>
     </SocketProvider>,
   );
   await act(async () => {});
@@ -22,7 +22,7 @@ describe('AppInitContext', () => {
     const cb = vi.fn();
 
     function Subscriber() {
-      useAppInitActions().subscribeInit(cb);
+      useAppConfigActions().subscribeInit(cb);
       return null;
     }
 
@@ -33,10 +33,10 @@ describe('AppInitContext', () => {
   });
 
   it('late subscriber receives already-fired init data immediately', async () => {
-    let subscribeInit: ReturnType<typeof useAppInitActions>['subscribeInit'];
+    let subscribeInit: ReturnType<typeof useAppConfigActions>['subscribeInit'];
 
     function Capture() {
-      subscribeInit = useAppInitActions().subscribeInit;
+      subscribeInit = useAppConfigActions().subscribeInit;
       return null;
     }
 
@@ -88,12 +88,12 @@ describe('AppInitContext', () => {
   });
 
   it('subscribeInit belongs to actions, not state', () => {
-    let state: ReturnType<typeof useAppInitState>;
-    let actions: ReturnType<typeof useAppInitActions>;
+    let state: ReturnType<typeof useAppConfigState>;
+    let actions: ReturnType<typeof useAppConfigActions>;
 
     function Probe() {
-      state = useAppInitState();
-      actions = useAppInitActions();
+      state = useAppConfigState();
+      actions = useAppConfigActions();
       return null;
     }
 
@@ -137,7 +137,7 @@ describe('AppInitContext', () => {
     const cb = vi.fn();
 
     function Subscriber() {
-      useAppInitActions().subscribeInit(cb);
+      useAppConfigActions().subscribeInit(cb);
       return null;
     }
 

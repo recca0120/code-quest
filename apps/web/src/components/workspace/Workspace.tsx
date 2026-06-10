@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { CommandPaletteProvider, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
+import { useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
 import { useGitActions, useGitState } from '@/contexts/GitContext';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
@@ -99,7 +99,8 @@ const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
   path_not_directory: (p) => `Not a directory: ${p}`,
 };
 
-function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
+function DocumentTitle() {
+  const { sessions } = useSession();
   const isBusy = sessions.some((s) => s.state === 'busy');
   useEffect(() => {
     document.title = isBusy ? '⟳ Code Quest' : 'Code Quest';
@@ -108,14 +109,6 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
 }
 
 export function Workspace(): React.JSX.Element {
-  return (
-    <CommandPaletteProvider>
-      <WorkspaceInner />
-    </CommandPaletteProvider>
-  );
-}
-
-function WorkspaceInner() {
   const { openPalette, registerActions } = useCommandPaletteActions();
   useHotkeys('mod+k', () => openPalette(), NO_FORM);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -178,9 +171,9 @@ function WorkspaceInner() {
   );
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <main className="flex flex-col flex-1 overflow-hidden">
       <CommandPalette />
-      <DocumentTitle sessions={sessions} />
+      <DocumentTitle />
       {projects.length === 0 ? (
         <EmptyState
           icon={<FolderOpenIcon className="w-10 h-10" />}
@@ -197,22 +190,20 @@ function WorkspaceInner() {
           }
         >
           <KeyboardShortcutsProvider>
-            <main aria-label="project-container" className="flex flex-1 min-w-0 overflow-hidden">
-              <TabContainer
-                pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
-                onSessionCreated={() => setPendingSession(null)}
-                onOpenModal={(paneId) => {
-                  setOpenInPaneTargetPaneId(paneId);
-                  setOpenInPaneModalOpen(true);
-                }}
-                onOpenSettings={() => setSettingsOpen(true)}
-                onAddProject={() => setDialogOpen(true)}
-                onNewWorktree={(projectCwd) => {
-                  setActiveProject(projectCwd);
-                  setWorktreeDialogOpen(true);
-                }}
-              />
-            </main>
+            <TabContainer
+              pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
+              onSessionCreated={() => setPendingSession(null)}
+              onOpenModal={(paneId) => {
+                setOpenInPaneTargetPaneId(paneId);
+                setOpenInPaneModalOpen(true);
+              }}
+              onOpenSettings={() => setSettingsOpen(true)}
+              onAddProject={() => setDialogOpen(true)}
+              onNewWorktree={(projectCwd) => {
+                setActiveProject(projectCwd);
+                setWorktreeDialogOpen(true);
+              }}
+            />
           </KeyboardShortcutsProvider>
           <ConnectedPanePicker
             open={panePickerOpen}
@@ -259,6 +250,6 @@ function WorkspaceInner() {
           onClose={() => setWorktreeDialogOpen(false)}
         />
       )}
-    </div>
+    </main>
   );
 }

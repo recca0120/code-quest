@@ -134,9 +134,9 @@ describe('Workspace — state preservation across breakpoints', () => {
     const project = await result.addProject();
     await project.launchSession();
 
-    const elBefore = screen.getByLabelText('project-container');
+    const elBefore = screen.getByTestId('tab-container');
     fakeMM.triggerChange(1025);
-    const elAfter = screen.getByLabelText('project-container');
+    const elAfter = screen.getByTestId('tab-container');
 
     expect(elAfter).toBe(elBefore);
   });
@@ -147,9 +147,9 @@ describe('Workspace — state preservation across breakpoints', () => {
     const project = await result.addProject();
     await project.launchSession();
 
-    const elBefore = screen.getByLabelText('project-container');
+    const elBefore = screen.getByTestId('tab-container');
     fakeMM.triggerChange(800);
-    const elAfter = screen.getByLabelText('project-container');
+    const elAfter = screen.getByTestId('tab-container');
 
     expect(elAfter).toBe(elBefore);
   });
@@ -203,7 +203,7 @@ describe('Workspace — PanePicker wiring', () => {
 describe('Workspace — layout width constraints', () => {
   it('active project container has min-w-0 to prevent overflow on mobile', async () => {
     await setupWithProject(375);
-    expect(screen.getByLabelText('project-container')).toHaveClass('min-w-0');
+    expect(screen.getByTestId('tab-container')).toHaveClass('min-w-0');
   });
 
   it('split pane root has min-w-0 to prevent content forcing parent wider than viewport', async () => {

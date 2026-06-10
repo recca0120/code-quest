@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { AppInitProvider } from '@/contexts/AppInitContext';
+import { AppConfigProvider } from '@/contexts/AppInitContext';
 import { NavigationProvider, useNavigationActions } from '@/contexts/NavigationContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SessionProvider } from '@/contexts/SessionContext';
@@ -45,7 +45,7 @@ function Wrapper({ projectCwd, children }: { projectCwd: string; children: React
   const summoner = createFakeSummoner();
   return (
     <SocketProvider socket={summoner.socket}>
-      <AppInitProvider>
+      <AppConfigProvider>
         <SessionProvider>
           <ProjectProvider>
             <NavigationProvider>
@@ -53,7 +53,7 @@ function Wrapper({ projectCwd, children }: { projectCwd: string; children: React
             </NavigationProvider>
           </ProjectProvider>
         </SessionProvider>
-      </AppInitProvider>
+      </AppConfigProvider>
     </SocketProvider>
   );
 }

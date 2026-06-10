@@ -10,7 +10,7 @@ import { useState, useSyncExternalStore } from 'react';
 import { z } from 'zod';
 import { CommandMenu } from '@/components/chat/compose/command-menu/CommandMenu';
 import { IconButton } from '@/components/ui/IconButton';
-import { useAppInit } from '@/contexts/AppInitContext';
+import { useAppConfig } from '@/contexts/AppInitContext';
 import {
   useChannelCompose,
   useChannelConfig,
@@ -131,7 +131,7 @@ export function ComposeToolbar({
     setEffort,
     providerConfig,
   } = useChannelConfig();
-  const { initOptions, setInitOptions } = useAppInit();
+  const { initOptions, setInitOptions } = useAppConfig();
   const compose = useChannelCompose();
 
   const baseMcpServers = channelMcpServers.map(toMcpServerInfo);

@@ -3,7 +3,7 @@ import { type FakeClaude, segments as s } from '@code-quest/test-kit';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { onTestFinished } from 'vitest';
-import { AppInitProvider } from '../contexts/AppInitContext.tsx';
+import { AppConfigProvider } from '../contexts/AppInitContext.tsx';
 import { CommandPaletteProvider } from '../contexts/CommandPaletteContext.tsx';
 import { ChannelProvider, type SessionMode } from '../contexts/channel/ChannelContext.tsx';
 import { NavigationProvider } from '../contexts/NavigationContext.tsx';
@@ -60,7 +60,7 @@ export async function renderWithChannel(
   const result = render(ui, {
     wrapper: ({ children }) => (
       <SocketProvider socket={summoner.socket}>
-        <AppInitProvider>
+        <AppConfigProvider>
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
@@ -82,7 +82,7 @@ export async function renderWithChannel(
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
-        </AppInitProvider>
+        </AppConfigProvider>
       </SocketProvider>
     ),
   });

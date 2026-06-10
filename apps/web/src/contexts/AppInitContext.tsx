@@ -12,7 +12,7 @@ import { useSocket } from './SocketContext.tsx';
 
 type InitSubscriber = (data: InitResponse) => void;
 
-interface AppInitState {
+interface AppConfigState {
   /** Feature flags derived from server `app:init` — e.g., whether git
    *  worktree operations are available. */
   capabilities: { worktree: boolean };
@@ -21,33 +21,33 @@ interface AppInitState {
   initOptions: Record<string, unknown>;
 }
 
-interface AppInitActions {
+interface AppConfigActions {
   setInitOptions: (opts: Record<string, unknown>) => void;
   subscribeInit: (cb: InitSubscriber) => () => void;
 }
 
-export const AppInitStateContext: React.Context<AppInitState | null> =
-  createContext<AppInitState | null>(null);
-const AppInitActionsContext = createContext<AppInitActions | null>(null);
+export const AppConfigStateContext: React.Context<AppConfigState | null> =
+  createContext<AppConfigState | null>(null);
+const AppConfigActionsContext = createContext<AppConfigActions | null>(null);
 
-export function useAppInitState(): AppInitState {
-  const ctx = useContext(AppInitStateContext);
-  if (!ctx) throw new Error('useAppInitState must be used within AppInitProvider');
+export function useAppConfigState(): AppConfigState {
+  const ctx = useContext(AppConfigStateContext);
+  if (!ctx) throw new Error('useAppConfigState must be used within AppConfigProvider');
   return ctx;
 }
 
-export function useAppInitActions(): AppInitActions {
-  const ctx = useContext(AppInitActionsContext);
-  if (!ctx) throw new Error('useAppInitActions must be used within AppInitProvider');
+export function useAppConfigActions(): AppConfigActions {
+  const ctx = useContext(AppConfigActionsContext);
+  if (!ctx) throw new Error('useAppConfigActions must be used within AppConfigProvider');
   return ctx;
 }
 
 /** Convenience: `{ capabilities, initOptions, setInitOptions }` in one call. */
-export function useAppInit(): AppInitState & AppInitActions {
-  return { ...useAppInitState(), ...useAppInitActions() };
+export function useAppConfig(): AppConfigState & AppConfigActions {
+  return { ...useAppConfigState(), ...useAppConfigActions() };
 }
 
-export function AppInitProvider({ children }: { children: ReactNode }): React.JSX.Element {
+export function AppConfigProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const [capabilities, setCapabilities] = useState<{ worktree: boolean }>({ worktree: false });
   const [initOptions, setInitOptions] = useState<Record<string, unknown>>({});
@@ -72,7 +72,7 @@ export function AppInitProvider({ children }: { children: ReactNode }): React.JS
         pending = false;
         const parsed = initResponseSchema.safeParse(raw);
         if (!parsed.success) {
-          console.warn('[AppInitContext] initResponseSchema parse failed', parsed.error);
+          console.warn('[AppConfigContext] initResponseSchema parse failed', parsed.error);
           return;
         }
         lastInitRef.current = parsed.data;
@@ -95,14 +95,24 @@ export function AppInitProvider({ children }: { children: ReactNode }): React.JS
     };
   }, [socket]);
 
-  const [actions] = useState<AppInitActions>(() => ({
+  const [actions] = useState<AppConfigActions>(() => ({
     setInitOptions,
     subscribeInit,
   }));
 
   return (
-    <AppInitStateContext.Provider value={{ capabilities, initOptions }}>
-      <AppInitActionsContext.Provider value={actions}>{children}</AppInitActionsContext.Provider>
-    </AppInitStateContext.Provider>
+    <AppConfigStateContext.Provider value={{ capabilities, initOptions }}>
+      <AppConfigActionsContext.Provider value={actions}>
+        {children}
+      </AppConfigActionsContext.Provider>
+    </AppConfigStateContext.Provider>
   );
 }
+
+// Backward-compat aliases
+export const AppInitProvider: typeof AppConfigProvider = AppConfigProvider;
+export const useAppInitState: typeof useAppConfigState = useAppConfigState;
+export const useAppInitActions: typeof useAppConfigActions = useAppConfigActions;
+export const useAppInit: typeof useAppConfig = useAppConfig;
+/** @deprecated use AppConfigStateContext */
+export const AppInitStateContext: typeof AppConfigStateContext = AppConfigStateContext;

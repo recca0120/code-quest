@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { AppInitProvider } from '@/contexts/AppInitContext';
+import { AppConfigProvider } from '@/contexts/AppInitContext';
 import { ChannelProvider, useChannelMessages } from '@/contexts/channel';
 import { PluginProvider } from '@/contexts/PluginContext';
 import { SessionProvider } from '@/contexts/SessionContext';
@@ -28,7 +28,7 @@ async function renderInChannel(ui: ReactElement, opts?: { planComments?: PlanCom
   const result = render(ui, {
     wrapper: ({ children }) => (
       <SocketProvider socket={summoner.socket}>
-        <AppInitProvider>
+        <AppConfigProvider>
           <SessionProvider>
             <PluginProvider>
               <TabProvider
@@ -44,7 +44,7 @@ async function renderInChannel(ui: ReactElement, opts?: { planComments?: PlanCom
               </TabProvider>
             </PluginProvider>
           </SessionProvider>
-        </AppInitProvider>
+        </AppConfigProvider>
       </SocketProvider>
     ),
   });

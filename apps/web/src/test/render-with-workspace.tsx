@@ -7,15 +7,9 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Toaster } from 'sonner';
 import { onTestFinished } from 'vitest';
+import { AppProviders } from '../App.tsx';
 import { Workspace } from '../components/workspace/Workspace.tsx';
-import { AppInitProvider } from '../contexts/AppInitContext.tsx';
-import { FsProvider } from '../contexts/FsContext.tsx';
-import { GitProvider } from '../contexts/GitContext.tsx';
-import { NavigationProvider } from '../contexts/NavigationContext.tsx';
-import { OpenspecProvider } from '../contexts/OpenspecContext.tsx';
-import { PluginProvider } from '../contexts/PluginContext.tsx';
-import { ProjectProvider } from '../contexts/ProjectContext.tsx';
-import { SessionProvider } from '../contexts/SessionContext.tsx';
+import { AppConfigProvider } from '../contexts/AppInitContext.tsx';
 import { SocketProvider } from '../contexts/SocketContext.tsx';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner.ts';
 
@@ -139,24 +133,12 @@ export async function renderWithWorkspace(
 
   const { unmount } = render(
     <SocketProvider socket={summoner.socket}>
-      <AppInitProvider>
-        <SessionProvider>
-          <PluginProvider>
-            <ProjectProvider>
-              <NavigationProvider>
-                <GitProvider>
-                  <FsProvider>
-                    <OpenspecProvider>
-                      <Workspace />
-                      <Toaster />
-                    </OpenspecProvider>
-                  </FsProvider>
-                </GitProvider>
-              </NavigationProvider>
-            </ProjectProvider>
-          </PluginProvider>
-        </SessionProvider>
-      </AppInitProvider>
+      <AppConfigProvider>
+        <AppProviders>
+          <Workspace />
+          <Toaster />
+        </AppProviders>
+      </AppConfigProvider>
     </SocketProvider>,
   );
 

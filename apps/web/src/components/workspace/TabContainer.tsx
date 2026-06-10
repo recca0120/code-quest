@@ -367,7 +367,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   return (
     <PaneZoomProvider>
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div data-testid="tab-container" className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <WorkspaceTabBar onOpenSettings={onOpenSettings} onAddProject={onAddProject} />
         <div ref={sessionBarContainerRef} className="contents">
           <SessionBar
