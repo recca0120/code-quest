@@ -48,3 +48,5 @@ P2 UI 增強與 P3 收斂列於 §5-§6 留後。共用 TabMeta 型別——單�
 - [ ] 6.2 tool pane follow:'focused-session' 模式（wire 已預留 target.kind）
 - [ ] 6.3 formatWorktreeLabel util 統一 `branch ?? name` fallback（4+ 處）
 - [ ] 6.4 WorktreeSwitcher：cwd 不在 listing 顯示 basename＋警示；下拉 project 分組＋✓
+- [ ] 6.5 PanePicker：git listing 載入中顯示 loading 態（驗收發現：listing 未到時 worktree 列整片空白，使用者只看到 + New worktree）
+- [ ] 6.6 session title fallback：無 title 顯示 cwd 尾段而非 channelId UUID（驗收發現：SessionBar 顯示 bb6bbf8d-cf…）
