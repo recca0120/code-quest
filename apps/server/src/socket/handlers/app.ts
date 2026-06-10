@@ -1,9 +1,15 @@
-import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
+import type { PersistedLayout, SocketCallback, TypedSocket } from '@code-quest/schemas';
 import { EVENTS } from '@code-quest/schemas';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { SETTINGS_STATE_KEYS } from './settings.ts';
+
+function storedLayoutToWire(
+  stored: { layout: PersistedLayout; rev: number } | null,
+): (PersistedLayout & { rev: number }) | null {
+  return stored ? { ...stored.layout, rev: stored.rev } : null;
+}
 
 export function create({
   channelManager,
@@ -45,7 +51,7 @@ export function create({
         browserIntegrationSupported: false,
       },
       capabilities: { worktree: gitService.capabilities.worktree },
-      layout: layoutStore.get('default'),
+      layout: storedLayoutToWire(layoutStore.get(channelManager.provider)),
     });
   }
 

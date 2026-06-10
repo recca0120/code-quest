@@ -57,7 +57,7 @@ import type {
   GitUpdateSkippedBranchPayload,
 } from './git.ts';
 import type { HookResponsePayload, HookStartedPayload } from './hook.ts';
-import type { PersistedLayout } from './layout.ts';
+import type { LayoutSaveAck, LayoutSyncPayload, PersistedLayout } from './layout.ts';
 import type {
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
@@ -288,7 +288,7 @@ export interface ClientToServerEvents {
   ) => void;
 
   // ── Aligned: Layout ──
-  'layout:save': (payload: PersistedLayout) => void;
+  'layout:save': (payload: PersistedLayout, callback: (res: LayoutSaveAck) => void) => void;
 
   // ── Aligned: MCP ──
   'mcp:servers': (
@@ -684,7 +684,7 @@ export interface ServerToClientEvents {
   'worktree:branchChanged': (event: WorktreeBranchChangedEvent) => void;
 
   // ── Layout (global broadcast) ──
-  'layout:sync': (payload: PersistedLayout) => void;
+  'layout:sync': (payload: LayoutSyncPayload) => void;
 
   // ══════════════════════════════════════════════════════════
   // Named socket events (type:subtype format)

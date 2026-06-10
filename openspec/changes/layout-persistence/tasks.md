@@ -53,17 +53,17 @@
 ## Refactor
 
 - [x] 8.1 [refactor] 將 `LayoutStore` 注入 `app:init` handler 與 `layout:save` handler，確保兩者共用同一實例
-- [ ] 8.2 [refactor] 確認 `ChannelManager` 與 `LayoutStore` 無耦合，各自 SRP
+- [x] 8.2 [refactor] 確認 `ChannelManager` 與 `LayoutStore` 無耦合，各自 SRP
 
 ## P0 修正（2026-06-10 design review，詳見 design.md Review Findings）
 
 ### F1 — save↔sync 回音迴圈（v2 修訂：rev 機制取代 lastSyncedJson 主案）
 
-- [ ] 9.1 [test] server `layout:save` — 每次成功儲存 rev 單調遞增，ack 回傳新 rev，`layout:sync` 與 `app:init` payload 附 rev
-- [ ] 9.2 [impl] `LayoutStore` 加 rev counter；handler ack/broadcast 帶 rev
-- [ ] 9.3 [test] client 收到 `rev <= lastSeenRev` 的 sync — 忽略，不觸發 setWsState
-- [ ] 9.4 [test] client 收到新 rev 的 sync — 套用後 500ms 內不 echo 回 `layout:save`（serialize 結果與 lastAppliedJson 相同即 skip）
-- [ ] 9.5 [impl] TabContext 記錄 lastSeenRev ＋ lastAppliedJson（以 canonical serializer 輸出比對）；save effect emit 前比對、成功 emit 後更新
+- [x] 9.1 [test] server `layout:save` — 每次成功儲存 rev 單調遞增，ack 回傳新 rev，`layout:sync` 與 `app:init` payload 附 rev
+- [x] 9.2 [impl] `LayoutStore` 加 rev counter；handler ack/broadcast 帶 rev
+- [x] 9.3 [test] client 收到 `rev <= lastSeenRev` 的 sync — 忽略，不觸發 setWsState
+- [x] 9.4 [test] client 收到新 rev 的 sync — 套用後 500ms 內不 echo 回 `layout:save`（serialize 結果與 lastAppliedJson 相同即 skip）
+- [x] 9.5 [impl] TabContext 記錄 lastSeenRev ＋ lastAppliedJson（以 canonical serializer 輸出比對）；save effect emit 前比對、成功 emit 後更新
 
 ### F2 — worktrees pane 靜默失效（大部分被 §13 v2 schema 與 pane-tree-named-components §B codecs 吸收）
 
@@ -76,20 +76,20 @@
 - [ ] 11.1 ~~serialize 帶 {channelId,cwd}~~ → 併入 pane-tree-named-components 1.1/1.2
 - [ ] 11.2 ~~deserialize 無條件保留＋roundtrip property test~~ → 併入 pane-tree-named-components 2.1/2.2
 - [ ] 11.3 ~~走 pane-codecs~~ → 併入 pane-tree-named-components 2.5
-- [ ] 11.4 [test] rehydrate — 結構整棵採用（LWW）；channelId 仍 live 的 leaf 經 render-time 判斷自動重綁（mode:'resume'，不 spawn）
-- [ ] 11.5 [test] rehydrate dedup — incoming 多個 leaf 帶同一 channelId — 只保留第一個，其餘降級 empty＋hint（防 "Channel already exists" 雙 mount）
-- [ ] 11.6 [impl] deserializeLayout 出口 dedup pass；schema `.refine` channelId 全域唯一；server 拒收違規 payload
-- [ ] 11.7 [test] view state — `layout:sync` 不覆寫本地 activeWorkspaceTabId（除非該 tab 已不存在）；focused/zoomed 指向仍存在的 pane 則保留
-- [ ] 11.8 [impl] rehydrateFromLayout 拆 init 路徑（套用 activeTabId）與 sync 路徑（保留本地 view state）
-- [ ] 11.9 [test] rehydrate 完成後 emit `session:closed` — 該 pane 自動降級 empty-pane（render-time liveness 收斂）
-- [ ] 11.10 [test] EmptyPane — 還原的 session leaf 顯示「上次：{project} ⎇ {branch}」提示（content.cwd 反查 listing，不入 wire）
+- [x] 11.4 [test] rehydrate — 結構整棵採用（LWW）；channelId 仍 live 的 leaf 經 render-time 判斷自動重綁（mode:'resume'，不 spawn）
+- [x] 11.5 [test] rehydrate dedup — incoming 多個 leaf 帶同一 channelId — 只保留第一個，其餘降級 empty＋hint（防 "Channel already exists" 雙 mount）
+- [x] 11.6 [impl] deserializeLayout 出口 dedup pass；schema `.refine` channelId 全域唯一；server 拒收違規 payload
+- [x] 11.7 [test] view state — `layout:sync` 不覆寫本地 activeWorkspaceTabId（除非該 tab 已不存在）；focused/zoomed 指向仍存在的 pane 則保留
+- [x] 11.8 [impl] rehydrateFromLayout 拆 init 路徑（套用 activeTabId）與 sync 路徑（保留本地 view state）
+- [x] 11.9 [test] rehydrate 完成後 emit `session:closed` — 該 pane 自動降級 empty-pane（render-time liveness 收斂）
+- [x] 11.10 [test] EmptyPane — 還原的 session leaf 顯示「上次：{project} ⎇ {branch}」提示（content.cwd 反查 listing，不入 wire）
 
 ### F4 — per-summoner key
 
-- [ ] 12.1 [test] `layout:save` / `app:init` — 以實際 summoner 識別為 key，不同 summoner 互不干擾（production 路徑）
-- [ ] 12.2 [impl] 移除 `LAYOUT_SUMMONER_KEY = 'default'`，handler 從 socket/HandlerContext 取得 summoner 識別
-- [ ] 12.3 [test] `layout:sync` — 只廣播給同 summoner 的其他 socket
-- [ ] 12.4 [impl] broadcast 改 scoped（channel-emitter 增加 per-summoner 廣播或 filter）
+- [x] 12.1 [test] `layout:save` / `app:init` — 以實際 summoner 識別為 key，不同 summoner 互不干擾（production 路徑）
+- [x] 12.2 [impl] 移除 `LAYOUT_SUMMONER_KEY = 'default'`，handler 從 socket/HandlerContext 取得 summoner 識別
+- [x] 12.3 [test] `layout:sync` — 只廣播給同 summoner 的其他 socket
+- [x] 12.4 [impl] broadcast 改 scoped（channel-emitter 增加 per-summoner 廣播或 filter）
 
 ### Wire Schema v2（design.md「Wire Schema v2」；依賴 pane-tree-named-components A/B 的 content shape）
 
@@ -97,7 +97,7 @@
 - [x] 13.2 [impl] `persistedLayoutSchema` v2 改版（schemas package）
 - [x] 13.3 [test] migration — 無 version / v1 payload 經 `migrateLegacyToV2` 升級（session cwd → channelId:null + cwd）
 - [x] 13.4 [impl] migration chain 與 schema 同檔；client parse 失敗先過 migration
-- [ ] 13.5 [test] unknown content variant — 降級為 empty leaf，不讓整份 layout parse 失敗
-- [ ] 13.6 [impl] `persistedPaneContentSchema` 加 unknown-variant 容錯（catch-all → empty）
-- [ ] 13.7 [test] `layout:save` ack — parse 失敗回 `{ ok:false, error }`；成功回 `{ ok:true, rev }`
-- [ ] 13.8 [impl] `layout:save` 改 RPC 形式（callback ack）；server 拒絕 version 低於現存的寫入
+- [x] 13.5 [test] unknown content variant — 降級為 empty leaf，不讓整份 layout parse 失敗
+- [x] 13.6 [impl] `persistedPaneContentSchema` 加 unknown-variant 容錯（catch-all → empty）
+- [x] 13.7 [test] `layout:save` ack — parse 失敗回 `{ ok:false, error }`；成功回 `{ ok:true, rev }`
+- [x] 13.8 [impl] `layout:save` 改 RPC 形式（callback ack）；server 拒絕 version 低於現存的寫入

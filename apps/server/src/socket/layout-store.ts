@@ -1,13 +1,21 @@
 import type { PersistedLayout } from '@code-quest/schemas';
 
-export class LayoutStore {
-  private readonly store = new Map<string, PersistedLayout>();
+interface StoredLayout {
+  layout: PersistedLayout;
+  rev: number;
+}
 
-  get(summonerId: string): PersistedLayout | null {
+export class LayoutStore {
+  private readonly store = new Map<string, StoredLayout>();
+
+  get(summonerId: string): StoredLayout | null {
     return this.store.get(summonerId) ?? null;
   }
 
-  set(summonerId: string, layout: PersistedLayout): void {
-    this.store.set(summonerId, layout);
+  /** Stores the layout and returns the new monotonically increasing rev (echo guard). */
+  set(summonerId: string, layout: PersistedLayout): number {
+    const rev = (this.store.get(summonerId)?.rev ?? 0) + 1;
+    this.store.set(summonerId, { layout, rev });
+    return rev;
   }
 }

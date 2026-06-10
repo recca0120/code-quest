@@ -1,7 +1,12 @@
 import type { PersistedLayout } from '@code-quest/schemas';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../../test/index.ts';
 import { TYPES } from '../../types.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import { LayoutStore } from '../layout-store.ts';
+
+function summonerKeyOf(container: ReturnType<typeof createTestContainer>): string {
+  return container.get<ChannelManager>(TYPES.ChannelManager).provider;
+}
 
 const VALID_LAYOUT: PersistedLayout = {
   version: 2,
@@ -24,32 +29,38 @@ describe('LayoutStore', () => {
     expect(store.get('summoner-1')).toBeNull();
   });
 
-  it('set then get returns the same layout', () => {
+  it('set returns a monotonically increasing rev; get returns layout with rev', () => {
     const store = new LayoutStore();
-    store.set('summoner-1', VALID_LAYOUT);
-    expect(store.get('summoner-1')).toEqual(VALID_LAYOUT);
+    expect(store.set('summoner-1', VALID_LAYOUT)).toBe(1);
+    expect(store.set('summoner-1', VALID_LAYOUT)).toBe(2);
+    expect(store.get('summoner-1')).toEqual({ layout: VALID_LAYOUT, rev: 2 });
   });
 
-  it('different summoners do not share layouts', () => {
+  it('different summoners do not share layouts or revs', () => {
     const store = new LayoutStore();
     store.set('summoner-1', VALID_LAYOUT);
     expect(store.get('summoner-2')).toBeNull();
+    expect(store.set('summoner-2', VALID_LAYOUT)).toBe(1);
   });
 });
 
-describe('layout:save handler', () => {
-  it('saves layout to store on valid payload', async () => {
+describe('layout:save handler — ack + rev (9.1 / 13.7)', () => {
+  it('saves layout and acks { ok: true, rev } with monotonically increasing rev', async () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const claude = createFakeSummoner(server).claude();
     const layoutStore = container.get<LayoutStore>(TYPES.LayoutStore);
 
-    await claude.send('layout:save', VALID_LAYOUT);
+    const ack1 = await claude.send<{ ok: boolean; rev: number }>('layout:save', VALID_LAYOUT);
+    expect(ack1).toEqual({ ok: true, rev: 1 });
 
-    expect(layoutStore.get('default')).toEqual(VALID_LAYOUT);
+    const ack2 = await claude.send<{ ok: boolean; rev: number }>('layout:save', VALID_LAYOUT);
+    expect(ack2).toEqual({ ok: true, rev: 2 });
+
+    expect(layoutStore.get(summonerKeyOf(container))).toEqual({ layout: VALID_LAYOUT, rev: 2 });
   });
 
-  it('broadcasts layout:sync to other sockets (not sender)', async () => {
+  it('broadcasts layout:sync with rev to other sockets (not sender)', async () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const claude1 = createFakeSummoner(server).claude();
@@ -61,7 +72,7 @@ describe('layout:save handler', () => {
     await claude1.send('layout:save', VALID_LAYOUT);
 
     expect(received).toHaveLength(1);
-    expect(received[0]).toEqual(VALID_LAYOUT);
+    expect(received[0]).toEqual({ ...VALID_LAYOUT, rev: 1 });
   });
 
   it('does not send layout:sync back to the sender', async () => {
@@ -77,7 +88,7 @@ describe('layout:save handler', () => {
     expect(received).toHaveLength(0);
   });
 
-  it('ignores invalid payload — does not save or broadcast', async () => {
+  it('acks { ok: false } on invalid payload — does not save or broadcast', async () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const claude1 = createFakeSummoner(server).claude();
@@ -87,28 +98,87 @@ describe('layout:save handler', () => {
     const received: unknown[] = [];
     claude2.on('layout:sync', (payload) => received.push(payload));
 
-    await claude1.send('layout:save', { invalid: true });
+    const ack = await claude1.send<{ ok: boolean }>('layout:save', { invalid: true });
 
-    expect(layoutStore.get('default')).toBeNull();
+    expect(ack.ok).toBe(false);
+    expect(layoutStore.get(summonerKeyOf(container))).toBeNull();
     expect(received).toHaveLength(0);
+  });
+
+  it('dedupes duplicate channelIds before storing/broadcasting (11.6)', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const claude = createFakeSummoner(server).claude();
+    const layoutStore = container.get<LayoutStore>(TYPES.LayoutStore);
+
+    const dupLayout: PersistedLayout = {
+      version: 2,
+      tabs: [
+        {
+          id: 't1',
+          paneRoot: {
+            type: 'split',
+            id: 's',
+            direction: 'h',
+            ratio: 0.5,
+            first: {
+              type: 'leaf',
+              id: 'p1',
+              content: { type: 'session', channelId: 'ch-1', cwd: '/a' },
+            },
+            second: {
+              type: 'leaf',
+              id: 'p2',
+              content: { type: 'session', channelId: 'ch-1', cwd: '/a' },
+            },
+          },
+        },
+      ],
+      activeTabId: 't1',
+    };
+
+    await claude.send('layout:save', dupLayout);
+
+    const stored = layoutStore.get(summonerKeyOf(container));
+    const root = stored?.layout.tabs[0]?.paneRoot;
+    if (root?.type !== 'split') throw new Error('expected split');
+    expect(root.second).toMatchObject({
+      content: { type: 'session', channelId: null, cwd: '/a' },
+    });
+  });
+
+  it('rejects unversioned (v1) writes — stale clients must not downgrade stored data (13.8)', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const claude = createFakeSummoner(server).claude();
+    const layoutStore = container.get<LayoutStore>(TYPES.LayoutStore);
+
+    await claude.send('layout:save', VALID_LAYOUT);
+    const { version: _v, ...v1Payload } = VALID_LAYOUT;
+    const ack = await claude.send<{ ok: boolean }>('layout:save', v1Payload);
+
+    expect(ack.ok).toBe(false);
+    expect(layoutStore.get(summonerKeyOf(container))).toEqual({ layout: VALID_LAYOUT, rev: 1 });
   });
 });
 
-describe('app:init ACK — layout field', () => {
+describe('app:init ACK — layout field carries rev', () => {
   it('returns layout: null when no layout saved', async () => {
     const claude = createFakeSummoner().claude();
     const result = await claude.send<{ layout: unknown }>('app:init');
     expect(result.layout).toBeNull();
   });
 
-  it('returns saved layout when available', async () => {
+  it('returns saved layout with rev when available', async () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const claude = createFakeSummoner(server).claude();
 
     await claude.send('layout:save', VALID_LAYOUT);
-    const result = await claude.send<{ layout: PersistedLayout | null }>('app:init');
+    const result = await claude.send<{ layout: (PersistedLayout & { rev: number }) | null }>(
+      'app:init',
+    );
 
-    expect(result.layout).toEqual(VALID_LAYOUT);
+    expect(result.layout).toEqual({ ...VALID_LAYOUT, rev: 1 });
   });
 });

@@ -4,7 +4,7 @@
  * and v1 → v2 migration.
  */
 import { describe, expect, it } from 'vitest';
-import { migrateLegacyToV2, persistedLayoutSchema } from '../layout.ts';
+import { dedupeLayoutChannelIds, migrateLegacyToV2, persistedLayoutSchema } from '../layout.ts';
 
 const V2_LAYOUT = {
   version: 2,
@@ -83,6 +83,25 @@ describe('persistedLayoutSchema v2 (contract)', () => {
     expect(persistedLayoutSchema.safeParse(noVersion).success).toBe(false);
   });
 
+  it('degrades an unknown content variant to an empty session leaf (13.5)', () => {
+    const result = persistedLayoutSchema.safeParse({
+      version: 2,
+      tabs: [
+        {
+          id: 't',
+          paneRoot: { type: 'leaf', id: 'p', content: { type: 'terminal', cwd: '/x' } },
+        },
+      ],
+      activeTabId: 't',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tabs[0]?.paneRoot).toMatchObject({
+        content: { type: 'session', channelId: null, cwd: null },
+      });
+    }
+  });
+
   it('clamps invalid ratio instead of rejecting the whole layout', () => {
     const bad = structuredClone(V2_LAYOUT) as typeof V2_LAYOUT & {
       tabs: [{ paneRoot: { ratio: unknown } }];
@@ -95,6 +114,61 @@ describe('persistedLayoutSchema v2 (contract)', () => {
       expect(root?.type).toBe('split');
       if (root?.type === 'split') expect(root.ratio).toBe(0.5);
     }
+  });
+});
+
+describe('dedupeLayoutChannelIds (11.5/11.6 contract)', () => {
+  it('keeps the first occurrence of a channelId, degrades duplicates to empty with cwd hint', () => {
+    const layout = persistedLayoutSchema.parse({
+      version: 2,
+      tabs: [
+        {
+          id: 't1',
+          paneRoot: {
+            type: 'split',
+            id: 's',
+            direction: 'h',
+            ratio: 0.5,
+            first: {
+              type: 'leaf',
+              id: 'p1',
+              content: { type: 'session', channelId: 'ch-1', cwd: '/a' },
+            },
+            second: {
+              type: 'leaf',
+              id: 'p2',
+              content: { type: 'session', channelId: 'ch-1', cwd: '/a' },
+            },
+          },
+        },
+        {
+          // duplicates across workspace tabs are also deduped
+          id: 't2',
+          paneRoot: {
+            type: 'leaf',
+            id: 'p3',
+            content: { type: 'session', channelId: 'ch-1', cwd: '/a' },
+          },
+        },
+      ],
+      activeTabId: 't1',
+    });
+
+    const deduped = dedupeLayoutChannelIds(layout);
+    const root = deduped.tabs[0]?.paneRoot;
+    if (root?.type !== 'split') throw new Error('expected split');
+    expect(root.first).toMatchObject({ content: { type: 'session', channelId: 'ch-1' } });
+    expect(root.second).toMatchObject({
+      content: { type: 'session', channelId: null, cwd: '/a' },
+    });
+    expect(deduped.tabs[1]?.paneRoot).toMatchObject({
+      content: { type: 'session', channelId: null, cwd: '/a' },
+    });
+  });
+
+  it('returns the same reference when there is nothing to dedupe', () => {
+    const layout = persistedLayoutSchema.parse(V2_LAYOUT);
+    expect(dedupeLayoutChannelIds(layout)).toBe(layout);
   });
 });
 

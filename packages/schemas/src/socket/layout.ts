@@ -9,19 +9,23 @@ const paneTargetSchema = z.discriminatedUnion('kind', [
 ]);
 export type PaneTargetWire = z.infer<typeof paneTargetSchema>;
 
-const persistedPaneContentSchema = z.discriminatedUnion('type', [
-  // channelId rebinds still-alive sessions (mode:'resume' join — never spawns);
-  // cwd is the restore hint shown when the channel is gone
-  z.object({
-    type: z.literal('session'),
-    channelId: z.string().nullable(),
-    cwd: z.string().nullable(),
-  }),
-  z.object({ type: z.literal('files'), target: paneTargetSchema }),
-  z.object({ type: z.literal('git'), target: paneTargetSchema }),
-  z.object({ type: z.literal('openspec'), target: paneTargetSchema }),
-  z.object({ type: z.literal('worktrees') }),
-]);
+const persistedPaneContentSchema = z
+  .discriminatedUnion('type', [
+    // channelId rebinds still-alive sessions (mode:'resume' join — never spawns);
+    // cwd is the restore hint shown when the channel is gone
+    z.object({
+      type: z.literal('session'),
+      channelId: z.string().nullable(),
+      cwd: z.string().nullable(),
+    }),
+    z.object({ type: z.literal('files'), target: paneTargetSchema }),
+    z.object({ type: z.literal('git'), target: paneTargetSchema }),
+    z.object({ type: z.literal('openspec'), target: paneTargetSchema }),
+    z.object({ type: z.literal('worktrees') }),
+  ])
+  // Unknown-variant tolerance: a pane type from a newer client degrades to an
+  // empty session leaf instead of failing the whole layout parse (F2's wire dual)
+  .catch({ type: 'session', channelId: null, cwd: null });
 
 type PersistedPaneContent = z.infer<typeof persistedPaneContentSchema>;
 
@@ -70,6 +74,46 @@ export const persistedLayoutSchema = z.object({
   activeTabId: z.string(),
 });
 export type PersistedLayout = z.infer<typeof persistedLayoutSchema>;
+
+/** layout:save 的 RPC ack：成功帶 server 配發的單調遞增 rev（echo guard）。 */
+export type LayoutSaveAck = { ok: true; rev: number } | { ok: false; error: string };
+
+/** layout:sync / app:init 下行攜帶 rev；上行 layout:save 不含（server 配發）。 */
+export type LayoutSyncPayload = PersistedLayout & { rev: number };
+
+// ── channelId uniqueness (11.5/11.6) ──
+// A channelId may bind at most one leaf across ALL workspace tabs — duplicates
+// would double-mount ChannelProvider ("Channel already exists"). First wins;
+// later occurrences degrade to an empty leaf keeping the cwd restore hint.
+// Shared by server (before store/broadcast) and client (before apply).
+
+export function dedupeLayoutChannelIds(layout: PersistedLayout): PersistedLayout {
+  const seen = new Set<string>();
+  let changed = false;
+
+  function walk(node: PersistedPaneNode): PersistedPaneNode {
+    if (node.type === 'leaf') {
+      const c = node.content;
+      if (c.type === 'session' && c.channelId) {
+        if (seen.has(c.channelId)) {
+          changed = true;
+          return { ...node, content: { type: 'session', channelId: null, cwd: c.cwd } };
+        }
+        seen.add(c.channelId);
+      }
+      return node;
+    }
+    const first = walk(node.first);
+    const second = walk(node.second);
+    return first === node.first && second === node.second ? node : { ...node, first, second };
+  }
+
+  const tabs = layout.tabs.map((t) => {
+    const paneRoot = walk(t.paneRoot);
+    return paneRoot === t.paneRoot ? t : { ...t, paneRoot };
+  });
+  return changed ? { ...layout, tabs } : layout;
+}
 
 // ── v1 → v2 migration ──
 // v1 had no version field: session stored only { cwd }, tool panes a flat { cwd },
