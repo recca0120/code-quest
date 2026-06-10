@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
 
-export interface WorktreeOption {
+interface WorktreeOption {
   path: string;
   branch?: string;
   name: string;

@@ -8,7 +8,7 @@ export interface WorktreeOption {
   projectName?: string;
 }
 
-export interface WorktreesPaneSession {
+interface WorktreesPaneSession {
   channelId: string;
   cwd: string;
   title?: string;
