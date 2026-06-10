@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
 
-describe('WorkspaceLayout worktree grouping', () => {
+describe('Workspace worktree grouping', () => {
   it('git:worktree:add is a pure git op — it does NOT auto-spawn a chat tab', async () => {
     // FakeGit: any cwd under /projects/app (including worktrees) reports
     // projectRoot === /projects/app, so server + client group them together.

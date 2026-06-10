@@ -107,15 +107,15 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   return null;
 }
 
-export function WorkspaceLayout(): React.JSX.Element {
+export function Workspace(): React.JSX.Element {
   return (
     <CommandPaletteProvider>
-      <WorkspaceLayoutInner />
+      <WorkspaceInner />
     </CommandPaletteProvider>
   );
 }
 
-function WorkspaceLayoutInner() {
+function WorkspaceInner() {
   const { openPalette, registerActions } = useCommandPaletteActions();
   useHotkeys('mod+k', () => openPalette(), NO_FORM);
   const [dialogOpen, setDialogOpen] = useState(false);

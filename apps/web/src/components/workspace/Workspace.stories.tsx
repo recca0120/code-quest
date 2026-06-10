@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { makeSession, makeWorktreeSession } from '@/test/story-fixtures';
 import { withStoryWorkspaceFixtures } from '@/test/story-workspace-decorator';
-import { WorkspaceLayout } from './WorkspaceLayout.tsx';
+import { Workspace } from './Workspace.tsx';
 
-const meta: Meta<typeof WorkspaceLayout> = {
-  component: WorkspaceLayout,
+const meta: Meta<typeof Workspace> = {
+  component: Workspace,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
-} satisfies Meta<typeof WorkspaceLayout>;
+} satisfies Meta<typeof Workspace>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

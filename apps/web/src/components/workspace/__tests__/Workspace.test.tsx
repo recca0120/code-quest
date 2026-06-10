@@ -17,7 +17,7 @@ async function setupWithProject(width: number): Promise<RenderWithWorkspaceResul
 
 afterEach(() => vi.restoreAllMocks());
 
-describe('WorkspaceLayout — empty state', () => {
+describe('Workspace — empty state', () => {
   it('shows only EmptyState when no projects exist — no sidebar or tab bar', async () => {
     await renderWithWorkspace();
     expect(screen.getByRole('button', { name: 'Add Project' })).toBeInTheDocument();
@@ -25,7 +25,7 @@ describe('WorkspaceLayout — empty state', () => {
   });
 });
 
-describe('WorkspaceLayout — with project', () => {
+describe('Workspace — with project', () => {
   it('renders a tab with ChatPanel inside', async () => {
     await setup();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe('WorkspaceLayout — with project', () => {
   });
 });
 
-describe('WorkspaceLayout — multi-project', () => {
+describe('Workspace — multi-project', () => {
   it('second project can be added and shows its chat', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
@@ -107,7 +107,7 @@ describe('WorkspaceLayout — multi-project', () => {
   });
 });
 
-describe('WorkspaceLayout — Desktop (≥1024px)', () => {
+describe('Workspace — Desktop (≥1024px)', () => {
   it('does NOT render ActivityBar', async () => {
     await setupWithProject(1440);
     expect(screen.queryByRole('complementary', { name: 'activity-bar' })).toBeNull();
@@ -127,7 +127,7 @@ describe('WorkspaceLayout — Desktop (≥1024px)', () => {
   });
 });
 
-describe('WorkspaceLayout — state preservation across breakpoints', () => {
+describe('Workspace — state preservation across breakpoints', () => {
   it('crossing tablet→desktop does NOT remount the project tab container', async () => {
     const fakeMM = setupMatchMedia(1023);
     const result = await renderWithWorkspace();
@@ -155,7 +155,7 @@ describe('WorkspaceLayout — state preservation across breakpoints', () => {
   });
 });
 
-describe('WorkspaceLayout — PanePicker wiring', () => {
+describe('Workspace — PanePicker wiring', () => {
   it('clicking existing session in modal fills focused pane and closes modal', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
@@ -200,7 +200,7 @@ describe('WorkspaceLayout — PanePicker wiring', () => {
   });
 });
 
-describe('WorkspaceLayout — layout width constraints', () => {
+describe('Workspace — layout width constraints', () => {
   it('active project container has min-w-0 to prevent overflow on mobile', async () => {
     await setupWithProject(375);
     expect(screen.getByLabelText('project-container')).toHaveClass('min-w-0');
@@ -213,9 +213,9 @@ describe('WorkspaceLayout — layout width constraints', () => {
 });
 
 // ── Worktree listing auto-fetch ──
-// WorkspaceLayout 必須在 project 加入後自動 fetch worktree listing，
+// Workspace 必須在 project 加入後自動 fetch worktree listing，
 // 讓 PanePicker 的 worktree 列表有資料（不能依賴 Sidebar/ProjectRow）。
-describe('WorkspaceLayout — worktree listing auto-fetch', () => {
+describe('Workspace — worktree listing auto-fetch', () => {
   it('fetches worktree listing after project is added so PanePicker shows branches', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();

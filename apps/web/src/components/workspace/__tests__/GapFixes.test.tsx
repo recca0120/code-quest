@@ -38,7 +38,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 // Gap-1: ⌘T keyboard shortcut works in production (KeyboardShortcutsProvider wired)
 // ─────────────────────────────────────────────────────────────────────
 describe('Gap-1: KeyboardShortcutsProvider is mounted in production', () => {
-  it('⌘T creates a new session tab (shortcut fires from WorkspaceLayout)', async () => {
+  it('⌘T creates a new session tab (shortcut fires from Workspace)', async () => {
     const user = userEvent.setup();
     const result = await renderWithWorkspace();
     const project = await result.addProject();

@@ -4,7 +4,7 @@ import { App } from '../App.tsx';
 import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 
 describe('App', () => {
-  it('renders WorkspaceLayout without hitting ErrorBoundary — all providers are present', async () => {
+  it('renders Workspace without hitting ErrorBoundary — all providers are present', async () => {
     render(<App />);
 
     await waitFor(() => expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument());

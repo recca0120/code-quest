@@ -1,10 +1,10 @@
-// Mirrors <App /> shell (Toaster + ErrorBoundary + WorkspaceLayout) without createSocket().
-// For workspace-state variants see WorkspaceLayout.stories.tsx.
+// Mirrors <App /> shell (Toaster + ErrorBoundary + Workspace) without createSocket().
+// For workspace-state variants see Workspace.stories.tsx.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ui/ErrorFallback.tsx';
-import { WorkspaceLayout } from './components/workspace/WorkspaceLayout.tsx';
+import { Workspace } from './components/workspace/Workspace.tsx';
 import { makeSession } from './test/story-fixtures.ts';
 import { withStoryWorkspaceFixtures } from './test/story-workspace-decorator.tsx';
 
@@ -13,7 +13,7 @@ function AppShell(): React.JSX.Element {
     <>
       <Toaster position="top-right" richColors />
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <WorkspaceLayout />
+        <Workspace />
       </ErrorBoundary>
     </>
   );

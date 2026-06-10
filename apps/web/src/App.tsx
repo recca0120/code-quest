@@ -3,7 +3,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ui/ErrorFallback.tsx';
 import { RemoteStatusBanner } from './components/ui/RemoteStatusBanner.tsx';
-import { WorkspaceLayout } from './components/workspace/WorkspaceLayout.tsx';
+import { Workspace } from './components/workspace/Workspace.tsx';
 import { AppInitProvider } from './contexts/AppInitContext.tsx';
 import { FsProvider } from './contexts/FsContext.tsx';
 import { GitProvider } from './contexts/GitContext.tsx';
@@ -66,7 +66,7 @@ export function App(): React.JSX.Element {
                       <GitProvider>
                         <FsProvider>
                           <OpenspecProvider>
-                            <WorkspaceLayout />
+                            <Workspace />
                           </OpenspecProvider>
                         </FsProvider>
                       </GitProvider>

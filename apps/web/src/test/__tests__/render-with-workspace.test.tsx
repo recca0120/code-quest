@@ -6,7 +6,7 @@ import { emitAssistantTurn, sendUserMessage } from '../helpers.tsx';
 import { renderWithWorkspace } from '../render-with-workspace.tsx';
 
 describe('renderWithWorkspace', () => {
-  it('renders WorkspaceLayout with a new tab', async () => {
+  it('renders Workspace with a new tab', async () => {
     const { addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();

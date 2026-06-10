@@ -7,7 +7,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Toaster } from 'sonner';
 import { onTestFinished } from 'vitest';
-import { WorkspaceLayout } from '../components/workspace/WorkspaceLayout.tsx';
+import { Workspace } from '../components/workspace/Workspace.tsx';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { FsProvider } from '../contexts/FsContext.tsx';
 import { GitProvider } from '../contexts/GitContext.tsx';
@@ -147,7 +147,7 @@ export async function renderWithWorkspace(
                 <GitProvider>
                   <FsProvider>
                     <OpenspecProvider>
-                      <WorkspaceLayout />
+                      <Workspace />
                       <Toaster />
                     </OpenspecProvider>
                   </FsProvider>

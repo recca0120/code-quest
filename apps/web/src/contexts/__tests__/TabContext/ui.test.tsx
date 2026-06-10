@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
-import { WorkspaceLayout } from '@/components/workspace/WorkspaceLayout';
+import { Workspace } from '@/components/workspace/Workspace';
 import { AppInitProvider } from '@/contexts/AppInitContext';
 import { FsProvider } from '@/contexts/FsContext';
 import { GitProvider } from '@/contexts/GitContext';
@@ -44,7 +44,7 @@ describe('TabProvider', () => {
                     <FsProvider>
                       <OpenspecProvider>
                         <NavigationProvider>
-                          <WorkspaceLayout />
+                          <Workspace />
                         </NavigationProvider>
                       </OpenspecProvider>
                     </FsProvider>
@@ -138,7 +138,7 @@ describe('TabProvider', () => {
 
       // After renderWithWorkspace, session:created was broadcast with cwd
       // → deriveProjects should have created a project
-      // → WorkspaceLayout should render project path with TabProvider(sessions)
+      // → Workspace should render project path with TabProvider(sessions)
       // → Tab should be visible in project's TabContainer
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
