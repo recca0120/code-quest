@@ -43,10 +43,14 @@ const INITIAL_TABS = {
 };
 
 // Mock SocketProvider — TabContainer doesn't use it directly but TabProvider might
-vi.mock('@/contexts/SocketContext', () => ({
-  SocketProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useSocket: () => ({ socket: null }),
-}));
+vi.mock('@/contexts/SocketContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/contexts/SocketContext')>();
+  return {
+    ...actual,
+    SocketProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useSocket: () => ({ socket: null }),
+  };
+});
 
 describe('TabContainer — new session goes to pane, not pool (anti-double-mount)', () => {
   it('when all panes are occupied, creating a new tab splits the pane instead of going to pool', async () => {

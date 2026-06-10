@@ -5,7 +5,8 @@ interface SocketContextValue {
   socket: TypedSocket;
 }
 
-const SocketContext = createContext<SocketContextValue | null>(null);
+export const SocketContext: React.Context<SocketContextValue | null> =
+  createContext<SocketContextValue | null>(null);
 
 export function useSocket(): SocketContextValue {
   const ctx = useContext(SocketContext);

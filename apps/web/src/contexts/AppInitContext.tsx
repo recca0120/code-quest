@@ -28,7 +28,8 @@ interface AppConfigActions {
 
 export const AppConfigStateContext: React.Context<AppConfigState | null> =
   createContext<AppConfigState | null>(null);
-const AppConfigActionsContext = createContext<AppConfigActions | null>(null);
+export const AppConfigActionsContext: React.Context<AppConfigActions | null> =
+  createContext<AppConfigActions | null>(null);
 
 export function useAppConfigState(): AppConfigState {
   const ctx = useContext(AppConfigStateContext);

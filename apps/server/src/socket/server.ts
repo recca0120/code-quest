@@ -22,6 +22,7 @@ import * as app from './handlers/app.ts';
 import * as autoRespond from './handlers/auto-respond.ts';
 import * as fs from './handlers/fs.ts';
 import * as git from './handlers/git.ts';
+import * as layout from './handlers/layout.ts';
 import * as mcp from './handlers/mcp.ts';
 import * as message from './handlers/message.ts';
 import * as openspec from './handlers/openspec.ts';
@@ -37,6 +38,7 @@ import * as settings from './handlers/settings.ts';
 import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
+import type { LayoutStore } from './layout-store.ts';
 
 @injectable()
 export class SocketServer {
@@ -56,6 +58,7 @@ export class SocketServer {
   private diffFileService: DiffFile;
   private settingsStore: SettingsStore;
   private broadcaster: Broadcaster;
+  private layoutStore: LayoutStore;
   constructor(
     @inject(TYPES.AutoMode) autoMode: boolean,
     @inject(TYPES.RawEventStore) rawEventService: RawEventStore,
@@ -73,6 +76,7 @@ export class SocketServer {
     @inject(TYPES.DiffFile) diffFileService: DiffFile,
     @inject(TYPES.SettingsStore) settingsStore: SettingsStore,
     @inject(TYPES.Broadcaster) broadcaster: Broadcaster,
+    @inject(TYPES.LayoutStore) layoutStore: LayoutStore,
   ) {
     this.autoMode = autoMode;
     this.rawEventService = rawEventService;
@@ -90,6 +94,7 @@ export class SocketServer {
     this.diffFileService = diffFileService;
     this.settingsStore = settingsStore;
     this.broadcaster = broadcaster;
+    this.layoutStore = layoutStore;
   }
 
   private handlersWired = false;
@@ -148,6 +153,7 @@ export class SocketServer {
       diffFileService: this.diffFileService,
       planHandler: plan.create({ emitter: this.emitter }),
       broadcaster: this.broadcaster,
+      layoutStore: this.layoutStore,
     };
   }
 
@@ -165,6 +171,7 @@ export class SocketServer {
     git.create(ctx);
     message.create(ctx);
     app.create(ctx);
+    layout.create(ctx);
     sessionConnect.create(ctx);
     sessionCommand.create(ctx);
     sessionFork.create(ctx);

@@ -23,6 +23,7 @@ export * from './socket/fs.ts';
 export * from './socket/fs-dirty.ts';
 export * from './socket/git.ts';
 export * from './socket/hook.ts';
+export * from './socket/layout.ts';
 export * from './socket/mcp.ts';
 export * from './socket/message.ts';
 export * from './socket/message-meta.ts';

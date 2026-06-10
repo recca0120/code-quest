@@ -237,4 +237,10 @@ export class ChannelEmitter {
       sock.emit(event, ...args);
     }
   }
+
+  broadcastAllExcept(excludeSocketId: string, event: string, ...args: unknown[]): void {
+    for (const [id, sock] of this.socketRefs.entries()) {
+      if (id !== excludeSocketId) sock.emit(event, ...args);
+    }
+  }
 }

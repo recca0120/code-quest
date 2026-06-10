@@ -14,6 +14,7 @@ import type { ChannelEmitter } from './socket/channel-emitter.ts';
 import type { ChannelManager } from './socket/channel-manager.ts';
 import type { PlanApi } from './socket/handlers/plan.ts';
 import type { SessionHistory } from './socket/handlers/session/history.ts';
+import type { LayoutStore } from './socket/layout-store.ts';
 
 export interface RunnerFactory {
   create(opts?: LaunchOptions, spawnOptions?: Record<string, unknown>): ProcessRunner;
@@ -42,6 +43,7 @@ export const TYPES: {
   readonly FileWatcher: symbol;
   readonly AutoMode: symbol;
   readonly Broadcaster: symbol;
+  readonly LayoutStore: symbol;
 } = {
   RunnerFactory: Symbol.for('RunnerFactory'),
   SessionStore: Symbol.for('SessionStore'),
@@ -64,6 +66,7 @@ export const TYPES: {
   FileWatcher: Symbol.for('FileWatcher'),
   AutoMode: Symbol.for('AutoMode'),
   Broadcaster: Symbol.for('Broadcaster'),
+  LayoutStore: Symbol.for('LayoutStore'),
 } as const;
 
 export interface HandlerContext {
@@ -84,4 +87,5 @@ export interface HandlerContext {
   diffFileService: DiffFile;
   planHandler: PlanApi;
   broadcaster: Broadcaster;
+  layoutStore: LayoutStore;
 }

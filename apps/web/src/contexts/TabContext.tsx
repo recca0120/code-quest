@@ -1,11 +1,14 @@
-import type { SessionStateSummary } from '@code-quest/schemas';
+import type { PersistedLayout, PersistedTab, SessionStateSummary } from '@code-quest/schemas';
+import { EVENTS, persistedLayoutSchema } from '@code-quest/schemas';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui.ts';
+import { AppConfigActionsContext } from './AppInitContext.tsx';
 import type { SessionMode } from './channel/ChannelContext.tsx';
 // Intentional dependency — NavigationContext mediates sidebar/editor
 // intents (activate channel, open worktree). Soft-bound via direct useContext
 // so TabProvider can be mounted standalone in tests without a NavigationProvider.
 import { NavigationActionsContext, NavigationStateContext } from './NavigationContext.tsx';
+import { SocketContext } from './SocketContext.tsx';
 import { TERMINAL_STATES } from './session-states.ts';
 
 // ── Pane tree types ──
@@ -193,6 +196,78 @@ export function buildSessionPaneLabels(node: PaneNode, path = ''): Map<string, s
     ...buildSessionPaneLabels(node.first, firstLabel),
     ...buildSessionPaneLabels(node.second, secondLabel),
   ]);
+}
+
+// ── Layout persistence helpers ──
+
+function deserializePaneNode(
+  node: import('@code-quest/schemas').PersistedTab['paneRoot'],
+): PaneNode {
+  if (node.type === 'leaf') {
+    const content = node.content;
+    let paneContent: PaneContent;
+    if (content.type === 'session') {
+      paneContent = { type: 'session', sessionId: null };
+    } else if (content.type === 'files') {
+      paneContent = { type: 'files', cwd: content.cwd };
+    } else if (content.type === 'git') {
+      paneContent = { type: 'git', cwd: content.cwd };
+    } else {
+      paneContent = { type: 'spec', cwd: (content as { cwd: string }).cwd };
+    }
+    return { type: 'leaf', id: node.id, content: paneContent };
+  }
+  return {
+    type: 'split',
+    id: node.id,
+    direction: node.direction,
+    ratio: node.ratio,
+    first: deserializePaneNode(node.first),
+    second: deserializePaneNode(node.second),
+  };
+}
+
+function deserializeTab(t: PersistedTab): WorkspaceTab {
+  const paneRoot = deserializePaneNode(t.paneRoot);
+  return {
+    id: t.id,
+    label: t.label,
+    paneRoot,
+    focusedPaneId: firstLeafId(paneRoot),
+    zoomedPaneId: null,
+  };
+}
+
+function serializePaneNode(node: PaneNode): PersistedTab['paneRoot'] {
+  if (node.type === 'leaf') {
+    const c = node.content;
+    if (c.type === 'session') {
+      return { type: 'leaf', id: node.id, content: { type: 'session', cwd: null } };
+    }
+    if (c.type === 'spec') {
+      return { type: 'leaf', id: node.id, content: { type: 'openspec', cwd: c.cwd } };
+    }
+    return { type: 'leaf', id: node.id, content: c as { type: 'files' | 'git'; cwd: string } };
+  }
+  return {
+    type: 'split',
+    id: node.id,
+    direction: node.direction,
+    ratio: node.ratio,
+    first: serializePaneNode(node.first),
+    second: serializePaneNode(node.second),
+  };
+}
+
+function serializeLayout(wsState: WorkspaceTabStateValue): PersistedLayout {
+  return {
+    tabs: wsState.workspaceTabs.map((t) => ({
+      id: t.id,
+      label: t.label,
+      paneRoot: serializePaneNode(t.paneRoot),
+    })),
+    activeTabId: wsState.activeWorkspaceTabId ?? wsState.workspaceTabs[0]?.id ?? '',
+  };
 }
 
 function mapNode(node: PaneNode, fn: (n: PaneNode) => PaneNode): PaneNode {
@@ -478,6 +553,63 @@ export function TabProvider({
     workspaceTabs: [initialWorkspaceTab],
     activeWorkspaceTabId: initialWorkspaceTab.id,
   }));
+
+  function rehydrateFromLayout(layout: PersistedLayout) {
+    if (!layout.tabs.length) return;
+    setWsState({
+      workspaceTabs: layout.tabs.map(deserializeTab),
+      activeWorkspaceTabId: layout.activeTabId,
+    });
+  }
+
+  // Subscribe to app:init ACK to rehydrate layout (optional — works without AppConfigProvider)
+  const appConfigActions = useContext(AppConfigActionsContext);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rehydrateFromLayout and appConfigActions are stable
+  useEffect(() => {
+    if (!appConfigActions) return;
+    return appConfigActions.subscribeInit((data) => {
+      const layout = (data as { layout?: unknown }).layout;
+      if (!layout) return;
+      const parsed = persistedLayoutSchema.safeParse(layout);
+      if (parsed.success) rehydrateFromLayout(parsed.data);
+    });
+  }, [appConfigActions]);
+
+  // Listen for layout:sync from server (cross-device update)
+  // Soft-bound via direct useContext so TabProvider can mount without SocketProvider in tests.
+  const socketCtx = useContext(SocketContext);
+  const socket = socketCtx?.socket ?? null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rehydrateFromLayout is stable
+  useEffect(() => {
+    if (!socket) return;
+    function onSync(payload: unknown) {
+      const parsed = persistedLayoutSchema.safeParse(payload);
+      if (parsed.success) rehydrateFromLayout(parsed.data);
+    }
+    socket.on(EVENTS.layout.sync, onSync);
+    return () => {
+      socket.off(EVENTS.layout.sync, onSync);
+    };
+  }, [socket]);
+
+  // Debounced layout:save — emit 500ms after wsState changes (skip initial mount)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: socket is stable; save is driven by wsState only
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    if (!socket) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      socket.emit(EVENTS.layout.save, serializeLayout(wsState));
+    }, 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [wsState]);
 
   function updateActiveTab(updater: (tab: WorkspaceTab) => WorkspaceTab) {
     setWsState((prev) => ({

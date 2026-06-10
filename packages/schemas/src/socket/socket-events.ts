@@ -57,6 +57,7 @@ import type {
   GitUpdateSkippedBranchPayload,
 } from './git.ts';
 import type { HookResponsePayload, HookStartedPayload } from './hook.ts';
+import type { PersistedLayout } from './layout.ts';
 import type {
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
@@ -285,6 +286,9 @@ export interface ClientToServerEvents {
     payload: SessionUpdateStatePayload,
     callback: (response: Ack) => void,
   ) => void;
+
+  // ── Aligned: Layout ──
+  'layout:save': (payload: PersistedLayout) => void;
 
   // ── Aligned: MCP ──
   'mcp:servers': (
@@ -679,6 +683,9 @@ export interface ServerToClientEvents {
   'worktree:removed': (event: WorktreeRemovedEvent) => void;
   'worktree:branchChanged': (event: WorktreeBranchChangedEvent) => void;
 
+  // ── Layout (global broadcast) ──
+  'layout:sync': (payload: PersistedLayout) => void;
+
   // ══════════════════════════════════════════════════════════
   // Named socket events (type:subtype format)
   // Each event has its own typed payload.
@@ -779,6 +786,10 @@ export const EVENTS = {
     experiment_gates: 'app:experiment_gates',
     init: 'app:init',
     models: 'app:models',
+  },
+  layout: {
+    save: 'layout:save',
+    sync: 'layout:sync',
   },
   auth: {
     login: 'auth:login',

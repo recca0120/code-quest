@@ -518,6 +518,7 @@ export const initResponseSchema: z.ZodObject<
     models: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
     state: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
     capabilities: z.ZodOptional<z.ZodObject<{ worktree: z.ZodBoolean }, z.core.$strip>>;
+    layout: z.ZodOptional<z.ZodNullable<z.ZodUnknown>>;
   },
   z.core.$loose
 > = z.looseObject({
@@ -527,6 +528,7 @@ export const initResponseSchema: z.ZodObject<
   models: z.array(z.unknown()).optional(),
   state: z.record(z.string(), z.unknown()).optional(),
   capabilities: z.object({ worktree: z.boolean() }).optional(),
+  layout: z.unknown().nullable().optional(),
 });
 export type InitResponse = z.infer<typeof initResponseSchema>;
 

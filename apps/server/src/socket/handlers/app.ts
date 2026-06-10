@@ -10,7 +10,11 @@ export function create({
   settingsStore,
   emitter,
   gitService,
-}: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'emitter' | 'gitService'>): void {
+  layoutStore,
+}: Pick<
+  HandlerContext,
+  'channelManager' | 'settingsStore' | 'emitter' | 'gitService' | 'layoutStore'
+>): void {
   async function handleInit(
     _ch: Channel | null,
     _payload: unknown,
@@ -41,6 +45,7 @@ export function create({
         browserIntegrationSupported: false,
       },
       capabilities: { worktree: gitService.capabilities.worktree },
+      layout: layoutStore.get('default'),
     });
   }
 
