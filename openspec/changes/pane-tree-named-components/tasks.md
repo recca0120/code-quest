@@ -19,6 +19,9 @@ Wire schema v2 的對應任務在 `layout-persistence` tasks.md §13（依賴本
 - [ ] 2.3 [impl] 新增 `contexts/pane-codecs.ts`：mapped type `Serializers`/`Deserializers` + generic indexed access dispatch，零 React import、零 cast
 - [ ] 2.4 [impl] `AssertEqual<PaneContent['type'], PersistedPaneContent['type']>` 靜態斷言
 - [ ] 2.5 [refactor] TabContext 的 serializePaneNode/deserializePaneNode 改走 codecs，刪除 `as` cast
+- [ ] 2.6 [test] ratio 精度 — serialize split node 時 ratio round 到 4 位小數（`0.6342819…` → `0.6343`），roundtrip 後穩定（echo guard 字串比對前提）
+- [ ] 2.7 [test] ratio clamp — deserialize 時 ratio 限制在 `[0.05, 0.95]`，壞資料（0、1、NaN、負數）clamp 後仍渲染出可見的 pane
+- [ ] 2.8 [impl] serializeNode round ratio；deserializeNode clamp ratio（schema 亦加 `z.number()` 範圍驗證）
 
 ## C. Named pane components
 

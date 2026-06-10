@@ -128,6 +128,93 @@ PaneSplit 渲染前判斷（zoomedPaneId ?? (isMobile ? focusedPaneId : null)）
 
 RightPane 是 session 附屬的 ephemeral quick-view（三合一 tabs、不入樹、不持久化、`rightOpen` 為 local state）。與 D5 follow-mode tool pane 功能重疊——**worktree-centric D5 落地後評估讓 `onToggleRight` 改為 split 出 follow-mode pane、RightPane 退役**；在那之前不動。
 
+### D9. 尺寸與位置：不存絕對值，只存 ratio（含精度與 clamp）
+
+JSON **不記錄** width / height / pane position——leaf 的矩形由「root 到 leaf 路徑上所有 split 的 direction × ratio 組合」推導（h split：first 左 second 右；v split：first 上 second 下；尺寸 = ratio 連乘，渲染時轉 `width: N%` flex 樣式）。
+
+理由：(1) 跨裝置同步是核心場景，比例制讓同一份 JSON 在任何視窗尺寸成立，存 px 直接壞；(2) 視窗 resize 不產生需持久化的狀態；(3) 樹本身就是空間索引，再存座標 = 冗餘 = 不一致溫床。
+
+兩個防禦細節：
+- **精度**：serialize 時 ratio round 到 4 位小數（拖曳產生 `0.6342819…` 長浮點 → 無意義 diff、echo guard 字串比對不穩）
+- **clamp**：deserialize 時 ratio 限制 `[0.05, 0.95]`——壞資料不得把 pane 壓成 0 寬度不可見（與「worktree 已刪顯示警示」同屬 defensive restore）
+
+---
+
+## App → Pane 完整結構
+
+```
+main.tsx → App
+└─ SocketProvider(socket)
+   └─ AppConfigProvider                ← app:init RPC；ack 含 layout，subscribeInit 通知訂閱者
+      └─ AppProviders                  ← Session → Plugin → Project → Navigation
+         │                                → Git → Fs → Openspec → CommandPalette
+         └─ Workspace                  ← activeProjectCwd、dialogs、PanePicker 編排
+            ├─ WorkspaceTabBar         ← workspace tab 切換 / ⊞ / + Project / ⚙
+            ├─ TabProvider             ← 本 change 的 state 心臟：
+            │  │                          wsState { workspaceTabs[{id,label,paneRoot,focused,zoomed}], activeId }
+            │  │                          tabs: Record<channelId, TabMeta>
+            │  │                          layout save(debounce)/rehydrate（吃 pane-codecs）
+            │  └─ KeyboardShortcutsProvider
+            │     └─ TabContainer      ← 瘦身後：組裝層
+            │        ├─ SessionBar     ←（remove-session-bar 排定移除）
+            │        ├─ PaneTree       ← 遞迴渲染 active tab 的 paneRoot
+            │        │   ├─ PaneSplit ── ratio/divider；zoom/mobile solo 決策
+            │        │   └─ PaneLeaf ─── key={node.id}、focus、統一 <Pane>+<Pane.Toolbar>
+            │        │        └─ switch → SessionPane | GitPane | FilesPane
+            │        │                    | OpenspecPane | WorktreesPane
+            │        │                      └─ SessionPane → TabContent(ChannelProvider→ChatView)
+            │        │                                        └─ RightPane（ephemeral，D8）
+            │        └─ SessionPool    ← 未入樹/inactive-tab 的 TabContent 保持掛載
+            └─ CommandPalette / PanePicker / dialogs
+```
+
+## 同步資料流（client ⇄ server）
+
+```
+Browser A                                         Server
+─────────                                         ──────
+wsState 變動（split/close/ratio/swap/綁定）
+  ↓ debounce 500ms
+serializeLayout（pane-codecs，純函式）
+  ↓ 與 lastAppliedJson 相同 → skip
+emit layout:save {version:2, tabs, activeTabId} ──→ handlers/layout.ts
+                                                      ├─ migrateLegacyToV2 → safeParse
+                                                      │    失敗 → ack {ok:false} + logger.warn
+                                                      ├─ rev++ → LayoutStore.set(summonerId, layout, rev)
+                                                      ├─ ack {ok:true, rev} ──→ A 更新 lastSeenRev/lastAppliedJson
+                                                      └─ broadcast 同 summoner 其他 socket
+                                                            ↓ layout:sync {rev, …}
+Browser B
+  rev ≤ lastSeenRev → 忽略（echo guard）
+  ↓ deserializeLayout（permissive）→ dedup pass（channelId 唯一）
+  rehydrate sync 路徑：結構整棵採用（LWW），保留本地 activeTab/focused/zoomed
+  ↓ render-time liveness：tabs[sessionId] 有 meta → TabContent 重綁；無 → EmptyPane + cwd hint
+
+Reload / 新裝置：app:init ack { …, layout: {rev,…} | null }
+  → init 路徑 rehydrate（此時才套用 activeTabId）
+
+Server 端結構：
+  socket/server.ts → channel-emitter（dispatch/broadcast）
+  handlers/layout.ts（save→rev→store→ack→sync）｜handlers/app.ts（init ack 帶 layout）
+  layout-store.ts：Map<summonerId, { layout, rev }>（memory-only，F5 維持 out of scope）
+  schemas/socket/layout.ts：v2 schema + migration chain（單一真相，client/server 共用）
+```
+
+## 開發方式（skill ＋ TDD）
+
+每條 task 都是 `[test]` 先紅再 `[impl]` 綠、最後 refactor（依 `tdd` skill）。各階段用的 harness：
+
+| 階段 | Harness / Skill | 模式 |
+|---|---|---|
+| A shape / TabContext | TabProvider standalone（`layout-persistence.test.tsx` 既有模式：`createTestContainer` + `createFakeServer` + `FakeSummoner` + SocketProvider，不掛元件樹） | renderHook / 最小 render |
+| B codecs | 純 vitest unit，零 React | roundtrip property test（隨機樹生成 → `serialize∘deserialize ≡ identity`） |
+| C named components | `fake-summoner-client`：`renderWithChannel`（單 pane 行為）/ `renderWithWorkspace`（多 pane/pool/tab 切換） | **多層驗證**：① UI（testid）② `claude.receivedEvents('layout:save')` ③ `container.get(TYPES.LayoutStore)` ④ client state |
+| server v2（layout-persistence §13） | `fake-summoner-server`：`createTestContainer` + emitter dispatch（`layout.test.ts` 既有模式） | handler 單測 + 兩 socket broadcast 驗證 |
+| D zoom/mobile | style 斷言（jsdom 驗不到 layout → 斷言「無 percentage wrapper / 無 divider」）＋ Storybook story 視覺驗證 | `storybook-component` skill |
+| 驗收 | `/run`：起 dev server 實際拖 divider / zoom / swap / reload | 手動煙霧測試 |
+
+注意事項（來自專案 memory）：共用 PaneContent 型別的遷移（A→B→C 鏈）**不可用平行 agent** 各改各的——interface 變更會互相覆蓋，單線依序做。
+
 ---
 
 ## 否決記錄（草案被批判推翻的決策，勿重蹈）
