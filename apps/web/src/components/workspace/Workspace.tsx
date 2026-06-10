@@ -1,6 +1,6 @@
 import type { WorktreeInfo } from '@code-quest/git';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -137,6 +137,24 @@ export function Workspace(): React.JSX.Element {
   const { listing } = useGitState();
   const { list: listWorktrees } = useGitActions();
 
+  // Stable identities for TabContainer props — Workspace re-renders on every
+  // session:states tick; inline arrows here would defeat memo(TabContainer)
+  // and churn paneEnvironment (the D5 render-isolation invariant)
+  const handleSessionCreated = useCallback(() => setPendingSession(null), []);
+  const handleOpenModal = useCallback((paneId?: string) => {
+    setOpenInPaneTargetPaneId(paneId);
+    setOpenInPaneModalOpen(true);
+  }, []);
+  const handleOpenSettings = useCallback(() => setSettingsOpen(true), []);
+  const handleOpenAddProjectDialog = useCallback(() => setDialogOpen(true), []);
+  const handleNewWorktree = useCallback(
+    (projectCwd: string) => {
+      setActiveProject(projectCwd);
+      setWorktreeDialogOpen(true);
+    },
+    [setActiveProject],
+  );
+
   useEffect(() => {
     for (const p of projects) {
       if (!(p.cwd in listing)) {
@@ -194,17 +212,11 @@ export function Workspace(): React.JSX.Element {
           <KeyboardShortcutsProvider>
             <TabContainer
               pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
-              onSessionCreated={() => setPendingSession(null)}
-              onOpenModal={(paneId) => {
-                setOpenInPaneTargetPaneId(paneId);
-                setOpenInPaneModalOpen(true);
-              }}
-              onOpenSettings={() => setSettingsOpen(true)}
-              onAddProject={() => setDialogOpen(true)}
-              onNewWorktree={(projectCwd) => {
-                setActiveProject(projectCwd);
-                setWorktreeDialogOpen(true);
-              }}
+              onSessionCreated={handleSessionCreated}
+              onOpenModal={handleOpenModal}
+              onOpenSettings={handleOpenSettings}
+              onAddProject={handleOpenAddProjectDialog}
+              onNewWorktree={handleNewWorktree}
             />
           </KeyboardShortcutsProvider>
           <ConnectedPanePicker

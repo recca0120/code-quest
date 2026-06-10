@@ -4,7 +4,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { PaneZoomProvider } from '@/components/workspace/PaneZoomProvider';
+import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -14,14 +14,14 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   return (
     <SocketProvider socket={summoner.socket}>
       <TabProvider>
-        <PaneZoomProvider>{children}</PaneZoomProvider>
+        <KeyboardShortcutsProvider>{children}</KeyboardShortcutsProvider>
       </TabProvider>
     </SocketProvider>
   );
 }
 
 // 5.1: ⌘⇧Z sets zoomedPaneId = focusedPaneId; already zoomed clears it
-describe('PaneZoomProvider (5.1) keyboard shortcut', () => {
+describe('KeyboardShortcutsProvider zoom (5.1) keyboard shortcut', () => {
   it('Cmd+Shift+Z zooms focused pane', async () => {
     const user = userEvent.setup();
     let zoomedId: string | null = 'not-set';

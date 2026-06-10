@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
-
-interface WorktreeOption {
-  path: string;
-  branch?: string;
-  name: string;
-  projectName?: string;
-}
+import type { WorktreeOption } from './useAvailableWorktrees.ts';
 
 interface WorktreeSwitcherProps {
   emoji: string;

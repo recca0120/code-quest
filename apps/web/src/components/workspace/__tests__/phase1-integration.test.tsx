@@ -6,7 +6,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { PaneTree } from '@/components/workspace/PaneTree';
-import { PaneZoomProvider } from '@/components/workspace/PaneZoomProvider';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneActions, usePaneState, useWorkspaceTab } from '@/contexts/TabContext';
@@ -23,9 +22,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   const summoner = createFakeSummoner();
   return (
     <SocketProvider socket={summoner.socket}>
-      <TabProvider>
-        <PaneZoomProvider>{children}</PaneZoomProvider>
-      </TabProvider>
+      <TabProvider>{children}</TabProvider>
     </SocketProvider>
   );
 }

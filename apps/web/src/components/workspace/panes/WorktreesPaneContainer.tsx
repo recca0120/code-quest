@@ -1,5 +1,5 @@
 import { useTabState } from '@/contexts/TabContext';
-import { WorktreesPane } from '../ToolPanes.tsx';
+import { WorktreesPane } from '../WorktreesPane.tsx';
 import { usePaneEnvironment } from './PaneEnvironmentContext.tsx';
 import { PaneShell, type PaneToolbarCommonProps } from './PaneShell.tsx';
 

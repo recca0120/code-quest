@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import type { PaneToolbarCommonProps } from './PaneShell.tsx';
 import { SessionPane } from './SessionPane.tsx';
@@ -9,11 +10,9 @@ import { WorktreesPaneContainer } from './WorktreesPaneContainer.tsx';
  * Record lookup) so TypeScript narrows content per case — and `satisfies never`
  * turns a forgotten case into a compile error when a new pane type is added.
  */
-export function PaneLeafBody({
-  node,
-}: {
+export const PaneLeafBody: React.NamedExoticComponent<{
   node: Extract<PaneNode, { type: 'leaf' }>;
-}): React.ReactNode {
+}> = memo(function PaneLeafBody({ node }) {
   const { paneRoot } = usePaneState();
   const { splitPane, closePane, focusPane, swapPane } = usePaneActions();
 
@@ -47,4 +46,4 @@ export function PaneLeafBody({
     default:
       return content satisfies never;
   }
-}
+});

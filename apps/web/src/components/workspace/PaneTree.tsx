@@ -3,8 +3,6 @@ import { PaneDivider } from './PaneDivider';
 import { PaneLeafBody } from './panes/PaneLeafBody.tsx';
 import { useMobileMode } from './useMobileMode';
 
-type RenderLeaf = (node: PaneNode) => React.ReactNode;
-
 /** zoom（或 mobile 時的 focus）指定的「唯一顯示」pane id */
 function useSoloPaneId(): string | null {
   const { zoomedPaneId, focusedPaneId } = usePaneState();
@@ -12,13 +10,7 @@ function useSoloPaneId(): string | null {
   return zoomedPaneId ?? (isMobile ? focusedPaneId : null);
 }
 
-function PaneLeaf({
-  node,
-  renderLeaf,
-}: {
-  node: Extract<PaneNode, { type: 'leaf' }>;
-  renderLeaf?: RenderLeaf;
-}) {
+function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
   const { focusPane } = usePaneActions();
 
   return (
@@ -34,18 +26,12 @@ function PaneLeaf({
       style={{ flex: 1, overflow: 'hidden' }}
       className="flex flex-1 min-w-0 min-h-0"
     >
-      {renderLeaf ? renderLeaf(node) : <PaneLeafBody node={node} />}
+      <PaneLeafBody node={node} />
     </div>
   );
 }
 
-function PaneSplit({
-  node,
-  renderLeaf,
-}: {
-  node: Extract<PaneNode, { type: 'split' }>;
-  renderLeaf?: RenderLeaf;
-}) {
+function PaneSplit({ node }: { node: Extract<PaneNode, { type: 'split' }> }) {
   const { updateRatio } = usePaneActions();
   const soloId = useSoloPaneId();
 
@@ -57,7 +43,7 @@ function PaneSplit({
     const inSecond = hasLeaf(node.second, soloId);
     if (inFirst !== inSecond) {
       const side = inFirst ? node.first : node.second;
-      return <PaneTreeNode node={side} renderLeaf={renderLeaf} />;
+      return <PaneTreeNode node={side} />;
     }
   }
 
@@ -72,30 +58,30 @@ function PaneSplit({
       className={`flex flex-1 min-w-0 min-h-0 ${isHorizontal ? 'flex-row' : 'flex-col'}`}
     >
       <div style={firstStyle} className="flex min-w-0 min-h-0">
-        <PaneTreeNode node={node.first} renderLeaf={renderLeaf} />
+        <PaneTreeNode node={node.first} />
       </div>
       <PaneDivider
         direction={node.direction}
         onRatioChange={(ratio) => updateRatio(node.id, ratio)}
       />
       <div style={secondStyle} className="flex min-w-0 min-h-0">
-        <PaneTreeNode node={node.second} renderLeaf={renderLeaf} />
+        <PaneTreeNode node={node.second} />
       </div>
     </div>
   );
 }
 
-function PaneTreeNode({ node, renderLeaf }: { node: PaneNode; renderLeaf?: RenderLeaf }) {
+function PaneTreeNode({ node }: { node: PaneNode }) {
   // key={node.id}: leaf id 由 wire 帶來、跨裝置穩定 → rehydrate/swap 後 mount 身份可預期
-  if (node.type === 'leaf') return <PaneLeaf key={node.id} node={node} renderLeaf={renderLeaf} />;
-  return <PaneSplit key={node.id} node={node} renderLeaf={renderLeaf} />;
+  if (node.type === 'leaf') return <PaneLeaf key={node.id} node={node} />;
+  return <PaneSplit key={node.id} node={node} />;
 }
 
-export function PaneTree({ renderLeaf }: { renderLeaf?: RenderLeaf } = {}): React.JSX.Element {
+export function PaneTree(): React.JSX.Element {
   const { paneRoot } = usePaneState();
   return (
     <div data-testid="split-pane-root" className="flex flex-1 min-w-0 min-h-0 overflow-hidden">
-      <PaneTreeNode node={paneRoot} renderLeaf={renderLeaf} />
+      <PaneTreeNode node={paneRoot} />
     </div>
   );
 }

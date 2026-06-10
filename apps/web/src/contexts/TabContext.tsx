@@ -223,6 +223,14 @@ function hasTabId(id: string): (t: { id: string }) => boolean {
   return (t) => t.id === id;
 }
 
+// Stable identity for the "active tab not found" edge — a fresh object per render
+// would change leaf ids every render and remount the whole pane subtree.
+// (applyLayout's membership guard makes this near-unreachable, but stay defensive.)
+const FALLBACK_PANE_STATE: PaneStateValue = (() => {
+  const leaf = makeLeaf();
+  return { paneRoot: leaf, focusedPaneId: null, zoomedPaneId: null };
+})();
+
 function mapNode(node: PaneNode, fn: (n: PaneNode) => PaneNode): PaneNode {
   const mapped = fn(node);
   if (mapped !== node) return mapped;
@@ -441,6 +449,9 @@ export function TabProvider({
   }));
 
   const prevSessionIds = useRef<Set<string>>(new Set());
+  // Latest activeTabId for the diff effect (deps limited to [sessions])
+  const activeTabIdRef = useRef(state.activeTabId);
+  activeTabIdRef.current = state.activeTabId;
   // biome-ignore lint/correctness/useExhaustiveDependencies: addTab/removeTab/replaceActiveTab only call setState — deps are intentionally limited to sessions to avoid re-running the diff on every render
   useEffect(() => {
     if (!sessions) return;
@@ -449,7 +460,16 @@ export function TabProvider({
       (s) => !prevSessionIds.current.has(s.channelId) && !TERMINAL_STATES.has(s.state),
     );
     const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
-    if (added.length === 1 && removed.length === 1 && added[0] && removed[0]) {
+    if (
+      added.length === 1 &&
+      removed.length === 1 &&
+      added[0] &&
+      removed[0] &&
+      // Swap semantics only apply when the dying session IS the active tab —
+      // otherwise a background session ending alongside a new one appearing
+      // would kill the user's active tab and leave the dead one as a zombie.
+      removed[0] === activeTabIdRef.current
+    ) {
       actions.replaceActiveTab(added[0].channelId, added[0].cwd, added[0].branch);
     } else {
       for (const s of added) {
@@ -501,11 +521,13 @@ export function TabProvider({
     navActions.clearPendingOpenWorktree();
   }, [pendingOpenWorktree, state.tabs]);
 
-  const initialWorkspaceTab = makeWorkspaceTab();
-  const [wsState, setWsState] = useState<WorkspaceTabStateValue>(() => ({
-    workspaceTabs: [initialWorkspaceTab],
-    activeWorkspaceTabId: initialWorkspaceTab.id,
-  }));
+  const [wsState, setWsState] = useState<WorkspaceTabStateValue>(() => {
+    const initialWorkspaceTab = makeWorkspaceTab();
+    return {
+      workspaceTabs: [initialWorkspaceTab],
+      activeWorkspaceTabId: initialWorkspaceTab.id,
+    };
+  });
 
   // Echo guard refs (F1 v2): server-issued monotonic rev + canonical JSON of the
   // last applied/saved layout. Comparing against the APPLIED state (not the raw
@@ -542,10 +564,14 @@ export function TabProvider({
         source === 'sync' &&
         prev.activeWorkspaceTabId !== null &&
         workspaceTabs.some(hasTabId(prev.activeWorkspaceTabId));
-      const next: WorkspaceTabStateValue = {
-        workspaceTabs,
-        activeWorkspaceTabId: keepLocalActive ? prev.activeWorkspaceTabId : deduped.activeTabId,
-      };
+      const candidate = keepLocalActive ? prev.activeWorkspaceTabId : deduped.activeTabId;
+      // Membership guard (clamp-not-reject): a corrupt/foreign activeTabId must
+      // not leave paneState dangling — fall back to the first tab
+      const activeWorkspaceTabId =
+        candidate !== null && workspaceTabs.some(hasTabId(candidate))
+          ? candidate
+          : (workspaceTabs[0]?.id ?? null);
+      const next: WorkspaceTabStateValue = { workspaceTabs, activeWorkspaceTabId };
       lastAppliedJsonRef.current = JSON.stringify(serializeLayout(next));
       return next;
     });
@@ -747,11 +773,7 @@ export function TabProvider({
   }));
 
   const activeWsTab = wsState.workspaceTabs.find((t) => t.id === wsState.activeWorkspaceTabId);
-  const paneState: PaneStateValue = activeWsTab ?? {
-    paneRoot: makeLeaf(),
-    focusedPaneId: null,
-    zoomedPaneId: null,
-  };
+  const paneState: PaneStateValue = activeWsTab ?? FALLBACK_PANE_STATE;
 
   return (
     <TabStateContext.Provider value={state}>

@@ -26,7 +26,7 @@ vi.mock('../../files/FilesView.tsx', () => ({
 vi.mock('../../spec/SpecView.tsx', () => ({
   SpecView: () => <div data-testid="spec-view" />,
 }));
-vi.mock('../ToolPanes.tsx', () => ({
+vi.mock('../WorktreesPane.tsx', () => ({
   WorktreesPane: () => <div data-testid="worktrees-view" />,
 }));
 vi.mock('@/contexts/GitContext', () => ({

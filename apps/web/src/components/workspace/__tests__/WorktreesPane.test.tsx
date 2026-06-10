@@ -4,7 +4,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { WorktreesPane } from '@/components/workspace/ToolPanes';
+import { WorktreesPane } from '@/components/workspace/WorktreesPane';
 
 vi.mock('@/contexts/GitContext', () => ({
   useGitState: () => ({

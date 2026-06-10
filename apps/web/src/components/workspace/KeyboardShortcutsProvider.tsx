@@ -37,8 +37,8 @@ function useKeyboardShortcuts(
   sessionManagerOpen: boolean,
   setSessionManagerOpen: (fn: (prev: boolean) => boolean) => void,
 ): void {
-  const { paneRoot, focusedPaneId } = usePaneState();
-  const { splitPane, closePane, focusPane, swapPane } = usePaneActions();
+  const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
+  const { splitPane, closePane, focusPane, swapPane, zoomPane } = usePaneActions();
   const { createNewTab } = useTabActions();
   const { tabs } = useTabState();
   const isMobile = useMobileMode();
@@ -72,6 +72,17 @@ function useKeyboardShortcuts(
       if (e.key === 't' && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         createNewTab(focusedLeafCwd ? { cwd: focusedLeafCwd } : undefined);
+        return;
+      }
+
+      // ⌘⇧Z — toggle zoom on the focused pane (was PaneZoomProvider)
+      if (e.shiftKey && e.key === 'Z' && !e.altKey) {
+        e.preventDefault();
+        if (zoomedPaneId !== null) {
+          zoomPane(null);
+        } else if (focusedPaneId) {
+          zoomPane(focusedPaneId);
+        }
         return;
       }
 
@@ -169,6 +180,8 @@ function useKeyboardShortcuts(
     focusPane,
     createNewTab,
     swapPane,
+    zoomPane,
+    zoomedPaneId,
     setSessionManagerOpen,
   ]);
 }

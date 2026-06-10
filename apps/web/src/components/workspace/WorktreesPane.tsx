@@ -1,13 +1,6 @@
 import { useGitState } from '@/contexts/GitContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 
-export interface WorktreeOption {
-  path: string;
-  branch?: string;
-  name: string;
-  projectName?: string;
-}
-
 interface WorktreesPaneSession {
   channelId: string;
   cwd: string;

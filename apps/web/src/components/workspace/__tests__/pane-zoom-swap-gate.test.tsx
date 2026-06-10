@@ -26,7 +26,7 @@ vi.mock('../../files/FilesView.tsx', () => ({
 vi.mock('../../spec/SpecView.tsx', () => ({
   SpecView: () => <div data-testid="spec-view" />,
 }));
-vi.mock('../ToolPanes.tsx', () => ({
+vi.mock('../WorktreesPane.tsx', () => ({
   WorktreesPane: () => <div data-testid="worktrees-view" />,
 }));
 vi.mock('@/contexts/GitContext', () => ({
@@ -161,6 +161,33 @@ describe('toolbar DnD swap (4.4)', () => {
     const leaves = leavesOf(state().paneRoot);
     expect(leaves.find((l) => l.id === firstId)!.content.type).toBe('files');
     expect(leaves.find((l) => l.id === secondId)!.content.type).toBe('git');
+  });
+});
+
+describe('handleCreateTab fallback — focused tool pane must not swallow the session', () => {
+  function Wrapper({ pendingCwd }: { pendingCwd: string | null }) {
+    return (
+      <NavigationProvider>
+        <TabProvider>
+          <Probe />
+          <TabContainer pendingNewSessionCwd={pendingCwd} onSessionCreated={() => {}} />
+        </TabProvider>
+      </NavigationProvider>
+    );
+  }
+
+  it('creates a visible session even when the focused pane is a worktrees pane', () => {
+    const { rerender } = render(<Wrapper pendingCwd={null} />);
+
+    const leafId = leavesOf(probeState!.paneRoot)[0]!.id;
+    actHelper(() => probeActions!.setContentInPane(leafId, { type: 'worktrees' }));
+    actHelper(() => probeActions!.focusPane(leafId));
+
+    rerender(<Wrapper pendingCwd="/repo/feat" />);
+
+    // session must land in a pane (split), not be silently dropped
+    expect(screen.getByTestId('chat-view')).toBeInTheDocument();
+    expect(screen.getAllByTestId('pane-header').length).toBe(2);
   });
 });
 

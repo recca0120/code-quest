@@ -1,7 +1,13 @@
 import { useMemo } from 'react';
 import { useGitState } from '@/contexts/GitContext';
 import { useProjectState } from '@/contexts/ProjectContext';
-import type { WorktreeOption } from './ToolPanes.tsx';
+
+export interface WorktreeOption {
+  path: string;
+  branch?: string;
+  name: string;
+  projectName?: string;
+}
 
 /**
  * Flattens projects × git worktree listing into the option list consumed by

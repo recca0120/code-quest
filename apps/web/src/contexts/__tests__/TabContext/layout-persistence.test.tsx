@@ -186,6 +186,15 @@ describe('layout:sync cross-device update', () => {
     expect(screen.getByTestId('active-tab').textContent).toBe('tab-a');
   });
 
+  it('falls back to the first tab when incoming activeTabId is not a member', async () => {
+    const summoner = renderBare();
+
+    await emitSync(summoner, { ...VALID_LAYOUT, activeTabId: 'ghost-tab' }, 1);
+
+    expect(screen.getByTestId('tab-count').textContent).toBe('2');
+    expect(screen.getByTestId('active-tab').textContent).toBe('tab-a');
+  });
+
   it('dedupes duplicate channelIds on apply — only one leaf stays bound (11.5)', async () => {
     const summoner = renderBare();
 

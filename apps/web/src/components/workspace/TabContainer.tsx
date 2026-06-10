@@ -17,21 +17,29 @@ import {
   useWorkspaceTab,
 } from '@/contexts/TabContext';
 import { PaneTree } from './PaneTree.tsx';
-import { PaneZoomProvider } from './PaneZoomProvider.tsx';
 import { type PaneEnvironment, PaneEnvironmentProvider } from './panes/PaneEnvironmentContext.tsx';
 import { SessionPool } from './panes/SessionPool.tsx';
 import { SessionBar } from './SessionBar.tsx';
 import { useAvailableWorktrees } from './useAvailableWorktrees.ts';
 import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
 
-function findPaneLeaf(node: PaneNode, id: string): Extract<PaneNode, { type: 'leaf' }> | null {
-  if (node.type === 'leaf') return node.id === id ? node : null;
-  return findPaneLeaf(node.first, id) ?? findPaneLeaf(node.second, id);
+type PaneLeafNode = Extract<PaneNode, { type: 'leaf' }>;
+
+function findLeafBy(node: PaneNode, pred: (leaf: PaneLeafNode) => boolean): PaneLeafNode | null {
+  if (node.type === 'leaf') return pred(node) ? node : null;
+  return findLeafBy(node.first, pred) ?? findLeafBy(node.second, pred);
 }
 
-function findFirstLeaf(node: PaneNode): Extract<PaneNode, { type: 'leaf' }> | null {
-  if (node.type === 'leaf') return node;
-  return findFirstLeaf(node.first) ?? findFirstLeaf(node.second);
+function findPaneLeaf(node: PaneNode, id: string): PaneLeafNode | null {
+  return findLeafBy(node, (leaf) => leaf.id === id);
+}
+
+function isEmptySessionLeaf(leaf: PaneLeafNode): boolean {
+  return leaf.content.type === 'session' && leaf.content.sessionId === null;
+}
+
+function isSessionLeaf(leaf: PaneLeafNode): boolean {
+  return leaf.content.type === 'session';
 }
 
 interface TabContainerProps {
@@ -79,17 +87,20 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     (opts?: { cwd?: string; targetPaneId?: string }) => {
       const { channelId, cwd: newCwd } = createNewTab(opts);
       const effectivePaneId = opts?.targetPaneId ?? focusedPaneId;
-      const target = effectivePaneId
-        ? (findPaneLeaf(paneRoot, effectivePaneId) ?? findFirstLeaf(paneRoot))
-        : findFirstLeaf(paneRoot);
-      if (target && target.content.type === 'session') {
-        if (target.content.sessionId === null) {
-          setSessionInPane(target.id, channelId, newCwd);
-          focusPane(target.id);
-        } else {
-          // Pane is occupied — split and assign to new leaf to prevent double-mount
-          splitPaneAndAssign('h', channelId, newCwd);
-        }
+      const byId = effectivePaneId ? findPaneLeaf(paneRoot, effectivePaneId) : null;
+      // Fallback chain: explicit session leaf → first EMPTY session leaf →
+      // first session leaf → split. A created session must always land in a
+      // pane — even when the focused pane is a tool pane (worktrees/git/…).
+      const target =
+        byId && isSessionLeaf(byId)
+          ? byId
+          : (findLeafBy(paneRoot, isEmptySessionLeaf) ?? findLeafBy(paneRoot, isSessionLeaf));
+      if (target && target.content.type === 'session' && target.content.sessionId === null) {
+        setSessionInPane(target.id, channelId, newCwd);
+        focusPane(target.id);
+      } else {
+        // Occupied or no session leaf at all — split and assign to a new leaf
+        splitPaneAndAssign('h', channelId, newCwd);
       }
     },
     // opts.targetPaneId is captured at call time — no need in deps
@@ -190,29 +201,27 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   }));
 
   return (
-    <PaneZoomProvider>
-      <div data-testid="tab-container" className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <WorkspaceTabBar onOpenSettings={onOpenSettings} onAddProject={onAddProject} />
-        <div ref={sessionBarContainerRef} className="contents">
-          <SessionBar
-            sessions={sessionBarItems}
-            maxVisible={maxVisible}
-            availableWorktrees={availableWorktrees}
-            projects={projects.map((p) => ({ cwd: p.cwd, name: p.name }))}
-            onNewSession={(cwd) => handleCreateTab({ cwd })}
-            onNewWorktree={onNewWorktree}
-            onCloseSession={handleCloseSession}
-          />
-        </div>
-
-        <PaneEnvironmentProvider value={paneEnvironment}>
-          {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}
-          <SessionPool />
-
-          {/* Pane area: sessions assigned to panes render here */}
-          <PaneTree />
-        </PaneEnvironmentProvider>
+    <div data-testid="tab-container" className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <WorkspaceTabBar onOpenSettings={onOpenSettings} onAddProject={onAddProject} />
+      <div ref={sessionBarContainerRef} className="contents">
+        <SessionBar
+          sessions={sessionBarItems}
+          maxVisible={maxVisible}
+          availableWorktrees={availableWorktrees}
+          projects={projects.map((p) => ({ cwd: p.cwd, name: p.name }))}
+          onNewSession={(cwd) => handleCreateTab({ cwd })}
+          onNewWorktree={onNewWorktree}
+          onCloseSession={handleCloseSession}
+        />
       </div>
-    </PaneZoomProvider>
+
+      <PaneEnvironmentProvider value={paneEnvironment}>
+        {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}
+        <SessionPool />
+
+        {/* Pane area: sessions assigned to panes render here */}
+        <PaneTree />
+      </PaneEnvironmentProvider>
+    </div>
   );
 });

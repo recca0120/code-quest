@@ -49,7 +49,11 @@ export function SessionPane({
           message="Empty pane"
           hint={hint}
           actionLabel="New Session"
-          onAction={env.onOpenModal ? () => env.onOpenModal?.(paneId) : () => env.onNewTab()}
+          onAction={
+            env.onOpenModal
+              ? () => env.onOpenModal?.(paneId)
+              : () => env.onNewTab({ targetPaneId: paneId })
+          }
         />
       </PaneShell>
     );

@@ -8,7 +8,7 @@ import {
 } from '@/contexts/TabContext';
 import type { SessionStatus } from '@/types/ui';
 import { cn } from '@/utils/cn';
-import type { WorktreeOption } from './ToolPanes.tsx';
+import type { WorktreeOption } from './useAvailableWorktrees.ts';
 
 interface SessionInfo {
   channelId: string;
