@@ -25,17 +25,17 @@ P2 UI 增強與 P3 收斂列於 §5-§6 留後。共用 TabMeta 型別——單�
 
 ## 3. P2 — SessionManager 接線
 
-- [ ] 3.1 [test] ⌘⇧M「+ New session」— 經 pendingSession 管線建立並落 pane
-- [ ] 3.2 [impl] KeyboardShortcutsProvider props { onNewSession?, onNewWorktree?, onAddProject? } 由 Workspace 傳入並轉交 SessionManager；onNewSession 簽名帶 projectCwd
-- [ ] 3.3 [test] 同 worktree 兩個 sessions — Projects 區列出兩個＋恆常「+ New session」
-- [ ] 3.4 [impl] cwdToSessionId 改 cwd → sessionId[]；「+ New session」不與既有 session 互斥
+- [x] 3.1 [test] ⌘⇧M「+ New session」— 經 pendingSession 管線建立並落 pane
+- [x] 3.2 [impl] KeyboardShortcutsProvider props { onNewSession?, onNewWorktree?, onAddProject? } 由 Workspace 傳入並轉交 SessionManager；onNewSession 簽名帶 projectCwd
+- [x] 3.3 [test] 同 worktree 兩個 sessions — Projects 區列出兩個＋恆常「+ New session」
+- [x] 3.4 [impl] cwdToSessionId 改 cwd → sessionId[]；「+ New session」不與既有 session 互斥
 
 ## 4. P2 — targetPaneId ＋ worktree 建立接續
 
 - [x] 4.1 [test] 空 pane 的 picker 建立 session 落在該 pane（非 focused pane）
 - [x] 4.2 [impl] Workspace pendingSession 加 targetPaneId；TabContainer effect 傳 handleCreateTab
-- [ ] 4.3 [test] CreateWorktreeDialog onCreated — new-session flow 進入時建完即開 session
-- [ ] 4.4 [impl] dialog 加 onCreated(path)；Workspace 記錄來源 intent，接 pendingSession
+- [x] 4.3 [test] CreateWorktreeDialog onCreated — new-session flow 進入時建完即開 session
+- [x] 4.4 [impl] dialog 加 onCreated(path)；Workspace 記錄來源 intent，接 pendingSession
 
 ## 5. P2 UI 增強（留後）
 

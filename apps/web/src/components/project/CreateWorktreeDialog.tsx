@@ -31,10 +31,13 @@ export function CreateWorktreeDialog({
   open,
   cwd,
   onClose,
+  onCreated,
 }: {
   open: boolean;
   cwd: string;
   onClose: () => void;
+  /** 建立成功（new-session flow 用它接續開 session，終結 dead-end）。 */
+  onCreated?: (path: string) => void;
 }): React.JSX.Element {
   const { create, listBranches } = useGitActions();
 
@@ -92,6 +95,7 @@ export function CreateWorktreeDialog({
         setError(result.error);
         return;
       }
+      onCreated?.(activePath);
       resetAndClose();
     } finally {
       setIsCreating(false);

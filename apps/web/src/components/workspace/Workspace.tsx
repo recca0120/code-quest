@@ -228,7 +228,14 @@ export function Workspace(): React.JSX.Element {
           }
         >
           <NavigationIntentBridge />
-          <KeyboardShortcutsProvider>
+          <KeyboardShortcutsProvider
+            onNewSession={(cwd, projectCwd) => {
+              setActiveProject(projectCwd);
+              setPendingSession({ projectCwd, sessionCwd: cwd });
+            }}
+            onNewWorktree={handleNewWorktree}
+            onAddProject={handleOpenAddProjectDialog}
+          >
             <TabContainer
               pendingNewSession={pendingNewSession}
               onSessionCreated={handleSessionCreated}
@@ -281,6 +288,10 @@ export function Workspace(): React.JSX.Element {
           open
           cwd={activeProjectCwd}
           onClose={() => setWorktreeDialogOpen(false)}
+          onCreated={(path) => {
+            // 所有現行入口都來自 new-session flow — 建完即開，終結 8 步 dead-end
+            setPendingSession({ projectCwd: activeProjectCwd, sessionCwd: path });
+          }}
         />
       )}
     </main>

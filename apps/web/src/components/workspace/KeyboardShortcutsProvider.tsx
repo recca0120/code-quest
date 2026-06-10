@@ -189,8 +189,14 @@ function useKeyboardShortcuts(
 
 export function KeyboardShortcutsProvider({
   children,
+  onNewSession,
+  onNewWorktree,
+  onAddProject,
 }: {
   children: React.ReactNode;
+  onNewSession?: (cwd: string, projectCwd: string) => void;
+  onNewWorktree?: (projectCwd: string) => void;
+  onAddProject?: () => void;
 }): React.JSX.Element {
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
   useKeyboardShortcuts(sessionManagerOpen, setSessionManagerOpen);
@@ -198,7 +204,23 @@ export function KeyboardShortcutsProvider({
   return (
     <SessionManagerContext.Provider value={ctxValue}>
       {children}
-      {sessionManagerOpen && <SessionManager onClose={() => setSessionManagerOpen(() => false)} />}
+      {sessionManagerOpen && (
+        <SessionManager
+          onClose={() => setSessionManagerOpen(() => false)}
+          onNewSession={(cwd, projectCwd) => {
+            setSessionManagerOpen(() => false);
+            onNewSession?.(cwd, projectCwd);
+          }}
+          onNewWorktree={(projectCwd) => {
+            setSessionManagerOpen(() => false);
+            onNewWorktree?.(projectCwd);
+          }}
+          onAddProject={() => {
+            setSessionManagerOpen(() => false);
+            onAddProject?.();
+          }}
+        />
+      )}
     </SessionManagerContext.Provider>
   );
 }

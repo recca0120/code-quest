@@ -12,7 +12,7 @@ import { useWorktreeLookup } from './useAvailableWorktrees.ts';
 
 interface SessionManagerProps {
   onClose: () => void;
-  onNewSession?: (cwd: string) => void;
+  onNewSession?: (cwd: string, projectCwd: string) => void;
   onNewWorktree?: (projectCwd: string) => void;
   onAddProject?: () => void;
 }
@@ -70,11 +70,14 @@ export function SessionManager({
 
   const noTabSessions = Object.keys(tabs).filter((id) => !allTabSessionIds.has(id));
 
-  // Build cwd → session id map for Projects section
-  const cwdToSessionId = new Map<string, string>();
+  // Build cwd → session ids map for Projects section (one-to-many — a worktree
+  // can host several sessions; last-write-wins hid all but one)
+  const cwdToSessionIds = new Map<string, string[]>();
   for (const [id, meta] of Object.entries(tabs)) {
     if (meta.cwd) {
-      cwdToSessionId.set(meta.cwd, id);
+      const ids = cwdToSessionIds.get(meta.cwd) ?? [];
+      ids.push(id);
+      cwdToSessionIds.set(meta.cwd, ids);
     }
   }
 
@@ -180,30 +183,34 @@ export function SessionManager({
               <div key={project.cwd} className="mb-3">
                 <div className="text-xs font-medium px-1 mb-1">{project.name}</div>
                 {worktreeList.map((wt) => {
-                  const sessionId = cwdToSessionId.get(wt.path);
-                  const sessionMeta = sessionId ? tabs[sessionId] : null;
+                  const sessionIds = cwdToSessionIds.get(wt.path) ?? [];
                   return (
                     <div key={wt.path} className="flex items-center gap-2 px-2 py-1 text-xs">
                       <span className="opacity-70">⎇ {wt.branch ?? wt.name}</span>
-                      {sessionMeta ? (
-                        <button
-                          type="button"
-                          data-testid={`session-manager-item-${sessionId}`}
-                          onClick={() => sessionId && handleSelect(sessionId)}
-                          className="truncate hover:underline text-left"
-                        >
-                          {sessionMeta.title ?? sessionMeta.cwd ?? sessionId}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          data-testid="new-session-btn"
-                          className="text-muted-foreground hover:text-foreground"
-                          onClick={() => onNewSession?.(wt.path)}
-                        >
-                          + New session
-                        </button>
-                      )}
+                      {sessionIds.map((sessionId) => {
+                        const sessionMeta = tabs[sessionId];
+                        if (!sessionMeta) return null;
+                        return (
+                          <button
+                            key={sessionId}
+                            type="button"
+                            data-testid={`session-manager-item-${sessionId}`}
+                            onClick={() => handleSelect(sessionId)}
+                            className="truncate hover:underline text-left"
+                          >
+                            {sessionMeta.title ?? sessionMeta.cwd ?? sessionId}
+                          </button>
+                        );
+                      })}
+                      {/* always available — a worktree may host several sessions */}
+                      <button
+                        type="button"
+                        data-testid="new-session-btn"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => onNewSession?.(wt.path, project.cwd)}
+                      >
+                        + New session
+                      </button>
                     </div>
                   );
                 })}

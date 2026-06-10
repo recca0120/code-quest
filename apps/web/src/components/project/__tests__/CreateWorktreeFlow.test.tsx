@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
 
-describe('Create Worktree end-to-end flow (right-click → dialog → new tab)', () => {
+describe('Create Worktree end-to-end flow (dialog → session in new worktree)', () => {
   it('right-click ProjectCard → Create Worktree… → fill name → submit → new tab in same Project', async () => {
     // Arrange: FakeGit reports /projects/app as the git root for any cwd under it.
     const fakeGit = new FakeGit();
@@ -35,12 +35,14 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
     await user.type(screen.getByLabelText(/new branch name/i), 'feat-a');
     await user.click(screen.getByRole('button', { name: /^Create$/ }));
 
-    // Assert: dialog closes; tab count UNCHANGED (creating a worktree no
-    // longer auto-spawns a chat session — user clicks the worktree row
-    // separately to open chat).
+    // Assert: dialog closes AND a session opens in the new worktree
+    // (worktree-centric entry-wiring: the create-worktree dead-end is gone —
+    // coming from a new-session flow continues straight into a session).
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: /new worktree/i })).not.toBeInTheDocument();
     });
-    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByPlaceholderText(/Esc to focus/i).length).toBe(2);
+    });
   });
 });
