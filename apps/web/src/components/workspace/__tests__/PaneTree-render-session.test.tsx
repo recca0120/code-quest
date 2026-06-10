@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { SplitPane } from '@/components/workspace/SplitPane';
+import { PaneTree } from '@/components/workspace/PaneTree';
 import { SocketProvider } from '@/contexts/SocketContext';
 import type { PaneNode } from '@/contexts/TabContext';
 import { TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
@@ -40,7 +40,7 @@ describe('SplitPane renderLeaf (9.2a)', () => {
           <button type="button" onClick={() => leafId && setSessionInPane(leafId, 'ch-abc', null)}>
             set
           </button>
-          <SplitPane renderLeaf={renderLeaf} />
+          <PaneTree renderLeaf={renderLeaf} />
         </>
       );
     }
@@ -83,7 +83,7 @@ describe('SplitPane forceMount (9.2b)', () => {
           <button type="button" onClick={() => firstLeafId && zoomPane(firstLeafId)}>
             zoom
           </button>
-          <SplitPane renderLeaf={renderLeaf} />
+          <PaneTree renderLeaf={renderLeaf} />
         </>
       );
     }

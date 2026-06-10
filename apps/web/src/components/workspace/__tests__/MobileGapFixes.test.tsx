@@ -7,8 +7,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PaneTree } from '@/components/workspace/PaneTree';
 import { SessionBar } from '@/components/workspace/SessionBar';
-import { SplitPane } from '@/components/workspace/SplitPane';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -71,7 +71,7 @@ describe('Gap-M: Mobile forces single pane display', () => {
     const { container } = render(
       <Wrapper>
         <Setup />
-        <SplitPane />
+        <PaneTree />
       </Wrapper>,
     );
 
@@ -101,7 +101,7 @@ describe('Gap-M: Mobile forces single pane display', () => {
     const { container } = render(
       <Wrapper>
         <Setup />
-        <SplitPane />
+        <PaneTree />
       </Wrapper>,
     );
 
@@ -147,7 +147,7 @@ describe('Gap-M: Mobile forces single pane display', () => {
     const { container } = render(
       <Wrapper>
         <Setup />
-        <SplitPane />
+        <PaneTree />
       </Wrapper>,
     );
 

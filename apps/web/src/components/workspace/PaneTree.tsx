@@ -4,7 +4,7 @@ import { useMobileMode } from './useMobileMode';
 
 type RenderLeaf = (node: PaneNode) => React.ReactNode;
 
-function SplitPaneLeaf({
+function PaneLeaf({
   node,
   renderLeaf,
 }: {
@@ -38,10 +38,14 @@ function SplitPaneLeaf({
   );
 }
 
-function SplitPaneNode({ node, renderLeaf }: { node: PaneNode; renderLeaf?: RenderLeaf }) {
+function PaneSplit({
+  node,
+  renderLeaf,
+}: {
+  node: Extract<PaneNode, { type: 'split' }>;
+  renderLeaf?: RenderLeaf;
+}) {
   const { updateRatio } = usePaneActions();
-
-  if (node.type === 'leaf') return <SplitPaneLeaf node={node} renderLeaf={renderLeaf} />;
 
   const isHorizontal = node.direction === 'h';
   const dimension = isHorizontal ? 'width' : 'height';
@@ -54,24 +58,29 @@ function SplitPaneNode({ node, renderLeaf }: { node: PaneNode; renderLeaf?: Rend
       className={`flex flex-1 min-w-0 min-h-0 ${isHorizontal ? 'flex-row' : 'flex-col'}`}
     >
       <div style={firstStyle} className="flex min-w-0 min-h-0">
-        <SplitPaneNode node={node.first} renderLeaf={renderLeaf} />
+        <PaneTreeNode node={node.first} renderLeaf={renderLeaf} />
       </div>
       <PaneDivider
         direction={node.direction}
         onRatioChange={(ratio) => updateRatio(node.id, ratio)}
       />
       <div style={secondStyle} className="flex min-w-0 min-h-0">
-        <SplitPaneNode node={node.second} renderLeaf={renderLeaf} />
+        <PaneTreeNode node={node.second} renderLeaf={renderLeaf} />
       </div>
     </div>
   );
 }
 
-export function SplitPane({ renderLeaf }: { renderLeaf?: RenderLeaf } = {}): React.JSX.Element {
+function PaneTreeNode({ node, renderLeaf }: { node: PaneNode; renderLeaf?: RenderLeaf }) {
+  if (node.type === 'leaf') return <PaneLeaf node={node} renderLeaf={renderLeaf} />;
+  return <PaneSplit node={node} renderLeaf={renderLeaf} />;
+}
+
+export function PaneTree({ renderLeaf }: { renderLeaf?: RenderLeaf } = {}): React.JSX.Element {
   const { paneRoot } = usePaneState();
   return (
     <div data-testid="split-pane-root" className="flex flex-1 min-w-0 min-h-0 overflow-hidden">
-      <SplitPaneNode node={paneRoot} renderLeaf={renderLeaf} />
+      <PaneTreeNode node={paneRoot} renderLeaf={renderLeaf} />
     </div>
   );
 }

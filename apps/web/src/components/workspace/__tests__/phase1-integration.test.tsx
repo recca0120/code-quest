@@ -5,8 +5,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { PaneTree } from '@/components/workspace/PaneTree';
 import { PaneZoomProvider } from '@/components/workspace/PaneZoomProvider';
-import { SplitPane } from '@/components/workspace/SplitPane';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneActions, usePaneState, useWorkspaceTab } from '@/contexts/TabContext';
@@ -79,7 +79,7 @@ describe('Phase 1 integration (9.1)', () => {
       <Wrapper>
         <ControlPanel />
         <WorkspaceTabBar />
-        <SplitPane />
+        <PaneTree />
       </Wrapper>,
     );
 

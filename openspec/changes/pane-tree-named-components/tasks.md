@@ -26,7 +26,7 @@ rehydrate／live-channel 重綁（mode:'resume' 不 spawn）的測試在 layout-
 
 ## C. Named pane components
 
-- [ ] 3.1 [impl] `SplitPane` → `PaneTree`、split 分支 → `PaneSplit`、`SplitPaneLeaf` → `PaneLeaf`（rename + 拆檔，行為不變，既有測試過）
+- [x] 3.1 [impl] `SplitPane` → `PaneTree`、split 分支 → `PaneSplit`、`SplitPaneLeaf` → `PaneLeaf`（rename + 拆檔，行為不變，既有測試過）
 - [ ] 3.2 [test] PaneLeaf — 渲染 `<Pane>` + `<Pane.Toolbar>`（common props 含 onSwap）+ type 對應的 Body
 - [ ] 3.3 [impl] 新增 `components/workspace/panes/`：`SessionPane` / `GitPane` / `FilesPane` / `OpenspecPane` / `WorktreesPane`（PaneView 介面：ToolbarTools? / Body / scrollable?；worktrees case 先沿用現有渲染、3.6 收斂 toolbar）；PaneLeaf exhaustive switch + `satisfies never`
 - [ ] 3.4 [test] SessionPane — meta 存在渲染 TabContent；meta 缺席渲染 EmptyPane + cwd hint（「上次: {project} ⎇ {branch}」；worktree-centric D3 落地前先用 availableWorktrees 本地反查）

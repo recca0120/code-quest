@@ -27,10 +27,10 @@ import { FilesView } from '../files/FilesView.tsx';
 import { GitView } from '../git/GitView.tsx';
 import { SpecView } from '../spec/SpecView.tsx';
 import { Pane } from './Pane.tsx';
+import { PaneTree } from './PaneTree.tsx';
 import { PaneZoomProvider } from './PaneZoomProvider.tsx';
 import { RightPane } from './RightPane.tsx';
 import { SessionBar } from './SessionBar.tsx';
-import { SplitPane } from './SplitPane.tsx';
 import { type WorktreeOption, WorktreesPane } from './ToolPanes.tsx';
 import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
 import { WorktreeSwitcher } from './WorktreeSwitcher.tsx';
@@ -478,7 +478,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
         </div>
 
         {/* SplitPane area: sessions assigned to panes render here */}
-        <SplitPane renderLeaf={renderLeaf} />
+        <PaneTree renderLeaf={renderLeaf} />
       </div>
     </PaneZoomProvider>
   );

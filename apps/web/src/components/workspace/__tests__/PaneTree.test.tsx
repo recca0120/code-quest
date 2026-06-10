@@ -4,7 +4,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { SplitPane } from '@/components/workspace/SplitPane';
+import { PaneTree } from '@/components/workspace/PaneTree';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneActions } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -21,7 +21,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 // 2.1: single session pane renders content area
 describe('SplitPane (2.1) single session pane', () => {
   it('renders a pane content area', () => {
-    render(<SplitPane />, { wrapper: Wrapper });
+    render(<PaneTree />, { wrapper: Wrapper });
     expect(screen.getByTestId('split-pane-root')).toBeInTheDocument();
   });
 });
@@ -43,7 +43,7 @@ describe('SplitPane (2.2) after split shows two panes', () => {
     render(
       <Wrapper>
         <Trigger />
-        <SplitPane />
+        <PaneTree />
       </Wrapper>,
     );
 
@@ -70,7 +70,7 @@ describe('SplitPane (4.3) divider renders and updates ratio on drag', () => {
     render(
       <Wrapper>
         <Trigger />
-        <SplitPane />
+        <PaneTree />
       </Wrapper>,
     );
 
@@ -95,7 +95,7 @@ describe('SplitPane (4.3) divider renders and updates ratio on drag', () => {
     render(
       <Wrapper>
         <Trigger />
-        <SplitPane />
+        <PaneTree />
       </Wrapper>,
     );
 
@@ -142,7 +142,7 @@ describe('SplitPane (2.3) zoom hides other panes', () => {
     render(
       <Wrapper>
         <Trigger />
-        <SplitPane />
+        <PaneTree />
       </Wrapper>,
     );
 
