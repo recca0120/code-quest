@@ -1,7 +1,7 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { type ReactNode, useContext } from 'react';
-import { AppInitStateContext } from '@/contexts/AppInitContext';
+import { AppConfigStateContext } from '@/contexts/AppInitContext';
 import {
   menuContentClass as MENU_CONTENT_CLASS,
   type MenuItem,
@@ -52,7 +52,7 @@ export function buildProjectMenuItems(
 }
 
 function useItemList(callbacks: ProjectMenuCallbacks): MenuItem[] {
-  const capabilities = useContext(AppInitStateContext)?.capabilities ?? { worktree: false };
+  const capabilities = useContext(AppConfigStateContext)?.capabilities ?? { worktree: false };
   return buildProjectMenuItems(callbacks, capabilities);
 }
 

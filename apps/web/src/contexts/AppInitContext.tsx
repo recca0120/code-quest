@@ -108,6 +108,3 @@ export function AppConfigProvider({ children }: { children: ReactNode }): React.
     </AppConfigStateContext.Provider>
   );
 }
-
-/** @deprecated use AppConfigStateContext */
-export const AppInitStateContext: typeof AppConfigStateContext = AppConfigStateContext;
