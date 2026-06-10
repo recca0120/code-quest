@@ -10,7 +10,7 @@ interface SessionInfo {
   cwd?: string;
 }
 
-export interface PastSessionInfo {
+interface PastSessionInfo {
   id: string;
   channelId: string;
   title?: string;

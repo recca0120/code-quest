@@ -209,7 +209,7 @@ function mapNode(node: PaneNode, fn: (n: PaneNode) => PaneNode): PaneNode {
 
 // ── WorkspaceTab (tmux window) ──
 
-export interface WorkspaceTab {
+interface WorkspaceTab {
   id: string;
   label?: string;
   paneRoot: PaneNode;
