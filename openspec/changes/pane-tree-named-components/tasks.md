@@ -27,13 +27,13 @@ rehydrate／live-channel 重綁（mode:'resume' 不 spawn）的測試在 layout-
 ## C. Named pane components
 
 - [x] 3.1 [impl] `SplitPane` → `PaneTree`、split 分支 → `PaneSplit`、`SplitPaneLeaf` → `PaneLeaf`（rename + 拆檔，行為不變，既有測試過）
-- [ ] 3.2 [test] PaneLeaf — 渲染 `<Pane>` + `<Pane.Toolbar>`（common props 含 onSwap）+ type 對應的 Body
-- [ ] 3.3 [impl] 新增 `components/workspace/panes/`：`SessionPane` / `GitPane` / `FilesPane` / `OpenspecPane` / `WorktreesPane`（PaneView 介面：ToolbarTools? / Body / scrollable?；worktrees case 先沿用現有渲染、3.6 收斂 toolbar）；PaneLeaf exhaustive switch + `satisfies never`
-- [ ] 3.4 [test] SessionPane — meta 存在渲染 TabContent；meta 缺席渲染 EmptyPane + cwd hint（「上次: {project} ⎇ {branch}」；worktree-centric D3 落地前先用 availableWorktrees 本地反查）
-- [ ] 3.5 [test] SessionPane self-heal — sessions 晚到（meta 後出現）同一 leaf 自動從 EmptyPane 切回 TabContent；emit session:closed 後自動降級回 EmptyPane
-- [ ] 3.6 [impl] WorktreesPane 接入 PaneLeaf 統一 toolbar（移除裸 div 包裝）
-- [ ] 3.7 [test] SessionPool — pane 未指派的 live session 在 pool 中保持 mount（既有 anti-double-mount 測試遷移）
-- [ ] 3.8 [refactor] 刪除 PaneLeafContent if/else；TabContainer 瘦身（renderLeaf closure 移除）
+- [x] 3.2 [test] PaneLeaf — 渲染 `<Pane>` + `<Pane.Toolbar>`（common props 含 onSwap）+ type 對應的 Body
+- [x] 3.3 [impl] 新增 `components/workspace/panes/`：`SessionPane` / `GitPane` / `FilesPane` / `OpenspecPane` / `WorktreesPane`（PaneView 介面：ToolbarTools? / Body / scrollable?；worktrees case 先沿用現有渲染、3.6 收斂 toolbar）；PaneLeaf exhaustive switch + `satisfies never`
+- [x] 3.4 [test] SessionPane — meta 存在渲染 TabContent；meta 缺席渲染 EmptyPane + cwd hint（「上次: {project} ⎇ {branch}」；worktree-centric D3 落地前先用 availableWorktrees 本地反查）
+- [x] 3.5 [test] SessionPane self-heal — sessions 晚到（meta 後出現）同一 leaf 自動從 EmptyPane 切回 TabContent；emit session:closed 後自動降級回 EmptyPane
+- [x] 3.6 [impl] WorktreesPane 接入 PaneLeaf 統一 toolbar（移除裸 div 包裝）
+- [x] 3.7 [test] SessionPool — pane 未指派的 live session 在 pool 中保持 mount（既有 anti-double-mount 測試遷移）
+- [x] 3.8 [refactor] 刪除 PaneLeafContent if/else；TabContainer 瘦身（renderLeaf closure 移除）
 
 ## D. Bug 修正
 
@@ -41,7 +41,7 @@ rehydrate／live-channel 重綁（mode:'resume' 不 spawn）的測試在 layout-
 - [ ] 4.2 [test] mobile — focused pane 佔滿、其餘 split 不渲染
 - [ ] 4.3 [impl] PaneSplit 用 `hasLeaf` 判斷 zoom/mobile 目標側，只渲染該側；PaneLeaf 移除 hidden 邏輯
 - [ ] 4.4 [test] DnD swap — dragstart pane A header → drop pane B header → 兩 leaf content 互換
-- [ ] 4.5 [impl] PaneLeaf common props 接 `onSwap: (sourceId) => swapPane(sourceId, node.id)`
+- [x] 4.5 [impl] PaneLeaf common props 接 `onSwap: (sourceId) => swapPane(sourceId, node.id)`
 - [ ] 4.6 [test] 純 tool-pane layout（無 session tab）— PaneTree 照常渲染 git/worktrees pane，不被空狀態 gate 吃掉
 - [ ] 4.7 [impl] TabContainer early return 改判「預設空狀態」（單 tab 且單一 empty session leaf）
 - [ ] 4.8 [impl] PaneLeaf 外層 `key={node.id}`

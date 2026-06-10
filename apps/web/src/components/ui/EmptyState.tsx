@@ -7,6 +7,7 @@ interface EmptyStateProps {
   hint?: ReactNode;
   actionLabel?: string;
   onAction?: () => void;
+  'data-testid'?: string;
 }
 
 export function EmptyState({
@@ -15,10 +16,14 @@ export function EmptyState({
   hint,
   actionLabel,
   onAction,
+  'data-testid': testId,
 }: EmptyStateProps): React.JSX.Element {
   const hasAction = actionLabel !== undefined && onAction !== undefined;
   return (
-    <div className="flex flex-col items-center justify-center flex-1 gap-4 text-muted text-center px-6">
+    <div
+      data-testid={testId}
+      className="flex flex-col items-center justify-center flex-1 gap-4 text-muted text-center px-6"
+    >
       {icon && <span className="text-subtle">{icon}</span>}
       <p className="max-w-xs text-sm">{message}</p>
       {hint && <div className="text-xs text-dim">{hint}</div>}

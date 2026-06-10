@@ -71,7 +71,7 @@ describe('Gap-M: Mobile forces single pane display', () => {
     const { container } = render(
       <Wrapper>
         <Setup />
-        <PaneTree />
+        <PaneTree renderLeaf={() => null} />
       </Wrapper>,
     );
 
@@ -101,7 +101,7 @@ describe('Gap-M: Mobile forces single pane display', () => {
     const { container } = render(
       <Wrapper>
         <Setup />
-        <PaneTree />
+        <PaneTree renderLeaf={() => null} />
       </Wrapper>,
     );
 
@@ -147,7 +147,7 @@ describe('Gap-M: Mobile forces single pane display', () => {
     const { container } = render(
       <Wrapper>
         <Setup />
-        <PaneTree />
+        <PaneTree renderLeaf={() => null} />
       </Wrapper>,
     );
 

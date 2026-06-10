@@ -1,5 +1,6 @@
 import { type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { PaneDivider } from './PaneDivider';
+import { PaneLeafBody } from './panes/PaneLeafBody.tsx';
 import { useMobileMode } from './useMobileMode';
 
 type RenderLeaf = (node: PaneNode) => React.ReactNode;
@@ -33,7 +34,7 @@ function PaneLeaf({
       style={hidden ? undefined : { flex: 1, overflow: 'hidden' }}
       className="flex flex-1 min-w-0 min-h-0"
     >
-      {renderLeaf?.(node)}
+      {renderLeaf ? renderLeaf(node) : <PaneLeafBody node={node} />}
     </div>
   );
 }

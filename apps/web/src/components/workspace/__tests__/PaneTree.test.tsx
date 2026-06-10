@@ -3,7 +3,7 @@
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { PaneTree } from '@/components/workspace/PaneTree';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneActions } from '@/contexts/TabContext';
@@ -113,6 +113,13 @@ describe('SplitPane (4.3) divider renders and updates ratio on drag', () => {
 // 2.3: zoom hides non-zoomed panes
 import { useRef } from 'react';
 import { usePaneState } from '@/contexts/TabContext';
+
+vi.mock('@/contexts/GitContext', () => ({
+  useGitState: () => ({ listing: {} }),
+}));
+vi.mock('@/contexts/ProjectContext', () => ({
+  useProjectState: () => ({ activeProjectCwd: null, projects: [] }),
+}));
 
 describe('SplitPane (2.3) zoom hides other panes', () => {
   it('zoomed pane is visible; other panes are hidden', async () => {

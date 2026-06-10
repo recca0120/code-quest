@@ -4,81 +4,24 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // Approximate width of one session tab item (px) — used to compute maxVisible
 const SESSION_TAB_WIDTH_PX = 120;
 
-const NOOP = (): void => {};
-
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ChannelProvider } from '@/contexts/channel';
-import { useGitState } from '@/contexts/GitContext';
 import { useNavigationActions } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import {
-  collectSessionsInPaneTree,
   type PaneNode,
-  type TabMeta,
   usePaneActions,
   usePaneState,
   useTabActions,
   useTabState,
-  useWorkspaceTab,
 } from '@/contexts/TabContext';
-import { ChatView } from '../chat/ChatView.tsx';
-import { FilesView } from '../files/FilesView.tsx';
-import { GitView } from '../git/GitView.tsx';
-import { SpecView } from '../spec/SpecView.tsx';
-import { Pane } from './Pane.tsx';
 import { PaneTree } from './PaneTree.tsx';
 import { PaneZoomProvider } from './PaneZoomProvider.tsx';
-import { RightPane } from './RightPane.tsx';
+import { type PaneEnvironment, PaneEnvironmentProvider } from './panes/PaneEnvironmentContext.tsx';
+import { SessionPool } from './panes/SessionPool.tsx';
 import { SessionBar } from './SessionBar.tsx';
-import { type WorktreeOption, WorktreesPane } from './ToolPanes.tsx';
+import { useAvailableWorktrees } from './useAvailableWorktrees.ts';
 import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
-import { WorktreeSwitcher } from './WorktreeSwitcher.tsx';
-
-interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode' | 'branch'> {
-  channelId: string;
-  projectName: string;
-  onToggleLeft?: () => void;
-  onToggleRight?: () => void;
-  onNewChannel?: (cwd: string) => void;
-  rightPane?: React.ReactNode;
-}
-
-function TabContent({
-  channelId,
-  cwd,
-  branch,
-  title,
-  projectName,
-  mode,
-  onToggleLeft,
-  onToggleRight,
-  onNewChannel,
-  rightPane,
-}: TabContentProps) {
-  const { setTabTitle, setTabStatus } = useTabActions();
-  return (
-    <ChannelProvider
-      channelId={channelId}
-      cwd={cwd}
-      branch={branch}
-      mode={mode}
-      onChange={(update) => {
-        if (update.title) setTabTitle(channelId, update.title);
-        if (update.status) setTabStatus(channelId, update.status);
-      }}
-      onNewChannel={onNewChannel}
-    >
-      <ChatView
-        title={title}
-        projectName={projectName}
-        onToggleLeft={onToggleLeft}
-        onToggleRight={onToggleRight}
-        rightPane={rightPane}
-      />
-    </ChannelProvider>
-  );
-}
 
 function findPaneLeaf(node: PaneNode, id: string): Extract<PaneNode, { type: 'leaf' }> | null {
   if (node.type === 'leaf') return node.id === id ? node : null;
@@ -88,150 +31,6 @@ function findPaneLeaf(node: PaneNode, id: string): Extract<PaneNode, { type: 'le
 function findFirstLeaf(node: PaneNode): Extract<PaneNode, { type: 'leaf' }> | null {
   if (node.type === 'leaf') return node;
   return findFirstLeaf(node.first) ?? findFirstLeaf(node.second);
-}
-
-interface PaneLeafContentProps {
-  node: Extract<PaneNode, { type: 'leaf' }>;
-  tabs: Record<string, TabMeta>;
-  projectName: string;
-  availableWorktrees?: WorktreeOption[];
-  onToggleLeft?: () => void;
-  onNewTab: (opts?: { cwd?: string; targetPaneId?: string }) => void;
-  onOpenModal?: (paneId?: string) => void;
-  onNewWorktree?: (projectCwd: string) => void;
-}
-
-function PaneLeafContent({
-  node,
-  tabs,
-  projectName,
-  availableWorktrees,
-  onToggleLeft,
-  onNewTab,
-  onOpenModal,
-  onNewWorktree,
-}: PaneLeafContentProps) {
-  const { paneRoot } = usePaneState();
-  const { splitPane, closePane, focusPane } = usePaneActions();
-  const [rightOpen, setRightOpen] = useState(false);
-
-  const sessionId = node.content.type === 'session' ? node.content.sessionId : null;
-  const meta = sessionId ? tabs[sessionId] : null;
-  const isOnly = paneRoot.type === 'leaf';
-
-  const toolbarProps = {
-    paneId: node.id,
-    branch: meta?.branch,
-    title: meta?.title,
-    isOnly,
-    onSplitH: () => {
-      focusPane(node.id);
-      splitPane('h');
-    },
-    onSplitV: () => {
-      focusPane(node.id);
-      splitPane('v');
-    },
-    onClose: () => closePane(node.id),
-  };
-
-  if (node.content.type === 'git') {
-    return (
-      <Pane>
-        <Pane.Toolbar {...toolbarProps}>
-          <WorktreeSwitcher
-            emoji="🌿"
-            label="Git"
-            cwd={node.content.target.cwd}
-            paneId={node.id}
-            availableWorktrees={availableWorktrees}
-            makeContent={(c) => ({ type: 'git', target: { kind: 'fixed', cwd: c } })}
-          />
-        </Pane.Toolbar>
-        <Pane.Content>
-          <GitView cwd={node.content.target.cwd} />
-        </Pane.Content>
-      </Pane>
-    );
-  }
-
-  if (node.content.type === 'files') {
-    return (
-      <Pane>
-        <Pane.Toolbar {...toolbarProps}>
-          <WorktreeSwitcher
-            emoji="📁"
-            label="Files"
-            cwd={node.content.target.cwd}
-            paneId={node.id}
-            availableWorktrees={availableWorktrees}
-            makeContent={(c) => ({ type: 'files', target: { kind: 'fixed', cwd: c } })}
-          />
-        </Pane.Toolbar>
-        <Pane.Content>
-          <FilesView cwd={node.content.target.cwd} onMention={() => {}} />
-        </Pane.Content>
-      </Pane>
-    );
-  }
-
-  if (node.content.type === 'openspec') {
-    return (
-      <Pane>
-        <Pane.Toolbar {...toolbarProps}>
-          <WorktreeSwitcher
-            emoji="📋"
-            label="Spec"
-            cwd={node.content.target.cwd}
-            paneId={node.id}
-            availableWorktrees={availableWorktrees}
-            makeContent={(c) => ({ type: 'openspec', target: { kind: 'fixed', cwd: c } })}
-          />
-        </Pane.Toolbar>
-        <Pane.Content>
-          <SpecView cwd={node.content.target.cwd} />
-        </Pane.Content>
-      </Pane>
-    );
-  }
-
-  return (
-    <div className="flex flex-col flex-1 min-w-0 min-h-0">
-      <Pane.Toolbar {...toolbarProps} />
-      {node.content.type === 'worktrees' ? (
-        <WorktreesPane
-          sessions={Object.entries(tabs).map(([id, m]) => ({
-            channelId: id,
-            cwd: m.cwd ?? '',
-            title: m.title,
-          }))}
-          onNewSession={(cwd) => onNewTab({ cwd })}
-          onNewWorktree={onNewWorktree}
-        />
-      ) : sessionId && meta ? (
-        <TabContent
-          channelId={sessionId}
-          cwd={meta.cwd}
-          branch={meta.branch}
-          title={meta.title}
-          projectName={projectName}
-          mode={meta.mode}
-          onToggleLeft={onToggleLeft}
-          onToggleRight={meta.cwd ? () => setRightOpen((v) => !v) : undefined}
-          onNewChannel={(newCwd) => onNewTab({ cwd: newCwd })}
-          rightPane={rightOpen && meta.cwd ? <RightPane cwd={meta.cwd} /> : undefined}
-        />
-      ) : (
-        <EmptyState
-          data-testid="empty-pane"
-          icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}
-          message="Empty pane"
-          actionLabel="New Session"
-          onAction={onOpenModal ? () => onOpenModal(node.id) : () => onNewTab()}
-        />
-      )}
-    </div>
-  );
 }
 
 interface TabContainerProps {
@@ -259,12 +58,8 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   const { setActiveCwd } = useNavigationActions();
 
   const { activeProjectCwd, projects } = useProjectState();
-  const { listing } = useGitState();
   const { paneRoot, focusedPaneId } = usePaneState();
   const { setSessionInPane, focusPane, splitPaneAndAssign } = usePaneActions();
-  const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTab();
-
-  const projectName = projects.find((p) => p.cwd === activeProjectCwd)?.name ?? '';
 
   const focusedLeaf = focusedPaneId ? findPaneLeaf(paneRoot, focusedPaneId) : null;
   const focusedTabCwd = (() => {
@@ -349,52 +144,18 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
       ? Math.max(1, Math.floor((sessionBarWidth - SESSION_TAB_WIDTH_PX) / SESSION_TAB_WIDTH_PX))
       : undefined;
 
-  // Sessions in INACTIVE workspace tabs' pane trees — must stay mounted to avoid double-mount
-  // when switching tabs (React would unmount from pane and remount in pool simultaneously)
-  const inactiveTabSessionIds = useMemo(
-    () =>
-      workspaceTabs
-        .filter((t) => t.id !== activeWorkspaceTabId)
-        .flatMap((t) => [...collectSessionsInPaneTree(t.paneRoot)]),
-    [workspaceTabs, activeWorkspaceTabId],
-  );
+  const availableWorktrees = useAvailableWorktrees();
 
-  const availableWorktrees = useMemo<WorktreeOption[]>(() => {
-    return projects.flatMap((p) => {
-      const wts = listing[p.cwd];
-      if (!Array.isArray(wts)) return [];
-      return wts.map((wt) => ({
-        path: wt.path,
-        branch: wt.branch,
-        name: wt.name,
-        projectName: p.name,
-      }));
-    });
-  }, [projects, listing]);
-
-  const renderLeaf = useCallback(
-    (node: PaneNode) =>
-      node.type === 'leaf' ? (
-        <PaneLeafContent
-          node={node}
-          tabs={tabs}
-          projectName={projectName}
-          availableWorktrees={availableWorktrees}
-          onToggleLeft={onToggleLeft}
-          onNewTab={handleCreateTab}
-          onOpenModal={onOpenModal}
-          onNewWorktree={onNewWorktree}
-        />
-      ) : null,
-    [
-      tabs,
-      projectName,
-      availableWorktrees,
+  // Stable-identity environment for pane bodies and pools — onNewTab reads the
+  // latest handleCreateTab through a ref so ratio drags / tabs ticks never churn it
+  const paneEnvironment = useMemo<PaneEnvironment>(
+    () => ({
       onToggleLeft,
-      handleCreateTab,
+      onNewTab: (opts) => handleCreateTabRef.current(opts),
       onOpenModal,
       onNewWorktree,
-    ],
+    }),
+    [onToggleLeft, onOpenModal, onNewWorktree],
   );
 
   if (tabEntries.length === 0) {
@@ -407,11 +168,6 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
       />
     );
   }
-
-  const sessionsInPanes = collectSessionsInPaneTree(paneRoot);
-
-  // Sessions not in the ACTIVE tab's pane tree AND not in any inactive tab's pane tree
-  const allPaneSessions = new Set([...sessionsInPanes, ...inactiveTabSessionIds]);
 
   const sessionBarItems = tabEntries.map(([id, meta]) => ({
     channelId: id,
@@ -437,48 +193,13 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
           />
         </div>
 
-        {/* Inactive workspace tabs: keep sessions in their pane trees mounted to prevent
-              double-mount when switching tabs (avoids "Channel already exists" error) */}
-        <div data-testid="inactive-tab-sessions" hidden aria-hidden="true">
-          {inactiveTabSessionIds.map((id) => {
-            const meta = tabs[id];
-            if (!meta) return null;
-            return (
-              <TabContent
-                key={id}
-                channelId={id}
-                cwd={meta.cwd}
-                branch={meta.branch}
-                title={meta.title}
-                projectName={projectName}
-                mode={meta.mode}
-                onNewChannel={NOOP}
-              />
-            );
-          })}
-        </div>
+        <PaneEnvironmentProvider value={paneEnvironment}>
+          {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}
+          <SessionPool />
 
-        {/* Pool: sessions not assigned to any pane in any workspace tab */}
-        <div data-testid="session-pool" hidden aria-hidden="true" style={{ display: 'none' }}>
-          {tabEntries
-            .filter(([id]) => !allPaneSessions.has(id))
-            .map(([id, meta]) => (
-              <TabContent
-                key={id}
-                channelId={id}
-                cwd={meta.cwd}
-                branch={meta.branch}
-                title={meta.title}
-                projectName={projectName}
-                mode={meta.mode}
-                onToggleLeft={onToggleLeft}
-                onNewChannel={(newCwd) => handleCreateTab({ cwd: newCwd })}
-              />
-            ))}
-        </div>
-
-        {/* SplitPane area: sessions assigned to panes render here */}
-        <PaneTree renderLeaf={renderLeaf} />
+          {/* Pane area: sessions assigned to panes render here */}
+          <PaneTree />
+        </PaneEnvironmentProvider>
       </div>
     </PaneZoomProvider>
   );
