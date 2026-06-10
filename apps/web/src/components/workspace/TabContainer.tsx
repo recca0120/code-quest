@@ -1,8 +1,5 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-// Approximate width of one session tab item (px) — used to compute maxVisible
-const SESSION_TAB_WIDTH_PX = 120;
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useNavigationActions } from '@/contexts/NavigationContext';
@@ -139,24 +136,6 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   const tabEntries = Object.entries(tabs);
 
-  // Measure session bar container width to compute maxVisible
-  const sessionBarContainerRef = useRef<HTMLDivElement>(null);
-  const [sessionBarWidth, setSessionBarWidth] = useState(0);
-  useEffect(() => {
-    const el = sessionBarContainerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) setSessionBarWidth(entry.contentRect.width);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  const maxVisible =
-    sessionBarWidth > 0
-      ? Math.max(1, Math.floor((sessionBarWidth - SESSION_TAB_WIDTH_PX) / SESSION_TAB_WIDTH_PX))
-      : undefined;
-
   const availableWorktrees = useAvailableWorktrees();
 
   // Stable-identity environment for pane bodies and pools — onNewTab reads the
@@ -203,17 +182,14 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   return (
     <div data-testid="tab-container" className="flex flex-col flex-1 min-w-0 overflow-hidden">
       <WorkspaceTabBar onOpenSettings={onOpenSettings} onAddProject={onAddProject} />
-      <div ref={sessionBarContainerRef} className="contents">
-        <SessionBar
-          sessions={sessionBarItems}
-          maxVisible={maxVisible}
-          availableWorktrees={availableWorktrees}
-          projects={projects.map((p) => ({ cwd: p.cwd, name: p.name }))}
-          onNewSession={(cwd) => handleCreateTab({ cwd })}
-          onNewWorktree={onNewWorktree}
-          onCloseSession={handleCloseSession}
-        />
-      </div>
+      <SessionBar
+        sessions={sessionBarItems}
+        availableWorktrees={availableWorktrees}
+        projects={projects.map((p) => ({ cwd: p.cwd, name: p.name }))}
+        onNewSession={(cwd) => handleCreateTab({ cwd })}
+        onNewWorktree={onNewWorktree}
+        onCloseSession={handleCloseSession}
+      />
 
       <PaneEnvironmentProvider value={paneEnvironment}>
         {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}

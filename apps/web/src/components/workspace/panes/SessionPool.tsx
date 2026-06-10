@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useProjectState } from '@/contexts/ProjectContext';
 import {
   collectSessionsInPaneTree,
-  usePaneState,
   useTabState,
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
@@ -21,21 +20,22 @@ const NOOP = (): void => {};
 export function SessionPool(): React.JSX.Element {
   const { tabs } = useTabState();
   const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTabState();
-  const { paneRoot } = usePaneState();
   const env = usePaneEnvironment();
   const { projects, activeProjectCwd } = useProjectState();
   const projectName = projects.find((p) => p.cwd === activeProjectCwd)?.name ?? '';
 
-  const inactiveTabSessionIds = useMemo(
-    () =>
-      workspaceTabs
-        .filter((t) => t.id !== activeWorkspaceTabId)
-        .flatMap((t) => [...collectSessionsInPaneTree(t.paneRoot)]),
-    [workspaceTabs, activeWorkspaceTabId],
-  );
-
-  const sessionsInPanes = collectSessionsInPaneTree(paneRoot);
-  const allPaneSessions = new Set([...sessionsInPanes, ...inactiveTabSessionIds]);
+  // Single source of truth: both sets derive from workspaceTabs (the active
+  // tab's paneRoot is workspaceTabs[active].paneRoot — no usePaneState needed)
+  const { inactiveTabSessionIds, allPaneSessions } = useMemo(() => {
+    const inactive: string[] = [];
+    const all = new Set<string>();
+    for (const t of workspaceTabs) {
+      const ids = collectSessionsInPaneTree(t.paneRoot);
+      for (const id of ids) all.add(id);
+      if (t.id !== activeWorkspaceTabId) inactive.push(...ids);
+    }
+    return { inactiveTabSessionIds: inactive, allPaneSessions: all };
+  }, [workspaceTabs, activeWorkspaceTabId]);
 
   return (
     <>

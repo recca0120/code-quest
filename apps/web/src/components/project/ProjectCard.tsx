@@ -54,7 +54,7 @@ export function ProjectCard({
     const targetCwd = picked.cwd ?? cwd;
     if (targetCwd) {
       actions?.setActiveProject(targetCwd);
-      navActions?.requestActivateChannel(targetCwd, spawnedId);
+      navActions?.requestActivateChannel(spawnedId);
     }
   };
 

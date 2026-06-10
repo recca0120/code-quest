@@ -46,8 +46,6 @@ export function RightPane({
     setMounted((prev) => (prev.has(next) ? prev : new Set([...prev, next])));
   }
 
-  const handleMention = onMention ?? (() => {});
-
   return (
     <Tabs.Root
       value={active}
@@ -64,7 +62,7 @@ export function RightPane({
       </Tabs.List>
       <section aria-label="right-pane-body" className="flex-1 min-h-0 flex flex-col" data-cwd={cwd}>
         <TabContent value="files" active={active === 'files'}>
-          {mounted.has('files') && <FilesView cwd={cwd} onMention={handleMention} />}
+          {mounted.has('files') && <FilesView cwd={cwd} onMention={onMention} />}
         </TabContent>
         <TabContent value="git" active={active === 'git'}>
           {mounted.has('git') && <GitView cwd={cwd} />}

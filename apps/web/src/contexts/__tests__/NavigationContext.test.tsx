@@ -26,11 +26,10 @@ describe('NavigationContext', () => {
       );
 
       act(() => {
-        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+        result.current.actions.requestActivateChannel('ch-1');
       });
 
       expect(result.current.state.pendingActivateChannel).toEqual({
-        cwd: '/proj',
         channelId: 'ch-1',
       });
     });
@@ -43,7 +42,7 @@ describe('NavigationContext', () => {
       const firstActions = result.current.actions;
 
       act(() => {
-        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+        result.current.actions.requestActivateChannel('ch-1');
       });
       rerender();
 
@@ -57,7 +56,7 @@ describe('NavigationContext', () => {
       );
 
       act(() => {
-        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+        result.current.actions.requestActivateChannel('ch-1');
       });
       act(() => {
         result.current.actions.clearPendingActivate();
@@ -197,11 +196,10 @@ describe('NavigationContext', () => {
       );
 
       act(() => {
-        result.current.actions.requestOpenWorktree('/proj', '/proj/.claude/worktrees/x');
+        result.current.actions.requestOpenWorktree('/proj/.claude/worktrees/x');
       });
 
       expect(result.current.state.pendingOpenWorktree).toEqual({
-        projectCwd: '/proj',
         worktreeCwd: '/proj/.claude/worktrees/x',
         forceNew: false,
       });
@@ -214,7 +212,7 @@ describe('NavigationContext', () => {
       );
 
       act(() => {
-        result.current.actions.requestOpenWorktree('/p', '/p/wt', true);
+        result.current.actions.requestOpenWorktree('/p/wt', true);
       });
 
       expect(result.current.state.pendingOpenWorktree?.forceNew).toBe(true);
@@ -227,7 +225,7 @@ describe('NavigationContext', () => {
       );
 
       act(() => {
-        result.current.actions.requestOpenWorktree('/p', '/p/wt');
+        result.current.actions.requestOpenWorktree('/p/wt');
       });
       act(() => {
         result.current.actions.clearPendingOpenWorktree();

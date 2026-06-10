@@ -53,7 +53,7 @@ export const FilesPane: (props: ToolPaneProps) => React.JSX.Element = createTool
   emoji: '📁',
   label: 'Files',
   makeContent: (cwd) => ({ type: 'files', target: { kind: 'fixed', cwd } }),
-  renderView: (cwd) => <FilesView cwd={cwd} onMention={() => {}} />,
+  renderView: (cwd) => <FilesView cwd={cwd} />,
 });
 
 export const OpenspecPane: (props: ToolPaneProps) => React.JSX.Element = createToolPane({

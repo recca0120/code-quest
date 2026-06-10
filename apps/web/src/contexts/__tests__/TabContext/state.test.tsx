@@ -83,10 +83,7 @@ describe('TabProvider', () => {
           <span role="status" aria-label="pending">
             {JSON.stringify(pendingActivateChannel)}
           </span>
-          <button
-            type="button"
-            onClick={() => requestActivateChannel(trigger.cwd, trigger.channelId)}
-          >
+          <button type="button" onClick={() => requestActivateChannel(trigger.channelId)}>
             request
           </button>
         </>

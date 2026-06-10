@@ -23,7 +23,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { toast } from 'sonner';
 import { rpc } from '../socket/rpc.ts';
 import { useAppConfigActions } from './AppInitContext.tsx';
 import { useSocket } from './SocketContext.tsx';
@@ -137,17 +136,6 @@ export function SessionProvider({ children }: { children: ReactNode }): React.JS
   const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
 
   const sessionStatesListenersRef = useRef<Set<(p: SessionStatesPayload) => void>>(new Set());
-
-  useEffect(() => {
-    const onConnectError = (err: Error) => {
-      toast.error(`Connection error: ${err.message}`);
-    };
-    socket.on('connect_error', onConnectError);
-    socket.connect();
-    return () => {
-      socket.off('connect_error', onConnectError);
-    };
-  }, [socket]);
 
   useEffect(() => {
     const onAuthUrl = (payload: { channelId: string; url: string; method: string }) => {

@@ -120,6 +120,64 @@ describe('app:init rehydrate', () => {
   });
 });
 
+describe('provider remount replay (client-structure-cleanup 4.1)', () => {
+  it('a remounted TabProvider must not apply a stale init snapshot over a newer synced layout', async () => {
+    const container = createTestContainer();
+    const summonerKey = container.get<{ provider: string }>(TYPES.ChannelManager).provider;
+    container.get<LayoutStore>(TYPES.LayoutStore).set(summonerKey, VALID_LAYOUT); // rev 1
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+
+    function Harness({ mounted }: { mounted: boolean }) {
+      return (
+        <SocketProvider socket={summoner.socket}>
+          <AppConfigProvider>
+            {mounted && (
+              <TabProvider>
+                <TabInfo />
+              </TabProvider>
+            )}
+          </AppConfigProvider>
+        </SocketProvider>
+      );
+    }
+
+    const { rerender } = render(<Harness mounted />);
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+    });
+    expect(screen.getByTestId('tab-count').textContent).toBe('2');
+
+    // a newer layout arrives via sync (3 tabs, rev 2)
+    const threeTabs: PersistedLayout = {
+      ...VALID_LAYOUT,
+      tabs: [
+        ...VALID_LAYOUT.tabs,
+        {
+          id: 'tab-c',
+          paneRoot: {
+            type: 'leaf',
+            id: 'pane-c',
+            content: { type: 'session', channelId: null, cwd: null },
+          },
+        },
+      ],
+    };
+    await act(async () => {
+      summoner.socket.serverSocket.emit('layout:sync', { ...threeTabs, rev: 2 });
+    });
+    expect(screen.getByTestId('tab-count').textContent).toBe('3');
+
+    // unmount + remount the TabProvider (e.g. last project removed then re-added)
+    rerender(<Harness mounted={false} />);
+    rerender(<Harness mounted />);
+
+    // replayed init snapshot must reflect the newer layout, not the stale rev-1 one
+    expect(screen.getByTestId('tab-count').textContent).toBe('3');
+  });
+});
+
 describe('layout:sync cross-device update', () => {
   it('updates workspace tabs when layout:sync event is received', async () => {
     const summoner = renderBare();

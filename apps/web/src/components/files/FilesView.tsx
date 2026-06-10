@@ -37,7 +37,8 @@ async function loadPreview(
 
 interface FilesViewProps {
   cwd: string;
-  onMention: (path: string) => void;
+  /** When absent, mention affordances are hidden (no dead UI). */
+  onMention?: (path: string) => void;
 }
 
 type PreviewFile = { path: string; size: number };
@@ -105,7 +106,7 @@ export function FilesView({ cwd, onMention }: FilesViewProps): React.JSX.Element
   }, [gitData, cwd]);
 
   function handleActivate(file: { path: string; size?: number }, event: MouseEvent<Element>) {
-    if (event.metaKey || event.ctrlKey) {
+    if ((event.metaKey || event.ctrlKey) && onMention) {
       onMention(file.path);
       return;
     }
@@ -125,16 +126,18 @@ export function FilesView({ cwd, onMention }: FilesViewProps): React.JSX.Element
   const filename = previewFile ? basename(previewFile.path) : '';
   const drawerActions = previewFile && (
     <>
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={() => {
-          onMention(previewFile.path);
-          setPreviewFile(null);
-        }}
-      >
-        Mention
-      </Button>
+      {onMention && (
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => {
+            onMention(previewFile.path);
+            setPreviewFile(null);
+          }}
+        >
+          Mention
+        </Button>
+      )}
       <Button
         variant="secondary"
         size="sm"

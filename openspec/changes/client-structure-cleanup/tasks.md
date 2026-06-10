@@ -11,16 +11,16 @@
 
 ## 2. 職責歸位
 
-- [ ] 2.1 [refactor] SessionBar 量測下放（SESSION_TAB_WIDTH_PX/ResizeObserver/maxVisible 移入 SessionBar；TabContainer 移除 ref/state/effect）
-- [ ] 2.2 [refactor] `socket.connect()`（含 connect_error toast）上提到 App.tsx 建 socket 的 effect；SessionProvider 只留 session 事件訂閱
-- [ ] 2.3 [refactor] SessionPool 從 workspaceTabs 單一來源推導兩個集合（移除 usePaneState 依賴）
+- [x] 2.1 [refactor] SessionBar 量測下放（SESSION_TAB_WIDTH_PX/ResizeObserver/maxVisible 移入 SessionBar；TabContainer 移除 ref/state/effect）
+- [x] 2.2 [refactor] `socket.connect()`（含 connect_error toast）上提到 **SocketProvider**（與 socket 物件同生命週期；effect 在 children 之後執行，consumers 的 'connect' listener 先掛好）；SessionProvider 只留 session 事件訂閱
+- [x] 2.3 [refactor] SessionPool 從 workspaceTabs 單一來源推導兩個集合（移除 usePaneState 依賴）
 
 ## 3. 死碼與 doc rot
 
-- [ ] 3.1 [refactor] 移除 PendingActivateChannel.cwd / PendingOpenWorktree.projectCwd 欄位＋呼叫端簽名；NavigationContext/TabProvider props 註解更新為全域模型
-- [ ] 3.2 [decision+impl] onMention：FilesView onMention 改 optional＋缺席時隱藏 mention UI（或接通 PaneEnvironment→composer）；移除兩處 noop placeholder
+- [x] 3.1 [refactor] 移除 PendingActivateChannel.cwd / PendingOpenWorktree.projectCwd 欄位＋呼叫端簽名；NavigationContext/TabProvider props 註解更新為全域模型
+- [x] 3.2 [decision+impl] onMention：FilesView onMention 改 optional＋缺席時隱藏 mention UI（或接通 PaneEnvironment→composer）；移除兩處 noop placeholder
 
 ## 4. Edge case
 
-- [ ] 4.1 [test] TabProvider remount（移除最後 project 再加回）— 不得以舊 layout 覆寫較新的已存 layout
-- [ ] 4.2 [impl] AppConfigProvider 監聽 layout:sync 更新 lastInitRef（含 rev），subscribeInit replay 帶 rev；或 remount 重新 emit app:init
+- [x] 4.1 [test] TabProvider remount（移除最後 project 再加回）— 不得以舊 layout 覆寫較新的已存 layout
+- [x] 4.2 [impl] AppConfigProvider 監聽 layout:sync 更新 lastInitRef（含 rev），subscribeInit replay 帶 rev；或 remount 重新 emit app:init

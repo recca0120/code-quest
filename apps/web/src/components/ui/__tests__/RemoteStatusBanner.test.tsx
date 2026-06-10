@@ -7,19 +7,23 @@ import { RemoteStatusBanner } from '../RemoteStatusBanner.tsx';
 type RemoteStatusHandler = (payload: { connected: boolean }) => void;
 
 function makeSocket() {
-  let handler: RemoteStatusHandler | null = null;
+  // Keyed by event — SocketProvider also registers 'connect_error' on mount,
+  // which must not clobber the banner's 'remote:status' handler
+  const handlers = new Map<string, RemoteStatusHandler>();
   const socket = {
-    on: (_event: string, fn: RemoteStatusHandler) => {
-      handler = fn;
+    on: (event: string, fn: RemoteStatusHandler) => {
+      handlers.set(event, fn);
       return socket;
     },
     off: () => socket,
+    connect: () => socket,
   } as unknown as TypedSocket;
+  const handler = (payload: { connected: boolean }) => handlers.get('remote:status')?.(payload);
   return {
     socket,
-    push: (payload: { connected: boolean }) => act(() => handler?.(payload)),
-    disconnect: () => act(() => handler?.({ connected: false })),
-    reconnect: () => act(() => handler?.({ connected: true })),
+    push: (payload: { connected: boolean }) => act(() => handler(payload)),
+    disconnect: () => act(() => handler({ connected: false })),
+    reconnect: () => act(() => handler({ connected: true })),
   };
 }
 

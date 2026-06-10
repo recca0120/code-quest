@@ -152,7 +152,6 @@ describe('WorktreeChildList', () => {
         .setup({ pointerEventsCheck: 0 })
         .click(screen.getByLabelText('Open worktree feat/x'));
       expect(state!.pendingActivateChannel).toMatchObject({
-        cwd: '/repo',
         channelId: 'ch-remembered',
       });
     });

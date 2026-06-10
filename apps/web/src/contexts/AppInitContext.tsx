@@ -96,6 +96,21 @@ export function AppConfigProvider({ children }: { children: ReactNode }): React.
     };
   }, [socket]);
 
+  // Keep the replay snapshot's layout fresh: a TabProvider remounted later
+  // (last project removed then re-added) replays lastInitRef — without this,
+  // it would apply the stale connect-time layout over a newer synced one and
+  // the debounced save would persist the rollback.
+  useEffect(() => {
+    const onLayoutSync = (payload: unknown) => {
+      if (!lastInitRef.current) return;
+      lastInitRef.current = { ...lastInitRef.current, layout: payload };
+    };
+    socket.on(EVENTS.layout.sync, onLayoutSync);
+    return () => {
+      socket.off(EVENTS.layout.sync, onLayoutSync);
+    };
+  }, [socket]);
+
   const [actions] = useState<AppConfigActions>(() => ({
     setInitOptions,
     subscribeInit,

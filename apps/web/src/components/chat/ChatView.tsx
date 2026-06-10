@@ -53,7 +53,7 @@ export function ChatView({
         replaceTab(route.oldChannelId, route.newChannelId);
       } else if (route.type === 'activate') {
         setActiveProject(route.cwd);
-        requestActivateChannel(route.cwd, route.channelId);
+        requestActivateChannel(route.channelId);
       }
     },
     [

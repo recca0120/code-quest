@@ -4,18 +4,16 @@ export function setMapEntry<T>(prev: Record<string, T>, key: string, value: T): 
   return prev[key] === value ? prev : { ...prev, [key]: value };
 }
 
-/** Intent: tell a TabProvider scoped to `cwd` to activate `channelId` once it
- *  appears in that provider's tabs. Set by flows that spawn a channel
- *  outside any TabProvider (sidebar, resume flow, dialogs). */
+/** Intent: tell the (global) TabProvider to activate `channelId` once it
+ *  appears in its tabs. Set by flows that spawn a channel outside the
+ *  provider (resume flow, dialogs). */
 interface PendingActivateChannel {
-  cwd: string;
   channelId: string;
 }
 
-/** Intent: tell a TabProvider scoped to `projectCwd` to open (or switch to)
- *  a tab whose cwd is `worktreeCwd`. `forceNew` bypasses switch-to-existing. */
+/** Intent: open (or switch to) a tab whose cwd is `worktreeCwd` in the
+ *  global TabProvider. `forceNew` bypasses switch-to-existing. */
 interface PendingOpenWorktree {
-  projectCwd: string;
   worktreeCwd: string;
   forceNew: boolean;
 }
@@ -35,9 +33,9 @@ interface NavigationState {
 }
 
 interface NavigationActions {
-  requestActivateChannel: (cwd: string, channelId: string) => void;
+  requestActivateChannel: (channelId: string) => void;
   clearPendingActivate: () => void;
-  requestOpenWorktree: (projectCwd: string, worktreeCwd: string, forceNew?: boolean) => void;
+  requestOpenWorktree: (worktreeCwd: string, forceNew?: boolean) => void;
   clearPendingOpenWorktree: () => void;
   /** Set/clear which worktree the sidebar has highlighted under the given project. */
   setSelectedWorktree: (projectCwd: string, worktreeCwd: string | null) => void;
@@ -75,10 +73,10 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
   const [lastTabByWorktree, setLastTabByWorktree] = useState<Record<string, string>>({});
 
   const [actions] = useState<NavigationActions>(() => ({
-    requestActivateChannel: (cwd, channelId) => setPendingActivateChannel({ cwd, channelId }),
+    requestActivateChannel: (channelId) => setPendingActivateChannel({ channelId }),
     clearPendingActivate: () => setPendingActivateChannel(null),
-    requestOpenWorktree: (projectCwd, worktreeCwd, forceNew = false) =>
-      setPendingOpenWorktree({ projectCwd, worktreeCwd, forceNew }),
+    requestOpenWorktree: (worktreeCwd, forceNew = false) =>
+      setPendingOpenWorktree({ worktreeCwd, forceNew }),
     clearPendingOpenWorktree: () => setPendingOpenWorktree(null),
     setActiveCwd,
     recordLastWorktree: (projectCwd, worktreeCwd) =>

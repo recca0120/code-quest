@@ -164,7 +164,6 @@ describe('ProjectCard', () => {
           screen.getByRole('status', { name: 'pending' }).textContent ?? 'null',
         );
         expect(pending).not.toBeNull();
-        expect(pending.cwd).toBe('/proj');
         expect(typeof pending.channelId).toBe('string');
       });
 

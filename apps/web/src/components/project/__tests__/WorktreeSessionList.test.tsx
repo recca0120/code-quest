@@ -57,10 +57,10 @@ describe('WorktreeSessionList', () => {
     expect(screen.queryByRole('button', { current: true })).not.toBeInTheDocument();
   });
 
-  it('clicking session calls requestActivateChannel with projectRoot', async () => {
+  it('clicking session calls requestActivateChannel', async () => {
     const { Wrapper, summoner } = makeWrapper();
 
-    let capturedPending: { channelId: string; cwd: string } | null = null;
+    let capturedPending: { channelId: string } | null = null;
     function NavSpy() {
       const state = useNavigationState();
       capturedPending = state.pendingActivateChannel;
@@ -82,7 +82,7 @@ describe('WorktreeSessionList', () => {
     });
 
     await userEvent.setup().click(await screen.findByLabelText('Session: sess-wt'));
-    expect(capturedPending).toMatchObject({ channelId: 'sess-wt', cwd: '/repo' });
+    expect(capturedPending).toMatchObject({ channelId: 'sess-wt' });
   });
 
   it('clicking × removes session from list after server marks it exited', async () => {

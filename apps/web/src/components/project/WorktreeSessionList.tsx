@@ -48,7 +48,7 @@ export function WorktreeSessionList({
           >
             <ClickableRowOverlay
               aria-label={`Session: ${label}`}
-              onClick={() => requestActivateChannel(s.projectRoot, s.channelId)}
+              onClick={() => requestActivateChannel(s.channelId)}
             />
             <StatusDot color={color} pulse={pulse} className="relative z-10 shrink-0" />
             <span className="relative z-10 truncate flex-1">{label}</span>

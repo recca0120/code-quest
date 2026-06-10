@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   findPaneBySession,
   firstLeafId,
@@ -55,6 +55,33 @@ function getSessionStatusInTree(
 
 const BUSY_STATUSES: Set<SessionStatus> = new Set(['processing', 'busy', 'cancelling']);
 
+// Approximate width of one session tab item (px) — drives the »N overflow cutoff
+const SESSION_TAB_WIDTH_PX = 120;
+
+/** Measures the bar's own width; the explicit `maxVisible` prop (tests) overrides it. */
+function useComputedMaxVisible(override?: number): {
+  rootRef: React.RefObject<HTMLDivElement | null>;
+  maxVisible: number | undefined;
+} {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) setWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const computed =
+    width > 0
+      ? Math.max(1, Math.floor((width - SESSION_TAB_WIDTH_PX) / SESSION_TAB_WIDTH_PX))
+      : undefined;
+  return { rootRef, maxVisible: override ?? computed };
+}
+
 export function SessionBar({
   sessions,
   onCloseSession,
@@ -69,9 +96,10 @@ export function SessionBar({
   const { setSessionInPane, focusPane } = usePaneActions();
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [newSessionDropdownOpen, setNewSessionDropdownOpen] = useState(false);
+  const { rootRef, maxVisible: effectiveMax } = useComputedMaxVisible(maxVisible);
 
-  const visibleSessions = maxVisible != null ? sessions.slice(0, maxVisible) : sessions;
-  const overflowSessions = maxVisible != null ? sessions.slice(maxVisible) : [];
+  const visibleSessions = effectiveMax != null ? sessions.slice(0, effectiveMax) : sessions;
+  const overflowSessions = effectiveMax != null ? sessions.slice(effectiveMax) : [];
 
   function handleSessionClick(channelId: string) {
     const existingPaneId = findPaneBySession(paneRoot, channelId);
@@ -89,6 +117,7 @@ export function SessionBar({
 
   return (
     <div
+      ref={rootRef}
       data-testid="session-bar"
       className="flex gap-1 p-1 border-b border-border overflow-x-auto"
     >

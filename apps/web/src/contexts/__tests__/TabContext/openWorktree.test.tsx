@@ -24,18 +24,10 @@ function Probe() {
   );
 }
 
-function Trigger({
-  projectCwd,
-  worktreeCwd,
-  forceNew,
-}: {
-  projectCwd: string;
-  worktreeCwd: string;
-  forceNew?: boolean;
-}) {
+function Trigger({ worktreeCwd, forceNew }: { worktreeCwd: string; forceNew?: boolean }) {
   const { requestOpenWorktree } = useNavigationActions();
   return (
-    <button type="button" onClick={() => requestOpenWorktree(projectCwd, worktreeCwd, forceNew)}>
+    <button type="button" onClick={() => requestOpenWorktree(worktreeCwd, forceNew)}>
       open
     </button>
   );
@@ -63,7 +55,7 @@ describe('TabProvider: pendingOpenWorktree consumption', () => {
     render(
       <Wrapper projectCwd="/repo">
         <Probe />
-        <Trigger projectCwd="/repo" worktreeCwd="/repo/.claude/worktrees/feat-x" />
+        <Trigger worktreeCwd="/repo/.claude/worktrees/feat-x" />
       </Wrapper>,
     );
     expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('0');
@@ -82,7 +74,7 @@ describe('TabProvider: pendingOpenWorktree consumption', () => {
     render(
       <Wrapper projectCwd="/repo">
         <Probe />
-        <Trigger projectCwd="/repo" worktreeCwd="/repo/.claude/worktrees/feat-x" forceNew />
+        <Trigger worktreeCwd="/repo/.claude/worktrees/feat-x" forceNew />
       </Wrapper>,
     );
     expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('0');
@@ -104,7 +96,7 @@ describe('TabProvider: pendingOpenWorktree consumption', () => {
     render(
       <Wrapper projectCwd="/repo">
         <Probe />
-        <Trigger projectCwd="/other" worktreeCwd="/other/.claude/worktrees/x" />
+        <Trigger worktreeCwd="/other/.claude/worktrees/x" />
       </Wrapper>,
     );
 

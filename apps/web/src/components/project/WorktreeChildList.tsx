@@ -57,14 +57,14 @@ export function WorktreeChildList({
 
   const openWorktreeInChat = (pCwd: string, wCwd: string, forceNew = false) => {
     activateWorktree(pCwd, wCwd);
-    requestOpenWorktree(pCwd, wCwd, forceNew);
+    requestOpenWorktree(wCwd, forceNew);
   };
 
   const selectWorktree = (pCwd: string, wCwd: string) => {
     activateWorktree(pCwd, wCwd);
     recordLastWorktree(pCwd, wCwd);
     const lastTab = lastTabByWorktree[wCwd];
-    if (lastTab) requestActivateChannel(pCwd, lastTab);
+    if (lastTab) requestActivateChannel(lastTab);
   };
 
   async function fetchAndOpenBranchPopover(wt: WorktreeInfo, open: boolean) {
@@ -245,8 +245,8 @@ function WorktreeDialogs({
         <SessionHistoryPopover
           cwd={dialog.wt.path}
           onClose={onClose}
-          onResumed={(spawnedId, picked) => {
-            onRequestActivateChannel(picked.cwd ?? dialog.wt.path, spawnedId);
+          onResumed={(spawnedId) => {
+            onRequestActivateChannel(spawnedId);
             onSetActiveProject(projectCwd);
             onClose();
           }}
