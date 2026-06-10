@@ -28,22 +28,78 @@
 - Session Tab Bar（已由 layout 持久化取代，見 Decision 14）
 - 跨 Tab 的 pane 整體搬移（session 可跨 tab，但 pane 結構不跨）
 
+## 名詞定義
+
+本文件統一使用以下術語（對齊 tmux 概念，但以 Tab + Pane 命名避開 browser `window` 全域變數衝突）：
+
+| 術語 | 對應 tmux | 說明 |
+|---|---|---|
+| **Tab** | Window | WorkspaceTabBar 上的每一格，代表一個獨立工作場景 |
+| **PaneNode** | — | Tab 內 pane tree 的節點，union type：`PaneSplit \| PaneLeaf` |
+| **PaneSplit** | — | 純 layout 容器，有 first/second 子節點，使用者看不到 |
+| **PaneLeaf** | Pane | 使用者看到的格子，有 content |
+| **PaneContent** | — | PaneLeaf 的內容類型（session / files / git / openspec） |
+| **Channel** | — | Server 端一個跑著的 Claude process，對應 client 的 session |
+
+**Client 資料結構：**
+
+```
+TabContext
+├── tabs: Tab[]
+│     └── Tab
+│           ├── id: string
+│           ├── label?: string
+│           ├── focusedPaneId: string | null
+│           ├── zoomedPaneId: string | null
+│           └── paneRoot: PaneNode
+│                 │
+│                 ├── PaneSplit
+│                 │     ├── id: string
+│                 │     ├── direction: 'h' | 'v'
+│                 │     ├── ratio: number (0.0–1.0)
+│                 │     ├── first: PaneNode
+│                 │     └── second: PaneNode
+│                 │
+│                 └── PaneLeaf
+│                       ├── id: string
+│                       └── content: PaneContent
+│                             ├── { type: 'session';  sessionId: string | null }
+│                             ├── { type: 'files';    cwd: string }
+│                             ├── { type: 'git';      cwd: string }
+│                             └── { type: 'openspec'; cwd: string }
+│
+└── activeTabId: string | null
+```
+
+- `PaneLeaf.content.type === 'session'`：可綁定一個 Channel（nullable），空白時顯示 EmptyPanePicker
+- `PaneLeaf.content.type === 'files/git/openspec'`：綁定 cwd，不需要 Channel
+- `focusedPaneId` / `zoomedPaneId`：runtime 狀態，不持久化
+
+---
+
 ## Decisions
 
 ### 1. Pane Tree 資料結構：Binary Tree，Leaf 支援多種內容類型
 
 ```typescript
 type PaneContent =
-  | { type: 'session';   sessionId: string | null }
-  | { type: 'git';       cwd: string }
-  | { type: 'files';     cwd: string }
-  | { type: 'spec';      cwd: string }
-  | { type: 'worktrees' }
+  | { type: 'session';  sessionId: string | null }
+  | { type: 'git';      cwd: string }
+  | { type: 'files';    cwd: string }
+  | { type: 'openspec'; cwd: string }
 
-type PaneNode =
-  | { type: 'leaf';  id: string; content: PaneContent }
-  | { type: 'split'; id: string; direction: 'h' | 'v'; ratio: number;
-      first: PaneNode; second: PaneNode }
+type PaneLeaf = { type: 'leaf';  id: string; content: PaneContent }
+type PaneSplit = { type: 'split'; id: string; direction: 'h' | 'v'; ratio: number;
+                   first: PaneNode; second: PaneNode }
+type PaneNode = PaneLeaf | PaneSplit
+
+interface Tab {
+  id: string
+  label?: string
+  paneRoot: PaneNode
+  focusedPaneId: string | null   // runtime，不持久化
+  zoomedPaneId: string | null    // runtime，不持久化
+}
 ```
 
 **理由**：tmux 相同模型，能表達任意切割方向與深度。tool pane 與 session pane 共用同一個 pane tree，不需要額外的固定側欄。ratio（0.0–1.0）控制兩側比例，resize 只改 ratio 不動結構。
@@ -54,11 +110,11 @@ type PaneNode =
 
 ### 2. Pane Tree State 放在 TabContext
 
-**決定**：`paneRoot: PaneNode`、`focusedPaneId: string` 加入現有 `TabContext`，不另開新 context。
+**決定**：`tabs: Tab[]`、`activeTabId` 作為 `TabContext` 的核心狀態。每個 `Tab` 內含完整 pane tree（`paneRoot`）與 runtime state（`focusedPaneId`、`zoomedPaneId`）。
 
-**理由**：pane tree 與 session list（`tabs`）高度耦合——切換 session 需要同時知道 focusedPaneId 和 tabs；兩者分開 context 會造成 consumer 需要 import 兩個 context。
+**理由**：pane tree 與 tab 高度耦合，切換 tab 就是切換整個 pane tree；合併在同一個 context 讓操作自然，不需要跨 context 協調。
 
-**替代方案捨棄**：新建 `SplitPaneContext`——需要在 `TabContainer` 以上 provide，且幾乎所有 pane 操作都需要同時讀 tabs，合併更自然。
+**替代方案捨棄**：新建 `SplitPaneContext`——需要在 `TabContainer` 以上 provide，且幾乎所有 pane 操作都需要同時讀 tab 狀態，合併更自然。
 
 ---
 
@@ -403,17 +459,21 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 **持久化的 schema（`PersistedLayout`）**：
 
 ```ts
-// sessionId 是 runtime 概念，不持久化；leaf session 存 cwd
+// sessionId 是 runtime 概念，不持久化；PaneLeaf session 改存 cwd
 type PersistedPaneContent =
   | { type: 'session';  cwd: string | null }
-  | { type: 'git' | 'files' | 'spec' | 'worktrees'; cwd: string }
+  | { type: 'files';    cwd: string }
+  | { type: 'git';      cwd: string }
+  | { type: 'openspec'; cwd: string }
 
-type PersistedPaneNode =
-  | { type: 'leaf';  id: string; content: PersistedPaneContent }
-  | { type: 'split'; id: string; direction: 'h' | 'v'; ratio: number;
-      first: PersistedPaneNode; second: PersistedPaneNode }
+type PersistedPaneLeaf  = { type: 'leaf';  id: string; content: PersistedPaneContent }
+type PersistedPaneSplit = { type: 'split'; id: string; direction: 'h' | 'v'; ratio: number;
+                            first: PersistedPaneNode; second: PersistedPaneNode }
+type PersistedPaneNode  = PersistedPaneLeaf | PersistedPaneSplit
 
-type PersistedTab    = { id: string; name?: string; paneRoot: PersistedPaneNode }
+type PersistedTab = { id: string; label?: string; paneRoot: PersistedPaneNode }
+// focusedPaneId / zoomedPaneId 不持久化
+
 type PersistedLayout = { tabs: PersistedTab[]; activeTabId: string }
 ```
 
@@ -423,16 +483,63 @@ type PersistedLayout = { tabs: PersistedTab[]; activeTabId: string }
 
 | Event | 方向 | 說明 |
 |---|---|---|
-| `layout:save` | client → server | debounce 儲存當下 layout（每次 wsState 改變） |
+| `layout:save` | client → server | debounce 儲存當下 layout（每次 TabContext 狀態改變） |
 | `layout:load` | client → server | 連線初始化時請求上次儲存的 layout |
-| `layout:loaded` | server → client | 回傳 `PersistedLayout`（或 null，表示無存檔） |
-| `layout:sync` | server → client | 有其他裝置更新 layout 時，廣播給同 user 的其他連線 |
+| `layout:loaded` | server → client | 回傳 `PersistedLayout`（或 null，表示無 layout） |
+| `layout:sync` | server → client | 有其他 browser 更新 layout 時，廣播給其他連線（排除發送者） |
 
-**Session 恢復策略（保守）**：恢復時 leaf session 的 `sessionId = null`（空白 pane），使用者點擊 pane 後手動開 session。不自動建立 session，避免重整後一次開多個 session。
+**同步策略：last-write-wins**
+
+```
+Browser A  →  layout:save(json)
+              ↓
+            Server 存 memory（覆蓋）
+              ↓
+            socket.broadcast.emit("layout:sync", json)  ← 排除 A 自己
+              ↓
+Browser B  ←  layout:sync(json)  →  rehydrate TabContext
+Browser C  ←  layout:sync(json)  →  rehydrate TabContext
+```
+
+兩個 browser 同時操作時，後寫入者獲勝（last-write-wins），不做 conflict resolution。Server 重啟後 layout 清空，browser 重連收到 `null` 從預設狀態開始。
+
+**Server 實作（輕量，memory only，無 DB）**：
+
+```ts
+class LayoutStore {
+  private layout: unknown = null
+
+  save(layout: unknown): void {
+    this.layout = layout
+  }
+
+  load(): unknown | null {
+    return this.layout
+  }
+}
+```
+
+**Client 行為**：
+
+| 時機 | 行為 |
+|---|---|
+| Tab 狀態變動（split / close / resize / label） | debounce `layout:save(PersistedLayout)` |
+| 連線初始化 | `layout:load` → 收到 `layout:loaded` → rehydrate TabContext |
+| 收到 `layout:sync` | rehydrate TabContext（來自其他 browser） |
+| rehydrate 後 | `focusedPaneId = firstLeafId(paneRoot)`，`zoomedPaneId = null`，`sessionId = null` |
+
+**Server 行為**：
+
+| 收到事件 | 處理 |
+|---|---|
+| `layout:save(payload)` | `layoutStore.save(payload)` → `socket.broadcast.emit("layout:sync", payload)` |
+| `layout:load` | `socket.emit("layout:loaded", layoutStore.load())` |
+
+**Session 恢復策略（保守）**：rehydrate 時所有 PaneLeaf session 的 `sessionId = null`（顯示 EmptyPanePicker + cwd 提示），使用者點擊後手動開 session。不自動建立 session，避免重整後同時開多個 session。
 
 **Session Tab Bar 移除後的替代入口**：
 - 新 session → EmptyPanePicker 的 `[+ New session]` / `[+ branch]`
-- 切換 session → 切換 Layout Tab（每個 layout 有自己的 session 集合）
+- 切換 session → 切換 Tab（每個 Tab 有自己的 pane tree）
 - `forceMount` hidden pool 不再需要（session 無 limbo 狀態）
 
 **與 Decision 1–3 的關係**：
