@@ -6,12 +6,12 @@ rehydrate／live-channel 重綁（mode:'resume' 不 spawn）的測試在 layout-
 
 ## A. PaneContent shape 變更
 
-- [ ] 1.1 [test] `setSessionInPane(paneId, sessionId, cwd)` — 綁定後 leaf content 為 `{ type:'session', sessionId, cwd }`
-- [ ] 1.2 [test] `splitPaneAndAssign(direction, sessionId, cwd)` — 新 leaf content 帶 cwd
-- [ ] 1.3 [impl] `PaneContent` session variant 加 `cwd: string | null`；兩個 action 簽名加 cwd；呼叫端（TabContainer/PanePicker/KeyboardShortcutsProvider）補傳
-- [ ] 1.4 [test] tool pane content `target: { kind:'fixed', cwd }` — WorktreeSwitcher 切換後 target.cwd 更新
-- [ ] 1.5 [impl] git/files/openspec content 改 `target` shape；`makeContent` 呼叫端同步
-- [ ] 1.6 [impl] client `'spec'` rename `'openspec'`（機械性，含 testid 不變確認）
+- [x] 1.1 [test] `setSessionInPane(paneId, sessionId, cwd)` — 綁定後 leaf content 為 `{ type:'session', sessionId, cwd }`
+- [x] 1.2 [test] `splitPaneAndAssign(direction, sessionId, cwd)` — 新 leaf content 帶 cwd
+- [x] 1.3 [impl] `PaneContent` session variant 加 `cwd: string | null`；兩個 action 簽名加 cwd；呼叫端（TabContainer/PanePicker/KeyboardShortcutsProvider）補傳
+- [x] 1.4 [test] tool pane content `target: { kind:'fixed', cwd }` — WorktreeSwitcher 切換後 target.cwd 更新
+- [x] 1.5 [impl] git/files/openspec content 改 `target` shape；`makeContent` 呼叫端同步
+- [x] 1.6 [impl] client `'spec'` rename `'openspec'`（機械性，含 testid 不變確認）
 
 ## B. pane-codecs
 

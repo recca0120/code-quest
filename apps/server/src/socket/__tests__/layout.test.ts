@@ -4,10 +4,15 @@ import { TYPES } from '../../types.ts';
 import { LayoutStore } from '../layout-store.ts';
 
 const VALID_LAYOUT: PersistedLayout = {
+  version: 2,
   tabs: [
     {
       id: 'tab-1',
-      paneRoot: { type: 'leaf', id: 'pane-1', content: { type: 'session', cwd: '/repo' } },
+      paneRoot: {
+        type: 'leaf',
+        id: 'pane-1',
+        content: { type: 'session', channelId: null, cwd: '/repo' },
+      },
     },
   ],
   activeTabId: 'tab-1',

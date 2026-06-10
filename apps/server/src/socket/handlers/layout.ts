@@ -1,5 +1,6 @@
 import type { SocketCallback, TypedSocket } from '@code-quest/schemas';
-import { EVENTS, persistedLayoutSchema } from '@code-quest/schemas';
+import { EVENTS, migrateLegacyToV2, persistedLayoutSchema } from '@code-quest/schemas';
+import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 
@@ -15,8 +16,11 @@ export function create({
     socket?: TypedSocket,
     _callback?: SocketCallback,
   ): void {
-    const parsed = persistedLayoutSchema.safeParse(payload);
-    if (!parsed.success) return;
+    const parsed = persistedLayoutSchema.safeParse(migrateLegacyToV2(payload));
+    if (!parsed.success) {
+      logger.warn({ err: parsed.error.message }, 'layout:save rejected: invalid payload');
+      return;
+    }
 
     layoutStore.set(LAYOUT_SUMMONER_KEY, parsed.data);
 

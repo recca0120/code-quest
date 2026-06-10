@@ -69,7 +69,7 @@
 
 - [ ] 10.1 ~~schema worktrees variant~~ → 併入 13.1/13.2
 - [ ] 10.2 ~~mapped-type codecs 移除 as cast~~ → 併入 pane-tree-named-components 2.3/2.5
-- [ ] 10.3 [impl] server `safeParse` 失敗時 `logger.warn(parsed.error)`（13.7 ack 落地前的最低限度可觀測性）
+- [x] 10.3 [impl] server `safeParse` 失敗時 `logger.warn(parsed.error)`（13.7 ack 落地前的最低限度可觀測性）
 
 ### F3 — session 重綁 ＋ LWW rehydrate（v2 修訂：render-time liveness 取代 reconcile merge；依賴 pane-tree-named-components A/B）
 
@@ -93,10 +93,10 @@
 
 ### Wire Schema v2（design.md「Wire Schema v2」；依賴 pane-tree-named-components A/B 的 content shape）
 
-- [ ] 13.1 [test] schema v2 — `version: z.literal(2)` 必填；session `{ channelId, cwd }`；tool pane `target` union；worktrees variant；ratio `z.number().catch(0.5)`（clamp 不 reject，見 pane-tree 2.8）；rev **不在** save schema（僅下行 payload 攜帶）
-- [ ] 13.2 [impl] `persistedLayoutSchema` v2 改版（schemas package）
-- [ ] 13.3 [test] migration — 無 version / v1 payload 經 `migrateLegacyToV2` 升級（session cwd → channelId:null + cwd）
-- [ ] 13.4 [impl] migration chain 與 schema 同檔；client parse 失敗先過 migration
+- [x] 13.1 [test] schema v2 — `version: z.literal(2)` 必填；session `{ channelId, cwd }`；tool pane `target` union；worktrees variant；ratio `z.number().catch(0.5)`（clamp 不 reject，見 pane-tree 2.8）；rev **不在** save schema（僅下行 payload 攜帶）
+- [x] 13.2 [impl] `persistedLayoutSchema` v2 改版（schemas package）
+- [x] 13.3 [test] migration — 無 version / v1 payload 經 `migrateLegacyToV2` 升級（session cwd → channelId:null + cwd）
+- [x] 13.4 [impl] migration chain 與 schema 同檔；client parse 失敗先過 migration
 - [ ] 13.5 [test] unknown content variant — 降級為 empty leaf，不讓整份 layout parse 失敗
 - [ ] 13.6 [impl] `persistedPaneContentSchema` 加 unknown-variant 容錯（catch-all → empty）
 - [ ] 13.7 [test] `layout:save` ack — parse 失敗回 `{ ok:false, error }`；成功回 `{ ok:true, rev }`

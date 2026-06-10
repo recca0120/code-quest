@@ -13,15 +13,24 @@ import { TabProvider, useWorkspaceTab } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
 
 const VALID_LAYOUT: PersistedLayout = {
+  version: 2,
   tabs: [
     {
       id: 'tab-a',
       label: 'Tab A',
-      paneRoot: { type: 'leaf', id: 'pane-a', content: { type: 'session', cwd: '/repo' } },
+      paneRoot: {
+        type: 'leaf',
+        id: 'pane-a',
+        content: { type: 'session', channelId: null, cwd: '/repo' },
+      },
     },
     {
       id: 'tab-b',
-      paneRoot: { type: 'leaf', id: 'pane-b', content: { type: 'git', cwd: '/repo' } },
+      paneRoot: {
+        type: 'leaf',
+        id: 'pane-b',
+        content: { type: 'git', target: { kind: 'fixed', cwd: '/repo' } },
+      },
     },
   ],
   activeTabId: 'tab-b',
@@ -172,19 +181,29 @@ describe('debounced layout:save', () => {
       summoner.socket.serverSocket.on('layout:save', () => emitted.push(true));
 
       const layoutA: PersistedLayout = {
+        version: 2,
         tabs: [
           {
             id: 'a',
-            paneRoot: { type: 'leaf', id: 'pa', content: { type: 'session', cwd: null } },
+            paneRoot: {
+              type: 'leaf',
+              id: 'pa',
+              content: { type: 'session', channelId: null, cwd: null },
+            },
           },
         ],
         activeTabId: 'a',
       };
       const layoutB: PersistedLayout = {
+        version: 2,
         tabs: [
           {
             id: 'b',
-            paneRoot: { type: 'leaf', id: 'pb', content: { type: 'session', cwd: null } },
+            paneRoot: {
+              type: 'leaf',
+              id: 'pb',
+              content: { type: 'session', channelId: null, cwd: null },
+            },
           },
         ],
         activeTabId: 'b',

@@ -1,5 +1,10 @@
 import type { PersistedLayout, PersistedTab, SessionStateSummary } from '@code-quest/schemas';
-import { EVENTS, persistedLayoutSchema } from '@code-quest/schemas';
+import {
+  EVENTS,
+  LAYOUT_SCHEMA_VERSION,
+  migrateLegacyToV2,
+  persistedLayoutSchema,
+} from '@code-quest/schemas';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui.ts';
 import { AppConfigActionsContext } from './AppInitContext.tsx';
@@ -213,12 +218,16 @@ function deserializePaneNode(
     const content = node.content;
     let paneContent: PaneContent;
     if (content.type === 'session') {
-      // Permissive: preserve cwd from wire as restore hint; liveness is a render-time concern
-      paneContent = { type: 'session', sessionId: null, cwd: content.cwd };
-    } else if (content.type === 'files' || content.type === 'git') {
-      paneContent = { type: content.type, target: { kind: 'fixed', cwd: content.cwd } };
+      // Permissive: preserve channelId/cwd from wire as-is; liveness is a render-time
+      // concern (tabs[sessionId] present → rebind via mode:'resume', absent → empty pane)
+      paneContent = { type: 'session', sessionId: content.channelId, cwd: content.cwd };
+    } else if (content.type === 'worktrees') {
+      paneContent = { type: 'worktrees' };
+    } else if (content.target.kind === 'fixed') {
+      paneContent = { type: content.type, target: { kind: 'fixed', cwd: content.target.cwd } };
     } else {
-      paneContent = { type: 'openspec', target: { kind: 'fixed', cwd: content.cwd } };
+      // 'follow' is reserved (worktree-centric D5); degrade to empty session until implemented
+      paneContent = { type: 'session', sessionId: null, cwd: null };
     }
     return { type: 'leaf', id: node.id, content: paneContent };
   }
@@ -247,14 +256,16 @@ function serializePaneNode(node: PaneNode): PersistedTab['paneRoot'] {
   if (node.type === 'leaf') {
     const c = node.content;
     if (c.type === 'session') {
-      return { type: 'leaf', id: node.id, content: { type: 'session', cwd: c.cwd } };
+      return {
+        type: 'leaf',
+        id: node.id,
+        content: { type: 'session', channelId: c.sessionId, cwd: c.cwd },
+      };
     }
     if (c.type === 'git' || c.type === 'files' || c.type === 'openspec') {
-      return { type: 'leaf', id: node.id, content: { type: c.type, cwd: c.target.cwd } };
+      return { type: 'leaf', id: node.id, content: { type: c.type, target: c.target } };
     }
-    // worktrees: not representable in wire v1 — degrade to empty session leaf so the
-    // rest of the layout still persists (F2 mitigation until schema v2 adds the variant)
-    return { type: 'leaf', id: node.id, content: { type: 'session', cwd: null } };
+    return { type: 'leaf', id: node.id, content: { type: 'worktrees' } };
   }
   return {
     type: 'split',
@@ -268,6 +279,7 @@ function serializePaneNode(node: PaneNode): PersistedTab['paneRoot'] {
 
 function serializeLayout(wsState: WorkspaceTabStateValue): PersistedLayout {
   return {
+    version: LAYOUT_SCHEMA_VERSION,
     tabs: wsState.workspaceTabs.map((t) => ({
       id: t.id,
       label: t.label,
@@ -577,7 +589,7 @@ export function TabProvider({
     return appConfigActions.subscribeInit((data) => {
       const layout = (data as { layout?: unknown }).layout;
       if (!layout) return;
-      const parsed = persistedLayoutSchema.safeParse(layout);
+      const parsed = persistedLayoutSchema.safeParse(migrateLegacyToV2(layout));
       if (parsed.success) rehydrateFromLayout(parsed.data);
     });
   }, [appConfigActions]);
@@ -590,7 +602,7 @@ export function TabProvider({
   useEffect(() => {
     if (!socket) return;
     function onSync(payload: unknown) {
-      const parsed = persistedLayoutSchema.safeParse(payload);
+      const parsed = persistedLayoutSchema.safeParse(migrateLegacyToV2(payload));
       if (parsed.success) rehydrateFromLayout(parsed.data);
     }
     socket.on(EVENTS.layout.sync, onSync);
