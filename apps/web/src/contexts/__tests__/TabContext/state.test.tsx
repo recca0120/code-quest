@@ -3,6 +3,7 @@ import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { NavigationIntentBridge } from '@/components/workspace/NavigationIntentBridge';
 import { AppConfigProvider } from '@/contexts/AppInitContext';
 import {
   NavigationProvider,
@@ -39,6 +40,7 @@ function renderWithProjectAndSessions(
           <ProjectProvider>
             <NavigationProvider>
               <TabProvider cwd={initial.cwd} sessions={sessions}>
+                <NavigationIntentBridge />
                 {ui}
               </TabProvider>
             </NavigationProvider>
@@ -57,6 +59,7 @@ function renderWithProjectAndSessions(
             <ProjectProvider>
               <NavigationProvider>
                 <TabProvider cwd={initial.cwd} sessions={sessions}>
+                  <NavigationIntentBridge />
                   {ui}
                 </TabProvider>
               </NavigationProvider>
@@ -510,7 +513,10 @@ describe('TabProvider', () => {
       const { result } = renderHook(() => useTabActions(), {
         wrapper: ({ children }) => (
           <SocketProvider socket={summoner.socket}>
-            <TabProvider>{children}</TabProvider>
+            <TabProvider>
+              <NavigationIntentBridge />
+              {children}
+            </TabProvider>
           </SocketProvider>
         ),
       });
@@ -523,7 +529,10 @@ describe('TabProvider', () => {
       const { result } = renderHook(() => useTabState(), {
         wrapper: ({ children }) => (
           <SocketProvider socket={summoner.socket}>
-            <TabProvider>{children}</TabProvider>
+            <TabProvider>
+              <NavigationIntentBridge />
+              {children}
+            </TabProvider>
           </SocketProvider>
         ),
       });

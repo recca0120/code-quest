@@ -7,7 +7,6 @@ import { useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import {
   type PaneNode,
-  usePaneActions,
   usePaneState,
   useTabActions,
   useTabState,
@@ -17,31 +16,27 @@ import { PaneTree } from './PaneTree.tsx';
 import { type PaneEnvironment, PaneEnvironmentProvider } from './panes/PaneEnvironmentContext.tsx';
 import { SessionPool } from './panes/SessionPool.tsx';
 import { SessionBar } from './SessionBar.tsx';
-import { useAvailableWorktrees } from './useAvailableWorktrees.ts';
+import { useAvailableWorktrees, useWorktreeLookup } from './useAvailableWorktrees.ts';
+import { useCreateSessionInPane } from './useCreateSessionInPane.ts';
 import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
 
 type PaneLeafNode = Extract<PaneNode, { type: 'leaf' }>;
 
-function findLeafBy(node: PaneNode, pred: (leaf: PaneLeafNode) => boolean): PaneLeafNode | null {
-  if (node.type === 'leaf') return pred(node) ? node : null;
-  return findLeafBy(node.first, pred) ?? findLeafBy(node.second, pred);
-}
-
 function findPaneLeaf(node: PaneNode, id: string): PaneLeafNode | null {
-  return findLeafBy(node, (leaf) => leaf.id === id);
+  if (node.type === 'leaf') return node.id === id ? node : null;
+  return findPaneLeaf(node.first, id) ?? findPaneLeaf(node.second, id);
 }
 
-function isEmptySessionLeaf(leaf: PaneLeafNode): boolean {
-  return leaf.content.type === 'session' && leaf.content.sessionId === null;
-}
-
-function isSessionLeaf(leaf: PaneLeafNode): boolean {
-  return leaf.content.type === 'session';
+interface PendingNewSession {
+  cwd: string;
+  projectCwd?: string;
+  branch?: string;
+  targetPaneId?: string;
 }
 
 interface TabContainerProps {
   onToggleLeft?: () => void;
-  pendingNewSessionCwd?: string | null;
+  pendingNewSession?: PendingNewSession | null;
   onSessionCreated?: () => void;
   onOpenModal?: (paneId?: string) => void;
   onOpenSettings?: () => void;
@@ -51,7 +46,7 @@ interface TabContainerProps {
 
 export const TabContainer: React.FC<TabContainerProps> = memo(function TabContainer({
   onToggleLeft,
-  pendingNewSessionCwd,
+  pendingNewSession,
   onSessionCreated,
   onOpenModal,
   onOpenSettings,
@@ -59,14 +54,13 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   onNewWorktree,
 }) {
   const { tabs } = useTabState();
-  const { createNewTab, removeTab } = useTabActions();
+  const { removeTab } = useTabActions();
   const { closeSession } = useSession();
   const { setActiveCwd } = useNavigationActions();
 
   const { activeProjectCwd, projects } = useProjectState();
   const { paneRoot, focusedPaneId } = usePaneState();
   const { workspaceTabs } = useWorkspaceTabState();
-  const { setSessionInPane, focusPane, splitPaneAndAssign } = usePaneActions();
 
   const focusedLeaf = focusedPaneId ? findPaneLeaf(paneRoot, focusedPaneId) : null;
   const focusedTabCwd = (() => {
@@ -77,31 +71,13 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     return null;
   })();
 
-  // Create a new tab and immediately assign it to the focused pane (or first empty leaf)
-  // Both updates are dispatched in the same event handler → React 18 batches them into one render
-  // This avoids the double-mount "Channel already exists" error from useEffect-based assignment
+  // create+place 收斂於 useCreateSessionInPane（worktree-centric D6）
+  const { createSessionInPane } = useCreateSessionInPane();
   const handleCreateTab = useCallback(
-    (opts?: { cwd?: string; targetPaneId?: string }) => {
-      const { channelId, cwd: newCwd } = createNewTab(opts);
-      const effectivePaneId = opts?.targetPaneId ?? focusedPaneId;
-      const byId = effectivePaneId ? findPaneLeaf(paneRoot, effectivePaneId) : null;
-      // Fallback chain: explicit session leaf → first EMPTY session leaf →
-      // first session leaf → split. A created session must always land in a
-      // pane — even when the focused pane is a tool pane (worktrees/git/…).
-      const target =
-        byId && isSessionLeaf(byId)
-          ? byId
-          : (findLeafBy(paneRoot, isEmptySessionLeaf) ?? findLeafBy(paneRoot, isSessionLeaf));
-      if (target && target.content.type === 'session' && target.content.sessionId === null) {
-        setSessionInPane(target.id, channelId, newCwd);
-        focusPane(target.id);
-      } else {
-        // Occupied or no session leaf at all — split and assign to a new leaf
-        splitPaneAndAssign('h', channelId, newCwd);
-      }
+    (opts?: { cwd?: string; projectCwd?: string; branch?: string; targetPaneId?: string }) => {
+      createSessionInPane(opts);
     },
-    // opts.targetPaneId is captured at call time — no need in deps
-    [createNewTab, focusedPaneId, paneRoot, setSessionInPane, focusPane, splitPaneAndAssign],
+    [createSessionInPane],
   );
 
   // Keep a ref to the latest handleCreateTab to avoid stale closure in the effect
@@ -109,10 +85,10 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   handleCreateTabRef.current = handleCreateTab;
 
   useEffect(() => {
-    if (!pendingNewSessionCwd) return;
-    handleCreateTabRef.current({ cwd: pendingNewSessionCwd });
+    if (!pendingNewSession) return;
+    handleCreateTabRef.current(pendingNewSession);
     onSessionCreated?.();
-  }, [pendingNewSessionCwd, onSessionCreated]);
+  }, [pendingNewSession, onSessionCreated]);
 
   const handleCloseSession = useCallback(
     (channelId: string) => {
@@ -137,6 +113,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   const tabEntries = Object.entries(tabs);
 
   const availableWorktrees = useAvailableWorktrees();
+  const worktreeLookup = useWorktreeLookup();
 
   // Stable-identity environment for pane bodies and pools — onNewTab reads the
   // latest handleCreateTab through a ref so ratio drags / tabs ticks never churn it
@@ -175,7 +152,8 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     channelId: id,
     title: meta.title,
     tabStatus: meta.tabStatus,
-    branch: meta.branch,
+    // live lookup first — branch renames reflect without reopening the session
+    branch: (meta.cwd ? worktreeLookup.get(meta.cwd)?.branch : undefined) ?? meta.branch,
     cwd: meta.cwd ?? null,
   }));
 
@@ -186,7 +164,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
         sessions={sessionBarItems}
         availableWorktrees={availableWorktrees}
         projects={projects.map((p) => ({ cwd: p.cwd, name: p.name }))}
-        onNewSession={(cwd) => handleCreateTab({ cwd })}
+        onNewSession={(cwd, projectCwd, branch) => handleCreateTab({ cwd, projectCwd, branch })}
         onNewWorktree={onNewWorktree}
         onCloseSession={handleCloseSession}
       />

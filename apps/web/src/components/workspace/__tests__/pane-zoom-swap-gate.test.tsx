@@ -170,7 +170,10 @@ describe('handleCreateTab fallback — focused tool pane must not swallow the se
       <NavigationProvider>
         <TabProvider>
           <Probe />
-          <TabContainer pendingNewSessionCwd={pendingCwd} onSessionCreated={() => {}} />
+          <TabContainer
+            pendingNewSession={pendingCwd ? { cwd: pendingCwd } : null}
+            onSessionCreated={() => {}}
+          />
         </TabProvider>
       </NavigationProvider>
     );
@@ -188,6 +191,40 @@ describe('handleCreateTab fallback — focused tool pane must not swallow the se
     // session must land in a pane (split), not be silently dropped
     expect(screen.getByTestId('chat-view')).toBeInTheDocument();
     expect(screen.getAllByTestId('pane-header').length).toBe(2);
+  });
+});
+
+describe('pendingNewSession.targetPaneId — picker session lands in the TARGET pane (worktree-centric 4.1)', () => {
+  function TargetWrapper({ pending }: { pending: { cwd: string; targetPaneId?: string } | null }) {
+    return (
+      <NavigationProvider>
+        <TabProvider>
+          <Probe />
+          <TabContainer pendingNewSession={pending} onSessionCreated={() => {}} />
+        </TabProvider>
+      </NavigationProvider>
+    );
+  }
+
+  it('session fills the target empty pane, not the focused one', () => {
+    const { rerender } = render(<TargetWrapper pending={null} />);
+
+    const firstId = leavesOf(probeState!.paneRoot)[0]!.id;
+    actHelper(() => probeActions!.splitPane('h'));
+    const emptyId = leavesOf(probeState!.paneRoot).find((l) => l.id !== firstId)!.id;
+    actHelper(() =>
+      probeActions!.setContentInPane(firstId, {
+        type: 'git',
+        target: { kind: 'fixed', cwd: '/a' },
+      }),
+    );
+    actHelper(() => probeActions!.focusPane(firstId));
+
+    rerender(<TargetWrapper pending={{ cwd: '/repo/feat', targetPaneId: emptyId }} />);
+
+    const target = leavesOf(probeState!.paneRoot).find((l) => l.id === emptyId);
+    expect(target?.content.type).toBe('session');
+    expect(target?.content.type === 'session' ? target.content.sessionId : null).toBeTruthy();
   });
 });
 

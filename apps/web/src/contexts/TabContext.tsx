@@ -9,10 +9,6 @@ import type { SessionStateSummary } from '@code-quest/schemas';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui.ts';
 import type { SessionMode } from './channel/ChannelContext.tsx';
-// Intentional dependency — NavigationContext mediates sidebar/editor
-// intents (activate channel, open worktree). Soft-bound via direct useContext
-// so TabProvider can be mounted standalone in tests without a NavigationProvider.
-import { NavigationActionsContext, NavigationStateContext } from './NavigationContext.tsx';
 import { TERMINAL_STATES } from './session-states.ts';
 import { WorkspaceLayoutProvider } from './WorkspaceLayoutContext.tsx';
 
@@ -39,6 +35,8 @@ export interface TabMeta {
   title?: string;
   tabStatus: SessionStatus;
   cwd?: string;
+  /** Owning project root — written at creation (worktree-centric D2). */
+  projectCwd?: string;
   branch?: string;
   mode: SessionMode;
 }
@@ -63,13 +61,21 @@ export function useTabState(): TabStateValue {
 // ── Actions context (stable references) ──
 
 interface TabActionsValue {
-  addTab: (id: string, cwd?: string, branch?: string) => void;
+  addTab: (id: string, cwd?: string, branch?: string, projectCwd?: string) => void;
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
-  createNewTab: (opts?: { cwd?: string }) => { channelId: string; cwd: string | null };
-  replaceActiveTab: (newChannelId: string, cwd?: string, branch?: string) => void;
+  createNewTab: (opts?: { cwd?: string; projectCwd?: string; branch?: string }) => {
+    channelId: string;
+    cwd: string | null;
+  };
+  replaceActiveTab: (
+    newChannelId: string,
+    cwd?: string,
+    branch?: string,
+    projectCwd?: string,
+  ) => void;
   replaceTab: (oldChannelId: string, newChannelId: string) => void;
 }
 
@@ -115,10 +121,10 @@ export function TabProvider({
   selectedCwdRef.current = selectedCwd;
 
   const [actions] = useState<TabActionsValue>(() => ({
-    addTab: (id, cwd, branch) => {
+    addTab: (id, cwd, branch, projectCwd) => {
       setState((prev) => {
         if (id in prev.tabs) return prev;
-        const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd, branch } };
+        const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd, branch, projectCwd } };
         return { ...prev, tabs, activeTabId: prev.activeTabId ?? id };
       });
     },
@@ -155,19 +161,25 @@ export function TabProvider({
         ...prev,
         tabs: {
           ...prev.tabs,
-          [channelId]: { ...DEFAULT_META, cwd: tabCwd, mode: 'new' },
+          [channelId]: {
+            ...DEFAULT_META,
+            cwd: tabCwd,
+            projectCwd: opts?.projectCwd,
+            branch: opts?.branch,
+            mode: 'new',
+          },
         },
         activeTabId: channelId,
       }));
       return { channelId, cwd: tabCwd ?? null };
     },
-    replaceActiveTab: (newChannelId, cwd, branch) => {
+    replaceActiveTab: (newChannelId, cwd, branch, projectCwd) => {
       setState((prev) => {
         if (!prev.activeTabId) return prev;
         const { [prev.activeTabId]: _, ...rest } = prev.tabs;
         return {
           ...prev,
-          tabs: { ...rest, [newChannelId]: { ...DEFAULT_META, cwd, branch } },
+          tabs: { ...rest, [newChannelId]: { ...DEFAULT_META, cwd, branch, projectCwd } },
           activeTabId: newChannelId,
         };
       });
@@ -208,10 +220,15 @@ export function TabProvider({
       // would kill the user's active tab and leave the dead one as a zombie.
       removed[0] === activeTabIdRef.current
     ) {
-      actions.replaceActiveTab(added[0].channelId, added[0].cwd, added[0].branch);
+      actions.replaceActiveTab(
+        added[0].channelId,
+        added[0].cwd,
+        added[0].branch,
+        added[0].projectRoot,
+      );
     } else {
       for (const s of added) {
-        actions.addTab(s.channelId, s.cwd, s.branch);
+        actions.addTab(s.channelId, s.cwd, s.branch, s.projectRoot);
       }
       for (const id of removed) {
         actions.removeTab(id);
@@ -219,45 +236,6 @@ export function TabProvider({
     }
     prevSessionIds.current = currentIds;
   }, [sessions]);
-
-  // Consume pendingActivateChannel intent from NavigationContext.
-  // Fires only when the channel is already in our tabs. Otherwise we wait —
-  // the sessions-prop effect above may add the channel later, and this effect
-  // will re-run via the tabs dep.
-  // Dep array MUST include both pendingActivateChannel AND state.tabs,
-  // otherwise a pending intent that lands before auto-addTab is silently lost.
-  const navState = useContext(NavigationStateContext);
-  const navActions = useContext(NavigationActionsContext);
-  const pendingActivateChannel = navState?.pendingActivateChannel ?? null;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: setActiveTab is a local closure that only calls setState; navActions identity is preserved by NavigationProvider's useState initializer
-  useEffect(() => {
-    if (!pendingActivateChannel || !navActions) return;
-    // Global TabProvider handles all channels — no cwd guard needed
-    if (!(pendingActivateChannel.channelId in state.tabs)) return;
-    actions.setActiveTab(pendingActivateChannel.channelId);
-    navActions.clearPendingActivate();
-  }, [pendingActivateChannel, state.tabs]);
-
-  // Consume pendingOpenWorktree intent — sidebar clicked a worktree row.
-  // Global TabProvider handles all projects — no projectCwd guard needed.
-  const pendingOpenWorktree = navState?.pendingOpenWorktree ?? null;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: same reasoning as pendingActivateChannel effect — actions identity is stable
-  useEffect(() => {
-    if (!pendingOpenWorktree || !navActions) return;
-    const existingId = pendingOpenWorktree.forceNew
-      ? undefined
-      : Object.entries(state.tabs).find(
-          ([, meta]) => meta.cwd === pendingOpenWorktree.worktreeCwd,
-        )?.[0];
-    if (existingId) {
-      actions.setActiveTab(existingId);
-    } else {
-      // Mockup's openWt: when no matching tab exists, create one (open-or-switch).
-      // Duplicate-tab creation stays behind ⋯ menu "Open in new chat" (forceNew=true).
-      actions.createNewTab({ cwd: pendingOpenWorktree.worktreeCwd });
-    }
-    navActions.clearPendingOpenWorktree();
-  }, [pendingOpenWorktree, state.tabs]);
 
   return (
     <TabStateContext.Provider value={state}>

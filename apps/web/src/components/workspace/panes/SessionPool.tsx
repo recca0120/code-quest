@@ -6,6 +6,7 @@ import {
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
 import { TabContent } from '../TabContent.tsx';
+import { useWorktreeLookup } from '../useAvailableWorktrees.ts';
 import { usePaneEnvironment } from './PaneEnvironmentContext.tsx';
 
 const NOOP = (): void => {};
@@ -22,7 +23,11 @@ export function SessionPool(): React.JSX.Element {
   const { workspaceTabs, activeWorkspaceTabId } = useWorkspaceTabState();
   const env = usePaneEnvironment();
   const { projects, activeProjectCwd } = useProjectState();
-  const projectName = projects.find((p) => p.cwd === activeProjectCwd)?.name ?? '';
+  const lookup = useWorktreeLookup();
+  const projectNameOf = (meta: { projectCwd?: string; cwd?: string }): string => {
+    const projectCwd = meta.projectCwd ?? (meta.cwd ? lookup.get(meta.cwd)?.projectCwd : undefined);
+    return projects.find((p) => p.cwd === (projectCwd ?? activeProjectCwd))?.name ?? '';
+  };
 
   // Single source of truth: both sets derive from workspaceTabs (the active
   // tab's paneRoot is workspaceTabs[active].paneRoot — no usePaneState needed)
@@ -50,7 +55,7 @@ export function SessionPool(): React.JSX.Element {
               cwd={meta.cwd}
               branch={meta.branch}
               title={meta.title}
-              projectName={projectName}
+              projectName={projectNameOf(meta)}
               mode={meta.mode}
               onNewChannel={NOOP}
             />
@@ -68,7 +73,7 @@ export function SessionPool(): React.JSX.Element {
               cwd={meta.cwd}
               branch={meta.branch}
               title={meta.title}
-              projectName={projectName}
+              projectName={projectNameOf(meta)}
               mode={meta.mode}
               onToggleLeft={env.onToggleLeft}
               onNewChannel={(newCwd) => env.onNewTab({ cwd: newCwd })}

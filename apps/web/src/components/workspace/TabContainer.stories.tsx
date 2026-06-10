@@ -15,5 +15,5 @@ type Story = StoryObj<typeof meta>;
 export const Empty: Story = {};
 
 export const WithPendingSession: Story = {
-  args: { pendingNewSessionCwd: '/projects/code-quest' },
+  args: { pendingNewSession: { cwd: '/projects/code-quest' } },
 };

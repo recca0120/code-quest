@@ -7,7 +7,12 @@ import { createContext, useContext } from 'react';
  */
 export interface PaneEnvironment {
   onToggleLeft?: () => void;
-  onNewTab: (opts?: { cwd?: string; targetPaneId?: string }) => void;
+  onNewTab: (opts?: {
+    cwd?: string;
+    projectCwd?: string;
+    branch?: string;
+    targetPaneId?: string;
+  }) => void;
   onOpenModal?: (paneId?: string) => void;
   onNewWorktree?: (projectCwd: string) => void;
 }

@@ -4,11 +4,11 @@ import {
   type PaneNode,
   usePaneActions,
   usePaneState,
-  useTabActions,
   useTabState,
 } from '@/contexts/TabContext';
 import { SessionManager } from './SessionManager';
 import { SessionManagerContext } from './SessionManagerContext';
+import { useCreateSessionInPane } from './useCreateSessionInPane.ts';
 import { useMobileMode } from './useMobileMode';
 
 function findAdjacentLeafId(
@@ -39,7 +39,7 @@ function useKeyboardShortcuts(
 ): void {
   const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
   const { splitPane, closePane, focusPane, swapPane, zoomPane } = usePaneActions();
-  const { createNewTab } = useTabActions();
+  const { createSessionInPane } = useCreateSessionInPane();
   const { tabs } = useTabState();
   const isMobile = useMobileMode();
 
@@ -71,7 +71,8 @@ function useKeyboardShortcuts(
 
       if (e.key === 't' && !e.altKey && !e.shiftKey) {
         e.preventDefault();
-        createNewTab(focusedLeafCwd ? { cwd: focusedLeafCwd } : undefined);
+        // create+place（D6）：session 可見落 pane，不再掉進隱形 pool
+        createSessionInPane(focusedLeafCwd ? { cwd: focusedLeafCwd } : undefined);
         return;
       }
 
@@ -178,7 +179,7 @@ function useKeyboardShortcuts(
     splitPane,
     closePane,
     focusPane,
-    createNewTab,
+    createSessionInPane,
     swapPane,
     zoomPane,
     zoomedPaneId,

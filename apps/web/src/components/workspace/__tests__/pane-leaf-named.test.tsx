@@ -15,7 +15,9 @@ vi.mock('@/contexts/channel', () => ({
   ChannelProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock('../../chat/ChatView.tsx', () => ({
-  ChatView: () => <div data-testid="chat-view" />,
+  ChatView: ({ projectName }: { projectName?: string }) => (
+    <div data-testid="chat-view">{projectName}</div>
+  ),
 }));
 vi.mock('../../git/GitView.tsx', () => ({
   GitView: () => <div data-testid="git-view" />,
@@ -33,13 +35,17 @@ vi.mock('@/contexts/GitContext', () => ({
   useGitState: () => ({
     listing: {
       '/projects/app': [{ path: '/projects/app/feat', branch: 'feat-x', name: 'feat' }],
+      '/projects/other': [{ path: '/projects/other/main', branch: 'main', name: 'main' }],
     },
   }),
 }));
 vi.mock('@/contexts/ProjectContext', () => ({
   useProjectState: () => ({
     activeProjectCwd: '/projects/app',
-    projects: [{ cwd: '/projects/app', name: 'app' }],
+    projects: [
+      { cwd: '/projects/app', name: 'app' },
+      { cwd: '/projects/other', name: 'other' },
+    ],
   }),
 }));
 
@@ -177,5 +183,28 @@ describe('SessionPane — self-heal (3.5)', () => {
     rerender(<Harness sessions={[]} />);
     expect(screen.queryByTestId('chat-view')).not.toBeInTheDocument();
     expect(screen.getByTestId('empty-pane')).toBeInTheDocument();
+  });
+});
+
+describe('SessionPane — per-session project name（worktree-centric 1.5）', () => {
+  it('cross-project session shows ITS project name, not the active project', () => {
+    const { rerender } = render(<Harness />);
+    rerender(
+      <Harness
+        sessions={[
+          {
+            channelId: 'ch-b',
+            state: 'idle',
+            cwd: '/projects/other/main',
+            projectRoot: '/projects/other',
+          },
+        ]}
+      />,
+    );
+    const paneId = firstLeafIdOf(probeState!.paneRoot);
+    act(() => probeActions!.setSessionInPane(paneId, 'ch-b', '/projects/other/main'));
+
+    // activeProject 是 app，但這個 session 屬於 other
+    expect(screen.getByTestId('chat-view').textContent).toBe('other');
   });
 });

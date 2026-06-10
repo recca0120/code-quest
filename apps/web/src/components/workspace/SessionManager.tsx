@@ -8,6 +8,7 @@ import {
   useTabState,
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
+import { useWorktreeLookup } from './useAvailableWorktrees.ts';
 
 interface SessionManagerProps {
   onClose: () => void;
@@ -28,6 +29,9 @@ export function SessionManager({
   const { workspaceTabs } = useWorkspaceTabState();
   const { listing } = useGitState();
   const { projects } = useProjectState();
+  const lookup = useWorktreeLookup();
+  const branchOf = (meta: { cwd?: string; branch?: string }): string | undefined =>
+    (meta.cwd ? lookup.get(meta.cwd)?.branch : undefined) ?? meta.branch;
 
   function handleSelect(sessionId: string): void {
     const targetId = focusedPaneId ?? firstLeafId(paneRoot);
@@ -125,7 +129,9 @@ export function SessionManager({
                     <span className="opacity-60">
                       {meta.tabStatus === 'processing' ? '●' : '○'}
                     </span>
-                    {meta.branch && <span className="opacity-70 text-xs">⎇ {meta.branch}</span>}
+                    {branchOf(meta) && (
+                      <span className="opacity-70 text-xs">⎇ {branchOf(meta)}</span>
+                    )}
                     <span className="truncate">{meta.title ?? meta.cwd ?? id}</span>
                   </button>
                 );
@@ -153,7 +159,7 @@ export function SessionManager({
                   className="w-full text-left px-3 py-2 text-sm rounded hover:bg-muted flex items-center gap-2"
                 >
                   <span className="opacity-60">{meta.tabStatus === 'processing' ? '●' : '○'}</span>
-                  {meta.branch && <span className="opacity-70 text-xs">⎇ {meta.branch}</span>}
+                  {branchOf(meta) && <span className="opacity-70 text-xs">⎇ {branchOf(meta)}</span>}
                   <span className="truncate">{meta.title ?? meta.cwd ?? id}</span>
                 </button>
               );

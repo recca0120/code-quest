@@ -10,7 +10,11 @@ vi.mock('@/contexts/SessionContext', () => ({
   useSession: () => ({ closeSession: vi.fn() }),
 }));
 vi.mock('@/contexts/GitContext', () => ({
-  useGitState: () => ({ listing: {} }),
+  useGitState: () => ({
+    listing: {
+      '/projects/app': [{ path: '/projects/app/feat', branch: 'feat-live', name: 'feat' }],
+    },
+  }),
 }));
 vi.mock('@/contexts/ProjectContext', () => ({
   useProjectState: () => ({
@@ -72,7 +76,10 @@ describe('TabContainer — new session goes to pane, not pool (anti-double-mount
     rerender(
       <NavigationProvider>
         <TabProvider>
-          <TabContainer pendingNewSessionCwd="/projects/app" onSessionCreated={onSessionCreated} />
+          <TabContainer
+            pendingNewSession={{ cwd: '/projects/app' }}
+            onSessionCreated={onSessionCreated}
+          />
         </TabProvider>
       </NavigationProvider>,
     );
@@ -106,7 +113,7 @@ describe('TabContainer — pendingNewSessionCwd creates session in pane', () => 
       <NavigationProvider>
         <TabProvider>
           <TabContainer
-            pendingNewSessionCwd="/projects/app/feat"
+            pendingNewSession={{ cwd: '/projects/app/feat' }}
             onSessionCreated={onSessionCreated}
           />
         </TabProvider>
@@ -162,7 +169,7 @@ describe("TabContainer — empty pane's 'New Session' calls onOpenModal with the
         <TabProvider>
           <TabContainer
             onOpenModal={onOpenModal}
-            pendingNewSessionCwd="/projects/app/s1"
+            pendingNewSession={{ cwd: '/projects/app/s1' }}
             onSessionCreated={vi.fn()}
           />
         </TabProvider>
@@ -193,7 +200,10 @@ describe('TabContainer — new session after closing focused pane goes to pane (
       return (
         <NavigationProvider>
           <TabProvider>
-            <TabContainer pendingNewSessionCwd={pendingCwd} onSessionCreated={vi.fn()} />
+            <TabContainer
+              pendingNewSession={pendingCwd ? { cwd: pendingCwd } : null}
+              onSessionCreated={vi.fn()}
+            />
           </TabProvider>
         </NavigationProvider>
       );
@@ -336,5 +346,33 @@ describe('TabContainer (7.4) Session Bar [+] shows inline dropdown', () => {
     // Inline dropdown shows worktree (mocked listing is empty so no worktrees shown,
     // but the dropdown itself should appear)
     expect(screen.getByTestId('new-session-dropdown')).toBeInTheDocument();
+  });
+});
+
+describe('SessionBar ⎇ badge — live lookup beats stale snapshot（worktree-centric 1.7）', () => {
+  it('shows the branch from the worktree listing, not the stale TabMeta snapshot', () => {
+    render(
+      <NavigationProvider>
+        <TabProvider
+          initialState={{
+            tabs: {
+              s1: {
+                tabStatus: 'idle' as const,
+                mode: 'resume' as const,
+                cwd: '/projects/app/feat',
+                branch: 'stale-branch',
+                title: 'feat session',
+              },
+            },
+            activeTabId: 's1',
+          }}
+        >
+          <TabContainer />
+        </TabProvider>
+      </NavigationProvider>,
+    );
+
+    expect(screen.getByText('⎇ feat-live')).toBeInTheDocument();
+    expect(screen.queryByText('⎇ stale-branch')).not.toBeInTheDocument();
   });
 });

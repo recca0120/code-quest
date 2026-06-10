@@ -30,7 +30,7 @@ interface SessionBarProps {
   onOpenModal?: () => void;
   availableWorktrees?: WorktreeOption[];
   projects?: ProjectInfo[];
-  onNewSession?: (cwd: string, projectCwd?: string) => void;
+  onNewSession?: (cwd: string, projectCwd?: string, branch?: string) => void;
   onNewWorktree?: (projectCwd: string) => void;
 }
 
@@ -227,7 +227,7 @@ export function SessionBar({
                         key={wt.path}
                         type="button"
                         onClick={() => {
-                          onNewSession?.(wt.path, project.cwd);
+                          onNewSession?.(wt.path, project.cwd, wt.branch);
                           setNewSessionDropdownOpen(false);
                         }}
                         className="w-full px-3 py-1.5 text-xs text-left hover:bg-accent font-mono"

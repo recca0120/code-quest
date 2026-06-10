@@ -5,7 +5,7 @@ import { useProjectState } from '@/contexts/ProjectContext';
 import { type PaneContent, useTabState } from '@/contexts/TabContext';
 import { RightPane } from '../RightPane.tsx';
 import { TabContent } from '../TabContent.tsx';
-import { useAvailableWorktrees } from '../useAvailableWorktrees.ts';
+import { useWorktreeLookup } from '../useAvailableWorktrees.ts';
 import { usePaneEnvironment } from './PaneEnvironmentContext.tsx';
 import { PaneShell, type PaneToolbarCommonProps } from './PaneShell.tsx';
 
@@ -28,16 +28,14 @@ export function SessionPane({
 }): React.JSX.Element {
   const { tabs } = useTabState();
   const env = usePaneEnvironment();
-  const availableWorktrees = useAvailableWorktrees();
+  const lookup = useWorktreeLookup();
   const { projects, activeProjectCwd } = useProjectState();
   const [rightOpen, setRightOpen] = useState(false);
 
   const meta = content.sessionId ? tabs[content.sessionId] : null;
 
   if (!content.sessionId || !meta) {
-    const hintWorktree = content.cwd
-      ? availableWorktrees.find((wt) => wt.path === content.cwd)
-      : undefined;
+    const hintWorktree = content.cwd ? lookup.get(content.cwd) : undefined;
     const hint = hintWorktree
       ? `Last: ${hintWorktree.projectName} ⎇ ${hintWorktree.branch ?? hintWorktree.name}`
       : undefined;
@@ -59,7 +57,11 @@ export function SessionPane({
     );
   }
 
-  const projectName = projects.find((p) => p.cwd === activeProjectCwd)?.name ?? '';
+  // Per-session identity: meta.projectCwd（建立時寫入）→ cwd 反查 lookup → activeProject fallback
+  const sessionProjectCwd =
+    meta.projectCwd ?? (meta.cwd ? lookup.get(meta.cwd)?.projectCwd : undefined);
+  const projectName =
+    projects.find((p) => p.cwd === (sessionProjectCwd ?? activeProjectCwd))?.name ?? '';
 
   return (
     <PaneShell

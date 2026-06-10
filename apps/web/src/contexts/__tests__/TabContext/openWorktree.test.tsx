@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
+import { NavigationIntentBridge } from '@/components/workspace/NavigationIntentBridge';
 import { AppConfigProvider } from '@/contexts/AppInitContext';
 import { NavigationProvider, useNavigationActions } from '@/contexts/NavigationContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
@@ -41,7 +42,10 @@ function Wrapper({ projectCwd, children }: { projectCwd: string; children: React
         <SessionProvider>
           <ProjectProvider>
             <NavigationProvider>
-              <TabProvider cwd={projectCwd}>{children}</TabProvider>
+              <TabProvider cwd={projectCwd}>
+                <NavigationIntentBridge />
+                {children}
+              </TabProvider>
             </NavigationProvider>
           </ProjectProvider>
         </SessionProvider>

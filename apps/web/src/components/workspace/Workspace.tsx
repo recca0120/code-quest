@@ -21,6 +21,7 @@ import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { CreateWorktreeDialog } from '../project/CreateWorktreeDialog.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
 import { KeyboardShortcutsProvider } from './KeyboardShortcutsProvider.tsx';
+import { NavigationIntentBridge } from './NavigationIntentBridge.tsx';
 import { PanePicker } from './PanePicker.tsx';
 import { TabContainer } from './TabContainer.tsx';
 
@@ -121,6 +122,8 @@ export function Workspace(): React.JSX.Element {
   const [pendingSession, setPendingSession] = useState<{
     projectCwd: string;
     sessionCwd: string;
+    branch?: string;
+    targetPaneId?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -176,6 +179,21 @@ export function Workspace(): React.JSX.Element {
 
   const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
 
+  // Stable identity per pendingSession value — an inline object would re-fire
+  // TabContainer's create effect on every Workspace render (duplicate sessions)
+  const pendingNewSession = useMemo(
+    () =>
+      pendingSession
+        ? {
+            cwd: pendingSession.sessionCwd,
+            projectCwd: pendingSession.projectCwd,
+            branch: pendingSession.branch,
+            targetPaneId: pendingSession.targetPaneId,
+          }
+        : null,
+    [pendingSession],
+  );
+
   const allWorktrees = useMemo(() => {
     const result: Record<string, WorktreeInfo[]> = {};
     for (const p of projects) {
@@ -209,9 +227,10 @@ export function Workspace(): React.JSX.Element {
             activeProjectCwd ? (selectedWorktreeCwd[activeProjectCwd] ?? undefined) : undefined
           }
         >
+          <NavigationIntentBridge />
           <KeyboardShortcutsProvider>
             <TabContainer
-              pendingNewSessionCwd={pendingSession?.sessionCwd ?? null}
+              pendingNewSession={pendingNewSession}
               onSessionCreated={handleSessionCreated}
               onOpenModal={handleOpenModal}
               onOpenSettings={handleOpenSettings}
@@ -233,9 +252,9 @@ export function Workspace(): React.JSX.Element {
             allWorktrees={allWorktrees}
             activeProjectCwd={activeProjectCwd ?? undefined}
             targetPaneId={openInPaneTargetPaneId}
-            onNewSession={(cwd, projectCwd) => {
+            onNewSession={(cwd, projectCwd, targetPaneId) => {
               setActiveProject(projectCwd);
-              setPendingSession({ projectCwd, sessionCwd: cwd });
+              setPendingSession({ projectCwd, sessionCwd: cwd, targetPaneId });
               setOpenInPaneModalOpen(false);
             }}
             onNewWorktree={(projectCwd) => {
