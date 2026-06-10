@@ -37,14 +37,14 @@ rehydrate／live-channel 重綁（mode:'resume' 不 spawn）的測試在 layout-
 
 ## D. Bug 修正
 
-- [ ] 4.1 [test] zoom — zoom 後 zoomed pane 佔滿 split-pane-root（style 斷言：無 percentage wrapper、無 divider）
-- [ ] 4.2 [test] mobile — focused pane 佔滿、其餘 split 不渲染
-- [ ] 4.3 [impl] PaneSplit 用 `hasLeaf` 判斷 zoom/mobile 目標側，只渲染該側；PaneLeaf 移除 hidden 邏輯
-- [ ] 4.4 [test] DnD swap — dragstart pane A header → drop pane B header → 兩 leaf content 互換
+- [x] 4.1 [test] zoom — zoom 後 zoomed pane 佔滿 split-pane-root（style 斷言：無 percentage wrapper、無 divider）
+- [x] 4.2 [test] mobile — focused pane 佔滿、其餘 split 不渲染
+- [x] 4.3 [impl] PaneSplit 用 `hasLeaf` 判斷 zoom/mobile 目標側，只渲染該側；PaneLeaf 移除 hidden 邏輯
+- [x] 4.4 [test] DnD swap — dragstart pane A header → drop pane B header → 兩 leaf content 互換
 - [x] 4.5 [impl] PaneLeaf common props 接 `onSwap: (sourceId) => swapPane(sourceId, node.id)`
-- [ ] 4.6 [test] 純 tool-pane layout（無 session tab）— PaneTree 照常渲染 git/worktrees pane，不被空狀態 gate 吃掉
-- [ ] 4.7 [impl] TabContainer early return 改判「預設空狀態」（單 tab 且單一 empty session leaf）
-- [ ] 4.8 [impl] PaneLeaf 外層 `key={node.id}`
+- [x] 4.6 [test] 純 tool-pane layout（無 session tab）— PaneTree 照常渲染 git/worktrees pane，不被空狀態 gate 吃掉
+- [x] 4.7 [impl] TabContainer early return 改判「預設空狀態」（單 tab 且單一 empty session leaf）
+- [x] 4.8 [impl] PaneLeaf 外層 `key={node.id}`
 
 ## E. 收尾
 

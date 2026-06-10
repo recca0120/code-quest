@@ -14,6 +14,7 @@ import {
   usePaneState,
   useTabActions,
   useTabState,
+  useWorkspaceTab,
 } from '@/contexts/TabContext';
 import { PaneTree } from './PaneTree.tsx';
 import { PaneZoomProvider } from './PaneZoomProvider.tsx';
@@ -59,6 +60,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   const { activeProjectCwd, projects } = useProjectState();
   const { paneRoot, focusedPaneId } = usePaneState();
+  const { workspaceTabs } = useWorkspaceTab();
   const { setSessionInPane, focusPane, splitPaneAndAssign } = usePaneActions();
 
   const focusedLeaf = focusedPaneId ? findPaneLeaf(paneRoot, focusedPaneId) : null;
@@ -158,7 +160,17 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     [onToggleLeft, onOpenModal, onNewWorktree],
   );
 
-  if (tabEntries.length === 0) {
+  // Global empty state only when the layout itself is the pristine default —
+  // a restored layout of pure tool panes (git/worktrees) must render even with
+  // zero session tabs (e.g. after server restart killed all sessions)
+  const isDefaultEmptyLayout = workspaceTabs.every(
+    (t) =>
+      t.paneRoot.type === 'leaf' &&
+      t.paneRoot.content.type === 'session' &&
+      t.paneRoot.content.sessionId === null,
+  );
+
+  if (tabEntries.length === 0 && isDefaultEmptyLayout) {
     return (
       <EmptyState
         icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}

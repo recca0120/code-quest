@@ -1,9 +1,16 @@
-import { type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
+import { hasLeaf, type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { PaneDivider } from './PaneDivider';
 import { PaneLeafBody } from './panes/PaneLeafBody.tsx';
 import { useMobileMode } from './useMobileMode';
 
 type RenderLeaf = (node: PaneNode) => React.ReactNode;
+
+/** zoom（或 mobile 時的 focus）指定的「唯一顯示」pane id */
+function useSoloPaneId(): string | null {
+  const { zoomedPaneId, focusedPaneId } = usePaneState();
+  const isMobile = useMobileMode();
+  return zoomedPaneId ?? (isMobile ? focusedPaneId : null);
+}
 
 function PaneLeaf({
   node,
@@ -12,13 +19,7 @@ function PaneLeaf({
   node: Extract<PaneNode, { type: 'leaf' }>;
   renderLeaf?: RenderLeaf;
 }) {
-  const { zoomedPaneId, focusedPaneId } = usePaneState();
   const { focusPane } = usePaneActions();
-  const isMobile = useMobileMode();
-  const isZoomed = zoomedPaneId === node.id;
-  const isFocused = focusedPaneId === node.id;
-  const hidden =
-    (isMobile && focusedPaneId !== null && !isFocused) || (zoomedPaneId !== null && !isZoomed);
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: pane container handles click-to-focus; tabIndex={-1} is intentional for programmatic focus only
@@ -30,8 +31,7 @@ function PaneLeaf({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') focusPane(node.id);
       }}
-      hidden={hidden}
-      style={hidden ? undefined : { flex: 1, overflow: 'hidden' }}
+      style={{ flex: 1, overflow: 'hidden' }}
       className="flex flex-1 min-w-0 min-h-0"
     >
       {renderLeaf ? renderLeaf(node) : <PaneLeafBody node={node} />}
@@ -47,6 +47,19 @@ function PaneSplit({
   renderLeaf?: RenderLeaf;
 }) {
   const { updateRatio } = usePaneActions();
+  const soloId = useSoloPaneId();
+
+  // Solo 決策在 split 層：目標只在一側 → 直接渲染該側、不渲染 percentage wrapper
+  // 與 divider —— zoomed/mobile-focused pane 才真正佔滿（修「hidden 佔位空洞」bug：
+  // 舊作法在 leaf 層 hidden，但 wrapper 的 width:N% 還在，zoom 毫無放大效果）
+  if (soloId) {
+    const inFirst = hasLeaf(node.first, soloId);
+    const inSecond = hasLeaf(node.second, soloId);
+    if (inFirst !== inSecond) {
+      const side = inFirst ? node.first : node.second;
+      return <PaneTreeNode node={side} renderLeaf={renderLeaf} />;
+    }
+  }
 
   const isHorizontal = node.direction === 'h';
   const dimension = isHorizontal ? 'width' : 'height';
@@ -73,8 +86,9 @@ function PaneSplit({
 }
 
 function PaneTreeNode({ node, renderLeaf }: { node: PaneNode; renderLeaf?: RenderLeaf }) {
-  if (node.type === 'leaf') return <PaneLeaf node={node} renderLeaf={renderLeaf} />;
-  return <PaneSplit node={node} renderLeaf={renderLeaf} />;
+  // key={node.id}: leaf id 由 wire 帶來、跨裝置穩定 → rehydrate/swap 後 mount 身份可預期
+  if (node.type === 'leaf') return <PaneLeaf key={node.id} node={node} renderLeaf={renderLeaf} />;
+  return <PaneSplit key={node.id} node={node} renderLeaf={renderLeaf} />;
 }
 
 export function PaneTree({ renderLeaf }: { renderLeaf?: RenderLeaf } = {}): React.JSX.Element {

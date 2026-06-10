@@ -114,10 +114,8 @@ describe('Phase 1 integration (9.1)', () => {
     await user.click(screen.getByRole('button', { name: 'zoom' }));
     expect(screen.getByTestId('zoomed-id')).not.toHaveTextContent('none');
 
-    // SplitPane shows zoomed pane (one leaf hidden)
-    const leaves = screen.getAllByTestId('split-pane-leaf');
-    const hiddenCount = leaves.filter((el) => el.hasAttribute('hidden')).length;
-    expect(hiddenCount).toBe(1);
+    // Solo rendering: only the zoomed leaf stays in the DOM (fills the root)
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
 
     // Unzoom
     await user.click(screen.getByRole('button', { name: 'unzoom' }));

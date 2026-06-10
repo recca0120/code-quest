@@ -78,11 +78,11 @@ describe('Gap-M: Mobile forces single pane display', () => {
     await user.click(screen.getByRole('button', { name: 'split' }));
     await user.click(screen.getByRole('button', { name: 'focus-first' }));
 
+    // Solo rendering: only the focused leaf is in the DOM — the split wrapper,
+    // divider and the other leaf are not rendered at all (it fills the area)
     const leaves = container.querySelectorAll('[data-testid="split-pane-leaf"]');
-    expect(leaves.length).toBe(2);
-    // On mobile with a focused pane: exactly one leaf (the non-focused) should be hidden
-    const hiddenLeaves = [...leaves].filter((el) => el.hasAttribute('hidden'));
-    expect(hiddenLeaves.length).toBe(1);
+    expect(leaves.length).toBe(1);
+    expect(container.querySelector('[data-testid="pane-divider"]')).toBeNull();
   });
 
   it('on desktop, both pane leaves are visible after split', async () => {
@@ -154,18 +154,16 @@ describe('Gap-M: Mobile forces single pane display', () => {
     await user.click(screen.getByRole('button', { name: 'split' }));
     await user.click(screen.getByRole('button', { name: 'focus-first' }));
 
-    const leaves = () => container.querySelectorAll('[data-testid="split-pane-leaf"]');
+    const leaves = () => [...container.querySelectorAll('[data-testid="split-pane-leaf"]')];
 
-    // first is focused → second should be hidden
-    const hiddenAfterFocusFirst = [...leaves()].filter((el) => el.hasAttribute('hidden'));
-    expect(hiddenAfterFocusFirst.length).toBe(1);
-    expect(hiddenAfterFocusFirst[0]).toHaveAttribute('data-pane-id', secondId);
+    // first is focused → only first rendered (solo)
+    expect(leaves()).toHaveLength(1);
+    expect(leaves()[0]).toHaveAttribute('data-pane-id', firstId);
 
-    // switch focus to second → first should be hidden
+    // switch focus to second → only second rendered
     await user.click(screen.getByRole('button', { name: 'focus-second' }));
-    const hiddenAfterFocusSecond = [...leaves()].filter((el) => el.hasAttribute('hidden'));
-    expect(hiddenAfterFocusSecond.length).toBe(1);
-    expect(hiddenAfterFocusSecond[0]).toHaveAttribute('data-pane-id', firstId);
+    expect(leaves()).toHaveLength(1);
+    expect(leaves()[0]).toHaveAttribute('data-pane-id', secondId);
   });
 });
 

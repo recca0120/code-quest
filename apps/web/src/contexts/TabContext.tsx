@@ -115,7 +115,7 @@ export function firstLeafId(node: PaneNode): string | null {
   return firstLeafId(node.first) ?? firstLeafId(node.second);
 }
 
-function hasLeaf(node: PaneNode, id: string): boolean {
+export function hasLeaf(node: PaneNode, id: string): boolean {
   if (node.type === 'leaf') return node.id === id;
   return hasLeaf(node.first, id) || hasLeaf(node.second, id);
 }

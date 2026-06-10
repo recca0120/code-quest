@@ -158,10 +158,9 @@ describe('SplitPane (2.3) zoom hides other panes', () => {
 
     await user.click(screen.getByRole('button', { name: 'zoom-first' }));
 
-    // After zoom, one leaf visible, one hidden
-    const allLeaves = screen.getAllByTestId('split-pane-leaf');
-    const hiddenLeaves = allLeaves.filter((el) => el.hasAttribute('hidden'));
-    expect(allLeaves).toHaveLength(2);
-    expect(hiddenLeaves).toHaveLength(1);
+    // Solo rendering: after zoom only the zoomed leaf is in the DOM —
+    // no split wrapper / divider, so it truly fills the root
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
+    expect(screen.queryByTestId('pane-divider')).toBeNull();
   });
 });
