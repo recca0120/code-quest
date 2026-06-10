@@ -7,7 +7,7 @@ type ResumeRoute =
 
 /** Decide what to do with a picked session after useResume() resolved.
  *
- *  - If the current ChatPanel's tab is empty (no messages) AND the picked
+ *  - If the current ChatShell's tab is empty (no messages) AND the picked
  *    session belongs to the same project, replace the current tab in place
  *    so the user doesn't end up with two tabs for the same chat.
  *  - Otherwise, when the picked session has a cwd, route to that project

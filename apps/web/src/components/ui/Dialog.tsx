@@ -20,7 +20,7 @@ interface DialogContentProps {
   scrollable?: boolean;
   /** Portal target. When set, overlay + content render inside the given
    *  element (which SHOULD be `position: relative`) instead of document.body
-   *  — use for dialogs scoped to a panel region (e.g. ChatPanel). */
+   *  — use for dialogs scoped to a panel region (e.g. ChatShell). */
   container?: HTMLElement | null;
 }
 

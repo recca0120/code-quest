@@ -9,7 +9,7 @@ interface SideQuestionDialogProps {
   error: string | null;
   onClose: () => void;
   /** Optional portal target to scope the backdrop to a subset of the viewport
-   *  (e.g. ChatPanel) instead of covering the whole app. */
+   *  (e.g. ChatShell) instead of covering the whole app. */
   container?: HTMLElement | null;
 }
 

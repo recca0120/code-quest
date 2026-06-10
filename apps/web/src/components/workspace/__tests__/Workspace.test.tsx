@@ -26,7 +26,7 @@ describe('Workspace — empty state', () => {
 });
 
 describe('Workspace — with project', () => {
-  it('renders a tab with ChatPanel inside', async () => {
+  it('renders a tab with ChatShell inside', async () => {
     await setup();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
