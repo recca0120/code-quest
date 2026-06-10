@@ -68,7 +68,8 @@ function ConnectedPanePicker(props: PanePickerConfig) {
       onShowHere={(channelId, paneId) => {
         const target = paneId ?? focusedPaneId;
         if (target) {
-          setSessionInPane(target, channelId);
+          const session = props.sessions?.find((s) => s.channelId === channelId);
+          setSessionInPane(target, channelId, session?.cwd ?? null);
           focusPane(target);
         }
         props.onClose();
@@ -77,7 +78,8 @@ function ConnectedPanePicker(props: PanePickerConfig) {
         const res = await resume(sessionId);
         const target = props.targetPaneId ?? focusedPaneId;
         if (target) {
-          setSessionInPane(target, res.channelId);
+          const past = pastSessions.find((s) => s.id === sessionId);
+          setSessionInPane(target, res.channelId, past?.cwd ?? null);
           focusPane(target);
         }
         props.onClose();

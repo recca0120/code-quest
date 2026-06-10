@@ -14,7 +14,7 @@ import { TERMINAL_STATES } from './session-states.ts';
 // ── Pane tree types ──
 
 export type PaneContent =
-  | { type: 'session'; sessionId: string | null }
+  | { type: 'session'; sessionId: string | null; cwd: string | null }
   | { type: 'git'; cwd: string }
   | { type: 'files'; cwd: string }
   | { type: 'spec'; cwd: string }
@@ -53,11 +53,11 @@ export function usePaneState(): PaneStateValue {
 
 interface PaneActionsValue {
   splitPane: (direction: 'h' | 'v') => void;
-  splitPaneAndAssign: (direction: 'h' | 'v', sessionId: string) => void;
+  splitPaneAndAssign: (direction: 'h' | 'v', sessionId: string, cwd: string | null) => void;
   closePane: (paneId: string) => void;
   focusPane: (paneId: string) => void;
   updateRatio: (splitNodeId: string, ratio: number) => void;
-  setSessionInPane: (paneId: string, sessionId: string | null) => void;
+  setSessionInPane: (paneId: string, sessionId: string | null, cwd: string | null) => void;
   setContentInPane: (paneId: string, content: PaneContent) => void;
   zoomPane: (paneId: string | null) => void;
   swapPane: (idA: string, idB: string) => void;
@@ -74,7 +74,9 @@ export function usePaneActions(): PaneActionsValue {
 
 // ── Pane tree helpers ──
 
-function makeLeaf(content: PaneContent = { type: 'session', sessionId: null }): PaneNode {
+function makeLeaf(
+  content: PaneContent = { type: 'session', sessionId: null, cwd: null },
+): PaneNode {
   return { type: 'leaf', id: crypto.randomUUID(), content };
 }
 
@@ -126,12 +128,13 @@ function splitNodeAndAssign(
   focusedId: string | null,
   direction: 'h' | 'v',
   sessionId: string,
+  cwd: string | null,
 ): { root: PaneNode; newLeafId: string } {
   // Guard against stale focused IDs (e.g. from close-button click bubbling to SplitPaneLeaf)
   const validFocusedId = focusedId && hasLeaf(root, focusedId) ? focusedId : null;
   const targetId = validFocusedId ?? firstLeafId(root);
   if (!targetId) return { root, newLeafId: '' };
-  const newLeaf = makeLeaf({ type: 'session', sessionId });
+  const newLeaf = makeLeaf({ type: 'session', sessionId, cwd });
   const newRoot = mapNode(root, (node) => {
     if (node.type === 'leaf' && node.id === targetId) {
       return {
@@ -207,7 +210,8 @@ function deserializePaneNode(
     const content = node.content;
     let paneContent: PaneContent;
     if (content.type === 'session') {
-      paneContent = { type: 'session', sessionId: null };
+      // Permissive: preserve cwd from wire as restore hint; liveness is a render-time concern
+      paneContent = { type: 'session', sessionId: null, cwd: content.cwd };
     } else if (content.type === 'files') {
       paneContent = { type: 'files', cwd: content.cwd };
     } else if (content.type === 'git') {
@@ -242,7 +246,7 @@ function serializePaneNode(node: PaneNode): PersistedTab['paneRoot'] {
   if (node.type === 'leaf') {
     const c = node.content;
     if (c.type === 'session') {
-      return { type: 'leaf', id: node.id, content: { type: 'session', cwd: null } };
+      return { type: 'leaf', id: node.id, content: { type: 'session', cwd: c.cwd } };
     }
     if (c.type === 'spec') {
       return { type: 'leaf', id: node.id, content: { type: 'openspec', cwd: c.cwd } };
@@ -369,7 +373,7 @@ interface TabActionsValue {
   setActiveTab: (id: string) => void;
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
-  createNewTab: (opts?: { cwd?: string }) => { channelId: string };
+  createNewTab: (opts?: { cwd?: string }) => { channelId: string; cwd: string | null };
   replaceActiveTab: (newChannelId: string, cwd?: string, branch?: string) => void;
   replaceTab: (oldChannelId: string, newChannelId: string) => void;
 }
@@ -460,7 +464,7 @@ export function TabProvider({
         },
         activeTabId: channelId,
       }));
-      return { channelId };
+      return { channelId, cwd: tabCwd ?? null };
     },
     replaceActiveTab: (newChannelId, cwd, branch) => {
       setState((prev) => {
@@ -659,13 +663,14 @@ export function TabProvider({
         return { ...t, paneRoot: newRoot, focusedPaneId: newLeafId ?? t.focusedPaneId };
       });
     },
-    splitPaneAndAssign: (direction, sessionId) => {
+    splitPaneAndAssign: (direction, sessionId, cwd) => {
       updateActiveTab((t) => {
         const { root: newRoot, newLeafId } = splitNodeAndAssign(
           t.paneRoot,
           t.focusedPaneId,
           direction,
           sessionId,
+          cwd,
         );
         return { ...t, paneRoot: newRoot, focusedPaneId: newLeafId };
       });
@@ -692,12 +697,12 @@ export function TabProvider({
         ),
       }));
     },
-    setSessionInPane: (paneId, sessionId) => {
+    setSessionInPane: (paneId, sessionId, cwd) => {
       updateActiveTab((t) => ({
         ...t,
         paneRoot: mapNode(t.paneRoot, (node) =>
           node.type === 'leaf' && node.id === paneId
-            ? { ...node, content: { type: 'session', sessionId } }
+            ? { ...node, content: { type: 'session', sessionId, cwd } }
             : node,
         ),
       }));

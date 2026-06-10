@@ -69,8 +69,8 @@ describe('PaneDragDrop (D.2) drop swaps pane contents', () => {
           onClick={() => {
             splitPane('h');
             if (paneRoot.type === 'split') {
-              setSessionInPane(paneRoot.first.id, 'sess-L');
-              setSessionInPane(paneRoot.second.id, 'sess-R');
+              setSessionInPane(paneRoot.first.id, 'sess-L', null);
+              setSessionInPane(paneRoot.second.id, 'sess-R', null);
             }
           }}
         >

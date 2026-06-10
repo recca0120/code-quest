@@ -70,7 +70,7 @@ describe('Fix-1: ⌘T creates tab with focused pane cwd', () => {
           onClick={() => {
             addTab('sess-focus', '/my-project');
             if (paneRoot.type === 'leaf') {
-              setSessionInPane(paneRoot.id, 'sess-focus');
+              setSessionInPane(paneRoot.id, 'sess-focus', null);
               focusPane(paneRoot.id);
             }
           }}

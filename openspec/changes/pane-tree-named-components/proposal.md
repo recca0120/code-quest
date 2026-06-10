@@ -34,6 +34,7 @@ Pane 是樹狀結構，但目前的渲染與序列化都沒有按樹的節點類
 - session content 改 `{ type:'session'; sessionId: string|null; cwd: string|null }`，`setSessionInPane` / `splitPaneAndAssign` 簽名加 cwd，綁定當下寫入——serialize 變純函式（殺 stale closure），cwd 同時是 EmptyPane 還原 hint
 - tool pane content 改 `target: { kind:'fixed', cwd } | { kind:'follow' }`（預留 worktree-centric D5，目前只實作 fixed）
 - client `'spec'` rename 為 `'openspec'`，對齊 wire 與 server events
+- split ratio：serialize round 到 4 位小數、還原時 clamp `[0.05, 0.95]`（echo guard 穩定性＋defensive restore，schema 層用 catch/clamp 不 reject）
 
 ### Bug 修正
 
@@ -44,5 +45,6 @@ Pane 是樹狀結構，但目前的渲染與序列化都沒有按樹的節點類
 ## Impact
 
 - **影響檔案**：`SplitPane.tsx`（改名拆分）、`TabContainer.tsx`（大幅瘦身）、`TabContext.tsx`（content shape、codecs 抽出）、`Pane.tsx`（不變）、新增 `panes/` 目錄與 `pane-codecs.ts`
-- **相依**：`layout-persistence` 的 wire v2（schema 同步改 shape）依賴本 change 的 content shape——**本 change 先做**；`worktree-centric-workspace` D5 的 follow mode 已在 shape 預留
+- **相依**：`layout-persistence` 的 wire v2（schema 同步改 shape）依賴本 change 的 content shape——**本 change 先做**；`worktree-centric-workspace` D5 的 follow mode 已在 shape 預留（shape 以本 change D1 為準）。EmptyPane hint 的 cwd→{project, branch} 反查在 worktree-centric D3 lookup map 落地前，先用 TabContainer 既有 `availableWorktrees` 本地反查，D3 落地後改吃共用 map
+- **RightPane**：維持 ephemeral quick-view 不入樹（design D8），worktree-centric D5 落地後再評估退役
 - **測試**：zoom 修正需補 layout 級驗證（jsdom 驗不到，用 Storybook/Playwright 或斷言 style）；既有 pane 測試的 testid 不變

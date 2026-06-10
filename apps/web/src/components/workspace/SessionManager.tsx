@@ -32,7 +32,7 @@ export function SessionManager({
   function handleSelect(sessionId: string): void {
     const targetId = focusedPaneId ?? firstLeafId(paneRoot);
     if (targetId) {
-      setSessionInPane(targetId, sessionId);
+      setSessionInPane(targetId, sessionId, tabs[sessionId]?.cwd ?? null);
       focusPane(targetId);
     }
     onClose();

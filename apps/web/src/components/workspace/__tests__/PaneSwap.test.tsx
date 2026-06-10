@@ -54,8 +54,8 @@ describe('PaneSwap (S.1) swapPane action', () => {
             type="button"
             onClick={() => {
               if (paneRoot.type === 'split') {
-                setSessionInPane(paneRoot.first.id, 'sess-A');
-                setSessionInPane(paneRoot.second.id, 'sess-B');
+                setSessionInPane(paneRoot.first.id, 'sess-A', null);
+                setSessionInPane(paneRoot.second.id, 'sess-B', null);
               }
             }}
           >
@@ -115,8 +115,8 @@ describe('PaneSwap (S.2) ⌘⇧→ swaps focused pane with right sibling', () =>
             if (paneRoot.type === 'leaf') {
               splitPane('h');
             } else if (paneRoot.type === 'split') {
-              setSessionInPane(paneRoot.first.id, 'sess-A');
-              setSessionInPane(paneRoot.second.id, 'sess-B');
+              setSessionInPane(paneRoot.first.id, 'sess-A', null);
+              setSessionInPane(paneRoot.second.id, 'sess-B', null);
               focusPane(paneRoot.first.id);
             }
           }}

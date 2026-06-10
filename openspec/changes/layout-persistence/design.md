@@ -6,7 +6,9 @@ Layout 持久化是 `workspace-tab-split-pane` change 的一部分（Decision 14
 
 ## Decisions
 
-### 1. 持久化 schema：PersistedLayout
+### 1. 持久化 schema：PersistedLayout（⚠ superseded by「Wire Schema v2」，2026-06-10）
+
+> **v2 修訂**：session 改存 `{ channelId, cwd }`（channelId 用於**重綁**仍存活的 session，非重建）；tool pane 改 `target` union；加 worktrees variant 與 version。以下為 v1 原始決策，僅供 migration 對照。
 
 `sessionId` 是 runtime 概念（Channel 存活期間才有意義），不應持久化。PaneLeaf 改存 `cwd`，讓 server 能在重連時提示「從哪個目錄恢復」，而不是嘗試重建 session。
 
@@ -40,7 +42,7 @@ type PersistedLayout = { tabs: PersistedTab[]; activeTabId: string }
 
 ---
 
-### 2. WS Events 設計
+### 2. WS Events 設計（⚠ 部分 superseded：layout:save 改 RPC ack ＋ rev，見 §13.7-13.8 / §9）
 
 `layout:load` / `layout:loaded` 不需要獨立設計，改為在 `app:init` ack 一次帶回，少一個 round trip。
 
@@ -52,7 +54,7 @@ type PersistedLayout = { tabs: PersistedTab[]; activeTabId: string }
 
 ---
 
-### 3. LayoutStore：memory-only，per summoner
+### 3. LayoutStore：memory-only，per summoner（⚠ v2 修訂：set/get 帶 rev counter，見 §9.2）
 
 每個 summoner 一份 layout（用 summonerId 為 key）。Server 重啟後 layout 清空，browser 重連收到 `null` 從預設狀態開始。
 
@@ -80,9 +82,11 @@ class LayoutStore {
 
 ---
 
-### 5. Session 恢復策略：保守（不自動建立 session）
+### 5. Session 恢復策略：保守（不自動建立 session）（⚠ v2 修訂，見 Review Findings F3）
 
-rehydrate 時所有 PaneLeaf session 的 `sessionId = null`（顯示 EmptyPanePicker + cwd 提示），使用者點擊後手動開 session。
+> **v2 修訂**：deserialize 無條件保留 channelId；存活判斷在 **render time**——channelId 仍 live 的 leaf 以 mode:'resume' **重綁**（session:join，不 spawn）；已死的才顯示 EmptyPane + cwd 提示。「保守」原則收斂為「**不 spawn 新 process**」，重綁活 session 不違反此原則。
+
+rehydrate 時所有 PaneLeaf session 的 `sessionId = null`（顯示 EmptyPanePicker + cwd 提示），使用者點擊後手動開 session。（v1 原文）
 
 **理由**：不自動建立 session，避免重整後同時開多個 session 造成資源浪費，也避免在使用者不知情的情況下自動執行 Claude process。
 
@@ -94,7 +98,7 @@ rehydrate 時所有 PaneLeaf session 的 `sessionId = null`（顯示 EmptyPanePi
 
 ---
 
-## Data Flow
+## Data Flow（⚠ superseded：v2 行為見「Wire Schema v2」的 restore 決策表與 pane-tree-named-components design 的同步資料流圖；以下 v1 流程僅供對照——sync 路徑不再重置 sessionId/focused/activeTab）
 
 ### 連線初始化（Browser reload）
 
@@ -202,7 +206,8 @@ server 已有 sessionStore/settingsStore 落盤，使用者心智模型是「ses
 ```jsonc
 {
   "version": 2,                          // 必填 z.literal(2)；趁尚無部署資料直接定版
-  "rev": 17,                             // server 配發，單調遞增（F1 echo guard）
+  "rev": 17,                             // ⚠ 僅出現在 layout:sync / app:init 下行與 save ack；
+                                         //   layout:save 上行不含此欄位（server 配發）
   "tabs": [{
     "id": "tab-1", "label": "main",
     "paneRoot": {
@@ -226,6 +231,8 @@ server 已有 sessionStore/settingsStore 落盤，使用者心智模型是「ses
 | `{ type:'worktrees' }` variant | 修 F2 |
 | unknown content variant → 降級 empty leaf | 新 pane type 不會讓舊 client 整份 parse 失敗（F2 的 wire 端對偶） |
 | `layout:save` 加 ack callback | parse 失敗回 `{ ok:false }`，終結靜默丟棄；成功回新 rev |
+| ratio：schema 用 catch/clamp 不 reject | serialize 端 round 4 位小數（pane-tree D9）；schema `z.number().catch(0.5)`＋deserialize clamp `[0.05,0.95]`——壞 ratio 不得讓 safeParse 打掉整份 layout |
+| `rev` 僅下行 | rev 只出現在 `layout:sync` / `app:init` 下行 payload 與 save 的 ack；`layout:save` 上行**不含** rev（persistedLayoutSchema 無此欄位，server 配發） |
 | 不持久化 | focusedPaneId / zoomedPaneId / rightOpen / title（runtime 資料） |
 
 Restore 決策表（session leaf）：

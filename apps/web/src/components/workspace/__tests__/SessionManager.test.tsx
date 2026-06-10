@@ -143,7 +143,7 @@ describe('SessionManager (O.4) sessions grouped by workspace tab', () => {
             // Session in default tab (Layout 1)
             addTab('sess-layout1', '/project-a');
             const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
-            if (leafId) setSessionInPane(leafId, 'sess-layout1');
+            if (leafId) setSessionInPane(leafId, 'sess-layout1', null);
             // Add a second workspace tab with a session
             addWorkspaceTab('My Layout');
             addTab('sess-layout2', '/project-b');

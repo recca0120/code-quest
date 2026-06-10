@@ -47,7 +47,7 @@ type PaneContent =
   | { type: 'openspec'; target: PaneTarget }      // 'spec' rename
   | { type: 'worktrees' };
 
-type PaneTarget = { kind: 'fixed'; cwd: string } | { kind: 'follow' };  // follow = D5 預留，暫不實作
+type PaneTarget = { kind: 'fixed'; cwd: string } | { kind: 'follow' };  // follow = worktree-centric D5 預留，暫不實作（shape 以本處為準）
 ```
 
 - session 的 cwd 在**綁定當下**寫入：`setSessionInPane(paneId, sessionId, cwd)`、`splitPaneAndAssign(direction, sessionId, cwd)`——serialize 因此是純 tree function，不需要查 tabs map（save effect 的 deps 只有 `[wsState]`，timer fire 時 tabs 是 stale closure，**必然**拿到舊值——這是否決 SerializeCtx 的原因）
@@ -77,6 +77,7 @@ switch (content.type) {
 - **不可**做單一 `PANE_KINDS = { Component + serialize }`：TabContext import registry → registry 含 SessionPane → import 回 TabContext 的 runtime 循環；TabProvider 也會失去 standalone 測試能力
 - **不可**用 Record lookup 渲染 union component：JSX props 塌縮成 never，必逼出 cast
 - 加靜態斷言 `AssertEqual<PaneContent['type'], PersistedPaneContent['type']>` 守住兩個 union 的 key 同步
+- **欄位對映明示**：session codec 做 `sessionId（client）⇄ channelId（wire）` 改名對映；roundtrip identity 以 wire shape 為基準（`serialize∘deserialize ≡ id`）
 
 ### D3. Liveness 判斷在 render time，不在 deserialize
 
@@ -103,7 +104,7 @@ interface PaneView {
 ### D5. Props 扁平、資料從窄 context 自取（否決 PaneRenderCtx）
 
 - named component props 只有 `{ paneId, content }`；`mapNode` 的結構共享保證未變動 leaf 的 content identity 穩定（memo / React Compiler 友善）
-- 資料各自取：SessionPane 用 `useTabState`；tool panes 用 cwd→identity lookup（worktree-centric D3）；callbacks 走 stable actions（D6 createSessionInPane 下沉後 identity 永久穩定）
+- 資料各自取：SessionPane 用 `useTabState`；tool panes 用 cwd→identity lookup（worktree-centric D3）；callbacks 走 stable actions（worktree-centric D6 createSessionInPane 下沉後 identity 永久穩定）
 - 否決理由：單一 fat ctx 的 churn——tabs 每次 status tick、ratio 拖曳每 frame 都換 identity，所有 pane 含 ChatView 全部重渲染；也違反本 codebase state/actions 分離的既有紀律
 
 ### D6. Zoom/mobile 修正：決策上移 PaneSplit
@@ -137,6 +138,7 @@ JSON **不記錄** width / height / pane position——leaf 的矩形由「root 
 兩個防禦細節：
 - **精度**：serialize 時 ratio round 到 4 位小數（拖曳產生 `0.6342819…` 長浮點 → 無意義 diff、echo guard 字串比對不穩）
 - **clamp**：deserialize 時 ratio 限制 `[0.05, 0.95]`——壞資料不得把 pane 壓成 0 寬度不可見（與「worktree 已刪顯示警示」同屬 defensive restore）
+- **schema 層策略：clamp/transform，不 reject**——schema 若對 ratio 範圍做 reject 驗證，safeParse 會在 clamp 之前把整份 layout 打掉（一個壞 ratio 毀全部，重演 worktrees 災難模式）。schema 用 `z.number().catch(0.5)` ＋ deserialize clamp，永遠不因 ratio 拒收 layout
 
 ---
 
@@ -148,24 +150,25 @@ main.tsx → App
    └─ AppConfigProvider                ← app:init RPC；ack 含 layout，subscribeInit 通知訂閱者
       └─ AppProviders                  ← Session → Plugin → Project → Navigation
          │                                → Git → Fs → Openspec → CommandPalette
-         └─ Workspace                  ← activeProjectCwd、dialogs、PanePicker 編排
-            ├─ WorkspaceTabBar         ← workspace tab 切換 / ⊞ / + Project / ⚙
+         └─ Workspace                  ← activeProjectCwd、dialogs 編排
             ├─ TabProvider             ← 本 change 的 state 心臟：
             │  │                          wsState { workspaceTabs[{id,label,paneRoot,focused,zoomed}], activeId }
             │  │                          tabs: Record<channelId, TabMeta>
             │  │                          layout save(debounce)/rehydrate（吃 pane-codecs）
-            │  └─ KeyboardShortcutsProvider
-            │     └─ TabContainer      ← 瘦身後：組裝層
-            │        ├─ SessionBar     ←（remove-session-bar 排定移除）
-            │        ├─ PaneTree       ← 遞迴渲染 active tab 的 paneRoot
-            │        │   ├─ PaneSplit ── ratio/divider；zoom/mobile solo 決策
-            │        │   └─ PaneLeaf ─── key={node.id}、focus、統一 <Pane>+<Pane.Toolbar>
-            │        │        └─ switch → SessionPane | GitPane | FilesPane
-            │        │                    | OpenspecPane | WorktreesPane
-            │        │                      └─ SessionPane → TabContent(ChannelProvider→ChatView)
-            │        │                                        └─ RightPane（ephemeral，D8）
-            │        └─ SessionPool    ← 未入樹/inactive-tab 的 TabContent 保持掛載
-            └─ CommandPalette / PanePicker / dialogs
+            │  ├─ KeyboardShortcutsProvider
+            │  │  └─ TabContainer      ← 瘦身後：組裝層
+            │  │     ├─ WorkspaceTabBar ← workspace tab 切換 / ⊞ / + Project / ⚙
+            │  │     ├─ SessionBar     ←（remove-session-bar 排定移除）
+            │  │     ├─ PaneTree       ← 遞迴渲染 active tab 的 paneRoot
+            │  │     │   ├─ PaneSplit ── ratio/divider；zoom/mobile solo 決策
+            │  │     │   └─ PaneLeaf ─── key={node.id}、focus、統一 <Pane>+<Pane.Toolbar>
+            │  │     │        └─ switch → SessionPane | GitPane | FilesPane
+            │  │     │                    | OpenspecPane | WorktreesPane
+            │  │     │                      └─ SessionPane → TabContent(ChannelProvider→ChatView)
+            │  │     │                                        └─ RightPane（ephemeral，D8）
+            │  │     └─ SessionPool    ← 未入樹/inactive-tab 的 TabContent 保持掛載
+            │  └─ ConnectedPanePicker  ← 必須在 TabProvider 內（usePaneActions/usePaneState）
+            └─ CommandPalette / dialogs
 ```
 
 ## 同步資料流（client ⇄ server）

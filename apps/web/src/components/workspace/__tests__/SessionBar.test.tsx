@@ -65,7 +65,7 @@ describe('SessionBar (7.3) session states', () => {
           type="button"
           onClick={() => {
             if (leafId) {
-              setSessionInPane(leafId, 'ch-1');
+              setSessionInPane(leafId, 'ch-1', null);
               focusPane(leafId);
             }
           }}
@@ -186,7 +186,7 @@ describe('SessionBar (7.2) click active session focuses its pane', () => {
           <button type="button" onClick={() => splitPane('h')}>
             split
           </button>
-          <button type="button" onClick={() => l1Id && setSessionInPane(l1Id, 'ch-1')}>
+          <button type="button" onClick={() => l1Id && setSessionInPane(l1Id, 'ch-1', null)}>
             assign
           </button>
           <button type="button" onClick={() => l2Id && focusPane(l2Id)}>
@@ -341,7 +341,7 @@ describe('SessionBar (8) visual styling by data-status', () => {
       const { paneRoot } = usePaneState();
       const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
       return (
-        <button type="button" onClick={() => leafId && setSessionInPane(leafId, 'ch-1')}>
+        <button type="button" onClick={() => leafId && setSessionInPane(leafId, 'ch-1', null)}>
           assign
         </button>
       );

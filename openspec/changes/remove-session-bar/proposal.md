@@ -1,5 +1,7 @@
 # Remove Session Bar — Proposal
 
+> **⚠ Scope 修訂（2026-06-10，pane-tree-named-components 定案後）**：本 change 原規劃移除的 `tabs: Record<channelId, TabMeta>`、`useTabState` 與 hidden pools，已被 `pane-tree-named-components` 正式化為新架構的一部分（SessionPool 元件、SessionPane 的 render-time liveness 依賴 `tabs[sessionId]`、TabContent 共用掛載單位——見該 change 的 specs/pane-tree）。**移除目標限縮為：`SessionBar`/`TabBar` UI、`contents` div hack、`activeTabId` 舊讀寫**；`tabs` map（session meta store）與 SessionPool 不在移除範圍。本 change 動工前需依 pane-tree-named-components 落地後的實況重寫 Scope 與 tasks。
+
 ## Problem Statement
 
 Codebase 目前並行維護兩套 tab 系統，造成狀態管理複雜度與技術債：
@@ -47,7 +49,9 @@ Codebase 目前並行維護兩套 tab 系統，造成狀態管理複雜度與技
 
 ## Dependencies
 
-此 change 必須在 `layout-persistence` change 完成後才能實作，因為 layout persistence 讓新系統（`workspaceTabs` + pane tree）成為 workspace 狀態的 source of truth，是本 change 能安全移除舊系統的前提。
+1. `layout-persistence` 完成——layout persistence 讓新系統（`workspaceTabs` + pane tree）成為 workspace 狀態的 source of truth，是本 change 能安全移除舊系統的前提。
+2. `pane-tree-named-components` 完成——SessionPool / tabs map 的新定位（見上方 Scope 修訂）。
+3. **worktree-centric-workspace D6（createSessionInPane 下沉 TabContext）必須先完成**——目前 Cmd+T / pendingOpenWorktree 產生的「幽靈 session」唯一可見線索是 SessionBar 多一個 tab；SessionBar 移除後這兩個入口將完全失明。
 
 ## Risks
 

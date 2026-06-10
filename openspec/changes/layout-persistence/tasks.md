@@ -68,14 +68,14 @@
 ### F2 — worktrees pane 靜默失效（大部分被 §13 v2 schema 與 pane-tree-named-components §B codecs 吸收）
 
 - [ ] 10.1 ~~schema worktrees variant~~ → 併入 13.1/13.2
-- [ ] 10.2 ~~窮舉 switch 移除 as cast~~ → 併入 pane-tree-named-components 2.3/2.5
+- [ ] 10.2 ~~mapped-type codecs 移除 as cast~~ → 併入 pane-tree-named-components 2.3/2.5
 - [ ] 10.3 [impl] server `safeParse` 失敗時 `logger.warn(parsed.error)`（13.7 ack 落地前的最低限度可觀測性）
 
 ### F3 — session 重綁 ＋ LWW rehydrate（v2 修訂：render-time liveness 取代 reconcile merge；依賴 pane-tree-named-components A/B）
 
-- [ ] 11.1 [test] serialize — session leaf 帶 content 內的 `{ channelId, cwd }`（綁定當下寫入，serialize 為純 tree function，不查 tabs map）
-- [ ] 11.2 [test] deserialize — 無條件保留 channelId/cwd（不查 live sessions、不驗 cwd）；roundtrip `serialize∘deserialize ≡ identity` property test
-- [ ] 11.3 [impl] serialize/deserialize 走 pane-codecs（pane-tree-named-components §B）
+- [ ] 11.1 ~~serialize 帶 {channelId,cwd}~~ → 併入 pane-tree-named-components 1.1/1.2
+- [ ] 11.2 ~~deserialize 無條件保留＋roundtrip property test~~ → 併入 pane-tree-named-components 2.1/2.2
+- [ ] 11.3 ~~走 pane-codecs~~ → 併入 pane-tree-named-components 2.5
 - [ ] 11.4 [test] rehydrate — 結構整棵採用（LWW）；channelId 仍 live 的 leaf 經 render-time 判斷自動重綁（mode:'resume'，不 spawn）
 - [ ] 11.5 [test] rehydrate dedup — incoming 多個 leaf 帶同一 channelId — 只保留第一個，其餘降級 empty＋hint（防 "Channel already exists" 雙 mount）
 - [ ] 11.6 [impl] deserializeLayout 出口 dedup pass；schema `.refine` channelId 全域唯一；server 拒收違規 payload
@@ -93,7 +93,7 @@
 
 ### Wire Schema v2（design.md「Wire Schema v2」；依賴 pane-tree-named-components A/B 的 content shape）
 
-- [ ] 13.1 [test] schema v2 — `version: z.literal(2)` 必填；session `{ channelId, cwd }`；tool pane `target` union；worktrees variant
+- [ ] 13.1 [test] schema v2 — `version: z.literal(2)` 必填；session `{ channelId, cwd }`；tool pane `target` union；worktrees variant；ratio `z.number().catch(0.5)`（clamp 不 reject，見 pane-tree 2.8）；rev **不在** save schema（僅下行 payload 攜帶）
 - [ ] 13.2 [impl] `persistedLayoutSchema` v2 改版（schemas package）
 - [ ] 13.3 [test] migration — 無 version / v1 payload 經 `migrateLegacyToV2` 升級（session cwd → channelId:null + cwd）
 - [ ] 13.4 [impl] migration chain 與 schema 同檔；client parse 失敗先過 migration

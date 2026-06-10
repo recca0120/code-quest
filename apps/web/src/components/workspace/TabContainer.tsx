@@ -280,18 +280,18 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   // This avoids the double-mount "Channel already exists" error from useEffect-based assignment
   const handleCreateTab = useCallback(
     (opts?: { cwd?: string; targetPaneId?: string }) => {
-      const { channelId } = createNewTab(opts);
+      const { channelId, cwd: newCwd } = createNewTab(opts);
       const effectivePaneId = opts?.targetPaneId ?? focusedPaneId;
       const target = effectivePaneId
         ? (findPaneLeaf(paneRoot, effectivePaneId) ?? findFirstLeaf(paneRoot))
         : findFirstLeaf(paneRoot);
       if (target && target.content.type === 'session') {
         if (target.content.sessionId === null) {
-          setSessionInPane(target.id, channelId);
+          setSessionInPane(target.id, channelId, newCwd);
           focusPane(target.id);
         } else {
           // Pane is occupied — split and assign to new leaf to prevent double-mount
-          splitPaneAndAssign('h', channelId);
+          splitPaneAndAssign('h', channelId, newCwd);
         }
       }
     },
@@ -418,6 +418,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     title: meta.title,
     tabStatus: meta.tabStatus,
     branch: meta.branch,
+    cwd: meta.cwd ?? null,
   }));
 
   return (

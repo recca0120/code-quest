@@ -31,7 +31,7 @@
 - [ ] 6.2 [test] 更新 `TabContainer` 測試：session 關閉觸發新系統的 pane close，不再呼叫 `removeTab`
 - [ ] 6.3 [test] 更新 `TabContainer` 測試：session title 更新觸發 `renameWorkspaceTab`，不再呼叫 `setTabTitle`
 - [ ] 6.4 [test] 更新 `TabContainer` 測試：session status 變更由新系統 session state 追蹤，不再呼叫 `setTabStatus`
-- [ ] 6.5 [impl] `TabContainer`：`createNewTab` → `addWorkspaceTab` + `setSessionInPane`
+- [ ] 6.5 [impl] `TabContainer`：改消費下沉後的 `createSessionInPane` 單一 action（worktree-centric D6，前置依賴）——不在 TabContainer 自行組合 `addWorkspaceTab` + `setSessionInPane`
 - [ ] 6.6 [impl] `TabContainer`：`removeTab` → 新系統 pane close action
 - [ ] 6.7 [impl] `TabContainer`：`setTabTitle` → `renameWorkspaceTab`
 - [ ] 6.8 [impl] `TabContainer`：`setTabStatus` → 新系統 session state 更新機制

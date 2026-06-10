@@ -8,7 +8,7 @@ PaneContent ⇄ PersistedPaneContent 的純函式序列化層（`contexts/pane-c
 
 ### Requirement: Codec round-trip is identity
 
-For every `PaneContent` variant, `serializeContent(deserializeContent(x))` SHALL equal `x`（structural equality）。`deserializeContent` SHALL be lossless：session 的 channelId/cwd 無條件保留，不做存活判斷、不改寫 content。
+For every `PaneContent` variant, `serializeContent(deserializeContent(x))` SHALL equal `x`（structural equality，以 wire shape 為基準）。`deserializeContent` SHALL be lossless：session 的 channelId/cwd 無條件保留，不做存活判斷、不改寫 content。Session codec SHALL map `channelId`（wire）⇄ `sessionId`（client）作為唯一的欄位改名。
 
 #### Scenario: random tree round-trip（property test）
 
@@ -59,7 +59,7 @@ Serializers and deserializers SHALL be declared as mapped types over `PaneConten
 
 ### Requirement: Serialization requires no external context
 
-`serializeContent` / `serializeNode` SHALL be pure functions of the tree（無 tabs map、無 ctx 參數）。Session 的 cwd 由綁定動作（`setSessionInPane(paneId, sessionId, cwd)`）寫入 content，序列化時直接讀取。
+`serializeContent` / `serializeNode` SHALL be pure functions of the tree（無 tabs map、無 ctx 參數）。Session 的 cwd 由綁定動作（`setSessionInPane(paneId, sessionId, cwd)` 與 `splitPaneAndAssign(direction, sessionId, cwd)`）寫入 content，序列化時直接讀取。
 
 #### Scenario: serialize immediately after bind
 

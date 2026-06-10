@@ -15,6 +15,7 @@ interface SessionInfo {
   title?: string;
   tabStatus?: SessionStatus;
   branch?: string;
+  cwd?: string | null;
 }
 
 interface ProjectInfo {
@@ -80,7 +81,8 @@ export function SessionBar({
     }
     const targetId = focusedPaneId ?? firstLeafId(paneRoot);
     if (targetId) {
-      setSessionInPane(targetId, channelId);
+      const session = sessions.find((s) => s.channelId === channelId);
+      setSessionInPane(targetId, channelId, session?.cwd ?? null);
       focusPane(targetId);
     }
   }

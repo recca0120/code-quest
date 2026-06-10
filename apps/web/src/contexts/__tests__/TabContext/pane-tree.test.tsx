@@ -98,7 +98,7 @@ describe('splitPane action (1.3)', () => {
 
     const { user } = renderWithPanes(<Test />);
     await user.click(screen.getByRole('button', { name: 'split' }));
-    expect(newPaneContent).toMatchObject({ type: 'session', sessionId: null });
+    expect(newPaneContent).toMatchObject({ type: 'session', sessionId: null, cwd: null });
   });
 });
 
@@ -264,7 +264,10 @@ describe('setSessionInPane action (1.7)', () => {
       }
 
       return (
-        <button type="button" onClick={() => leafId && setSessionInPane(leafId, 'session-abc')}>
+        <button
+          type="button"
+          onClick={() => leafId && setSessionInPane(leafId, 'session-abc', null)}
+        >
           set-session
         </button>
       );
@@ -341,8 +344,8 @@ describe('buildSessionPaneLabels', () => {
       id: 's1',
       direction: 'h',
       ratio: 0.5,
-      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: 'ch-1' } },
-      second: { type: 'leaf', id: 'p2', content: { type: 'session', sessionId: null } },
+      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: 'ch-1', cwd: null } },
+      second: { type: 'leaf', id: 'p2', content: { type: 'session', sessionId: null, cwd: null } },
     };
     const labels = buildSessionPaneLabels(tree);
     expect(labels.get('ch-1')).toBe('Left pane');
@@ -354,8 +357,12 @@ describe('buildSessionPaneLabels', () => {
       id: 's1',
       direction: 'h',
       ratio: 0.5,
-      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: null } },
-      second: { type: 'leaf', id: 'p2', content: { type: 'session', sessionId: 'ch-2' } },
+      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: null, cwd: null } },
+      second: {
+        type: 'leaf',
+        id: 'p2',
+        content: { type: 'session', sessionId: 'ch-2', cwd: null },
+      },
     };
     const labels = buildSessionPaneLabels(tree);
     expect(labels.get('ch-2')).toBe('Right pane');
@@ -367,8 +374,16 @@ describe('buildSessionPaneLabels', () => {
       id: 's1',
       direction: 'v',
       ratio: 0.5,
-      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: 'ch-top' } },
-      second: { type: 'leaf', id: 'p2', content: { type: 'session', sessionId: 'ch-bot' } },
+      first: {
+        type: 'leaf',
+        id: 'p1',
+        content: { type: 'session', sessionId: 'ch-top', cwd: null },
+      },
+      second: {
+        type: 'leaf',
+        id: 'p2',
+        content: { type: 'session', sessionId: 'ch-bot', cwd: null },
+      },
     };
     const labels = buildSessionPaneLabels(tree);
     expect(labels.get('ch-top')).toBe('Top pane');
@@ -379,7 +394,7 @@ describe('buildSessionPaneLabels', () => {
     const tree: PaneNode = {
       type: 'leaf',
       id: 'p1',
-      content: { type: 'session', sessionId: 'ch-1' },
+      content: { type: 'session', sessionId: 'ch-1', cwd: null },
     };
     const labels = buildSessionPaneLabels(tree);
     expect(labels.get('ch-1')).toBe('Pane');

@@ -71,6 +71,8 @@ layout persistence 的 P0 修正記在 `openspec/changes/layout-persistence/`（
 
 ### D5. Tool pane follow 模式
 
+> **Shape 定版註記（2026-06-10）**：序列化與 client content 的形狀以 `pane-tree-named-components` D1 的 `target: { kind:'fixed'; cwd } | { kind:'follow' }` 為準（wire v2 已預留，命名為 `openspec` 非 `spec`）；下文的 `follow:'focused-session'` 僅為語意描述，非欄位形狀。
+
 PaneContent 的 git/files/spec 增加 `follow: 'focused-session'` variant，渲染時 cwd 即時解析自 focused session 的 `tabs[sessionId].cwd`。WorktreeSwitcher 下拉頂部加「Follow focused session」。pane cwd 與 focused session 不一致時 toolbar 警示色。序列化存 marker 而非 cwd。
 
 > 對照組：RightPane 已自動跟 session 的 meta.cwd（`RightPane.tsx:35-74`），模式正確，只是獨立 tool pane 沒有等價物。

@@ -37,7 +37,7 @@ describe('SplitPane renderLeaf (9.2a)', () => {
       const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
       return (
         <>
-          <button type="button" onClick={() => leafId && setSessionInPane(leafId, 'ch-abc')}>
+          <button type="button" onClick={() => leafId && setSessionInPane(leafId, 'ch-abc', null)}>
             set
           </button>
           <SplitPane renderLeaf={renderLeaf} />

@@ -177,7 +177,7 @@ describe('WorkspaceTabBar (6.4) busy indicator', () => {
             type="button"
             onClick={() => {
               addTab('sess-busy', '/test');
-              if (leafId) setSessionInPane(leafId, 'sess-busy');
+              if (leafId) setSessionInPane(leafId, 'sess-busy', null);
             }}
           >
             setup

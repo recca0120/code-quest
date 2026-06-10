@@ -1,7 +1,8 @@
 # Pane Tree Named Components — Tasks
 
 依賴順序：A（shape）→ B（codecs）→ C（named components）→ D（bug 修正）→ E（rename/收尾）。
-Wire schema v2 的對應任務在 `layout-persistence` tasks.md §13（依賴本 change 的 A/B）。
+Wire schema v2 的對應任務在 `layout-persistence` tasks.md §13（依賴本 change 的 A/B）；
+rehydrate／live-channel 重綁（mode:'resume' 不 spawn）的測試在 layout-persistence §11（11.4/11.9/11.10）。
 
 ## A. PaneContent shape 變更
 
@@ -21,14 +22,14 @@ Wire schema v2 的對應任務在 `layout-persistence` tasks.md §13（依賴本
 - [ ] 2.5 [refactor] TabContext 的 serializePaneNode/deserializePaneNode 改走 codecs，刪除 `as` cast
 - [ ] 2.6 [test] ratio 精度 — serialize split node 時 ratio round 到 4 位小數（`0.6342819…` → `0.6343`），roundtrip 後穩定（echo guard 字串比對前提）
 - [ ] 2.7 [test] ratio clamp — deserialize 時 ratio 限制在 `[0.05, 0.95]`，壞資料（0、1、NaN、負數）clamp 後仍渲染出可見的 pane
-- [ ] 2.8 [impl] serializeNode round ratio；deserializeNode clamp ratio（schema 亦加 `z.number()` 範圍驗證）
+- [ ] 2.8 [impl] serializeNode round ratio；deserializeNode clamp ratio。schema 層用 catch/clamp（如 `z.number().catch(0.5)`）**不可 reject**——壞 ratio 不得讓 safeParse 打掉整份 layout
 
 ## C. Named pane components
 
 - [ ] 3.1 [impl] `SplitPane` → `PaneTree`、split 分支 → `PaneSplit`、`SplitPaneLeaf` → `PaneLeaf`（rename + 拆檔，行為不變，既有測試過）
 - [ ] 3.2 [test] PaneLeaf — 渲染 `<Pane>` + `<Pane.Toolbar>`（common props 含 onSwap）+ type 對應的 Body
-- [ ] 3.3 [impl] 新增 `components/workspace/panes/`：`SessionPane` / `GitPane` / `FilesPane` / `OpenspecPane`（PaneView 介面：ToolbarTools? / Body / scrollable?）；PaneLeaf exhaustive switch + `satisfies never`
-- [ ] 3.4 [test] SessionPane — meta 存在渲染 TabContent；meta 缺席渲染 EmptyPane + cwd hint（「上次: {project} ⎇ {branch}」反查 lookup）
+- [ ] 3.3 [impl] 新增 `components/workspace/panes/`：`SessionPane` / `GitPane` / `FilesPane` / `OpenspecPane` / `WorktreesPane`（PaneView 介面：ToolbarTools? / Body / scrollable?；worktrees case 先沿用現有渲染、3.6 收斂 toolbar）；PaneLeaf exhaustive switch + `satisfies never`
+- [ ] 3.4 [test] SessionPane — meta 存在渲染 TabContent；meta 缺席渲染 EmptyPane + cwd hint（「上次: {project} ⎇ {branch}」；worktree-centric D3 落地前先用 availableWorktrees 本地反查）
 - [ ] 3.5 [test] SessionPane self-heal — sessions 晚到（meta 後出現）同一 leaf 自動從 EmptyPane 切回 TabContent；emit session:closed 後自動降級回 EmptyPane
 - [ ] 3.6 [impl] WorktreesPane 接入 PaneLeaf 統一 toolbar（移除裸 div 包裝）
 - [ ] 3.7 [test] SessionPool — pane 未指派的 live session 在 pool 中保持 mount（既有 anti-double-mount 測試遷移）
@@ -48,4 +49,4 @@ Wire schema v2 的對應任務在 `layout-persistence` tasks.md §13（依賴本
 ## E. 收尾
 
 - [ ] 5.1 [refactor] 全套測試過、knip/biome 乾淨
-- [ ] 5.2 [refactor] 更新 `openspec/specs/split-pane/spec.md` 與 `pane-compound-component/spec.md` 的 delta（named components、toolbar 所有權、zoom 行為）
+- [ ] 5.2 [refactor] 更新既有 specs 的 delta，具體過時項：`split-pane/spec.md` 的「SplitPane leaf renders Pane compound」requirement（更名 PaneTree/PaneSplit/PaneLeaf、toolbar 改 PaneLeaf 統一渲染、session 不包 Pane.Content）、「Spec pane」scenario 的 `type:'spec'`→`'openspec'`；`pane-compound-component/spec.md` 的 WorktreeSwitcher scenario（`setContentInPane` 改 target shape）；zoom 行為歸新 pane-tree spec

@@ -53,7 +53,10 @@ describe('Phase 1 integration (9.1)', () => {
           <button type="button" onClick={() => splitPane('h')}>
             split-h
           </button>
-          <button type="button" onClick={() => leafId && setSessionInPane(leafId, 'session-abc')}>
+          <button
+            type="button"
+            onClick={() => leafId && setSessionInPane(leafId, 'session-abc', null)}
+          >
             set-session
           </button>
           <button type="button" onClick={() => leafId && focusPane(leafId)}>
