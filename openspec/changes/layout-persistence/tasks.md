@@ -67,15 +67,15 @@
 
 ### F2 — worktrees pane 靜默失效（大部分被 §13 v2 schema 與 pane-tree-named-components §B codecs 吸收）
 
-- [ ] 10.1 ~~schema worktrees variant~~ → 併入 13.1/13.2
-- [ ] 10.2 ~~mapped-type codecs 移除 as cast~~ → 併入 pane-tree-named-components 2.3/2.5
+- [x] 10.1 ~~schema worktrees variant~~ → 併入 13.1/13.2
+- [x] 10.2 ~~mapped-type codecs 移除 as cast~~ → 併入 pane-tree-named-components 2.3/2.5
 - [x] 10.3 [impl] server `safeParse` 失敗時 `logger.warn(parsed.error)`（13.7 ack 落地前的最低限度可觀測性）
 
 ### F3 — session 重綁 ＋ LWW rehydrate（v2 修訂：render-time liveness 取代 reconcile merge；依賴 pane-tree-named-components A/B）
 
-- [ ] 11.1 ~~serialize 帶 {channelId,cwd}~~ → 併入 pane-tree-named-components 1.1/1.2
-- [ ] 11.2 ~~deserialize 無條件保留＋roundtrip property test~~ → 併入 pane-tree-named-components 2.1/2.2
-- [ ] 11.3 ~~走 pane-codecs~~ → 併入 pane-tree-named-components 2.5
+- [x] 11.1 ~~serialize 帶 {channelId,cwd}~~ → 併入 pane-tree-named-components 1.1/1.2
+- [x] 11.2 ~~deserialize 無條件保留＋roundtrip property test~~ → 併入 pane-tree-named-components 2.1/2.2
+- [x] 11.3 ~~走 pane-codecs~~ → 併入 pane-tree-named-components 2.5
 - [x] 11.4 [test] rehydrate — 結構整棵採用（LWW）；channelId 仍 live 的 leaf 經 render-time 判斷自動重綁（mode:'resume'，不 spawn）
 - [x] 11.5 [test] rehydrate dedup — incoming 多個 leaf 帶同一 channelId — 只保留第一個，其餘降級 empty＋hint（防 "Channel already exists" 雙 mount）
 - [x] 11.6 [impl] deserializeLayout 出口 dedup pass；schema `.refine` channelId 全域唯一；server 拒收違規 payload
