@@ -51,3 +51,7 @@ P2 UI 增強與 P3 收斂列於 §5-§6 留後。共用 TabMeta 型別——單�
 - [ ] 6.5 PanePicker：git listing 載入中顯示 loading 態（驗收發現：listing 未到時 worktree 列整片空白，使用者只看到 + New worktree）
 - [ ] 6.6 session title fallback：無 title 顯示 cwd 尾段而非 channelId UUID（驗收發現：SessionBar 顯示 bb6bbf8d-cf…）
 - [ ] 6.7 WorkspaceTabBar：點 tab label 文字不會切換 tab（label 是 rename 用內層 button stopPropagation）——整合測試發現的 UX 細節，評估單擊切換＋雙擊 rename 是否衝突
+- [ ] 6.8 PanePicker AiActionsView 持有 branch 卻不傳給 onNewSession——經 picker 建立的 TabMeta.branch 為 undefined（SessionBar dropdown 入口有傳）；兩入口 identity 寫入不對稱（測試真實化發現）
+- [ ] 6.9 TabProvider sessions-diff 以 channelId 記帳：session 首次以 disconnected 出現後轉 idle 永不建 tab（須先 session:dead）——重連場景可能漏建 tab，需確認（測試真實化發現）
+- [ ] 6.10 WorktreeSessionList 無任何 production mount 點（僅測試引用）——確認棄用或接回 UI（測試真實化發現）
+- [ ] 6.11 pane split 會 remount ChannelProvider 並重發同 channelId 的 session:launch（server already-exists 守門吸收）——評估 ChannelProvider remount 去重（測試真實化發現）

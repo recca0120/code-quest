@@ -1,11 +1,30 @@
+/**
+ * Layout persistence — TabProvider 端的 init/remount/防呆/debounce 行為。
+ *
+ * 與 layout-sync-pipeline.test.tsx 分工：echo guard（9.4）、save ack rev 簿記與
+ * stale sync 忽略（9.3）、preserve local active（11.7）、跨裝置雙 client 同步
+ * 已在彼處以真 UI + 真 layout:save handler 覆蓋，本檔不重複。
+ *
+ * 慣例（fake-summoner-client skill）：真 WorkspaceTabBar 切片 + userEvent 驅動；
+ * 跨裝置寫入走 seeder client 的真 layout:save handler（配 rev、broadcast）；
+ * 只有 schema-invalid / defensive payload 保留 claude.pushServerEvent。
+ */
 import type { PersistedLayout } from '@code-quest/schemas';
-import { createFakeServer, createTestContainer, seedLayout } from '@code-quest/server/test';
+import {
+  createFakeServer,
+  createTestContainer,
+  type LayoutStore,
+  seedLayout,
+  TYPES,
+} from '@code-quest/server/test';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, onTestFinished } from 'vitest';
+import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { AppConfigProvider } from '@/contexts/AppInitContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, useWorkspaceTab } from '@/contexts/TabContext';
-import { createFakeSummoner } from '@/test/fake-summoner';
+import { createFakeSummoner, type FakeSummoner } from '@/test/fake-summoner';
 
 const VALID_LAYOUT: PersistedLayout = {
   version: 2,
@@ -31,52 +50,47 @@ const VALID_LAYOUT: PersistedLayout = {
   activeTabId: 'tab-b',
 };
 
+const THREE_TAB_LAYOUT: PersistedLayout = {
+  ...VALID_LAYOUT,
+  tabs: [
+    ...VALID_LAYOUT.tabs,
+    {
+      id: 'tab-c',
+      paneRoot: {
+        type: 'leaf',
+        id: 'pane-c',
+        content: { type: 'session', channelId: null, cwd: null },
+      },
+    },
+  ],
+};
+
+/** 純 assertion 用 state probe（不做驅動）— pane tree 形狀無法只靠 tab bar DOM 驗 */
 let wsProbe: ReturnType<typeof useWorkspaceTab> | null = null;
 
-function TabInfo() {
-  const ws = useWorkspaceTab();
-  wsProbe = ws;
-  return (
-    <div>
-      <span data-testid="tab-count">{ws.workspaceTabs.length}</span>
-      <span data-testid="active-tab">{ws.activeWorkspaceTabId}</span>
-    </div>
-  );
+function WorkspaceStateProbe() {
+  wsProbe = useWorkspaceTab();
+  return null;
 }
 
-function renderFull(summoner = createFakeSummoner()) {
-  render(
+/** debounce 是 500ms — negative 斷言（「不發生」）需要明確的真實時間窗 */
+function settleDebounce() {
+  return act(async () => {
+    await new Promise((r) => setTimeout(r, 700));
+  });
+}
+
+function renderClient(summoner: FakeSummoner, extra?: React.ReactNode) {
+  return render(
     <SocketProvider socket={summoner.socket}>
       <AppConfigProvider>
         <TabProvider>
-          <TabInfo />
+          <WorkspaceTabBar />
+          {extra}
         </TabProvider>
       </AppConfigProvider>
     </SocketProvider>,
   );
-  return summoner;
-}
-
-function renderBare() {
-  const summoner = createFakeSummoner();
-  render(
-    <SocketProvider socket={summoner.socket}>
-      <TabProvider>
-        <TabInfo />
-      </TabProvider>
-    </SocketProvider>,
-  );
-  return summoner;
-}
-
-async function emitSync(
-  summoner: ReturnType<typeof createFakeSummoner>,
-  layout: PersistedLayout,
-  rev: number,
-) {
-  await act(async () => {
-    summoner.claude().pushServerEvent('layout:sync', { ...layout, rev });
-  });
 }
 
 describe('app:init rehydrate', () => {
@@ -86,12 +100,15 @@ describe('app:init rehydrate', () => {
     const server = createFakeServer(container);
     onTestFinished(() => server.destroy());
 
-    const summoner = createFakeSummoner(server);
-    renderFull(summoner);
+    renderClient(createFakeSummoner(server));
 
     // AppConfigProvider emits app:init on connect — wait for the rehydrate to land
-    await waitFor(() => expect(screen.getByTestId('tab-count')).toHaveTextContent('2'));
-    expect(screen.getByTestId('active-tab').textContent).toBe('tab-b');
+    await waitFor(() => expect(screen.getAllByTestId('workspace-tab')).toHaveLength(2));
+    const tabs = screen.getAllByTestId('workspace-tab');
+    expect(tabs[0]).toHaveTextContent('Tab A');
+    // incoming activeTabId=tab-b → 第二個 tab 是 active
+    expect(tabs[1]).toHaveAttribute('data-active');
+    expect(tabs[0]).not.toHaveAttribute('data-active');
   });
 
   it('keeps default single-tab state when app:init ACK layout is null', async () => {
@@ -99,10 +116,11 @@ describe('app:init rehydrate', () => {
     onTestFinished(() => server.destroy());
 
     const summoner = createFakeSummoner(server);
-    renderFull(summoner);
+    renderClient(summoner);
 
+    await waitFor(() => expect(summoner.sentEvents('app:init')).toHaveLength(1));
     await act(async () => {});
-    await waitFor(() => expect(screen.getByTestId('tab-count')).toHaveTextContent('1'));
+    expect(screen.getAllByTestId('workspace-tab')).toHaveLength(1);
   });
 });
 
@@ -120,7 +138,7 @@ describe('provider remount replay (client-structure-cleanup 4.1)', () => {
           <AppConfigProvider>
             {mounted && (
               <TabProvider>
-                <TabInfo />
+                <WorkspaceTabBar />
               </TabProvider>
             )}
           </AppConfigProvider>
@@ -129,114 +147,65 @@ describe('provider remount replay (client-structure-cleanup 4.1)', () => {
     }
 
     const { rerender } = render(<Harness mounted />);
-    await waitFor(() => expect(screen.getByTestId('tab-count')).toHaveTextContent('2'));
+    await waitFor(() => expect(screen.getAllByTestId('workspace-tab')).toHaveLength(2));
 
-    // a newer layout arrives via sync (3 tabs, rev 2)
-    const threeTabs: PersistedLayout = {
-      ...VALID_LAYOUT,
-      tabs: [
-        ...VALID_LAYOUT.tabs,
-        {
-          id: 'tab-c',
-          paneRoot: {
-            type: 'leaf',
-            id: 'pane-c',
-            content: { type: 'session', channelId: null, cwd: null },
-          },
-        },
-      ],
-    };
+    // 另一個裝置存了 3-tab 版本 — 真 handler 配 rev 2 並 broadcast layout:sync
+    const seeder = createFakeSummoner(server).claude();
     await act(async () => {
-      summoner.claude().pushServerEvent('layout:sync', { ...threeTabs, rev: 2 });
+      await seeder.send('layout:save', THREE_TAB_LAYOUT);
     });
-    expect(screen.getByTestId('tab-count').textContent).toBe('3');
+    await waitFor(() => expect(screen.getAllByTestId('workspace-tab')).toHaveLength(3));
 
     // unmount + remount the TabProvider (e.g. last project removed then re-added)
     rerender(<Harness mounted={false} />);
     rerender(<Harness mounted />);
 
     // replayed init snapshot must reflect the newer layout, not the stale rev-1 one
-    expect(screen.getByTestId('tab-count').textContent).toBe('3');
+    expect(screen.getAllByTestId('workspace-tab')).toHaveLength(3);
   });
 });
 
-describe('layout:sync cross-device update', () => {
-  it('updates workspace tabs when layout:sync event is received', async () => {
-    const summoner = renderBare();
-
-    await emitSync(summoner, VALID_LAYOUT, 1);
-
-    expect(screen.getByTestId('tab-count').textContent).toBe('2');
-    expect(screen.getByTestId('active-tab').textContent).toBe('tab-b');
-  });
-
-  it('ignores layout:sync with invalid schema', async () => {
-    const summoner = renderBare();
+describe('layout:sync 防呆與 LWW 套用細節', () => {
+  it('ignores layout:sync with invalid schema — listener stays alive for later valid syncs', async () => {
+    const summoner = createFakeSummoner();
+    renderClient(summoner);
 
     await act(async () => {
       summoner.claude().pushServerEvent('layout:sync', { invalid: true });
     });
+    expect(screen.getAllByTestId('workspace-tab')).toHaveLength(1);
 
-    expect(screen.getByTestId('tab-count').textContent).toBe('1');
-  });
-
-  it('ignores layout:sync with rev <= lastSeenRev (9.3)', async () => {
-    const summoner = renderBare();
-
-    await emitSync(summoner, VALID_LAYOUT, 2);
-    expect(screen.getByTestId('tab-count').textContent).toBe('2');
-
-    const threeTabs: PersistedLayout = {
-      ...VALID_LAYOUT,
-      tabs: [
-        ...VALID_LAYOUT.tabs,
-        {
-          id: 'tab-c',
-          paneRoot: {
-            type: 'leaf',
-            id: 'pane-c',
-            content: { type: 'session', channelId: null, cwd: null },
-          },
-        },
-      ],
-    };
-
-    // stale rev → ignored
-    await emitSync(summoner, threeTabs, 1);
-    expect(screen.getByTestId('tab-count').textContent).toBe('2');
-
-    // newer rev → applied
-    await emitSync(summoner, threeTabs, 3);
-    expect(screen.getByTestId('tab-count').textContent).toBe('3');
-  });
-
-  it('preserves local active tab on sync (11.7)', async () => {
-    const summoner = renderBare();
-
-    // initial sync: local active (default tab) is not in incoming → fallback to incoming
-    await emitSync(summoner, VALID_LAYOUT, 1);
-    expect(screen.getByTestId('active-tab').textContent).toBe('tab-b');
-
-    // user switches locally to tab-a
-    act(() => wsProbe!.switchWorkspaceTab('tab-a'));
-    expect(screen.getByTestId('active-tab').textContent).toBe('tab-a');
-
-    // remote sync says active=tab-b — local view must NOT be stolen
-    await emitSync(summoner, { ...VALID_LAYOUT, activeTabId: 'tab-b' }, 2);
-    expect(screen.getByTestId('active-tab').textContent).toBe('tab-a');
+    // 後續合法 sync 正常套用 — 證明上面是「擋掉」而不是「沒接 listener」
+    await act(async () => {
+      summoner.claude().pushServerEvent('layout:sync', { ...VALID_LAYOUT, rev: 1 });
+    });
+    expect(screen.getAllByTestId('workspace-tab')).toHaveLength(2);
   });
 
   it('falls back to the first tab when incoming activeTabId is not a member', async () => {
-    const summoner = renderBare();
+    const server = createFakeServer();
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+    renderClient(summoner);
 
-    await emitSync(summoner, { ...VALID_LAYOUT, activeTabId: 'ghost-tab' }, 1);
+    // 另一個裝置存了 activeTabId 指向不存在 tab 的 layout（schema 不驗 membership，
+    // 真 handler 照存照廣播）→ client 端 membership guard 必須 clamp 到第一個 tab
+    const seeder = createFakeSummoner(server).claude();
+    await act(async () => {
+      await seeder.send('layout:save', { ...VALID_LAYOUT, activeTabId: 'ghost-tab' });
+    });
 
-    expect(screen.getByTestId('tab-count').textContent).toBe('2');
-    expect(screen.getByTestId('active-tab').textContent).toBe('tab-a');
+    await waitFor(() => expect(screen.getAllByTestId('workspace-tab')).toHaveLength(2));
+    const tabs = screen.getAllByTestId('workspace-tab');
+    expect(tabs[0]).toHaveAttribute('data-active');
+    expect(tabs[1]).not.toHaveAttribute('data-active');
   });
 
   it('dedupes duplicate channelIds on apply — only one leaf stays bound (11.5)', async () => {
-    const summoner = renderBare();
+    // defensive payload：真 server 的 layout:save 已在 wire boundary dedupe，
+    // 這裡測的是 client 端 applyLayout 自己的防線 → 保留 pushServerEvent
+    const summoner = createFakeSummoner();
+    renderClient(summoner, <WorkspaceStateProbe />);
 
     const dupLayout: PersistedLayout = {
       version: 2,
@@ -264,7 +233,9 @@ describe('layout:sync cross-device update', () => {
       activeTabId: 't1',
     };
 
-    await emitSync(summoner, dupLayout, 1);
+    await act(async () => {
+      summoner.claude().pushServerEvent('layout:sync', { ...dupLayout, rev: 1 });
+    });
 
     const root = wsProbe!.workspaceTabs[0]!.paneRoot;
     if (root.type !== 'split') throw new Error('expected split');
@@ -273,73 +244,33 @@ describe('layout:sync cross-device update', () => {
   });
 });
 
-describe('debounced layout:save with echo guard', () => {
-  it('does NOT echo layout:save after applying a sync (9.4)', async () => {
-    vi.useFakeTimers();
-    try {
-      const summoner = renderBare();
+describe('debounced layout:save', () => {
+  it('debounces multiple rapid local changes to a single layout:save (real handler stores merged result)', async () => {
+    const user = userEvent.setup();
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+    renderClient(summoner);
 
-      const emitted: unknown[] = [];
-      summoner.socket.serverSocket.on('layout:save', (payload) => emitted.push(payload));
+    // 兩個 debounce 窗內的真 UI 變更
+    await user.click(screen.getByTestId('workspace-tab-add'));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 200));
+    });
+    await user.click(screen.getByTestId('workspace-tab-add'));
+    expect(screen.getAllByTestId('workspace-tab')).toHaveLength(3);
+    // 第二個變更重置了 timer — 此刻尚未送出
+    expect(summoner.sentEvents('layout:save')).toHaveLength(0);
 
-      await emitSync(summoner, VALID_LAYOUT, 1);
+    await settleDebounce();
+    // ② socket：合併成單一 save
+    expect(summoner.sentEvents('layout:save')).toHaveLength(1);
 
-      await act(async () => {
-        vi.advanceTimersByTime(700);
-      });
-
-      expect(emitted).toHaveLength(0);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('local state change emits layout:save after 500ms; unchanged state does not re-emit (9.5)', async () => {
-    vi.useFakeTimers();
-    try {
-      const summoner = renderBare();
-
-      const emitted: unknown[] = [];
-      summoner.socket.serverSocket.on('layout:save', (payload) => emitted.push(payload));
-
-      act(() => wsProbe!.addWorkspaceTab());
-
-      expect(emitted).toHaveLength(0);
-      await act(async () => {
-        vi.advanceTimersByTime(500);
-      });
-      expect(emitted).toHaveLength(1);
-
-      // 名實相符的後半句：狀態沒再變，之後不得 re-emit
-      await act(async () => {
-        vi.advanceTimersByTime(1500);
-      });
-      expect(emitted).toHaveLength(1);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('debounces multiple rapid local changes to a single layout:save', async () => {
-    vi.useFakeTimers();
-    try {
-      const summoner = renderBare();
-
-      const emitted: unknown[] = [];
-      summoner.socket.serverSocket.on('layout:save', () => emitted.push(true));
-
-      act(() => wsProbe!.addWorkspaceTab());
-      await act(async () => {
-        vi.advanceTimersByTime(200);
-      });
-      act(() => wsProbe!.addWorkspaceTab());
-      await act(async () => {
-        vi.advanceTimersByTime(500);
-      });
-
-      expect(emitted).toHaveLength(1);
-    } finally {
-      vi.useRealTimers();
-    }
+    // ③ server store：真 handler 存下合併後的 3 tabs（rev 1 — 只配發過一次）
+    const summonerKey = container.get<{ provider: string }>(TYPES.ChannelManager).provider;
+    const stored = container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKey);
+    expect(stored?.rev).toBe(1);
+    expect(stored?.layout.tabs).toHaveLength(3);
   });
 });

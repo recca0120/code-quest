@@ -1,20 +1,20 @@
 import type { SessionStateSummary } from '@code-quest/schemas';
-import { render, renderHook, screen, waitFor } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import type { ReactElement, ReactNode } from 'react';
+import { describe, expect, it } from 'vitest';
+import { WorktreeSessionList } from '@/components/project/WorktreeSessionList';
+import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
 import { NavigationIntentBridge } from '@/components/workspace/NavigationIntentBridge';
-import { AppConfigProvider } from '@/contexts/AppInitContext';
-import {
-  NavigationProvider,
-  useNavigationActions,
-  useNavigationState,
-} from '@/contexts/NavigationContext';
-import { ProjectProvider } from '@/contexts/ProjectContext';
-import { SessionProvider } from '@/contexts/SessionContext';
+import { PaneTree } from '@/components/workspace/PaneTree';
+import { CommandPaletteProvider } from '@/contexts/CommandPaletteContext';
+import { useNavigationState } from '@/contexts/NavigationContext';
+import { useSession } from '@/contexts/SessionContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, useTabActions, useTabState } from '@/contexts/TabContext';
-import { createFakeSummoner } from '@/test/fake-summoner';
+import { createTestWrapper } from '@/test/create-test-wrapper';
+import { setupMatchMedia } from '@/test/fake-match-media';
+import { createFakeSummoner, type FakeSummoner } from '@/test/fake-summoner';
 
 function renderInTab(ui: ReactElement) {
   const summoner = createFakeSummoner();
@@ -27,57 +27,23 @@ function renderInTab(ui: ReactElement) {
   return { claude: summoner.claude(), user };
 }
 
-function renderWithProjectAndSessions(
-  ui: ReactElement,
-  initial: { cwd: string; sessions?: SessionStateSummary[] },
-) {
-  const summoner = createFakeSummoner();
-  let sessions = initial.sessions ?? [];
-  const tree = (
-    <SocketProvider socket={summoner.socket}>
-      <AppConfigProvider>
-        <SessionProvider>
-          <ProjectProvider>
-            <NavigationProvider>
-              <TabProvider cwd={initial.cwd} sessions={sessions}>
-                <NavigationIntentBridge />
-                {ui}
-              </TabProvider>
-            </NavigationProvider>
-          </ProjectProvider>
-        </SessionProvider>
-      </AppConfigProvider>
-    </SocketProvider>
-  );
-  const { rerender } = render(tree);
-  function setSessions(next: SessionStateSummary[]) {
-    sessions = next;
-    rerender(
-      <SocketProvider socket={summoner.socket}>
-        <AppConfigProvider>
-          <SessionProvider>
-            <ProjectProvider>
-              <NavigationProvider>
-                <TabProvider cwd={initial.cwd} sessions={sessions}>
-                  <NavigationIntentBridge />
-                  {ui}
-                </TabProvider>
-              </NavigationProvider>
-            </ProjectProvider>
-          </SessionProvider>
-        </AppConfigProvider>
-      </SocketProvider>,
-    );
-  }
-  return { setSessions };
-}
-
 describe('TabProvider', () => {
+  /**
+   * pendingActivateChannel intent（Decision 10）— 真 UI 管線版。
+   *
+   * 慣例（fake-summoner-client skill）：requestActivateChannel 由真
+   * WorktreeSessionList 的 session row 點擊觸發（production 入口；SessionManager
+   * 的 item 走 setSessionInPane，不經 intent）。sessions 不用 rerender props 餵，
+   * 改經真 SessionProvider 由 claude.pushServerEvent('session:states'/'session:dead')
+   * 流入（bridge 鏡像 Workspace.tsx 的 useSession().sessions → TabProvider 接線）。
+   * activation 的 DOM 表徵：真 PaneTree（placeExistingSession → focused
+   * pane-header 顯示 title）＋ ⌘⇧M SessionManager（KeyboardShortcutsProvider）。
+   * Probe 僅讀 state（activeTabId / pendingActivateChannel），不做受測驅動。
+   */
   describe('pendingActivateChannel intent (Decision 10)', () => {
-    function ProbeAndTrigger({ trigger }: { trigger: { cwd: string; channelId: string } }) {
+    function Probe() {
       const { activeTabId } = useTabState();
       const { pendingActivateChannel } = useNavigationState();
-      const { requestActivateChannel } = useNavigationActions();
       return (
         <>
           <span role="status" aria-label="active">
@@ -86,77 +52,202 @@ describe('TabProvider', () => {
           <span role="status" aria-label="pending">
             {JSON.stringify(pendingActivateChannel)}
           </span>
-          <button type="button" onClick={() => requestActivateChannel(trigger.channelId)}>
-            request
-          </button>
         </>
       );
     }
 
-    it('matching cwd + channel already in tabs → setActiveTab + clearPendingActivate', async () => {
-      renderWithProjectAndSessions(
-        <ProbeAndTrigger trigger={{ cwd: '/proj', channelId: 'ch-1' }} />,
-        {
-          cwd: '/proj',
-          sessions: [{ channelId: 'ch-1', state: 'idle', cwd: '/proj', projectRoot: '/proj' }],
-        },
-      );
+    const activeText = () => screen.getByRole('status', { name: 'active' }).textContent;
+    const pendingText = () => screen.getByRole('status', { name: 'pending' }).textContent;
 
+    /** 鏡像 Workspace.tsx 的接線：TabProvider 的 sessions 來自真 SessionProvider。 */
+    function TabProviderBridge({ cwd, children }: { cwd: string; children: ReactNode }) {
+      const { sessions } = useSession();
+      return (
+        <TabProvider sessions={sessions} cwd={cwd}>
+          {children}
+        </TabProvider>
+      );
+    }
+
+    async function renderHarness(opts: {
+      tabProviderCwd: string;
+      worktreePath: string;
+      projectCwd: string;
+    }) {
+      setupMatchMedia(1280); // desktop：pane toolbar / manager 為桌面版佈局
+      const { summoner, Wrapper } = createTestWrapper();
       const user = userEvent.setup({ pointerEventsCheck: 0 });
-      await user.click(screen.getByText('request'));
+      render(
+        <Wrapper>
+          {/* CommandPaletteProvider：App.tsx 同位置（ChatView 的 MessageList 需要） */}
+          <CommandPaletteProvider>
+            <TabProviderBridge cwd={opts.tabProviderCwd}>
+              <NavigationIntentBridge />
+              <KeyboardShortcutsProvider>
+                <PaneTree />
+              </KeyboardShortcutsProvider>
+              <WorktreeSessionList worktreePath={opts.worktreePath} projectCwd={opts.projectCwd} />
+              <Probe />
+            </TabProviderBridge>
+          </CommandPaletteProvider>
+        </Wrapper>,
+      );
+      // app:init replay 會 wholesale setSessions —— 先 settle 再 push（同 production 順序）
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+      expect(summoner.sentEvents('app:init')).toHaveLength(1);
+      return { claude: summoner.claude(), user };
+    }
+
+    function pushStates(
+      claude: ReturnType<FakeSummoner['claude']>,
+      sessions: SessionStateSummary[],
+    ) {
+      return act(async () => {
+        claude.pushServerEvent('session:states', { sessions });
+      });
+    }
+
+    it('channel already in tabs → 點真 session row 即 activate＋清除 pending，session 落入 pane', async () => {
+      const { claude, user } = await renderHarness({
+        tabProviderCwd: '/proj',
+        worktreePath: '/proj',
+        projectCwd: '/proj',
+      });
+
+      await pushStates(claude, [
+        {
+          channelId: 'ch-1',
+          state: 'idle',
+          cwd: '/proj',
+          projectRoot: '/proj',
+          title: 'One',
+          branch: 'feat/one',
+        },
+      ]);
+
+      // arrange 完成：sessions diff 已建 tab（首個 tab 自動 active），但尚未置入 pane
+      expect(activeText()).toBe('ch-1');
+      expect(screen.getByTestId('empty-pane')).toBeInTheDocument();
+
+      await user.click(screen.getByLabelText('Session: One'));
 
       await waitFor(() => {
-        expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('ch-1');
-        expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent('null');
+        expect(activeText()).toBe('ch-1');
+        expect(pendingText()).toBe('null');
       });
+
+      // DOM 表徵：placeExistingSession 把 session 放進 focused pane，toolbar 顯示
+      // session 的 branch（title 由 CLI 管線稍後才回填，diff addTab 只帶 branch/cwd）
+      await waitFor(() => {
+        const header = screen.getByTestId('pane-header');
+        expect(header.dataset.focused).toBe('true');
+        expect(header.textContent).toContain('⎇ feat/one');
+      });
+      expect(screen.queryByTestId('empty-pane')).not.toBeInTheDocument();
+
+      // ⌘⇧M SessionManager：activated session 列為 item；點 item 後 manager 關閉、
+      // session 仍在 focused pane（item 走 setSessionInPane 的「show here」語意）
+      await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
+      expect(screen.getByTestId('session-manager')).toBeInTheDocument();
+      await user.click(screen.getByTestId('session-manager-item-ch-1'));
+      expect(screen.queryByTestId('session-manager')).not.toBeInTheDocument();
+      expect(screen.getByTestId('pane-header').dataset.focused).toBe('true');
     });
 
-    it('matching cwd + channel NOT yet in tabs → wait (no clear), activate when channel appears', async () => {
-      const { setSessions } = renderWithProjectAndSessions(
-        <ProbeAndTrigger trigger={{ cwd: '/proj', channelId: 'ch-late' }} />,
-        { cwd: '/proj', sessions: [] },
-      );
+    it('channel NOT yet in tabs（disconnected row）→ pending 等待不清除，session 復活才 activate', async () => {
+      const { claude, user } = await renderHarness({
+        tabProviderCwd: '/proj',
+        worktreePath: '/proj',
+        projectCwd: '/proj',
+      });
 
-      const user = userEvent.setup({ pointerEventsCheck: 0 });
-      await user.click(screen.getByText('request'));
+      // disconnected session：sidebar 仍列 row（只濾 exited），但 TERMINAL_STATES
+      // 使 sessions diff 不建 tab —— intent 目標「不在 tabs」的真實場景
+      await pushStates(claude, [
+        {
+          channelId: 'ch-late',
+          state: 'disconnected',
+          cwd: '/proj',
+          projectRoot: '/proj',
+          title: 'Late',
+        },
+      ]);
+      expect(activeText()).toBe('null');
 
-      // Pending stays set; no active tab yet
-      expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent(
-        '"channelId":"ch-late"',
-      );
-      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('null');
+      await user.click(screen.getByLabelText('Session: Late'));
 
-      // Channel appears via sessions prop
-      setSessions([{ channelId: 'ch-late', state: 'idle', cwd: '/proj', projectRoot: '/proj' }]);
+      // Decision 10：wait（no clear）——pending 保持、不 activate
+      expect(pendingText()).toContain('"channelId":"ch-late"');
+      expect(activeText()).toBe('null');
+      expect(screen.getByTestId('empty-pane')).toBeInTheDocument();
+
+      // session 死透（diff 以 channelId 記帳——須先 removed 之後同 id 才算 added）
+      await act(async () => {
+        claude.pushServerEvent('session:dead', { channelId: 'ch-late' });
+      });
+      expect(pendingText()).toContain('"channelId":"ch-late"'); // intent 仍在等
+
+      // 再以 idle 重新上線 → tab 出現 → bridge 消費 intent
+      await pushStates(claude, [
+        {
+          channelId: 'ch-late',
+          state: 'idle',
+          cwd: '/proj',
+          projectRoot: '/proj',
+          title: 'Late',
+          branch: 'feat/late',
+        },
+      ]);
 
       await waitFor(() => {
-        expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('ch-late');
-        expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent('null');
+        expect(activeText()).toBe('ch-late');
+        expect(pendingText()).toBe('null');
       });
+      const header = screen.getByTestId('pane-header');
+      expect(header.dataset.focused).toBe('true');
+      expect(header.textContent).toContain('⎇ feat/late');
     });
 
-    it('global TabProvider activates channel regardless of intent cwd', async () => {
-      // Design Decision 4: single global TabProvider handles all channels.
-      // No cwd guard — intent with any cwd activates the channel if it's in tabs.
-      renderWithProjectAndSessions(
-        <ProbeAndTrigger trigger={{ cwd: '/other', channelId: 'ch-target' }} />,
-        {
-          cwd: '/proj',
-          sessions: [
-            { channelId: 'ch-a', state: 'idle', cwd: '/proj', projectRoot: '/proj' },
-            { channelId: 'ch-target', state: 'idle', cwd: '/proj', projectRoot: '/proj' },
-          ],
-        },
-      );
-
-      const user = userEvent.setup({ pointerEventsCheck: 0 });
-      await user.click(screen.getByText('request'));
-
-      // Channel is in tabs → activates immediately, pending clears
-      await vi.waitFor(() => {
-        expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('ch-target');
-        expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent('null');
+    it('global TabProvider：provider cwd 與 session cwd 不同也照樣 activate（Decision 4 無 cwd guard）', async () => {
+      // 全域 TabProvider 掛在 /proj，被點的 sessions 屬於 /other 的 worktree
+      const { claude, user } = await renderHarness({
+        tabProviderCwd: '/proj',
+        worktreePath: '/other/wt',
+        projectCwd: '/other',
       });
+
+      await pushStates(claude, [
+        {
+          channelId: 'ch-a',
+          state: 'idle',
+          cwd: '/other/wt',
+          projectRoot: '/other',
+          title: 'Alpha',
+          branch: 'feat/alpha',
+        },
+        {
+          channelId: 'ch-target',
+          state: 'idle',
+          cwd: '/other/wt',
+          projectRoot: '/other',
+          title: 'Target',
+          branch: 'feat/target',
+        },
+      ]);
+      // 首個 session 自動成為 active tab —— 點擊後必須切換才證明 intent 被消費
+      expect(activeText()).toBe('ch-a');
+
+      await user.click(screen.getByLabelText('Session: Target'));
+
+      await waitFor(() => {
+        expect(activeText()).toBe('ch-target');
+        expect(pendingText()).toBe('null');
+      });
+      const header = screen.getByTestId('pane-header');
+      expect(header.dataset.focused).toBe('true');
+      expect(header.textContent).toContain('⎇ feat/target');
     });
   });
 
