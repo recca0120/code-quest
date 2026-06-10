@@ -24,7 +24,7 @@ const VARIANTS: Record<Variant, string> = {
   ghost: 'text-muted hover:text-text hover:tint-5',
   success: 'bg-success text-selected-text hover:bg-success/80',
   warning: 'bg-warning text-selected-text hover:bg-warning/80',
-  info: 'bg-button text-selected-text hover:bg-button/80',
+  info: 'bg-info text-selected-text hover:bg-info/80',
 };
 
 const SIZES: Record<Size, string> = {

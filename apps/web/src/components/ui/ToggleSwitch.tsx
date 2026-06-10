@@ -6,7 +6,7 @@ import { focusRing } from './_tokens.ts';
 const trackClass = (isOn: boolean) =>
   cn(
     'flex items-center w-7 h-3.5 rounded-full transition-colors shrink-0',
-    isOn ? 'bg-toggle' : 'bg-hover-tint',
+    isOn ? 'bg-accent' : 'bg-hover-tint',
   );
 
 const thumbClass = (isOn: boolean) =>
@@ -19,7 +19,7 @@ const thumbClass = (isOn: boolean) =>
 const Check = () => (
   <CheckIcon
     aria-hidden="true"
-    className="absolute inset-0 m-auto w-2 h-2 text-toggle"
+    className="absolute inset-0 m-auto w-2 h-2 text-accent"
     strokeWidth={2.5}
   />
 );

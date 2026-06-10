@@ -89,7 +89,7 @@ export function ManagePluginsDialog({
               >
                 {label}
                 {count > 0 && (
-                  <Badge className="ml-1.5 bg-button text-selected-text rounded-lg">{count}</Badge>
+                  <Badge className="ml-1.5 bg-info text-selected-text rounded-lg">{count}</Badge>
                 )}
               </Tabs.Trigger>
             ))}

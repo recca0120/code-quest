@@ -4,9 +4,9 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 
 ## 0. P0 — Design tokens（行為零變）
 
-- [ ] 0.1 [impl] App.proposal.css 替換 App.css @theme 段（保留短別名；--color-toggle/--color-button consumer 改 accent/info）
-- [ ] 0.2 [impl] 元件/motion/RWD tokens 併入；prefers-reduced-motion 全關動效
-- [ ] 0.3 [verify] 全套件綠＋主要畫面 Playwright 截圖無版崩
+- [x] 0.1 [impl] App.proposal.css 替換 App.css @theme 段（保留短別名；--color-toggle/--color-button consumer 改 accent/info）
+- [x] 0.2 [impl] 元件/motion/RWD tokens 併入；prefers-reduced-motion 全關動效
+- [x] 0.3 [verify] 全套件綠＋主要畫面 Playwright 截圖無版崩
 
 ## 1. P1 — Workspace chrome
 

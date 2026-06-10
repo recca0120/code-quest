@@ -97,7 +97,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps): Re
         <div
           role="presentation"
           aria-label="effort-switch-fill"
-          className="absolute top-0 left-0 h-full rounded-full bg-toggle transition-all duration-150"
+          className="absolute top-0 left-0 h-full rounded-full bg-accent transition-all duration-150"
           style={{ width: fillWidth }}
         />
         {ticksAfterThumb.map((i) => (

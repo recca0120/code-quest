@@ -74,6 +74,6 @@ describe('Button', () => {
 
   it('variant="info" uses button token', () => {
     render(<Button variant="info">X</Button>);
-    expect(screen.getByRole('button').className).toMatch(/bg-button/);
+    expect(screen.getByRole('button').className).toMatch(/bg-info/);
   });
 });

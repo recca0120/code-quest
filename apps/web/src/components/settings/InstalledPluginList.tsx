@@ -189,7 +189,7 @@ function AvailablePluginCard({
           <div className="flex items-center gap-1.5 text-xs text-muted">
             <span>from {plugin.marketplaceName}</span>
             {isOfficial && (
-              <span title={`Official ${brandName} Code marketplace`} className="text-button">
+              <span title={`Official ${brandName} Code marketplace`} className="text-info">
                 ✓
               </span>
             )}

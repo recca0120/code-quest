@@ -62,27 +62,31 @@ describe('App.css static shape', () => {
     });
   });
 
-  describe('T4 — rgb-split tokens', () => {
-    it('@theme declares --color-button-rgb (dark default)', () => {
-      expect(themeBlock).toMatch(/--color-button-rgb:\s*0\s*,\s*120\s*,\s*212/);
+  describe('T4 — rgb-split tokens (clay palette)', () => {
+    it('@theme declares --color-info-rgb (dark default)', () => {
+      expect(themeBlock).toMatch(/--color-info-rgb:\s*130\s*,\s*163\s*,\s*201/);
     });
     it('@theme declares --color-text-rgb (dark default)', () => {
-      expect(themeBlock).toMatch(/--color-text-rgb:\s*204\s*,\s*204\s*,\s*204/);
+      expect(themeBlock).toMatch(/--color-text-rgb:\s*216\s*,\s*210\s*,\s*198/);
     });
-    it('[data-theme="dark"] re-declares button/text rgb to dark values', () => {
-      expect(darkBlock).toMatch(/--color-button-rgb:\s*0\s*,\s*120\s*,\s*212/);
-      expect(darkBlock).toMatch(/--color-text-rgb:\s*204\s*,\s*204\s*,\s*204/);
+    it('does not declare the removed --color-button/--color-toggle tokens', () => {
+      expect(appCss).not.toMatch(/--color-button\b/);
+      expect(appCss).not.toMatch(/--color-toggle\b/);
     });
-    it('[data-theme="light"] declares button/text rgb with light values', () => {
-      expect(lightBlock).toMatch(/--color-button-rgb:\s*0\s*,\s*90\s*,\s*158/);
-      expect(lightBlock).toMatch(/--color-text-rgb:\s*31\s*,\s*31\s*,\s*31/);
+    it('[data-theme="dark"] re-declares info/text rgb in sync with @theme defaults', () => {
+      expect(darkBlock).toMatch(/--color-info-rgb:\s*130\s*,\s*163\s*,\s*201/);
+      expect(darkBlock).toMatch(/--color-text-rgb:\s*216\s*,\s*210\s*,\s*198/);
+    });
+    it('[data-theme="light"] declares info/text rgb with light values', () => {
+      expect(lightBlock).toMatch(/--color-info-rgb:\s*79\s*,\s*116\s*,\s*164/);
+      expect(lightBlock).toMatch(/--color-text-rgb:\s*64\s*,\s*60\s*,\s*51/);
     });
   });
 
   describe('T5 — mode → CSS var dispatch', () => {
     const modes = [
       ['normal', /--color-claude-clay-orange/, '0.2'],
-      ['plan', /--color-button\b/, '0.2'],
+      ['plan', /--color-info\b/, '0.2'],
       ['acceptEdits', /--color-text\b/, '0.1'],
       ['bypassPermissions', /--color-danger/, '0'],
       ['auto', /--color-danger/, '0'],
