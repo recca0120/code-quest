@@ -59,7 +59,7 @@ Rehydrate SHALL 整棵採用 incoming 樹（last-write-wins，不做 content-lev
 
 ### Requirement: channelId uniqueness across the whole layout
 
-一個 channelId SHALL 至多綁定一個 leaf（跨所有 workspace tabs）。Schema SHALL 以 `.refine` 驗證；server SHALL 拒收違規 payload；client deserialize 出口 SHALL 做 dedup pass（第一個出現保留，其餘降級 empty＋hint）。
+一個 channelId SHALL 至多綁定一個 leaf（跨所有 workspace tabs）。實作採 **dedupe-and-accept**（比拒收寬容，與 ratio clamp 同屬 defensive restore 哲學）：server SHALL 於 store/broadcast 前以共用 util dedupe；client SHALL 於 apply 前以同一 util dedupe；首見保留、後續降級 empty leaf＋cwd hint。SHALL NOT 因重複 channelId 拒收整份 layout。
 
 #### Scenario: duplicate channelId is deduped
 

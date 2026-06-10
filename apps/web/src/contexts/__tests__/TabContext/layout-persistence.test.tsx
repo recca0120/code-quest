@@ -1,10 +1,5 @@
 import type { PersistedLayout } from '@code-quest/schemas';
-import {
-  createFakeServer,
-  createTestContainer,
-  type LayoutStore,
-  TYPES,
-} from '@code-quest/server/test';
+import { createFakeServer, createTestContainer, seedLayout } from '@code-quest/server/test';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { AppConfigProvider } from '@/contexts/AppInitContext';
@@ -87,9 +82,7 @@ async function emitSync(
 describe('app:init rehydrate', () => {
   it('rehydrates tabs when app:init ACK contains layout (applies incoming activeTabId)', async () => {
     const container = createTestContainer();
-    // layout is stored per summoner — keyed by the provider identity
-    const summonerKey = container.get<{ provider: string }>(TYPES.ChannelManager).provider;
-    container.get<LayoutStore>(TYPES.LayoutStore).set(summonerKey, VALID_LAYOUT);
+    seedLayout(container, VALID_LAYOUT);
     const server = createFakeServer(container);
     onTestFinished(() => server.destroy());
 
@@ -116,8 +109,7 @@ describe('app:init rehydrate', () => {
 describe('provider remount replay (client-structure-cleanup 4.1)', () => {
   it('a remounted TabProvider must not apply a stale init snapshot over a newer synced layout', async () => {
     const container = createTestContainer();
-    const summonerKey = container.get<{ provider: string }>(TYPES.ChannelManager).provider;
-    container.get<LayoutStore>(TYPES.LayoutStore).set(summonerKey, VALID_LAYOUT); // rev 1
+    seedLayout(container, VALID_LAYOUT); // rev 1
     const server = createFakeServer(container);
     onTestFinished(() => server.destroy());
     const summoner = createFakeSummoner(server);
@@ -315,6 +307,12 @@ describe('debounced layout:save with echo guard', () => {
       expect(emitted).toHaveLength(0);
       await act(async () => {
         vi.advanceTimersByTime(500);
+      });
+      expect(emitted).toHaveLength(1);
+
+      // 名實相符的後半句：狀態沒再變，之後不得 re-emit
+      await act(async () => {
+        vi.advanceTimersByTime(1500);
       });
       expect(emitted).toHaveLength(1);
     } finally {

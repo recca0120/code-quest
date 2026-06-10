@@ -80,7 +80,7 @@ describe('SplitPane (4.3) divider renders and updates ratio on drag', () => {
     expect(screen.getByTestId('pane-divider')).toHaveAttribute('data-direction', 'h');
   });
 
-  it('dragging divider calls onRatioChange which triggers updateRatio', async () => {
+  it('renders a divider with the split direction inside the split container (drag→updateRatio wiring is covered by PaneDivider.test + manual acceptance)', async () => {
     const user = userEvent.setup();
 
     function Trigger() {

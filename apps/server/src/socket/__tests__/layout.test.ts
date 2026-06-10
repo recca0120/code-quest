@@ -137,12 +137,25 @@ describe('layout:save handler — ack + rev (9.1 / 13.7)', () => {
       activeTabId: 't1',
     };
 
+    const claude2 = createFakeSummoner(server).claude();
+    const received: unknown[] = [];
+    claude2.on('layout:sync', (payload) => received.push(payload));
+
     await claude.send('layout:save', dupLayout);
 
+    // storing 半邊
     const stored = layoutStore.get(summonerKeyOf(container));
     const root = stored?.layout.tabs[0]?.paneRoot;
     if (root?.type !== 'split') throw new Error('expected split');
     expect(root.second).toMatchObject({
+      content: { type: 'session', channelId: null, cwd: '/a' },
+    });
+
+    // broadcast 半邊——sync payload 也必須是 deduped 的（重構成分開處理時的守門）
+    expect(received).toHaveLength(1);
+    const syncRoot = (received[0] as PersistedLayout).tabs[0]?.paneRoot;
+    if (syncRoot?.type !== 'split') throw new Error('expected split in sync payload');
+    expect(syncRoot.second).toMatchObject({
       content: { type: 'session', channelId: null, cwd: '/a' },
     });
   });
@@ -180,5 +193,45 @@ describe('app:init ACK — layout field carries rev', () => {
     );
 
     expect(result.layout).toEqual({ ...VALID_LAYOUT, rev: 1 });
+  });
+});
+
+describe('per-summoner isolation — structural invariant guard (14.4)', () => {
+  it('a save on summoner X never reaches summoner Y (separate servers)', async () => {
+    // 目前架構：一個 server 進程＝一個 summoner（emitter 作用域即隔離邊界）。
+    // 此測試把該不變量釘成契約——未來若多 summoner 共用 emitter，
+    // 這條會失敗並要求 broadcast 改 scoped。
+    const serverX = createFakeServer(createTestContainer());
+    const serverY = createFakeServer(createTestContainer());
+    const x = createFakeSummoner(serverX).claude();
+    const y = createFakeSummoner(serverY).claude();
+
+    const received: unknown[] = [];
+    y.on('layout:sync', (payload) => received.push(payload));
+
+    await x.send('layout:save', VALID_LAYOUT);
+
+    expect(received).toHaveLength(0);
+  });
+});
+
+describe('concurrent saves — rev atomicity (14.7)', () => {
+  it('two clients saving concurrently get distinct, strictly increasing revs', async () => {
+    // Map 的同步 read-modify-write 讓 rev 配發天然原子；落盤改 async 後，
+    // 交錯讀寫可能配發重複 rev（echo guard 失效）。此測試是該行為的鎖。
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const c1 = createFakeSummoner(server).claude();
+    const c2 = createFakeSummoner(server).claude();
+
+    const [ack1, ack2] = await Promise.all([
+      c1.send<{ ok: boolean; rev: number }>('layout:save', VALID_LAYOUT),
+      c2.send<{ ok: boolean; rev: number }>('layout:save', VALID_LAYOUT),
+    ]);
+
+    expect(ack1.ok).toBe(true);
+    expect(ack2.ok).toBe(true);
+    expect(ack1.rev).not.toBe(ack2.rev);
+    expect([ack1.rev, ack2.rev].sort()).toEqual([1, 2]);
   });
 });

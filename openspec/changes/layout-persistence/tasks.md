@@ -104,11 +104,11 @@
 
 ## 14. 測試補強（2026-06-11 整合測試審計，餘項）
 
-- [ ] 14.1 [test] rebind 不 spawn 的全管線：launch session → LayoutStore 預存含該 channelId 的 layout → 重 render → 斷言 server 無第二次 spawn（renderWithWorkspace）
-- [ ] 14.2 [decision+test] reconnect 後 app:init 重新 rehydrate 的語意：目前每次 init 都套 incoming activeTabId（無「僅初次」gate、無 rev guard）——決定預期行為並以全管線測試 pin 住
-- [ ] 14.3 [test] server dedupe 測試補 broadcast 半邊（第二個 client 斷言 sync payload 也 deduped）
-- [ ] 14.4 [test] per-summoner 結構不變量守門：兩個 container 各自 server，X save → Y 收不到 sync
-- [ ] 14.5 [opsx] spec 漂移同步：layout-sync spec 的 channelId 唯一性改寫為 dedupe-and-accept（實作與測試皆如此；刪 .refine/拒收字句）
-- [ ] 14.6 [refactor] 落盤前置：web 測試的 LayoutStore 直接 seed 改 seedLayout helper；wire 層斷言取代同步 get（audit refactor-resilience）
-- [ ] 14.7 [test] 併發 save 的 rev 原子性（落盤 async 化前的行為鎖）
-- [ ] 14.8 [cleanup] brittle 清單：SessionBarOverflow 空殼測試、pane-tree.test 假 type-test、PaneDragDrop 死 arrange、PaneTree.test divider 整合名實不符、TabContainer.test 的 SocketContext mock 移除、9.5 名實相符
+- [x] 14.1 [test] rebind 不 spawn 的全管線：launch session → LayoutStore 預存含該 channelId 的 layout → 重 render → 斷言 server 無第二次 spawn（renderWithWorkspace）
+- [x] 14.2 [decision+test] reconnect 後 app:init 重新 rehydrate 的語意：目前每次 init 都套 incoming activeTabId（無「僅初次」gate、無 rev guard）——決定預期行為並以全管線測試 pin 住
+- [x] 14.3 [test] server dedupe 測試補 broadcast 半邊（第二個 client 斷言 sync payload 也 deduped）
+- [x] 14.4 [test] per-summoner 結構不變量守門：兩個 container 各自 server，X save → Y 收不到 sync
+- [x] 14.5 [opsx] spec 漂移同步：layout-sync spec 的 channelId 唯一性改寫為 dedupe-and-accept（實作與測試皆如此；刪 .refine/拒收字句）
+- [x] 14.6 [refactor] 落盤前置：web 測試的 LayoutStore 直接 seed 改 seedLayout helper；wire 層斷言取代同步 get（audit refactor-resilience）
+- [x] 14.7 [test] 併發 save 的 rev 原子性（落盤 async 化前的行為鎖）
+- [x] 14.8 [cleanup] brittle 清單：SessionBarOverflow 空殼測試、pane-tree.test 假 type-test、PaneDragDrop 死 arrange、PaneTree.test divider 整合名實不符、TabContainer.test 的 SocketContext mock 移除、9.5 名實相符

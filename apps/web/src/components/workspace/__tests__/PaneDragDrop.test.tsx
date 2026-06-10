@@ -60,24 +60,17 @@ describe('PaneDragDrop (D.2) drop swaps pane contents', () => {
     const swappedPairs: [string, string][] = [];
 
     function Setup() {
-      const { paneRoot } = usePaneState();
-      const { splitPane, setSessionInPane } = usePaneActions();
+      const { splitPane } = usePaneActions();
 
       return (
-        <button
-          type="button"
-          onClick={() => {
-            splitPane('h');
-            if (paneRoot.type === 'split') {
-              setSessionInPane(paneRoot.first.id, 'sess-L', null);
-              setSessionInPane(paneRoot.second.id, 'sess-R', null);
-            }
-          }}
-        >
+        <button type="button" onClick={() => splitPane('h')}>
           setup
         </button>
       );
     }
+
+    let paneIds = { leftId: '', rightId: '' };
+    const lastPaneIds = () => paneIds;
 
     function TwoPaneHeaders() {
       const { paneRoot } = usePaneState();
@@ -87,6 +80,7 @@ describe('PaneDragDrop (D.2) drop swaps pane contents', () => {
       const left = paneRoot.first;
       const right = paneRoot.second;
       if (!left || !right) return null;
+      paneIds = { leftId: left.id, rightId: right.id };
 
       return (
         <>
@@ -129,6 +123,9 @@ describe('PaneDragDrop (D.2) drop swaps pane contents', () => {
     // dt.getData returns the paneId set by dragStart handler
     fireEvent.drop(rightHeader, { dataTransfer: dt });
 
-    expect(swappedPairs).toHaveLength(1);
+    // drop 在右 header → 右側的 onSwap 必須收到「被拖來的左側」paneId
+    // （只驗 length 的話，swap 方向錯置也會綠）
+    const probe = lastPaneIds();
+    expect(swappedPairs).toEqual([[probe.rightId, probe.leftId]]);
   });
 });

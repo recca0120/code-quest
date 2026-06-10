@@ -40,6 +40,10 @@ export function useLayoutPersistence(
 ): void {
   const lastSeenRevRef = useRef(0);
   const lastAppliedJsonRef = useRef<string | null>(null);
+  // activeTabId is a cold-start preference: only the FIRST init applies it.
+  // Reconnect re-fires app:init with the stored layout — that replay must not
+  // steal the local active tab (spec: "activeTabId SHALL 僅在 app:init 初次套用").
+  const initAppliedRef = useRef(false);
 
   function applyLayout(layout: PersistedLayout, source: 'init' | 'sync') {
     if (!layout.tabs.length) return;
@@ -94,7 +98,8 @@ export function useLayoutPersistence(
       const parsed = persistedLayoutSchema.safeParse(migrateLegacyToV2(layout));
       if (!parsed.success) return;
       if (rev !== null) lastSeenRevRef.current = Math.max(lastSeenRevRef.current, rev);
-      applyLayout(parsed.data, 'init');
+      applyLayout(parsed.data, initAppliedRef.current ? 'sync' : 'init');
+      initAppliedRef.current = true;
     });
   }, [appConfigActions]);
 

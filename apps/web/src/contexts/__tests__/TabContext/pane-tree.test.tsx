@@ -11,6 +11,7 @@ import { SocketProvider } from '@/contexts/SocketContext';
 import type { PaneNode } from '@/contexts/TabContext';
 import {
   buildSessionPaneLabels,
+  type PaneContent,
   TabProvider,
   usePaneActions,
   usePaneState,
@@ -28,22 +29,26 @@ function renderWithPanes(ui: ReactElement) {
   return { user };
 }
 
-// ── 1.1 Type tests (compile-time) ── verified by TypeScript — no runtime assertions needed.
-// We import the types and assign values; if types are wrong, tsc fails.
+// ── 1.1 Type tests (compile-time) ── the `satisfies PaneContent` annotations make
+// tsc reject any drift from the current variants (the old version lacked
+// annotations entirely and silently passed with long-obsolete shapes).
 describe('PaneContent / PaneNode types (1.1)', () => {
-  it('can construct all PaneContent variants', () => {
-    const _session = { type: 'session' as const, sessionId: 'abc' };
-    const _sessionNull = { type: 'session' as const, sessionId: null };
-    const _git = { type: 'git' as const, cwd: '/repo' };
-    const _files = { type: 'files' as const, cwd: '/repo' };
-    const _spec = { type: 'spec' as const, cwd: '/repo' };
-    const _worktrees = { type: 'worktrees' as const };
-    expect(_session.type).toBe('session');
-    expect(_sessionNull.sessionId).toBeNull();
-    expect(_git.type).toBe('git');
-    expect(_files.type).toBe('files');
-    expect(_spec.type).toBe('spec');
-    expect(_worktrees.type).toBe('worktrees');
+  it('can construct all current PaneContent variants', () => {
+    const session = { type: 'session', sessionId: 'abc', cwd: '/repo' } satisfies PaneContent;
+    const sessionNull = { type: 'session', sessionId: null, cwd: null } satisfies PaneContent;
+    const git = { type: 'git', target: { kind: 'fixed', cwd: '/repo' } } satisfies PaneContent;
+    const files = { type: 'files', target: { kind: 'fixed', cwd: '/repo' } } satisfies PaneContent;
+    const openspec = {
+      type: 'openspec',
+      target: { kind: 'fixed', cwd: '/repo' },
+    } satisfies PaneContent;
+    const worktrees = { type: 'worktrees' } satisfies PaneContent;
+    expect(session.type).toBe('session');
+    expect(sessionNull.sessionId).toBeNull();
+    expect(git.target.kind).toBe('fixed');
+    expect(files.type).toBe('files');
+    expect(openspec.type).toBe('openspec');
+    expect(worktrees.type).toBe('worktrees');
   });
 });
 

@@ -19,11 +19,13 @@ import { describe, expect, it, onTestFinished } from 'vitest';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
 import { PaneTree } from '@/components/workspace/PaneTree';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
+import { AppConfigProvider } from '@/contexts/AppInitContext';
 import { GitProvider } from '@/contexts/GitContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider } from '@/contexts/TabContext';
 import { createFakeSummoner, type FakeSummoner } from '@/test/fake-summoner';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 /** debounce 是 500ms — negative 斷言（「不發生」）需要明確的真實時間窗 */
 function settleDebounce() {
@@ -35,16 +37,18 @@ function settleDebounce() {
 function renderClient(summoner: FakeSummoner) {
   return render(
     <SocketProvider socket={summoner.socket}>
-      <ProjectProvider>
-        <GitProvider>
-          <TabProvider>
-            <KeyboardShortcutsProvider>
-              <WorkspaceTabBar />
-              <PaneTree />
-            </KeyboardShortcutsProvider>
-          </TabProvider>
-        </GitProvider>
-      </ProjectProvider>
+      <AppConfigProvider>
+        <ProjectProvider>
+          <GitProvider>
+            <TabProvider>
+              <KeyboardShortcutsProvider>
+                <WorkspaceTabBar />
+                <PaneTree />
+              </KeyboardShortcutsProvider>
+            </TabProvider>
+          </GitProvider>
+        </ProjectProvider>
+      </AppConfigProvider>
     </SocketProvider>,
   );
 }
@@ -310,5 +314,112 @@ describe('defensive sync payloads（wiring 層，非純函式）', () => {
       });
     });
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
+  });
+});
+describe('reconnect 的 app:init replay（spec: activeTabId 僅初次套用）', () => {
+  it('重連後的 init replay 不偷本地 active tab', async () => {
+    const user = userEvent.setup();
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+
+    // 另一個 client 預存 layout（rev 1，active = Beta）
+    const seeder = createFakeSummoner(server).claude();
+    const twoTabs: PersistedLayout = {
+      version: 2,
+      tabs: [
+        {
+          id: 'tab-a',
+          label: 'Alpha',
+          paneRoot: {
+            type: 'leaf',
+            id: 'pa',
+            content: { type: 'session', channelId: null, cwd: null },
+          },
+        },
+        {
+          id: 'tab-b',
+          label: 'Beta',
+          paneRoot: {
+            type: 'leaf',
+            id: 'pb',
+            content: { type: 'session', channelId: null, cwd: null },
+          },
+        },
+      ],
+      activeTabId: 'tab-b',
+    };
+    await seeder.send('layout:save', twoTabs);
+
+    const summoner = createFakeSummoner(server);
+    renderClient(summoner);
+
+    // 首次 init：套用 incoming activeTabId（Beta）
+    await waitFor(() =>
+      expect(screen.getByText('Beta').closest('[data-testid="workspace-tab"]')).toHaveAttribute(
+        'data-active',
+      ),
+    );
+
+    // 本地切到 Alpha 並讓 debounce 存檔
+    await user.click(screen.getAllByTestId('workspace-tab')[0]!);
+    await waitFor(() => expect(summoner.sentEvents('layout:save')).toHaveLength(1), {
+      timeout: 2000,
+    });
+
+    // 另一個 client 再存一版 active=Beta（rev 3）——store 與本地 view 分歧
+    await act(async () => {
+      await seeder.send('layout:save', twoTabs);
+    });
+
+    // 重連 → app:init replay 帶回 store 的 layout（active=Beta）
+    const initsBefore = summoner.sentEvents('app:init').length;
+    await act(async () => {
+      summoner.socket.disconnect();
+      summoner.socket.connect();
+    });
+    await waitFor(() =>
+      expect(summoner.sentEvents('app:init').length).toBeGreaterThan(initsBefore),
+    );
+
+    // 非首次 init 走 sync 語意：本地 active（Alpha）不被偷
+    expect(screen.getByText('Alpha').closest('[data-testid="workspace-tab"]')).toHaveAttribute(
+      'data-active',
+    );
+  });
+});
+describe('reload 後 live session 重綁（spec: live session rebinds across reload）', () => {
+  it('layout 還原綁回仍存活的 channel：resume join、不 spawn 第二個 process', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+
+    // 第一個「視窗」：開 project、launch session、等 layout 存檔
+    const s1 = createFakeSummoner(server);
+    const view1 = await renderWithWorkspace({ summoner: s1 });
+    const project = await view1.addProject();
+    await project.launchSession();
+    expect(s1.sentEvents('session:launch')).toHaveLength(1);
+    await waitFor(() => expect(s1.sentEvents('layout:save').length).toBeGreaterThan(0), {
+      timeout: 2000,
+    });
+    view1.unmount();
+
+    // 「reload」：新 client 連同一 server——app:init 帶回 layout（含 channelId）＋ alive sessions
+    const s2 = createFakeSummoner(server);
+    await renderWithWorkspace({ summoner: s2 });
+
+    // ① UI：chat pane 自動重綁出現
+    await waitFor(() => expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument(), {
+      timeout: 2000,
+    });
+
+    // ② socket：走 resume join，絕不 spawn 第二次
+    expect(s2.sentEvents('session:launch')).toHaveLength(0);
+    await waitFor(() => expect(s2.sentEvents('session:join').length).toBeGreaterThan(0));
+
+    // ③ server：channel 數維持 1（沒有第二個 process）
+    const manager = container.get<{ getAliveChannels(): unknown[] }>(TYPES.ChannelManager);
+    expect(manager.getAliveChannels()).toHaveLength(1);
   });
 });

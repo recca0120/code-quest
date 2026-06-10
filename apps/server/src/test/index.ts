@@ -10,3 +10,4 @@ export {
   getChannelManager,
   setupSession,
 } from './fake-server.ts';
+export { seedLayout } from './seed-layout.ts';
