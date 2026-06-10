@@ -635,13 +635,13 @@
 
 ### Toggle 搬移（TG）
 
-- [ ] TG.1 [test] `PaneHeader` 不再渲染 Files/Git/Spec tool icon（不應有 `aria-label="Files"` 等按鈕）
-- [ ] TG.2 [test] `ChatBreadcrumb` 有 `onToggleRight` prop；存在時渲染 `aria-label="Toggle right pane"` 按鈕
-- [ ] TG.3 [test] 點擊 toggle button → `onToggleRight` 被呼叫
-- [ ] TG.4 [test] `PaneLeafContent` 初始 `rightOpen=false`；點擊 toggle → `RightPane` 出現；再點擊 → 消失
-- [ ] TG.5 [impl] `PaneHeader`：移除 `activeTool`、`onToolSelect` props 及三個 tool icon 按鈕
-- [ ] TG.6 [impl] `ChatBreadcrumb`：加入 `onToggleRight?: () => void` prop；渲染 `RectangleGroupIcon` button
-- [ ] TG.7 [impl] `ChatView`：`onToggleRight` prop 傳遞給 `ChatBreadcrumb`
-- [ ] TG.8 [impl] `TabContent`（TabContainer）：加入 `onToggleRight` prop，從 `PaneLeafContent` 傳入
-- [ ] TG.9 [impl] `PaneLeafContent`：`activeTool` state → `rightOpen: boolean`；`setRightOpen(v => !v)` 傳給 `TabContent.onToggleRight`
-- [ ] TG.10 [impl] 確認所有測試綠燈
+- [x] TG.1 [test] `PaneHeader` 不再渲染 Files/Git/Spec tool icon（不應有 `aria-label="Files"` 等按鈕）
+- [x] TG.2 [test] `ChatBreadcrumb` 有 `onToggleRight` prop；存在時渲染 `aria-label="Toggle right pane"` 按鈕
+- [x] TG.3 [test] 點擊 toggle button → `onToggleRight` 被呼叫
+- [x] TG.4 [test] `PaneLeafContent` 初始 `rightOpen=false`；點擊 toggle → `RightPane` 出現；再點擊 → 消失
+- [x] TG.5 [impl] `PaneHeader`：移除 `activeTool`、`onToolSelect` props 及三個 tool icon 按鈕
+- [x] TG.6 [impl] `ChatBreadcrumb`：加入 `onToggleRight?: () => void` prop；渲染 `RectangleGroupIcon` button
+- [x] TG.7 [impl] `ChatView`：`onToggleRight` prop 傳遞給 `ChatBreadcrumb`
+- [x] TG.8 [impl] `TabContent`（TabContainer）：加入 `onToggleRight` prop，從 `PaneLeafContent` 傳入
+- [x] TG.9 [impl] `PaneLeafContent`：`activeTool` state → `rightOpen: boolean`；`setRightOpen(v => !v)` 傳給 `TabContent.onToggleRight`
+- [x] TG.10 [impl] 確認所有測試綠燈

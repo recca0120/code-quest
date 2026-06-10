@@ -12,19 +12,20 @@
 **Goals:**
 - Split Pane：chat 區域可任意切割（左右 / 上下），任意深度，支援 resize、對調、拖拉重排
 - Tool Pane：Git / Files / Spec / Worktrees 可作為 pane 類型放入 split 區域，需要時才開
-- Tab = Session：Tab Bar 是 session 清單，點擊填入 focused pane，不再是 active 切換器
+- Layout 持久化：每個 Layout Tab 的 pane tree + cwd 透過 WebSocket 存在 server，跨裝置同步（見 Decision 14）
+- Session 永遠在 pane：layout 持久化後 session 不存在「無 pane」狀態，Session Tab Bar 因此移除（見 Decision 14）
 - Focus Model：click pane → focus
-- New Session：Session Tab Bar `[+]` 是唯一的開 session 入口；空白 pane picker 一站式選 session / tool / new
-- Tab：每個 tab 是獨立工作場景（類似 tmux window），有自己的 pane 排列
-- Context Panel：session pane header toolbar 快速展開 Files / Git / Spec，cwd 自動跟 session
-- Workspace Overview：overlay 總覽所有 tab / session + project/worktree 管理，含最新訊息預覽、拖曳重排、新 session 入口（取代原 Session Manager + Project List）
+- New Session：空白 pane picker 是主要開 session 入口；Layout Tab `[+]` 開新空白 layout
+- Tab：每個 tab 是獨立工作場景（類似 tmux window），有自己的 pane 排列，持久化在 server
+- Context Panel：`ChatBreadcrumb` toggle 快速展開 Files / Git / Spec inline side panel，cwd 自動跟 session
+- Workspace Overview：overlay 總覽所有 tab / session + project/worktree 管理，含最新訊息預覽、拖曳重排
 - Mobile 退化：小螢幕強制單 pane，不顯示 split 功能
 
 **Non-Goals:**
 - Global Bar（已移除，project switcher / active project 概念不需要）
 - 固定左側 Sidebar 或固定右側 Right Pane（改為 tool pane 進入 split area）
 - 同一個 session 出現在多個 pane（不允許，點 tab 只 focus 既有 pane）
-- Pane layout 持久化（layout 是臨時的，不儲存）
+- Session Tab Bar（已由 layout 持久化取代，見 Decision 14）
 - 跨 Tab 的 pane 整體搬移（session 可跨 tab，但 pane 結構不跨）
 
 ## Decisions
@@ -374,7 +375,7 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 
 - `[+]`：新增空白 tab
 - Layout 標題可雙擊 rename
-- `[×]` 關閉 tab（session 移至其他 tab 或變 inactive）
+- `[×]` 關閉 tab（session 內的 pane 一併關閉）
 
 ---
 
@@ -385,6 +386,70 @@ Drop zone 視覺：拖曳中 hover 到目標 pane 時，顯示方向指示（上
 - Pane tree 強制保持單 leaf（split 操作 disabled）
 - Tool pane 仍可在單 pane 內開啟，但不能與 session pane 並排
 - Tab Bar 維持不動（含 `[⊞]` Workspace Overview 入口）
+
+---
+
+### 14. Layout 持久化 + Session Tab Bar 移除
+
+**決定**：Layout（pane tree + 各 leaf 的 cwd）透過 WebSocket 持久化在 server，跨裝置即時同步。Session Tab Bar 因此移除。
+
+**理由**：
+- 使用者切換裝置或重新整理，workspace 完全恢復，不需手動重建
+- WebSocket 已是 cc-office 的通訊基礎，server-side persistence 是自然延伸
+- Layout 持久化後，session 永遠活在某個 pane 裡，「有 session 但無 pane」的狀態不存在
+- Session Tab Bar 存在的唯一理由是管理 inactive（無 pane）的 session；這個狀態消失後 Session Tab Bar 隨之移除
+- 去掉一整條 bar 讓 Split Pane Area 有更多垂直空間
+
+**持久化的 schema（`PersistedLayout`）**：
+
+```ts
+// sessionId 是 runtime 概念，不持久化；leaf session 存 cwd
+type PersistedPaneContent =
+  | { type: 'session';  cwd: string | null }
+  | { type: 'git' | 'files' | 'spec' | 'worktrees'; cwd: string }
+
+type PersistedPaneNode =
+  | { type: 'leaf';  id: string; content: PersistedPaneContent }
+  | { type: 'split'; id: string; direction: 'h' | 'v'; ratio: number;
+      first: PersistedPaneNode; second: PersistedPaneNode }
+
+type PersistedTab    = { id: string; name?: string; paneRoot: PersistedPaneNode }
+type PersistedLayout = { tabs: PersistedTab[]; activeTabId: string }
+```
+
+**不持久化的欄位**：`sessionId`（runtime）、`focusedPaneId`（預設 first leaf）、`zoomedPaneId`（transient）、`rightOpen`（預設 false）。
+
+**新增的 server events**：
+
+| Event | 方向 | 說明 |
+|---|---|---|
+| `layout:save` | client → server | debounce 儲存當下 layout（每次 wsState 改變） |
+| `layout:load` | client → server | 連線初始化時請求上次儲存的 layout |
+| `layout:loaded` | server → client | 回傳 `PersistedLayout`（或 null，表示無存檔） |
+| `layout:sync` | server → client | 有其他裝置更新 layout 時，廣播給同 user 的其他連線 |
+
+**Session 恢復策略（保守）**：恢復時 leaf session 的 `sessionId = null`（空白 pane），使用者點擊 pane 後手動開 session。不自動建立 session，避免重整後一次開多個 session。
+
+**Session Tab Bar 移除後的替代入口**：
+- 新 session → EmptyPanePicker 的 `[+ New session]` / `[+ branch]`
+- 切換 session → 切換 Layout Tab（每個 layout 有自己的 session 集合）
+- `forceMount` hidden pool 不再需要（session 無 limbo 狀態）
+
+**與 Decision 1–3 的關係**：
+- Decision 1（pane tree binary tree）不變，新增序列化/反序列化路徑
+- Decision 3（forceMount 策略）**修訂**：移除 hidden pool forceMount，session 只在 pane 內 mount
+- Session Tab Bar（B 區）整條移除，佈局從三條 bar 變兩條
+
+```
+移除前：                    移除後：
+┌──────────────────────┐   ┌──────────────────────┐
+│  A. Layout Tab Bar   │   │  A. Layout Tab Bar   │
+├──────────────────────┤   ├──────────────────────┤
+│  B. Session Tab Bar  │   │                      │
+├──────────────────────┤   │  B. Split Pane Area  │
+│  C. Split Pane Area  │   │     （更多空間）       │
+└──────────────────────┘   └──────────────────────┘
+```
 
 ---
 
