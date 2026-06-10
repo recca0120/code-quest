@@ -15,14 +15,14 @@ rehydrate／live-channel 重綁（mode:'resume' 不 spawn）的測試在 layout-
 
 ## B. pane-codecs
 
-- [ ] 2.1 [test] `serializeContent` / `deserializeContent` — 每個 type 的 roundtrip property test：`serialize(deserialize(x)) === x`（identity 契約）
-- [ ] 2.2 [test] deserialize 為 permissive — 不驗 cwd 存在性、不查 live sessions（餵已刪 worktree 的 cwd 仍原樣轉換）
-- [ ] 2.3 [impl] 新增 `contexts/pane-codecs.ts`：mapped type `Serializers`/`Deserializers` + generic indexed access dispatch，零 React import、零 cast
-- [ ] 2.4 [impl] `AssertEqual<PaneContent['type'], PersistedPaneContent['type']>` 靜態斷言
-- [ ] 2.5 [refactor] TabContext 的 serializePaneNode/deserializePaneNode 改走 codecs，刪除 `as` cast
-- [ ] 2.6 [test] ratio 精度 — serialize split node 時 ratio round 到 4 位小數（`0.6342819…` → `0.6343`），roundtrip 後穩定（echo guard 字串比對前提）
-- [ ] 2.7 [test] ratio clamp — deserialize 時 ratio 限制在 `[0.05, 0.95]`，壞資料（0、1、NaN、負數）clamp 後仍渲染出可見的 pane
-- [ ] 2.8 [impl] serializeNode round ratio；deserializeNode clamp ratio。schema 層用 catch/clamp（如 `z.number().catch(0.5)`）**不可 reject**——壞 ratio 不得讓 safeParse 打掉整份 layout
+- [x] 2.1 [test] `serializeContent` / `deserializeContent` — 每個 type 的 roundtrip property test：`serialize(deserialize(x)) === x`（identity 契約）
+- [x] 2.2 [test] deserialize 為 permissive — 不驗 cwd 存在性、不查 live sessions（餵已刪 worktree 的 cwd 仍原樣轉換）
+- [x] 2.3 [impl] 新增 `contexts/pane-codecs.ts`：mapped type `Serializers`/`Deserializers` + generic indexed access dispatch，零 React import、零 cast
+- [x] 2.4 [impl] `AssertEqual<PaneContent['type'], PersistedPaneContent['type']>` 靜態斷言
+- [x] 2.5 [refactor] TabContext 的 serializePaneNode/deserializePaneNode 改走 codecs，刪除 `as` cast
+- [x] 2.6 [test] ratio 精度 — serialize split node 時 ratio round 到 4 位小數（`0.6342819…` → `0.6343`），roundtrip 後穩定（echo guard 字串比對前提）
+- [x] 2.7 [test] ratio clamp — deserialize 時 ratio 限制在 `[0.05, 0.95]`，壞資料（0、1、NaN、負數）clamp 後仍渲染出可見的 pane
+- [x] 2.8 [impl] serializeNode round ratio；deserializeNode clamp ratio。schema 層用 catch/clamp（如 `z.number().catch(0.5)`）**不可 reject**——壞 ratio 不得讓 safeParse 打掉整份 layout
 
 ## C. Named pane components
 

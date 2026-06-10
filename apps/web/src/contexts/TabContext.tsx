@@ -1,10 +1,5 @@
 import type { PersistedLayout, PersistedTab, SessionStateSummary } from '@code-quest/schemas';
-import {
-  EVENTS,
-  LAYOUT_SCHEMA_VERSION,
-  migrateLegacyToV2,
-  persistedLayoutSchema,
-} from '@code-quest/schemas';
+import { EVENTS, migrateLegacyToV2, persistedLayoutSchema } from '@code-quest/schemas';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui.ts';
 import { AppConfigActionsContext } from './AppInitContext.tsx';
@@ -13,6 +8,7 @@ import type { SessionMode } from './channel/ChannelContext.tsx';
 // intents (activate channel, open worktree). Soft-bound via direct useContext
 // so TabProvider can be mounted standalone in tests without a NavigationProvider.
 import { NavigationActionsContext, NavigationStateContext } from './NavigationContext.tsx';
+import { deserializeNode, serializeLayout } from './pane-codecs.ts';
 import { SocketContext } from './SocketContext.tsx';
 import { TERMINAL_STATES } from './session-states.ts';
 
@@ -209,83 +205,16 @@ export function buildSessionPaneLabels(node: PaneNode, path = ''): Map<string, s
   ]);
 }
 
-// ── Layout persistence helpers ──
-
-function deserializePaneNode(
-  node: import('@code-quest/schemas').PersistedTab['paneRoot'],
-): PaneNode {
-  if (node.type === 'leaf') {
-    const content = node.content;
-    let paneContent: PaneContent;
-    if (content.type === 'session') {
-      // Permissive: preserve channelId/cwd from wire as-is; liveness is a render-time
-      // concern (tabs[sessionId] present → rebind via mode:'resume', absent → empty pane)
-      paneContent = { type: 'session', sessionId: content.channelId, cwd: content.cwd };
-    } else if (content.type === 'worktrees') {
-      paneContent = { type: 'worktrees' };
-    } else if (content.target.kind === 'fixed') {
-      paneContent = { type: content.type, target: { kind: 'fixed', cwd: content.target.cwd } };
-    } else {
-      // 'follow' is reserved (worktree-centric D5); degrade to empty session until implemented
-      paneContent = { type: 'session', sessionId: null, cwd: null };
-    }
-    return { type: 'leaf', id: node.id, content: paneContent };
-  }
-  return {
-    type: 'split',
-    id: node.id,
-    direction: node.direction,
-    ratio: node.ratio,
-    first: deserializePaneNode(node.first),
-    second: deserializePaneNode(node.second),
-  };
-}
+// ── Layout persistence helpers（codecs 本體在 pane-codecs.ts，純函式、可獨立測試）──
 
 function deserializeTab(t: PersistedTab): WorkspaceTab {
-  const paneRoot = deserializePaneNode(t.paneRoot);
+  const paneRoot = deserializeNode(t.paneRoot);
   return {
     id: t.id,
     label: t.label,
     paneRoot,
     focusedPaneId: firstLeafId(paneRoot),
     zoomedPaneId: null,
-  };
-}
-
-function serializePaneNode(node: PaneNode): PersistedTab['paneRoot'] {
-  if (node.type === 'leaf') {
-    const c = node.content;
-    if (c.type === 'session') {
-      return {
-        type: 'leaf',
-        id: node.id,
-        content: { type: 'session', channelId: c.sessionId, cwd: c.cwd },
-      };
-    }
-    if (c.type === 'git' || c.type === 'files' || c.type === 'openspec') {
-      return { type: 'leaf', id: node.id, content: { type: c.type, target: c.target } };
-    }
-    return { type: 'leaf', id: node.id, content: { type: 'worktrees' } };
-  }
-  return {
-    type: 'split',
-    id: node.id,
-    direction: node.direction,
-    ratio: node.ratio,
-    first: serializePaneNode(node.first),
-    second: serializePaneNode(node.second),
-  };
-}
-
-function serializeLayout(wsState: WorkspaceTabStateValue): PersistedLayout {
-  return {
-    version: LAYOUT_SCHEMA_VERSION,
-    tabs: wsState.workspaceTabs.map((t) => ({
-      id: t.id,
-      label: t.label,
-      paneRoot: serializePaneNode(t.paneRoot),
-    })),
-    activeTabId: wsState.activeWorkspaceTabId ?? wsState.workspaceTabs[0]?.id ?? '',
   };
 }
 
