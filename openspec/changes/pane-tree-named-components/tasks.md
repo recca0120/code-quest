@@ -48,5 +48,5 @@ rehydrate／live-channel 重綁（mode:'resume' 不 spawn）的測試在 layout-
 
 ## E. 收尾
 
-- [ ] 5.1 [refactor] 全套測試過、knip/biome 乾淨
-- [ ] 5.2 [refactor] 更新既有 specs 的 delta，具體過時項：`split-pane/spec.md` 的「SplitPane leaf renders Pane compound」requirement（更名 PaneTree/PaneSplit/PaneLeaf、toolbar 改 PaneLeaf 統一渲染、session 不包 Pane.Content）、「Spec pane」scenario 的 `type:'spec'`→`'openspec'`；`pane-compound-component/spec.md` 的 WorktreeSwitcher scenario（`setContentInPane` 改 target shape）；zoom 行為歸新 pane-tree spec
+- [x] 5.1 [refactor] 全套測試過、knip/biome 乾淨
+- [x] 5.2 [refactor] 更新既有 specs 的 delta，具體過時項：`split-pane/spec.md` 的「SplitPane leaf renders Pane compound」requirement（更名 PaneTree/PaneSplit/PaneLeaf、toolbar 改 PaneLeaf 統一渲染、session 不包 Pane.Content）、「Spec pane」scenario 的 `type:'spec'`→`'openspec'`；`pane-compound-component/spec.md` 的 WorktreeSwitcher scenario（`setContentInPane` 改 target shape）；zoom 行為歸新 pane-tree spec

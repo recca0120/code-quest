@@ -20,8 +20,8 @@ type PersistedTarget = Extract<PersistedPaneContent, { type: 'git' }>['target'];
 
 type AssertEqual<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
 /** Compile-time guard: client and wire content-type unions must not drift. */
-export const PANE_TYPE_KEYS_MATCH: AssertEqual<PaneContent['type'], PersistedPaneContent['type']> =
-  true;
+const PANE_TYPE_KEYS_MATCH: AssertEqual<PaneContent['type'], PersistedPaneContent['type']> = true;
+void PANE_TYPE_KEYS_MATCH;
 
 // ── content codecs（mapped types — 新增 type 漏寫直接編譯錯）──
 
@@ -39,7 +39,7 @@ const SERIALIZERS: Serializers = {
   worktrees: () => ({ type: 'worktrees' }),
 };
 
-export function serializeContent<K extends PaneContent['type']>(
+function serializeContent<K extends PaneContent['type']>(
   content: Extract<PaneContent, { type: K }>,
 ): Extract<PersistedPaneContent, { type: K }> {
   const serializer: Serializers[K] = SERIALIZERS[content.type];
@@ -68,7 +68,7 @@ const DESERIALIZERS: Deserializers = {
   worktrees: () => ({ type: 'worktrees' }),
 };
 
-export function deserializeContent<K extends PersistedPaneContent['type']>(
+function deserializeContent<K extends PersistedPaneContent['type']>(
   persisted: Extract<PersistedPaneContent, { type: K }>,
 ): PaneContent {
   const deserializer: Deserializers[K] = DESERIALIZERS[persisted.type];

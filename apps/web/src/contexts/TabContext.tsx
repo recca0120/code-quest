@@ -15,7 +15,7 @@ import { TERMINAL_STATES } from './session-states.ts';
 // ── Pane tree types ──
 
 // 'follow' variant joins at worktree-centric D5 — shape reserved in wire v2, not constructible yet
-export type PaneTarget = { kind: 'fixed'; cwd: string };
+type PaneTarget = { kind: 'fixed'; cwd: string };
 
 export type PaneContent =
   | { type: 'session'; sessionId: string | null; cwd: string | null }
