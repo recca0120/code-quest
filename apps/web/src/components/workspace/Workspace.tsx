@@ -11,7 +11,7 @@ import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import {
-  findPaneBySession,
+  findPaneByChannel,
   leafIdsInOrder,
   TabProvider,
   usePaneActions,
@@ -65,7 +65,7 @@ function ConnectedPanePicker(props: PanePickerConfig) {
   const leaves = leafIdsInOrder(paneRoot);
 
   const enrichedSessions = props.sessions?.map((s) => {
-    const paneId = findPaneBySession(paneRoot, s.channelId);
+    const paneId = findPaneByChannel(paneRoot, s.channelId);
     const idx = paneId ? leaves.indexOf(paneId) : -1;
     return {
       ...s,

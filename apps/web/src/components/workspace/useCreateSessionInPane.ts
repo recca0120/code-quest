@@ -6,7 +6,7 @@
  */
 import { useCallback } from 'react';
 import {
-  findPaneBySession,
+  findPaneByChannel,
   type PaneNode,
   usePaneActions,
   usePaneState,
@@ -21,7 +21,7 @@ function findLeafBy(node: PaneNode, pred: (leaf: PaneLeafNode) => boolean): Pane
 }
 
 function isEmptySessionLeaf(leaf: PaneLeafNode): boolean {
-  return leaf.content.type === 'session' && leaf.content.sessionId === null;
+  return leaf.content.type === 'session' && leaf.content.channelId === null;
 }
 
 function isSessionLeaf(leaf: PaneLeafNode): boolean {
@@ -51,7 +51,7 @@ export function useCreateSessionInPane(): {
         byId && isSessionLeaf(byId)
           ? byId
           : (findLeafBy(paneRoot, isEmptySessionLeaf) ?? findLeafBy(paneRoot, isSessionLeaf));
-      if (target && target.content.type === 'session' && target.content.sessionId === null) {
+      if (target && target.content.type === 'session' && target.content.channelId === null) {
         setSessionInPane(target.id, channelId, cwd);
         focusPane(target.id);
       } else {
@@ -73,7 +73,7 @@ export function useCreateSessionInPane(): {
 
   const placeExistingSession = useCallback(
     (channelId: string, cwd: string | null) => {
-      const existingPaneId = findPaneBySession(paneRoot, channelId);
+      const existingPaneId = findPaneByChannel(paneRoot, channelId);
       if (existingPaneId) {
         focusPane(existingPaneId);
         return;

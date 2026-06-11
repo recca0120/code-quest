@@ -23,14 +23,14 @@ function arbContent(rng: () => number, i: number): PaneContent {
   const pick = Math.floor(rng() * 8);
   switch (pick) {
     case 0:
-      return { type: 'session', sessionId: `ch-${i}`, cwd: `/repo/wt-${i}` };
+      return { type: 'session', channelId: `ch-${i}`, cwd: `/repo/wt-${i}` };
     case 1:
-      return { type: 'session', sessionId: null, cwd: null };
+      return { type: 'session', channelId: null, cwd: null };
     case 6:
       // rail state（tmux-workspace-ui P3）— roundtrip 必須保留
       return {
         type: 'session',
-        sessionId: `ch-${i}`,
+        channelId: `ch-${i}`,
         cwd: `/repo/wt-${i}`,
         rail: { open: rng() > 0.5, tab: (['files', 'git', 'spec'] as const)[i % 3]! },
       };
@@ -38,7 +38,7 @@ function arbContent(rng: () => number, i: number): PaneContent {
       // rail width（rail resize）— roundtrip 必須保留
       return {
         type: 'session',
-        sessionId: `ch-${i}`,
+        channelId: `ch-${i}`,
         cwd: `/repo/wt-${i}`,
         rail: {
           open: rng() > 0.5,
@@ -96,12 +96,12 @@ describe('pane-codecs — permissive deserialize (2.2)', () => {
     const wire = serializeNode({
       type: 'leaf',
       id: 'p1',
-      content: { type: 'session', sessionId: 'ch-dead', cwd: '/gone/worktree' },
+      content: { type: 'session', channelId: 'ch-dead', cwd: '/gone/worktree' },
     });
     expect(deserializeNode(wire)).toEqual({
       type: 'leaf',
       id: 'p1',
-      content: { type: 'session', sessionId: 'ch-dead', cwd: '/gone/worktree' },
+      content: { type: 'session', channelId: 'ch-dead', cwd: '/gone/worktree' },
     });
   });
 
@@ -175,7 +175,7 @@ describe('pane-codecs — serializeLayout (version envelope)', () => {
           paneRoot: {
             type: 'leaf',
             id: 'p1',
-            content: { type: 'session', sessionId: 'ch-1', cwd: '/repo' },
+            content: { type: 'session', channelId: 'ch-1', cwd: '/repo' },
           },
         },
       ],
@@ -224,7 +224,7 @@ describe("pane-codecs — reserved 'follow' target degrades (D5 placeholder)", (
     expect(node).toEqual({
       type: 'leaf',
       id: 'p9',
-      content: { type: 'session', sessionId: null, cwd: null },
+      content: { type: 'session', channelId: null, cwd: null },
     });
   });
 });

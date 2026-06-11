@@ -25,8 +25,8 @@ function collectCondensedSessions(root: PaneNode, visible: Set<string> | null): 
   const out: string[] = [];
   function walk(n: PaneNode): void {
     if (n.type === 'leaf') {
-      if (n.content.type === 'session' && n.content.sessionId && !visible?.has(n.id)) {
-        out.push(n.content.sessionId);
+      if (n.content.type === 'session' && n.content.channelId && !visible?.has(n.id)) {
+        out.push(n.content.channelId);
       }
       return;
     }

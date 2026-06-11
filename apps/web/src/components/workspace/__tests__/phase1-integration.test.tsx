@@ -48,8 +48,8 @@ describe('Phase 1 integration (9.1)', () => {
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
     expect(screen.queryByTestId('zoom-bar')).not.toBeInTheDocument();
 
-    // ① UI 反射 focused leaf 的 content.sessionId：launch 後 leaf 掛上該 channel 的
-    //    chat（content.sessionId 解析到 live session meta 才會渲染 TabContent），
+    // ① UI 反射 focused leaf 的 content.channelId：launch 後 leaf 掛上該 channel 的
+    //    chat（content.channelId 解析到 live session meta 才會渲染 TabContent），
     //    且該 channel 的 assistant 訊息（真 pipeline）出現在這個 leaf 裡
     const sessionLeaf = screen.getByTestId('split-pane-leaf');
     expect(sessionLeaf).toHaveAttribute('data-focused');

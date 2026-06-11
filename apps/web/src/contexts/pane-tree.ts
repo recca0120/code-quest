@@ -16,7 +16,7 @@ export interface RailState {
 }
 
 export type PaneContent =
-  | { type: 'session'; sessionId: string | null; cwd: string | null; rail?: RailState }
+  | { type: 'session'; channelId: string | null; cwd: string | null; rail?: RailState }
   | { type: 'git'; target: PaneTarget }
   | { type: 'files'; target: PaneTarget }
   | { type: 'openspec'; target: PaneTarget }
@@ -61,7 +61,7 @@ export function makeWorkspaceTab(label?: string): WorkspaceTab {
 // ── Tree algorithms ──
 
 export function makeLeaf(
-  content: PaneContent = { type: 'session', sessionId: null, cwd: null },
+  content: PaneContent = { type: 'session', channelId: null, cwd: null },
 ): PaneNode {
   return { type: 'leaf', id: crypto.randomUUID(), content };
 }
@@ -109,14 +109,14 @@ export function splitNodeAndAssign(
   root: PaneNode,
   focusedId: string | null,
   direction: 'h' | 'v',
-  sessionId: string,
+  channelId: string,
   cwd: string | null,
 ): { root: PaneNode; newLeafId: string } {
   // Guard against stale focused IDs (e.g. from close-button click bubbling to PaneLeaf)
   const validFocusedId = focusedId && hasLeaf(root, focusedId) ? focusedId : null;
   const targetId = validFocusedId ?? firstLeafId(root);
   if (!targetId) return { root, newLeafId: '' };
-  const newLeaf = makeLeaf({ type: 'session', sessionId, cwd });
+  const newLeaf = makeLeaf({ type: 'session', channelId, cwd });
   const newRoot = mapNode(root, (node) => {
     if (node.type === 'leaf' && node.id === targetId) {
       return {
@@ -238,18 +238,18 @@ export function movePaneTo(
   });
 }
 
-export function findPaneBySession(node: PaneNode, channelId: string): string | null {
+export function findPaneByChannel(node: PaneNode, channelId: string): string | null {
   if (node.type === 'leaf') {
-    return node.content.type === 'session' && node.content.sessionId === channelId ? node.id : null;
+    return node.content.type === 'session' && node.content.channelId === channelId ? node.id : null;
   }
-  return findPaneBySession(node.first, channelId) ?? findPaneBySession(node.second, channelId);
+  return findPaneByChannel(node.first, channelId) ?? findPaneByChannel(node.second, channelId);
 }
 
 export function collectSessionsInPaneTree(node: PaneNode): Set<string> {
   const ids = new Set<string>();
   function walk(n: PaneNode) {
     if (n.type === 'leaf') {
-      if (n.content.type === 'session' && n.content.sessionId) ids.add(n.content.sessionId);
+      if (n.content.type === 'session' && n.content.channelId) ids.add(n.content.channelId);
       return;
     }
     walk(n.first);
@@ -262,8 +262,8 @@ export function collectSessionsInPaneTree(node: PaneNode): Set<string> {
 export function buildSessionPaneLabels(node: PaneNode, path = ''): Map<string, string> {
   if (node.type === 'leaf') {
     const map = new Map<string, string>();
-    if (node.content.type === 'session' && node.content.sessionId) {
-      map.set(node.content.sessionId, path || 'Pane');
+    if (node.content.type === 'session' && node.content.channelId) {
+      map.set(node.content.channelId, path || 'Pane');
     }
     return map;
   }

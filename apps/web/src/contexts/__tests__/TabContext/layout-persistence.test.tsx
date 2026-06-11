@@ -288,8 +288,8 @@ describe('layout:sync 防呆與 LWW 套用細節', () => {
 
     const root = wsProbe!.workspaceTabs[0]!.paneRoot;
     if (root.type !== 'split') throw new Error('expected split');
-    expect(root.first).toMatchObject({ content: { type: 'session', sessionId: 'ch-1' } });
-    expect(root.second).toMatchObject({ content: { type: 'session', sessionId: null } });
+    expect(root.first).toMatchObject({ content: { type: 'session', channelId: 'ch-1' } });
+    expect(root.second).toMatchObject({ content: { type: 'session', channelId: null } });
   });
 });
 

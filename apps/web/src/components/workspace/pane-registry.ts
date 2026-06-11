@@ -21,7 +21,7 @@ export const PANE_TYPE_REGISTRY: readonly PaneTypeEntry[] = [
     icon: '✦',
     label: 'chat',
     hotkey: null,
-    makeContent: (cwd) => ({ type: 'session', sessionId: null, cwd }),
+    makeContent: (cwd) => ({ type: 'session', channelId: null, cwd }),
   },
   {
     key: 'files',

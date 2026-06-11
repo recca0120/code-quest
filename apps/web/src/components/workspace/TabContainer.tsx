@@ -63,7 +63,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   const focusedTabCwd = (() => {
     if (!focusedLeaf) return null;
     const c = focusedLeaf.content;
-    if (c.type === 'session') return c.sessionId ? (tabs[c.sessionId]?.cwd ?? null) : null;
+    if (c.type === 'session') return c.channelId ? (tabs[c.channelId]?.cwd ?? null) : null;
     if (c.type === 'git' || c.type === 'files' || c.type === 'openspec') return c.target.cwd;
     return null;
   })();
@@ -119,7 +119,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
     (t) =>
       t.paneRoot.type === 'leaf' &&
       t.paneRoot.content.type === 'session' &&
-      t.paneRoot.content.sessionId === null,
+      t.paneRoot.content.channelId === null,
   );
 
   if (tabEntries.length === 0 && isDefaultEmptyLayout) {

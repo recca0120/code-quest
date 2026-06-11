@@ -49,7 +49,7 @@ interface PaneActionsValue {
    * picker（handoff「分割（開 picker 選內容）」）需要它。無目標可分割時回 null。
    */
   splitPane: (direction: 'h' | 'v', paneId?: string) => string | null;
-  splitPaneAndAssign: (direction: 'h' | 'v', sessionId: string, cwd: string | null) => void;
+  splitPaneAndAssign: (direction: 'h' | 'v', channelId: string, cwd: string | null) => void;
   /** 分割 focused pane 並在新半邊放入任意 content（picker ⌘⏎ 分割開啟） */
   splitPaneAndSetContent: (direction: 'h' | 'v', content: PaneContent) => void;
   /** 標準工作組（picker ⌘1）：focused pane 右側建 files/git 直欄，focus 留在原 pane */
@@ -59,7 +59,7 @@ interface PaneActionsValue {
   closePane: (paneId: string) => void;
   focusPane: (paneId: string) => void;
   updateRatio: (splitNodeId: string, ratio: number) => void;
-  setSessionInPane: (paneId: string, sessionId: string | null, cwd: string | null) => void;
+  setSessionInPane: (paneId: string, channelId: string | null, cwd: string | null) => void;
   setContentInPane: (paneId: string, content: PaneContent) => void;
   zoomPane: (paneId: string | null) => void;
   swapPane: (idA: string, idB: string) => void;
@@ -186,13 +186,13 @@ export function WorkspaceLayoutProvider({ children }: { children: ReactNode }): 
       }));
       return result;
     },
-    splitPaneAndAssign: (direction, sessionId, cwd) => {
+    splitPaneAndAssign: (direction, channelId, cwd) => {
       updateActiveTab((t) => {
         const { root: newRoot, newLeafId } = splitNodeAndAssign(
           t.paneRoot,
           t.focusedPaneId,
           direction,
-          sessionId,
+          channelId,
           cwd,
         );
         return { ...t, paneRoot: newRoot, focusedPaneId: newLeafId };
@@ -272,12 +272,12 @@ export function WorkspaceLayoutProvider({ children }: { children: ReactNode }): 
         ),
       }));
     },
-    setSessionInPane: (paneId, sessionId, cwd) => {
+    setSessionInPane: (paneId, channelId, cwd) => {
       updateActiveTab((t) => ({
         ...t,
         paneRoot: mapNode(t.paneRoot, (node) =>
           node.type === 'leaf' && node.id === paneId
-            ? { ...node, content: { type: 'session', sessionId, cwd } }
+            ? { ...node, content: { type: 'session', channelId, cwd } }
             : node,
         ),
       }));

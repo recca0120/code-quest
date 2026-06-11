@@ -36,7 +36,7 @@ describe('PaneContent shape — session leaf carries cwd (1.1 / 1.2)', () => {
 
     expect(leaves()[0]!.content).toEqual({
       type: 'session',
-      sessionId: 'ch-1',
+      channelId: 'ch-1',
       cwd: '/repo/feat',
     });
   });
@@ -48,7 +48,7 @@ describe('PaneContent shape — session leaf carries cwd (1.1 / 1.2)', () => {
     act(() => actions().setSessionInPane(paneId, 'ch-1', '/repo/feat'));
     act(() => actions().setSessionInPane(paneId, null, null));
 
-    expect(leaves()[0]!.content).toEqual({ type: 'session', sessionId: null, cwd: null });
+    expect(leaves()[0]!.content).toEqual({ type: 'session', channelId: null, cwd: null });
   });
 
   it('splitPaneAndAssign(direction, sessionId, cwd) creates the new leaf with cwd', () => {
@@ -59,14 +59,14 @@ describe('PaneContent shape — session leaf carries cwd (1.1 / 1.2)', () => {
     act(() => actions().splitPaneAndAssign('h', 'ch-2', '/repo/main'));
 
     const newLeaf = leaves().find(
-      (l) => l.content.type === 'session' && l.content.sessionId === 'ch-2',
+      (l) => l.content.type === 'session' && l.content.channelId === 'ch-2',
     );
-    expect(newLeaf?.content).toEqual({ type: 'session', sessionId: 'ch-2', cwd: '/repo/main' });
+    expect(newLeaf?.content).toEqual({ type: 'session', channelId: 'ch-2', cwd: '/repo/main' });
   });
 
   it('default empty leaf has null sessionId and null cwd', () => {
     const { leaves } = renderProbe();
-    expect(leaves()[0]!.content).toEqual({ type: 'session', sessionId: null, cwd: null });
+    expect(leaves()[0]!.content).toEqual({ type: 'session', channelId: null, cwd: null });
   });
 });
 

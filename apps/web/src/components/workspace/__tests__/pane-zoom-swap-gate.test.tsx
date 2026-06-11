@@ -314,7 +314,7 @@ describe('pendingNewSession.targetPaneId — picker session lands in the TARGET 
     // state 層：session 落在 target pane，git pane 不被吞
     const target = leavesOf(probeState!.paneRoot).find((l) => l.id === emptyId);
     expect(target?.content.type).toBe('session');
-    expect(target?.content.type === 'session' ? target.content.sessionId : null).toBeTruthy();
+    expect(target?.content.type === 'session' ? target.content.channelId : null).toBeTruthy();
     expect(leavesOf(probeState!.paneRoot).find((l) => l.id === firstId)!.content.type).toBe('git');
     // UI 層：chat compose input 渲染在 target pane 裡
     const targetEl = container.querySelector(`[data-pane-id="${emptyId}"]`) as HTMLElement;

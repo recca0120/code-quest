@@ -22,7 +22,7 @@ function cardPreview(
   if (node.type !== 'leaf') return null;
   const c = node.content;
   if (c.type === 'session') {
-    const meta = c.sessionId ? tabs[c.sessionId] : null;
+    const meta = c.channelId ? tabs[c.channelId] : null;
     return { icon: '✦', preview: meta?.title ?? '' };
   }
   const entry = PANE_TYPE_REGISTRY.find((e) => e.key === c.type);

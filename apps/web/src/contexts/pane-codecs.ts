@@ -34,7 +34,7 @@ type Serializers = {
 const SERIALIZERS: Serializers = {
   session: (c) => ({
     type: 'session',
-    channelId: c.sessionId,
+    channelId: c.channelId,
     cwd: c.cwd,
     ...(c.rail ? { rail: c.rail } : {}),
   }),
@@ -56,7 +56,7 @@ function fromTarget(type: 'git' | 'files' | 'openspec', target: PersistedTarget)
     return { type, target: { kind: 'fixed', cwd: target.cwd } };
   }
   // 'follow' is reserved (worktree-centric D5); degrade to empty session until implemented
-  return { type: 'session', sessionId: null, cwd: null };
+  return { type: 'session', channelId: null, cwd: null };
 }
 
 type Deserializers = {
@@ -68,7 +68,7 @@ type Deserializers = {
 const DESERIALIZERS: Deserializers = {
   session: (p) => ({
     type: 'session',
-    sessionId: p.channelId,
+    channelId: p.channelId,
     cwd: p.cwd,
     ...(p.rail ? { rail: p.rail } : {}),
   }),

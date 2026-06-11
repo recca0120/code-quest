@@ -24,7 +24,7 @@ function zoomDetail(content: PaneContent, tabs: Record<string, TabMeta>): string
   const key = content.type === 'session' ? 'chat' : content.type;
   const entry = PANE_TYPE_REGISTRY.find((e) => e.key === key);
   if (content.type === 'session') {
-    const meta = content.sessionId ? tabs[content.sessionId] : undefined;
+    const meta = content.channelId ? tabs[content.channelId] : undefined;
     const cwd = meta?.cwd ?? content.cwd;
     const title = meta?.title ?? cwd?.split('/').filter(Boolean).pop();
     return title ? `${entry?.icon ?? ''} ${title}`.trim() : null;

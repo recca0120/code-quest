@@ -74,9 +74,9 @@ export function SessionPane({
     return () => ro.disconnect();
   }, []);
 
-  const meta = content.sessionId ? tabs[content.sessionId] : null;
+  const meta = content.channelId ? tabs[content.channelId] : null;
 
-  if (!content.sessionId || !meta) {
+  if (!content.channelId || !meta) {
     const hintWorktree = content.cwd ? lookup.get(content.cwd) : undefined;
     const hint = hintWorktree
       ? `Last: ${hintWorktree.projectName} ⎇ ${formatWorktreeLabel(hintWorktree)}`
@@ -125,7 +125,7 @@ export function SessionPane({
       <div ref={bodyRef} className="flex flex-col flex-1 min-h-0">
         <div className="flex-1 min-h-0 flex flex-col">
           <TabContent
-            channelId={content.sessionId}
+            channelId={content.channelId}
             cwd={meta.cwd}
             branch={meta.branch}
             mode={meta.mode}

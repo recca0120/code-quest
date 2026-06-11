@@ -68,8 +68,8 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
   // permission mode 派發（handoff §2：plan=info、bypass=danger）——
   // [data-mode] CSS dispatch 改寫 --color-mode-accent，focused 邊框跟著換色
   const permissionMode =
-    node.content.type === 'session' && node.content.sessionId
-      ? tabs[node.content.sessionId]?.permissionMode
+    node.content.type === 'session' && node.content.channelId
+      ? tabs[node.content.channelId]?.permissionMode
       : undefined;
   // 唯一 pane／尚無 focus 時不 dim（dim 只用來區分 focus 對象）。
   // dim 套在內容層（handoff §2：.dimmed 只 dim .cq-pane-body 不含 header）——

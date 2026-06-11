@@ -50,8 +50,8 @@ function useKeyboardShortcuts(onOpenPicker?: (paneId?: string) => void): void {
     }
     const leaf = findLeaf(paneRoot);
     if (!leaf) return undefined;
-    if (leaf.content.type === 'session' && leaf.content.sessionId) {
-      return tabs[leaf.content.sessionId]?.cwd ?? undefined;
+    if (leaf.content.type === 'session' && leaf.content.channelId) {
+      return tabs[leaf.content.channelId]?.cwd ?? undefined;
     }
     if (
       leaf.content.type === 'git' ||

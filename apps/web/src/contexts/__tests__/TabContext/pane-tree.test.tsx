@@ -30,8 +30,8 @@ function renderWithPanes(ui: ReactElement) {
 // 全是字面值複述（恆真），不提供任何行為保護。
 describe('PaneContent / PaneNode types (1.1)', () => {
   it('can construct all current PaneContent variants (type-level assertions)', () => {
-    const session = { type: 'session', sessionId: 'abc', cwd: '/repo' } satisfies PaneContent;
-    const sessionNull = { type: 'session', sessionId: null, cwd: null } satisfies PaneContent;
+    const session = { type: 'session', channelId: 'abc', cwd: '/repo' } satisfies PaneContent;
+    const sessionNull = { type: 'session', channelId: null, cwd: null } satisfies PaneContent;
     const git = { type: 'git', target: { kind: 'fixed', cwd: '/repo' } } satisfies PaneContent;
     const files = { type: 'files', target: { kind: 'fixed', cwd: '/repo' } } satisfies PaneContent;
     const openspec = {
@@ -102,7 +102,7 @@ describe('splitPane action (1.3)', () => {
 
     const { user } = renderWithPanes(<Test />);
     await user.click(screen.getByRole('button', { name: 'split' }));
-    expect(newPaneContent).toMatchObject({ type: 'session', sessionId: null, cwd: null });
+    expect(newPaneContent).toMatchObject({ type: 'session', channelId: null, cwd: null });
   });
 });
 
@@ -323,9 +323,9 @@ describe('setSessionInPane action (1.7)', () => {
     }
 
     const { user } = renderWithPanes(<Test />);
-    expect((leafContent as { sessionId: unknown })?.sessionId).toBeNull();
+    expect((leafContent as { channelId: unknown })?.channelId).toBeNull();
     await user.click(screen.getByRole('button', { name: 'set-session' }));
-    expect((leafContent as { sessionId: unknown })?.sessionId).toBe('session-abc');
+    expect((leafContent as { channelId: unknown })?.channelId).toBe('session-abc');
   });
 });
 
@@ -393,8 +393,8 @@ describe('buildSessionPaneLabels', () => {
       id: 's1',
       direction: 'h',
       ratio: 0.5,
-      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: 'ch-1', cwd: null } },
-      second: { type: 'leaf', id: 'p2', content: { type: 'session', sessionId: null, cwd: null } },
+      first: { type: 'leaf', id: 'p1', content: { type: 'session', channelId: 'ch-1', cwd: null } },
+      second: { type: 'leaf', id: 'p2', content: { type: 'session', channelId: null, cwd: null } },
     };
     const labels = buildSessionPaneLabels(tree);
     expect(labels.get('ch-1')).toBe('Left pane');
@@ -406,11 +406,11 @@ describe('buildSessionPaneLabels', () => {
       id: 's1',
       direction: 'h',
       ratio: 0.5,
-      first: { type: 'leaf', id: 'p1', content: { type: 'session', sessionId: null, cwd: null } },
+      first: { type: 'leaf', id: 'p1', content: { type: 'session', channelId: null, cwd: null } },
       second: {
         type: 'leaf',
         id: 'p2',
-        content: { type: 'session', sessionId: 'ch-2', cwd: null },
+        content: { type: 'session', channelId: 'ch-2', cwd: null },
       },
     };
     const labels = buildSessionPaneLabels(tree);
@@ -426,12 +426,12 @@ describe('buildSessionPaneLabels', () => {
       first: {
         type: 'leaf',
         id: 'p1',
-        content: { type: 'session', sessionId: 'ch-top', cwd: null },
+        content: { type: 'session', channelId: 'ch-top', cwd: null },
       },
       second: {
         type: 'leaf',
         id: 'p2',
-        content: { type: 'session', sessionId: 'ch-bot', cwd: null },
+        content: { type: 'session', channelId: 'ch-bot', cwd: null },
       },
     };
     const labels = buildSessionPaneLabels(tree);
@@ -443,7 +443,7 @@ describe('buildSessionPaneLabels', () => {
     const tree: PaneNode = {
       type: 'leaf',
       id: 'p1',
-      content: { type: 'session', sessionId: 'ch-1', cwd: null },
+      content: { type: 'session', channelId: 'ch-1', cwd: null },
     };
     const labels = buildSessionPaneLabels(tree);
     expect(labels.get('ch-1')).toBe('Pane');

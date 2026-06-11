@@ -23,7 +23,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 function leafContent(node: ReturnType<typeof usePaneState>['paneRoot']): string {
   if (node.type === 'leaf') {
     return node.content.type === 'session'
-      ? (node.content.sessionId ?? 'empty')
+      ? (node.content.channelId ?? 'empty')
       : node.content.type;
   }
   return '';
