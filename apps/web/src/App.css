@@ -3,7 +3,7 @@
 
 /*
  * Theme tokens registered here so Tailwind v4 emits utilities (bg-bg, text-text, …).
- * Default values = dark palette so `data-theme` unset matches `data-theme="dark"`.
+ * Default values = clay-dark palette so `data-theme` unset matches `data-theme="clay-dark"`.
  * Overrides per-axis live in :root[data-*] blocks below.
  */
 @theme {
@@ -118,7 +118,7 @@
   --color-bright: var(--color-text-bright);
 
   /* radius 階：chip 4 / row 7 / card 10 / composer 14 */
-  --radius-chip: 4px;
+  --radius-chip: 5px;
   --radius-row: 7px;
   --radius-card: 10px;
   --radius-composer: 14px;
@@ -126,7 +126,7 @@
 
 /* --- 偏好設定 tokens：theme / font-size / density ＋ command palette ---
    三軸互相獨立，各自存 localStorage：
-   <html data-theme="dark|light|roast|auto"
+   <html data-theme="clay-dark|light|roast|auto"
          data-fontsize="s|m|l|xl"
          data-density="compact|comfortable|relaxed"> */
 @theme {
@@ -248,6 +248,8 @@
     --dur-fast: 0ms;
     --dur-base: 0ms;
     --dur-drawer: 0ms;
+    --dur-palette: 0ms;
+    --theme-transition: 0ms;
     --busy-pulse: 0s;
   }
 
@@ -286,7 +288,7 @@
 
 /* Color theme axis — explicit dark block re-declares @theme defaults so the
    selector wins once a light theme lands. Values MUST stay in sync with @theme. */
-:root[data-theme="dark"] {
+:root[data-theme="clay-dark"] {
   color-scheme: dark;
   --color-bg: #191613;
   --color-surface: #211d18;

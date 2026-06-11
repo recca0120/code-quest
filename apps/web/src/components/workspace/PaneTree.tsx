@@ -63,6 +63,7 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
   const { focusPane } = usePaneActions();
   const { paneRoot, focusedPaneId } = usePaneState();
   const { tabs } = useTabState();
+  const isMobileLeaf = useMobileMode();
   const isFocused = focusedPaneId === node.id;
   // permission mode 派發（handoff §2：plan=info、bypass=danger）——
   // [data-mode] CSS dispatch 改寫 --color-mode-accent，focused 邊框跟著換色
@@ -105,7 +106,9 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
       }`}
     >
       <PaneLeafBody node={node} />
-      {dragDepth > 0 && <DropZones paneId={node.id} onHide={() => setDragDepth(0)} />}
+      {!isMobileLeaf && dragDepth > 0 && (
+        <DropZones paneId={node.id} onHide={() => setDragDepth(0)} />
+      )}
     </div>
   );
 }
@@ -177,6 +180,7 @@ function PortraitSlideOver({
   focusedPaneId: string | null;
   focusPane: (id: string) => void;
 }) {
+  const { splitPaneAndSetContent } = usePaneActions();
   const leaves = leafIdsInOrder(paneRoot);
   const primaryId = leaves[0];
   const isSecondaryFocused = focusedPaneId !== null && focusedPaneId !== primaryId;
@@ -189,6 +193,9 @@ function PortraitSlideOver({
       <SlideOverPane
         visible={isSecondaryFocused && secondaryNode !== null}
         onSwipeClose={() => primaryId && focusPane(primaryId)}
+        onPinToSplit={() => {
+          if (secondaryNode) splitPaneAndSetContent('h', secondaryNode.content);
+        }}
       >
         {secondaryNode && <PaneLeaf node={secondaryNode} />}
       </SlideOverPane>

@@ -101,7 +101,7 @@ function Toolbar({
       data-testid="pane-header"
       data-focused={isFocused || undefined}
       data-dragging={isDragging || undefined}
-      draggable="true"
+      draggable={!isMobile}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className="flex items-center gap-2 px-2.5 text-xs bg-surface border-b border-(--color-border-subtle) h-(--pane-header-h) shrink-0"
@@ -123,7 +123,11 @@ function Toolbar({
           {typeIcon}
         </span>
       )}
-      {title && <span className="font-semibold text-bright truncate">{title}</span>}
+      {title && (
+        <span className="font-semibold text-bright truncate text-[length:var(--text-ui)]">
+          {title}
+        </span>
+      )}
       {branch && <span className="font-mono text-2xs text-subtle">⎇ {branch}</span>}
       {isZoomed && (
         <span

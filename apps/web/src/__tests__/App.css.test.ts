@@ -34,7 +34,7 @@ const themeBlock = (() => {
   if (blocks.length === 0) throw new Error('No @theme blocks found in App.css');
   return blocks.join('\n');
 })();
-const darkBlock = extractBlock(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/);
+const clayDarkBlock = extractBlock(/:root\[data-theme="clay-dark"\]\s*\{([\s\S]*?)\n\}/);
 const lightBlock = extractBlock(/:root\[data-theme="light"\]\s*\{([\s\S]*?)\n\}/);
 
 describe('App.css static shape', () => {
@@ -84,9 +84,9 @@ describe('App.css static shape', () => {
       expect(appCss).not.toMatch(/--color-button\b/);
       expect(appCss).not.toMatch(/--color-toggle\b/);
     });
-    it('[data-theme="dark"] re-declares info/text rgb in sync with @theme defaults', () => {
-      expect(darkBlock).toMatch(/--color-info-rgb:\s*130\s*,\s*163\s*,\s*201/);
-      expect(darkBlock).toMatch(/--color-text-rgb:\s*216\s*,\s*210\s*,\s*198/);
+    it('[data-theme="clay-dark"] re-declares info/text rgb in sync with @theme defaults', () => {
+      expect(clayDarkBlock).toMatch(/--color-info-rgb:\s*130\s*,\s*163\s*,\s*201/);
+      expect(clayDarkBlock).toMatch(/--color-text-rgb:\s*216\s*,\s*210\s*,\s*198/);
     });
     it('[data-theme="light"] declares info/text rgb with light values', () => {
       expect(lightBlock).toMatch(/--color-info-rgb:\s*79\s*,\s*116\s*,\s*164/);
@@ -125,6 +125,24 @@ describe('App.css static shape', () => {
         );
       });
     }
+  });
+});
+
+describe('Design alignment audit — token values', () => {
+  it('--radius-chip is 5px (design spec §2 badge corner radius)', () => {
+    expect(themeBlock).toMatch(/--radius-chip:\s*5px/);
+  });
+
+  it('prefers-reduced-motion zeroes --theme-transition', () => {
+    const rmBlock = extractBlock(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?:root\s*\{([\s\S]*?)\}/,
+    );
+    expect(rmBlock).toMatch(/--theme-transition:\s*0(ms|s)/);
+  });
+
+  it('[data-theme="clay-dark"] selector exists (not "dark")', () => {
+    expect(appCss).toMatch(/:root\[data-theme="clay-dark"\]/);
+    expect(appCss).not.toMatch(/:root\[data-theme="dark"\]/);
   });
 });
 

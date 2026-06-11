@@ -7,26 +7,26 @@
 
 ## 1. CRITICAL — Token / 選擇器
 
-- [ ] 1.1 [test] App.css.test：data-theme="clay-dark" 選擇器存在且覆寫色彩 token
-- [ ] 1.2 [impl] App.css `[data-theme="dark"]` → `[data-theme="clay-dark"]`；更新 comment L129-131
-- [ ] 1.3 [test] App.css.test：`--radius-chip` 值為 5px
-- [ ] 1.4 [impl] App.css `--radius-chip: 4px` → `5px`
-- [ ] 1.5 [test] App.css.test：reduced-motion 區塊含 `--theme-transition: 0ms`
-- [ ] 1.6 [impl] App.css prefers-reduced-motion 區塊補 `--theme-transition: 0ms`
+- [x] 1.1 [test] App.css.test：data-theme="clay-dark" 選擇器存在且覆寫色彩 token
+- [x] 1.2 [impl] App.css `[data-theme="dark"]` → `[data-theme="clay-dark"]`；更新 comment L129-131
+- [x] 1.3 [test] App.css.test：`--radius-chip` 值為 5px
+- [x] 1.4 [impl] App.css `--radius-chip: 4px` → `5px`
+- [x] 1.5 [test] App.css.test：reduced-motion 區塊含 `--theme-transition: 0ms`
+- [x] 1.6 [impl] App.css prefers-reduced-motion 區塊補 `--theme-transition: 0ms`
 
 ## 2. CRITICAL — 字級對齊
 
-- [ ] 2.1 [test] Pane header 標題 class 含 `--text-ui`（12px）
-- [ ] 2.2 [impl] Pane.tsx 標題 span 加 `text-[length:var(--text-ui)]`
-- [ ] 2.3 [test] Statusline class 含 `--text-statusline`（10.5px）
-- [ ] 2.4 [impl] WorkspaceStatusline.tsx `text-2xs` → `text-[length:var(--text-statusline)]`
+- [x] 2.1 [test] Pane header 標題 class 含 `--text-ui`（12px）
+- [x] 2.2 [impl] Pane.tsx 標題 span 加 `text-[length:var(--text-ui)]`
+- [x] 2.3 [test] Statusline class 含 `--text-statusline`（10.5px）
+- [x] 2.4 [impl] WorkspaceStatusline.tsx `text-2xs` → `text-[length:var(--text-statusline)]`
 
 ## 3. CRITICAL — Mobile / SlideOver
 
-- [ ] 3.1 [test] renderWithWorkspace + mobile viewport：pane header 不可拖曳（draggable=false）
-- [ ] 3.2 [impl] Pane.tsx `draggable="true"` → `draggable={!isMobile}`；PaneTree drop handlers 加 mobile guard
-- [ ] 3.3 [test] renderWithWorkspace + tablet portrait：左拖 slide-over → pane tree 新增永久 split
-- [ ] 3.4 [impl] PaneTree PortraitSlideOver 補傳 onPinToSplit callback
+- [x] 3.1 [test] renderWithWorkspace + mobile viewport：pane header 不可拖曳（draggable=false）
+- [x] 3.2 [impl] Pane.tsx `draggable="true"` → `draggable={!isMobile}`；PaneTree drop handlers 加 mobile guard
+- [x] 3.3 [test] renderWithWorkspace + tablet portrait：左拖 slide-over → pane tree 新增永久 split
+- [x] 3.4 [impl] PaneTree PortraitSlideOver 補傳 onPinToSplit callback
 
 ## 4. WARNING — 元件樣式對齊
 

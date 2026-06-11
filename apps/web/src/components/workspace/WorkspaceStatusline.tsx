@@ -39,7 +39,7 @@ export function WorkspaceStatusline(): React.JSX.Element {
   return (
     <div
       data-testid="workspace-statusline"
-      className="flex items-center gap-3 px-3 border-t border-border bg-surface h-(--statusline-h) shrink-0 font-mono text-2xs text-muted whitespace-nowrap overflow-hidden"
+      className="flex items-center gap-3 px-3 border-t border-border bg-surface h-(--statusline-h) shrink-0 font-mono text-[length:var(--text-statusline)] text-muted whitespace-nowrap overflow-hidden"
     >
       {projectName && (
         <span data-testid="statusline-context" className="flex items-center gap-1.5">
