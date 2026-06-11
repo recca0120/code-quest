@@ -27,7 +27,7 @@ function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): 
   // 命中態走 dragenter/leave 切 data-hot——HTML5 drag 進行中 :hover 不生效
   const [hotKey, setHotKey] = useState<string | null>(null);
   return (
-    <div className="absolute inset-0 z-raised" data-testid="drop-zones">
+    <div className="absolute inset-0 z-[12]" data-testid="drop-zones">
       {DROP_ZONES.map((zone) => (
         // biome-ignore lint/a11y/noStaticElementInteractions: drop target（dragover/drop）非點擊互動；鍵盤等效＝⌘\ split＋⌥方向鍵
         <div
@@ -50,7 +50,7 @@ function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): 
             }
           }}
           style={{ position: 'absolute', ...zone.style }}
-          className="flex items-center justify-center rounded-(--radius-card) border-2 border-dashed border-accent/55 bg-(--color-accent-soft) text-2xs font-semibold text-accent data-[hot]:border-solid data-[hot]:bg-accent/25"
+          className="flex items-center justify-center rounded-(--radius-card) border-2 border-dashed border-accent/55 bg-(--color-accent-soft) text-[length:var(--text-label)] font-semibold text-(--color-accent-strong) data-[hot]:border-solid data-[hot]:bg-accent/25"
         >
           {zone.label}
         </div>

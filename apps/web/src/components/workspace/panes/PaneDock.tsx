@@ -46,14 +46,17 @@ export function PaneDock({
           className={cn(
             'flex items-center gap-1 px-2.5 text-[length:var(--text-label)] rounded-full border h-(--dock-chip-h)',
             key === activeTab
-              ? 'bg-accent-soft border-accent text-bright'
+              ? 'bg-accent-soft border-[color-mix(in_srgb,var(--color-accent)_50%,var(--color-border))] text-bright'
               : 'border-border hover:bg-hover-tint',
           )}
         >
           {icon}
           <span>{label}</span>
           {(counts[key] ?? 0) > 0 && (
-            <span data-testid={`pane-dock-count-${key}`} className="font-mono text-2xs text-accent">
+            <span
+              data-testid={`pane-dock-count-${key}`}
+              className="font-mono text-[length:var(--text-count-dock)] text-(--color-accent-strong)"
+            >
               {counts[key]}
             </span>
           )}

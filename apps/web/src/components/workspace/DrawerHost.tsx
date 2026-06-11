@@ -164,7 +164,7 @@ export function DrawerHost(): React.JSX.Element | null {
               {drawerIcon(drawer.content)}
             </span>
           )}
-          <span className="font-mono text-xs font-semibold truncate">
+          <span className="font-mono text-[length:var(--text-ui)] font-semibold truncate">
             {drawerTitle(drawer.content)}
           </span>
           <span className="ml-auto flex items-center gap-2">
@@ -172,7 +172,7 @@ export function DrawerHost(): React.JSX.Element | null {
               <button
                 type="button"
                 onClick={handlePin}
-                className="px-2 py-1 text-xs rounded-(--radius-row) bg-accent text-selected-text border border-accent"
+                className="px-2 py-1 text-xs rounded-(--radius-row) bg-(--color-accent-soft) text-accent border border-[color-mix(in_srgb,var(--color-accent)_45%,var(--color-border))]"
               >
                 ⊞ 釘選成 pane
               </button>

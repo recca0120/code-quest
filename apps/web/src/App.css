@@ -48,6 +48,7 @@
      danger  = oklch(0.66 0.14 31)
      info    = oklch(0.70 0.07 250) */
   --color-accent: #d97757;
+  --color-accent-strong: #e08862;
   --color-success: #84b07e;
   --color-warning: #d4ab6a;
   --color-danger: #df6c55;
@@ -137,7 +138,17 @@
   --text-code: calc(11.5px * var(--font-scale));
   --text-statusline: calc(10.5px * var(--font-scale));
   --text-label: calc(11px * var(--font-scale));
+  --text-header: calc(11.5px * var(--font-scale));
   --text-pane-dot: 22px;
+  --mobile-topbar-h: 48px;
+  --mobile-pane-dot: 22px;
+  --mobile-wall-toggle: 38px;
+  --radius-mobile-card: 12px;
+  --radius-mobile-dot: 7px;
+  --radius-mobile-tabdrop: 9px;
+  --radius-mobile-toggle: 10px;
+  --text-count: 9px;
+  --text-count-dock: 9.5px;
   /* 例外：--text-input-sm 16px 固定，防 iOS 聚焦縮放 */
 
   /* density：預設 default 檔 */
@@ -282,7 +293,7 @@
  * Used in sidebar / right-pane section headers (Projects, Active changes, etc). */
 @utility section-label {
   font-size: var(--text-2xs);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--color-text-dim);

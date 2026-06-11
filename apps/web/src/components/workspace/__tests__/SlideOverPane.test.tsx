@@ -18,7 +18,7 @@ describe('SlideOverPane 容器（2.1）', () => {
     expect(cls).toMatch(/z-25/);
     expect(cls).toMatch(/rounded/);
     // 58% width via inline style
-    expect(container.style.width).toBe('58%');
+    expect(container.style.width).toBe('var(--slideover-w)');
   });
 
   it('visible=false 時不渲染', () => {

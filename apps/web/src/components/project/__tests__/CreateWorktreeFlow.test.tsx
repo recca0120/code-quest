@@ -7,7 +7,7 @@ import { COMPOSE_PLACEHOLDER } from '@/test/helpers';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('Create Worktree end-to-end flow (dialog → session in new worktree)', () => {
-  it('SessionManager (⌘⇧M) → + New worktree → fill name → submit → session opens in new worktree', async () => {
+  it('PanePicker (⌘K) → + New worktree → fill name → submit → session opens in new worktree', async () => {
     // Arrange: FakeGit reports /projects/app as the git root for any cwd under it.
     const fakeGit = new FakeGit();
     fakeGit.setProjectRoot('/projects/app');
@@ -22,11 +22,10 @@ describe('Create Worktree end-to-end flow (dialog → session in new worktree)',
     // Sanity: chat panel is active.
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
 
-    // Act: SessionManager (⌘⇧M) → "+ New worktree"
-    // (SessionBar 的 [+] dropdown 已由 tmux-workspace-ui P1 移除)
-    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
-    await screen.findByTestId('session-manager');
-    const newWorktreeBtn = await screen.findByTestId('new-worktree-btn');
+    // Act: PanePicker (⌘K) → "＋ 新增 worktree…"
+    await user.keyboard('{Control>}k{/Control}');
+    await screen.findByTestId('pane-picker-miller');
+    const newWorktreeBtn = await screen.findByText(/新增 worktree|New worktree/i);
 
     // Click it → dialog opens.
     await user.click(newWorktreeBtn);

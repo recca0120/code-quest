@@ -59,7 +59,7 @@ export function PaneDivider({
       onPointerDown={handlePointerDown}
       onDoubleClick={() => onRatioChange(0.5)}
       title="拖曳調整大小・雙擊回 50%"
-      className={`group relative flex-shrink-0 flex items-center justify-center transition-colors hover:bg-accent/10 data-[resizing]:bg-accent/10 ${
+      className={`group relative flex-shrink-0 flex items-center justify-center transition-colors hover:bg-(--color-accent-soft) data-[resizing]:bg-(--color-accent-soft) ${
         isHorizontal ? 'cursor-col-resize w-(--pane-gap)' : 'cursor-row-resize h-(--pane-gap)'
       }`}
     >
@@ -73,7 +73,7 @@ export function PaneDivider({
       {/* 中央把手 ⋮（hover 顯示，handoff §7） */}
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute hidden group-hover:block text-xs leading-none text-accent ${
+        className={`pointer-events-none absolute hidden group-hover:block text-[length:var(--text-body)] leading-none text-accent ${
           isHorizontal ? '' : 'rotate-90'
         }`}
       >

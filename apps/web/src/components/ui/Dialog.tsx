@@ -54,7 +54,7 @@ export function DialogContent({
 
   return (
     <RadixDialog.Portal container={container ?? undefined}>
-      <RadixDialog.Overlay className={cn(overlayPos, 'z-modal bg-bg/60')} />
+      <RadixDialog.Overlay className={cn(overlayPos, 'z-modal bg-bg/38')} />
       <RadixDialog.Content
         className={cn(
           contentPos,

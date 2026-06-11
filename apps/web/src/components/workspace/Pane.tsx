@@ -72,7 +72,7 @@ function Toolbar({
       height: `${height}px`,
       transform: 'rotate(-1.5deg)',
       opacity: '0.92',
-      border: '1px solid var(--color-accent)',
+      border: '1px solid color-mix(in srgb, var(--color-accent) 60%, var(--color-border))',
       borderRadius: '10px',
       boxShadow: 'var(--shadow-floating)',
       backgroundColor: 'var(--color-surface)',
@@ -104,7 +104,7 @@ function Toolbar({
       draggable={!isMobile}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      className="flex items-center gap-2 px-2.5 text-xs bg-surface border-b border-(--color-border-subtle) h-(--pane-header-h) shrink-0"
+      className="flex items-center gap-2 px-2.5 text-[length:var(--text-header)] text-muted bg-surface border-b border-(--color-border-subtle) h-(--pane-header-h) shrink-0"
     >
       {paneIndex >= 0 && (
         <span
@@ -128,7 +128,7 @@ function Toolbar({
           {title}
         </span>
       )}
-      {branch && <span className="font-mono text-2xs text-subtle">⎇ {branch}</span>}
+      {branch && <span className="font-mono text-subtle">⎇ {branch}</span>}
       {isZoomed && (
         <span
           data-testid="pane-zoomed-indicator"
@@ -140,7 +140,7 @@ function Toolbar({
         </span>
       )}
       {children && <div className="flex items-center gap-1 ml-1">{children}</div>}
-      <div className="ml-auto flex items-center gap-0.5">
+      <div className="ml-auto flex items-center gap-2">
         {!isMobile && (
           <>
             <button
@@ -150,7 +150,7 @@ function Toolbar({
                 e.stopPropagation();
                 onSplitH?.();
               }}
-              className={cn(TOOL_BTN, 'text-muted hover:text-text')}
+              className={cn(TOOL_BTN, 'text-subtle hover:text-text')}
               title="Split horizontally"
             >
               <ViewColumnsIcon className="w-3.5 h-3.5" />
@@ -174,7 +174,7 @@ function Toolbar({
                 e.stopPropagation();
                 onZoom?.();
               }}
-              className={cn(TOOL_BTN, 'text-muted hover:text-text')}
+              className={cn(TOOL_BTN, 'text-subtle hover:text-text')}
               title="Zoom pane"
             >
               <ArrowsPointingOutIcon className="w-3.5 h-3.5" />

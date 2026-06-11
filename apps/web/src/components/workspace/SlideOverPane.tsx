@@ -50,10 +50,10 @@ export function SlideOverPane({
     <div
       data-testid="slide-over-pane"
       style={{
-        width: '58%',
+        width: 'var(--slideover-w)',
         transform: dragOffset > 0 ? `translateX(${dragOffset}px)` : undefined,
       }}
-      className="absolute right-0 top-0 bottom-0 z-25 flex flex-col bg-surface border-l border-border rounded-l-(--radius-card) shadow-floating animate-slide-over-in"
+      className="absolute right-2.5 top-2.5 bottom-2.5 z-25 flex flex-col bg-bg border border-border rounded-(--radius-mobile-card) shadow-floating animate-slide-over-in"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

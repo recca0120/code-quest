@@ -143,7 +143,7 @@ export function RightPane({
               {(counts[key] ?? 0) > 0 && (
                 <span
                   data-testid={`rail-tab-count-${key}`}
-                  className="font-mono text-2xs text-accent"
+                  className="font-mono text-[length:var(--text-count)] text-subtle"
                 >
                   ·{counts[key]}
                 </span>

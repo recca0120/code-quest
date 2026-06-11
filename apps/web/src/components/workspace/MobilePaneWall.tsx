@@ -73,7 +73,7 @@ export function MobilePaneWall({
         data-testid="mobile-pane-wall-toggle"
         aria-label="open pane switcher"
         onClick={() => setOpen(true)}
-        className="fixed bottom-8 right-3 z-float size-9 rounded-full bg-surface border border-border text-text shadow-floating"
+        className="fixed bottom-8 right-3 z-float size-(--mobile-wall-toggle) rounded-(--radius-mobile-toggle) bg-surface border border-border text-text shadow-floating"
       >
         ⊞
       </button>
@@ -87,7 +87,7 @@ export function MobilePaneWall({
           />
           <div
             data-testid="mobile-pane-wall"
-            className="relative grid grid-cols-2 gap-3 p-4 mt-12 overflow-y-auto"
+            className="relative grid grid-cols-2 gap-3 p-3.5 mt-12 overflow-y-auto"
           >
             {leaves.map((id, idx) => {
               const isActive = focusedPaneId === id;
@@ -117,7 +117,7 @@ export function MobilePaneWall({
                       setOpen(false);
                     }
                   }}
-                  className={`flex flex-col items-start gap-2 h-(--wall-card-h) p-3 rounded-(--radius-card) border bg-surface text-left text-sm cursor-pointer ${
+                  className={`flex flex-col items-start gap-2 h-(--wall-card-h) p-3 rounded-(--radius-mobile-card) border bg-surface text-left text-sm cursor-pointer ${
                     isActive
                       ? 'border-(--color-pane-focus) ring-1 ring-(--color-pane-focus-ring)'
                       : 'border-border hover:border-accent'
@@ -173,7 +173,7 @@ export function MobilePaneWall({
                   setOpen(false);
                   onOpenModal();
                 }}
-                className="flex flex-col items-center justify-center h-(--wall-card-h) rounded-(--radius-card) border border-dashed border-border bg-surface text-subtle hover:text-text hover:border-accent cursor-pointer"
+                className="flex flex-col items-center justify-center h-(--wall-card-h) rounded-(--radius-mobile-card) border border-dashed border-border bg-surface text-subtle hover:text-text hover:border-accent cursor-pointer"
               >
                 <span className="text-xl">＋</span>
                 <span className="text-2xs">新增 pane</span>

@@ -191,7 +191,7 @@ function CommandModeView({
 
   return (
     <div data-testid="command-mode" className="flex flex-col">
-      <div className="flex items-center gap-2 border-b border-border px-2 mb-2">
+      <div className="flex items-center gap-2 border-b border-border-subtle px-4 mb-2">
         <span aria-hidden="true" className="text-accent font-bold">
           ›
         </span>
@@ -311,7 +311,7 @@ function MessageSearchView({
 
   return (
     <div data-testid="message-search-mode" className="flex flex-col">
-      <div className="flex items-center gap-2 border-b border-border px-2 mb-2">
+      <div className="flex items-center gap-2 border-b border-border-subtle px-4 mb-2">
         <button
           type="button"
           onClick={() => onQueryChange('›')}
@@ -566,7 +566,7 @@ export function PanePicker({
         ) : (
           // biome-ignore lint/a11y/noStaticElementInteractions: 鍵盤協定容器——焦點落在內部互動元素上
           <div onKeyDown={handleKeyDown} data-testid="pane-picker-miller">
-            <div className="flex items-center gap-2 border-b border-border px-2 mb-2">
+            <div className="flex items-center gap-2 border-b border-border-subtle px-4 mb-2">
               <span aria-hidden="true" className="text-subtle">
                 ⌕
               </span>
@@ -700,7 +700,7 @@ export function PanePicker({
                 <p className="section-label mb-1">新增 pane</p>
                 {/* 類型卡照 design .tx-type：bg-bg＋border-border、radius 9px 無 token 以
                     --radius-card(10) 近似、hover ≈ border-accent/55＋row-active-bg */}
-                <div className="grid grid-cols-3 gap-1.5 mb-2">
+                <div className="grid grid-cols-3 gap-2 mb-2">
                   {contentItems.map((item, idx) =>
                     item.kind === 'type' ? (
                       <button
@@ -716,13 +716,15 @@ export function PanePicker({
                         onClick={(e) =>
                           activate(item, e.metaKey || e.ctrlKey ? { split: true } : undefined)
                         }
-                        className={`flex flex-col items-center gap-0.5 px-2 py-2 text-xs rounded-(--radius-card) border ${
+                        className={`flex flex-col items-center gap-0.5 px-2 py-2.5 text-xs rounded-(--radius-card) border ${
                           col === 2 && sel3 === idx
-                            ? 'border-accent bg-selected'
+                            ? 'border-[color-mix(in_srgb,var(--color-accent)_50%,var(--color-border))] bg-selected'
                             : 'border-border bg-bg hover:border-accent/55 hover:bg-(--color-row-active-bg)'
                         }`}
                       >
-                        <span aria-hidden="true">{item.entry.icon}</span>
+                        <span aria-hidden="true" className="text-base">
+                          {item.entry.icon}
+                        </span>
                         <span>{item.entry.label}</span>
                         <span className="font-mono text-2xs text-subtle">
                           {item.entry.hotkey ?? '⏎'}

@@ -30,7 +30,7 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
   return (
     <div
       data-testid="mobile-topbar"
-      className="sticky top-0 z-sticky flex items-center gap-2 h-11 px-3 bg-surface border-b border-border shrink-0"
+      className="sticky top-0 z-sticky flex items-center gap-2 h-(--mobile-topbar-h) px-3 bg-surface border-b border-border shrink-0"
     >
       {/* Tab dropdown */}
       <div className="relative">
@@ -38,7 +38,7 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
           type="button"
           data-testid="mobile-topbar-tab-dropdown"
           onClick={() => setTabDropdownOpen((v) => !v)}
-          className="flex items-center gap-1 text-xs font-semibold text-text truncate max-w-24"
+          className="flex items-center gap-1 min-h-9 px-3 text-xs font-semibold text-text truncate max-w-24 rounded-(--radius-mobile-tabdrop) border border-border bg-surface"
         >
           <span className="truncate">{tabLabel}</span>
           <span className="text-subtle">▾</span>
@@ -80,8 +80,8 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
               data-pane-id={id}
               data-active={isActive || undefined}
               onClick={() => focusPane(id)}
-              className={`text-[length:var(--text-pane-dot)] font-mono leading-none ${
-                isActive ? 'text-accent' : 'text-subtle'
+              className={`flex items-center justify-center size-(--mobile-pane-dot) rounded-(--radius-mobile-dot) font-mono text-2xs font-bold ${
+                isActive ? 'bg-accent text-selected-text' : 'bg-surface-hover text-subtle'
               }`}
             >
               {CIRCLED[idx] ?? idx + 1}
