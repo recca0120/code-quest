@@ -31,7 +31,7 @@ export function WorktreesPane({
         const worktrees = Array.isArray(wts) ? wts : [];
         return (
           <div key={project.cwd} className="p-2">
-            <p className="text-xs font-medium text-muted-foreground mb-1">{project.name}</p>
+            <p className="text-xs font-medium text-muted mb-1">{project.name}</p>
             <ul className="space-y-0.5">
               {worktrees.map((wt) => {
                 const session = sessions.find((s) => s.cwd === wt.path);
@@ -39,9 +39,9 @@ export function WorktreesPane({
                   <li key={wt.path} className="flex items-center justify-between gap-1 text-xs">
                     <span className="flex flex-col min-w-0">
                       <span>⎇ {wt.branch ?? wt.name}</span>
-                      <span className="text-muted-foreground truncate">{wt.path}</span>
+                      <span className="text-muted truncate">{wt.path}</span>
                       {session?.title && (
-                        <span className="text-muted-foreground truncate">{session.title}</span>
+                        <span className="text-muted truncate">{session.title}</span>
                       )}
                     </span>
                     <button

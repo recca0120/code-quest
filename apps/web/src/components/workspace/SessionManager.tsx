@@ -101,7 +101,7 @@ export function SessionManager({
           <button
             type="button"
             aria-label="Close"
-            className="text-muted-foreground hover:text-foreground text-xs"
+            className="text-muted hover:text-text text-xs"
             onClick={onClose}
           >
             ×
@@ -111,12 +111,12 @@ export function SessionManager({
         {/* Sessions grouped by workspace tab */}
         {tabGroups.map((group) => (
           <div key={group.label} className="mb-4">
-            <div className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-2">
+            <div className="text-xs text-muted font-medium mb-2 flex items-center gap-2">
               <span>{group.label}</span>
               <span className="flex-1 border-t border-border" />
             </div>
             {group.sessions.length === 0 ? (
-              <div className="text-xs text-muted-foreground px-2 py-1 italic">No sessions</div>
+              <div className="text-xs text-muted px-2 py-1 italic">No sessions</div>
             ) : (
               group.sessions.map((id) => {
                 const meta = tabs[id];
@@ -146,7 +146,7 @@ export function SessionManager({
         {/* No Tab group */}
         {noTabSessions.length > 0 && (
           <div className="mb-4">
-            <div className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-2">
+            <div className="text-xs text-muted font-medium mb-2 flex items-center gap-2">
               <span>No Tab</span>
               <span className="flex-1 border-t border-border" />
             </div>
@@ -172,7 +172,7 @@ export function SessionManager({
 
         {/* Projects section */}
         <div className="mb-2">
-          <div className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-2">
+          <div className="text-xs text-muted font-medium mb-2 flex items-center gap-2">
             <span>Projects</span>
             <span className="flex-1 border-t border-border" />
           </div>
@@ -210,7 +210,7 @@ export function SessionManager({
                       <button
                         type="button"
                         data-testid="new-session-btn"
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-muted hover:text-text"
                         onClick={() => onNewSession?.(wt.path, project.cwd)}
                       >
                         + New session
@@ -222,7 +222,7 @@ export function SessionManager({
                   <button
                     type="button"
                     data-testid="new-worktree-btn"
-                    className="text-xs text-muted-foreground hover:text-foreground"
+                    className="text-xs text-muted hover:text-text"
                     onClick={() => onNewWorktree?.(project.cwd)}
                   >
                     + New worktree
@@ -235,7 +235,7 @@ export function SessionManager({
             <button
               type="button"
               data-testid="add-project-btn"
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-xs text-muted hover:text-text"
               onClick={() => onAddProject?.()}
             >
               + Add project

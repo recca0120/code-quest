@@ -67,7 +67,7 @@ function Toolbar({
       onDragEnd={handleDragEnd}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
-      className="flex items-center gap-1 px-2 text-xs border-b border-border h-(--pane-header-h) shrink-0 data-[focused]:ring-1 data-[focused]:ring-primary"
+      className="flex items-center gap-1 px-2 text-xs border-b border-border h-(--pane-header-h) shrink-0"
     >
       {paneIndex >= 0 && (
         <span
@@ -86,8 +86,8 @@ function Toolbar({
           ⊠ zoomed
         </span>
       )}
-      {branch && <span className="text-muted-foreground">⎇ {branch}</span>}
-      {branch && title && <span className="text-muted-foreground">·</span>}
+      {branch && <span className="text-muted">⎇ {branch}</span>}
+      {branch && title && <span className="text-muted">·</span>}
       {title && <span className="font-medium truncate">{title}</span>}
       {children && <div className="flex items-center gap-1 ml-1">{children}</div>}
       <div className="ml-auto flex items-center gap-0.5">

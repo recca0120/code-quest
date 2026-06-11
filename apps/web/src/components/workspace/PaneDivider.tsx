@@ -45,7 +45,13 @@ export function PaneDivider({
       onPointerDown={handlePointerDown}
       onDoubleClick={() => onRatioChange(0.5)}
       title="拖曳調整大小・雙擊回 50%"
-      className={`flex-shrink-0 bg-border hover:bg-accent/40 transition-colors cursor-${isHorizontal ? 'col' : 'row'}-resize ${isHorizontal ? 'w-1' : 'h-1'}`}
-    />
+      className={`group flex-shrink-0 flex items-center justify-center transition-colors cursor-${isHorizontal ? 'col' : 'row'}-resize ${isHorizontal ? 'w-(--pane-gap)' : 'h-(--pane-gap)'}`}
+    >
+      {/* 視覺 1px、熱區 6px（handoff §7）——熱區同時是 pane 間距 */}
+      <span
+        aria-hidden="true"
+        className={`bg-border group-hover:bg-accent/60 ${isHorizontal ? 'w-px h-full' : 'h-px w-full'}`}
+      />
+    </div>
   );
 }

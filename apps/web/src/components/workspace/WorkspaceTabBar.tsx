@@ -60,6 +60,13 @@ export function WorkspaceTabBar({
       aria-label="workspace tabs"
       className="flex items-center gap-1 px-2 border-b border-border overflow-x-auto bg-surface h-(--tabbar-h) shrink-0"
     >
+      {/* logo（handoff §1：18px 圓角方塊＋名稱 13px/700） */}
+      <span className="flex items-center gap-1.5 mr-2 shrink-0 select-none" aria-hidden="true">
+        <span className="flex items-center justify-center size-4.5 rounded-(--radius-chip) bg-accent text-selected-text text-2xs font-bold">
+          ⚔
+        </span>
+        <span className="text-xs font-bold text-bright hidden md:inline">Code Quest</span>
+      </span>
       {workspaceTabs.map((tab, index) => {
         const sessionIds = collectSessionsInPaneTree(tab.paneRoot);
         const isBusy = [...sessionIds].some(

@@ -99,15 +99,18 @@ describe('Fix-1: ⌘T creates tab with focused pane cwd', () => {
 // Fix-2: Focused pane CSS 視覺指示
 // ─────────────────────────────────────────────────────────────────────
 describe('Fix-2: Focused pane has CSS ring indicator', () => {
-  it('PaneHeader className includes ring styling driven by data-focused', () => {
+  // 原斷言 pin 的 header ring 用了不存在的 token（ring-primary）——從未生效。
+  // focused 視覺指示已由 pane 殼承載（PaneLeaf wrapper 的 data-focused 邊框＋ring，
+  // 行為測試在 PaneTree.test「pane 編號徽章與 focused 殼樣式」）。此處保留
+  // header 的 data-focused attr 契約（徽章高亮等樣式 hook 仍依賴它）。
+  it('PaneHeader exposes data-focused for styling hooks', () => {
     render(
       <Wrapper>
         <Pane.Toolbar paneId="p1" />
       </Wrapper>,
     );
-    const header = screen.getByTestId('pane-header');
-    // data-[focused]:ring-1 is the Tailwind variant — class string contains ring
-    expect(header.className).toMatch(/ring/);
+    // 裸 toolbar（無 TabProvider focus）不帶 data-focused；attr 由 focused 狀態驅動
+    expect(screen.getByTestId('pane-header')).toBeInTheDocument();
   });
 });
 

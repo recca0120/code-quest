@@ -44,7 +44,7 @@ function railTabContent(tab: RailTab, cwd: string): PaneContent {
 
 const TRIGGER_BASE = cn(
   tabTrigger,
-  'flex-1 h-9 inline-flex items-center justify-center gap-1.5 text-xs outline-none',
+  'flex-1 h-8 inline-flex items-center justify-center gap-1 text-2xs outline-none min-w-0',
 );
 
 export function RightPane({
@@ -87,7 +87,7 @@ export function RightPane({
             aria-label="open in drawer"
             title="以 drawer 檢視完整內容"
             onClick={() => onOpenDrawer(railTabContent(active, cwd))}
-            className="px-1.5 h-9 text-subtle hover:text-text"
+            className="px-1 h-8 text-subtle hover:text-text shrink-0"
           >
             ⤢
           </button>
@@ -98,7 +98,7 @@ export function RightPane({
             aria-label="collapse rail"
             title="收合側欄"
             onClick={onCollapse}
-            className="px-1.5 h-9 text-subtle hover:text-text"
+            className="px-1 h-8 text-subtle hover:text-text shrink-0"
           >
             ⇥
           </button>
@@ -118,18 +118,16 @@ export function RightPane({
         </TabContent>
       </section>
       {onPromote && (
-        <div className="flex items-center gap-2 px-2 py-1 border-t border-border-subtle shrink-0">
+        <div className="flex items-center px-2 py-1 border-t border-border-subtle shrink-0 whitespace-nowrap overflow-hidden">
           <button
             type="button"
             aria-label="promote rail to pane"
             onClick={() => onPromote(railTabContent(active, cwd))}
             className="font-mono text-2xs text-subtle hover:text-text"
+            title="把目前分頁開成獨立 pane"
           >
             ⊞ 升級成 pane
           </button>
-          <span className="ml-auto font-mono text-2xs text-dim hidden lg:inline">
-            ⤢ 開 drawer 看完整內容
-          </span>
         </div>
       )}
     </Tabs.Root>

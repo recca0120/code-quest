@@ -105,12 +105,12 @@ function ImportView({
         <button type="button" onClick={onBack} className="text-sm font-mono">
           ←
         </button>
-        <span className="text-sm text-muted-foreground">Import — ⎇ {branch}</span>
+        <span className="text-sm text-muted">Import — ⎇ {branch}</span>
       </div>
       <button
         type="button"
         onClick={() => onImport?.('claude-jsonl', worktreePath)}
-        className="px-3 py-2 text-sm text-left rounded border border-border hover:bg-accent"
+        className="px-3 py-2 text-sm text-left rounded-(--radius-row) border border-border hover:bg-hover-tint"
       >
         📄 Claude JSONL
       </button>

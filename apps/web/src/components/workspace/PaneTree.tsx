@@ -176,7 +176,7 @@ export function PaneTree(): React.JSX.Element {
   return (
     <div
       data-testid="split-pane-root"
-      className="flex flex-1 min-w-0 min-h-0 overflow-hidden"
+      className="flex flex-1 min-w-0 min-h-0 overflow-hidden p-(--pane-gap) bg-bg"
       onTouchStart={(e) => setTouchStartX(e.changedTouches[0]?.clientX ?? null)}
       onTouchEnd={handleTouchEnd}
     >
