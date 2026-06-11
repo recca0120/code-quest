@@ -375,6 +375,27 @@ describe('指令模式 UI（unified-command-entry 3.1）', () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
+  it('› 後命中字元有 mark 高亮（bg-palette-match）', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.type(screen.getByLabelText('picker search'), '›');
+    await user.type(screen.getByLabelText('picker search'), 'theme');
+    const commandMode = screen.getByTestId('command-mode');
+    const marks = commandMode.querySelectorAll('mark');
+    expect(marks.length).toBeGreaterThan(0);
+  });
+
+  it('›tm → fuzzy 匹配 theme 相關項目（子序列非 substring）', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.type(screen.getByLabelText('picker search'), '›');
+    await user.type(screen.getByLabelText('picker search'), 'tm');
+    const commandMode = screen.getByTestId('command-mode');
+    expect(within(commandMode).getAllByTestId(/^command-item-/).length).toBeGreaterThan(0);
+  });
+
   it('› 後輸入不匹配文字 → 零結果', async () => {
     const user = userEvent.setup();
     setup();

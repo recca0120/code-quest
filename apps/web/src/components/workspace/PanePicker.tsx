@@ -4,6 +4,7 @@ import { defaultEnabledTypes } from '@/contexts/channel/MessageVisibilityContext
 import { useChannelsStore } from '@/stores/channels-store';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import type { Message } from '@/types/ui';
+import { fuzzyMatch, highlightByIndices } from '@/utils/fuzzy-match';
 import { isMessageVisible } from '@/utils/isMessageVisible';
 import { PaletteMessageList } from '../palette/PaletteMessageList';
 import { paletteMessageResults } from '../palette/palette-message-results';
@@ -151,15 +152,18 @@ function CommandModeView({
   const commandQuery = query.slice(1).toLowerCase(); // 去掉 › 前綴
   const [sel, setSel] = useState(0);
 
-  const filtered = useMemo(
-    () =>
-      commandQuery
-        ? features.filter(
-            (f) => f.label.toLowerCase().includes(commandQuery) || f.id.includes(commandQuery),
-          )
-        : features,
-    [features, commandQuery],
-  );
+  const filtered = useMemo(() => {
+    if (!commandQuery) return features.map((f) => ({ feature: f, indices: [] as number[] }));
+    return features
+      .map((f) => {
+        const labelResult = fuzzyMatch(commandQuery, f.label);
+        if (labelResult.match) return { feature: f, indices: labelResult.indices };
+        const idResult = fuzzyMatch(commandQuery, f.id);
+        if (idResult.match) return { feature: f, indices: [] as number[] };
+        return null;
+      })
+      .filter((x): x is { feature: (typeof features)[number]; indices: number[] } => x !== null);
+  }, [features, commandQuery]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: commandQuery derives from query; sel must reset when search text changes
   useEffect(() => {
@@ -175,16 +179,16 @@ function CommandModeView({
       setSel((i) => Math.max(i - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const item = filtered[sel];
-      if (item) executeItem(item);
+      const entry = filtered[sel];
+      if (entry) executeItem(entry.feature);
     }
   }
 
-  function executeItem(item: (typeof filtered)[number]): void {
-    if (item.id === 'search-messages') {
+  function executeItem(f: (typeof features)[number]): void {
+    if (f.id === 'search-messages') {
       onQueryChange('›search ');
     } else {
-      item.execute();
+      f.execute();
       onClose();
     }
   }
@@ -209,24 +213,43 @@ function CommandModeView({
         </kbd>
       </div>
       <div className="flex flex-col overflow-y-auto" style={{ maxHeight: 'var(--palette-max-h)' }}>
-        {filtered.map((f, idx) => (
-          <button
-            key={f.id}
-            type="button"
-            data-testid={`command-item-${f.id}`}
-            data-active={sel === idx || undefined}
-            onClick={() => executeItem(f)}
-            className={`flex items-center gap-2 px-3 text-[length:var(--text-body)] text-left rounded-(--radius-row) ${
-              sel === idx ? 'bg-selected text-selected-text' : 'hover:bg-hover-tint'
-            }`}
-            style={{ minHeight: 'var(--palette-row-h)' }}
-          >
-            <span className="truncate">{f.label}</span>
-            {f.description && (
-              <span className="ml-auto text-2xs text-subtle truncate">{f.description}</span>
-            )}
-          </button>
-        ))}
+        {filtered.map(({ feature: f, indices }, idx) => {
+          const parts = indices.length > 0 ? highlightByIndices(f.label, indices) : null;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              data-testid={`command-item-${f.id}`}
+              data-active={sel === idx || undefined}
+              onClick={() => executeItem(f)}
+              className={`flex items-center gap-2 px-3 text-[length:var(--text-body)] text-left rounded-(--radius-row) ${
+                sel === idx ? 'bg-selected text-selected-text' : 'hover:bg-hover-tint'
+              }`}
+              style={{ minHeight: 'var(--palette-row-h)' }}
+            >
+              <span className="truncate">
+                {parts
+                  ? parts.map((p) => {
+                      const k = `${p.match ? 'm' : 't'}-${p.text}`;
+                      return p.match ? (
+                        <mark
+                          key={k}
+                          className="bg-(--color-palette-match) text-accent rounded-sm px-px"
+                        >
+                          {p.text}
+                        </mark>
+                      ) : (
+                        <span key={k}>{p.text}</span>
+                      );
+                    })
+                  : f.label}
+              </span>
+              {f.description && (
+                <span className="ml-auto text-2xs text-subtle truncate">{f.description}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
