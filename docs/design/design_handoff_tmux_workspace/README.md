@@ -40,9 +40,9 @@
 
 ### 1. Workspace 外框
 - **頂部 tab bar**：高 38px，背景 `--color-surface`，底線 1px `--color-border`
-  - 左：logo（18px 圓角 4px 方塊 `--color-accent`＋「Code Quest」13px/700）
+  - 左：logo（18px 圓角 5px 方塊 `--color-accent`＋「Code Quest」13px/700）
   - tabs：高 32px、圓角 8 8 0 0、active＝`--color-bg` 底＋邊框＋底部 2px 蓋線接縫；內容＝編號（mono 10px，active 時 `--color-accent`）＋busy 燈（6px 圓點 `--color-accent`，pulse 1.2s）＋名稱＋×；**全部 `white-space: nowrap`**
-  - 右：⊞ Session Manager（⌘⇧M）、⌘K 鍵帽、⚙、＋ Project（production 增補：onboarding 直達入口）
+  - 右：⊞ Session Manager（⌘⇧M）、⌘K 鍵帽、⚙
 - **底部狀態列**：高 26px，`--color-surface` 底、頂線 1px；mono 10.5px
   - 左：project 名（accent 色、600）＋ `⎇ branch`
   - 右：快捷鍵提示（⌘K picker／⌘D 垂直分割／⌘⇧D 水平分割／⌘⇧Z zoom）＋ `N busy`＋busy 燈
@@ -52,7 +52,7 @@
 - 圓角 10px、邊框 1px `--color-border`、超出裁切
 - **focused**：邊框 `accent 55%`＋外圈 1px `accent 35%`；permission mode 換色（plan＝`--color-info`、bypass＝`--color-danger`）
 - 非 focus pane 內容 `opacity: 0.75`
-- **header** 高 30px：編號徽章（16×16、圓角 4、mono 10px/700；focused＝accent 底白字）＋類型 icon＋標題（12px/600）＋meta（mono 10px）＋右側動作 `◫ ⬓ ⤢ ×`
+- **header** 高 30px：編號徽章（16×16、圓角 5、mono 10px/700；focused＝accent 底白字）＋類型 icon＋標題（12px/600）＋meta（mono 10px）＋右側動作 `◫ ⬓ ⤢ ×`
 - 最小尺寸：寬 320 / 高 160（低於下限 → 拒絕分割並 toast 提示）
 
 ### 3. Chat pane（B/C 混搭）
@@ -67,8 +67,25 @@
 - 頂部搜尋列；底部鍵位列：「←→ 換欄／↑↓ 移動／⏎ 開啟到目前 pane／⌘⏎ 分割開啟」
 - 欄 1 **Projects**（flex 4）：列＝⌂＋名稱＋`N⎇`；底部「＋ 新增 Project…」
 - 欄 2 **Worktrees**（flex 5）：⎇＋branch（mono）＋`N chats・busy`；底部「＋ 新增 worktree…」
-- 欄 3（flex 6）：**新增 pane** 類型 grid（3 欄卡片：icon＋名稱＋快捷字母 F/G/O/D/T）→ **進行中**（busy 標示＋所在 pane 編號）→ **歷史 resume**（⟲＋相對時間）→ 底部**常用組合**「標準工作組 chat＋files＋git（⌘1）」；另有 ⬆ Import…（production 既有功能保留）
+- 欄 3（flex 6）：**新增 pane** 類型 grid（3 欄卡片：icon＋名稱＋快捷字母 F/G/O/D/T）→ **進行中**（busy 標示＋所在 pane 編號）→ **歷史 resume**（⟲＋相對時間）→ 底部**常用組合**「標準工作組 chat＋files＋git（⌘1）」
 - 列高 ≥ 28px、active 列＝`--color-selected` 底＋accent glyph
+
+### 4b. Command Palette（⌘K 統一入口，與 PanePicker 共用 shell）
+- ⌘K 預設狀態＝ PanePicker（搜 pane／worktree）；輸入 **《›》前綴**切到指令模式
+- 外殼同 PanePicker modal：寬 `--palette-w` 640px（min 90vw）、輸入列 48px、列高 36px（隨 density 32/36/40）、`max-height: min(480px, 64vh)` 超出捲動、群組標籤 sticky
+- fuzzy 命中字元底色 `--color-palette-match`（accent 30%）；z＝modal 50、backdrop＝overlay 40；進場 160ms scale 0.98→1＋fade
+- **theme・字級・密度都是指令**：「切換主題：…」「字級：放大/縮小/重設」「密度：Compact/Default/Relaxed」
+
+### 4c. 使用者偏好三軸（theme / font-size / density）
+三軸互相獨立，各自存 localStorage，以 data attribute 掛在 `<html>`：
+
+```html
+<html data-theme="clay-dark|light|roast|auto" data-fontsize="s|m|l|xl" data-density="compact|default|relaxed">
+```
+
+- **theme**：clay-dark（預設）／light／roast／auto（跟隨 `prefers-color-scheme`，在 light↔clay-dark 間切）；切換時 bg/text/border 過渡 `--theme-transition` 120ms（reduced-motion 關閉）
+- **font-size**：設 `--font-scale` 0.92／1／1.08／1.15，所有字級 token 乘上（body 13→12–15、code 11.5→10.5–13.2）；快捷鍵 ⌘= / ⌘− / ⌘0，statusline 短暫顯示目前字級；例外：mobile composer 固定 16px（防 iOS 聚焦縮放）
+- **density**：只動間距列高不動字級——`--density-row-pad-y` 3/5/8、`--pane-header-h` 26/30/34、`--tabbar-h` 34/38/42、`--tab-h` 28/32/36、`--statusline-h` 22/26/30、`--msg-gap` 12/16/20、palette 列高 32/36/40
 
 ### 5. Drawer（桌面完整內容）
 - 右側滑入，寬 56%（min 480px）、左緣 6px 拖拉把手（中央 44px 把手條）
@@ -86,7 +103,7 @@
 - 分隔線：視覺 1px、熱區 6px；hover 顯把手（accent）＋游標 col/row-resize；拖曳即時 reflow；雙擊回 50%；focused pane 可用 ⌥方向鍵微調
 
 ### 8. RWD
-- **tablet（640–1024）**：同時可見 pane 上限 2；超出的收成右側 34px 直立 tab 條（writing-mode: vertical-rl），點了與目前 pane 交換（production 採 focused 衍生可見集合：點條＝帶進視野，偏離「交換」定案——決策 2026-06-11）。直向：單 pane＋slide-over 浮層（寬 58%，拖到底固定成分割）。保留拖曳
+- **tablet（640–1024）**：同時可見 pane 上限 2；超出的收成右側 34px 直立 tab 條（writing-mode: vertical-rl），點了與目前 pane 交換。直向：單 pane＋slide-over 浮層（寬 58%，拖到底固定成分割）。保留拖曳
 - **mobile（<640）**：單 pane 全幅；頂列＝tab 下拉＋pane 數字 ①②③（22px）＋⊞ 切換器；底部 dock chips（高 40px）；左右滑切 pane；**不提供分割與拖曳**；drawer → bottom sheet（snap 0/66%/100%，grabber 44×5）；pane tree 攤平成**卡片牆切換器**（2 欄、卡 190px 高、active 卡 accent 框）；composer 輸入字 16px（防 iOS 聚焦縮放）；dock/sheet 加 `env(safe-area-inset-bottom)`
 - **核心原則：斷點切換不銷毀 pane tree，只改變同時渲染數；回桌面原樹還原**
 
@@ -101,6 +118,8 @@
 | 1–9 | （按住 pane-jump 鍵時）跳到該編號 pane |
 | ⌥方向鍵 | 微調 focused pane 邊界 |
 | ⌘⇧M | Session Manager |
+| ⌘K 內輸入「›」 | 切換到指令模式（theme／字級／密度等都是指令） |
+| ⌘= / ⌘− / ⌘0 | 字級放大／縮小／重設 |
 
 動效：hover/focus `120ms`；pane 開合與重排 `200ms`；drawer/sheet `240ms`；easing `cubic-bezier(.2,.8,.2,1)`；`prefers-reduced-motion` 時全部關閉。
 
@@ -112,18 +131,21 @@
 - drawer：全域單例 `{ descriptor, width } | null`；釘選＝呼叫既有 `setContentInPane` 的分割版
 - RWD：以 viewport 寬計算 `maxVisiblePanes`（1/2/∞）；被收納的 pane 只是不渲染，state 保留
 - SessionBar 元件與相關 `maxVisible`/overflow 邏輯刪除；busy 聚合移至 tab（既有 `collectSessionsInPaneTree` 可直接用）
+- 偏好設定：`{ theme, fontSize, density }` 存 localStorage（各自獨立 key），啟動時同步到 `<html>` 的 data attribute；CSS 端全靠 attribute selector 覆寫 token，元件不需要訂閱狀態
 
 ## Design Tokens
 
 完整檔：**`tokens/App.proposal.css`**（Tailwind v4 `@theme`，可直接替換 `apps/web/src/App.css` 的 token 段）。重點：
 
 - 色彩（V1 陶土・暗，dark 預設）：bg `#191613`／surface `#211d18`／hover `#29241e`／border `#38322a`／text 六階 `#f2ede3 #d8d2c6 #a39b8d #756d5e #5a523f #3b362c`／accent `#d97757`／success `#84b07e`／warning `#d4ab6a`／danger `#df6c55`／info `#82a3c9`；light 對應（紙・亮）在同檔
-- 字體：Outfit／JetBrains Mono；body 13、ui 12、label 10/700/+12%、code 11.5、statusline 10.5（production 採 repo 可及性字級體系——`--text-xs` 14px＋字級軸——為有意偏離）
+- 字體：Outfit／JetBrains Mono；body 13、ui 12、label 10/700/+12%、code 11.5、statusline 10.5
 - radius：4 / 7 / 10 / 14 / 16(sheet) / 99(pill)；spacing 4px 基準
 - pane：header 30、gap 6、min 320×160、group stripe 3px、dim .75
 - z-index 沿用 repo 既有 tiers（float 30＝drawer/sheet、overlay 40、modal 50＝picker）
 - motion：120/200/240ms＋`cubic-bezier(.2,.8,.2,1)`
 - RWD：breakpoint sm 640／lg 1024、hit-min 44、input 16px、safe-area
+- **偏好三軸**：`data-theme`（clay-dark*/light/roast/auto，含 roast 完整覆寫）、`data-fontsize`（`--font-scale` 0.92–1.15）、`data-density`（compact/default*/relaxed 成組覆寫列高間距）——檔位覆寫全部在 `tokens/App.proposal.css` 末段
+- **command palette**：`--palette-w` 640、input-h 48、row-h 36（隨 density）、max-h `min(480px, 64vh)`、match 底色、`--dur-palette` 160ms
 
 ## Assets
 
@@ -141,6 +163,7 @@
 | `proposal/tmux-details.jsx` | picker 三案（乙＝定案）、zoom、拖曳、divider/registry |
 | `proposal/tmux-rwd.jsx`／`tmux-rwd-tokens.jsx` | RWD 五畫板＋RWD token 表 |
 | `proposal/tmux-tokens-full.jsx`／`token-sheet.jsx` | 元件 token 總表／色彩表 |
+| `proposal/tmux-tokens-prefs.jsx` | 偏好設定 token 表（theme／font-size／density）＋command palette 規格 |
 | `lib/design-canvas.jsx` | 畫布外殼（僅供 HTML 瀏覽用，與實作無關） |
 
 ## 建議的 CLAUDE.md 追加段落（貼進 repo 根目錄 CLAUDE.md）

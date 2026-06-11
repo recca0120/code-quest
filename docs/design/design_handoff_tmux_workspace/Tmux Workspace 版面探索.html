@@ -22,19 +22,23 @@
 <script type="text/babel" src="proposal/tmux-rwd.jsx"></script>
 <script type="text/babel" src="proposal/tmux-rwd-tokens.jsx"></script>
 <script type="text/babel" src="proposal/tmux-tokens-full.jsx"></script>
+<script type="text/babel" src="proposal/tmux-tokens-prefs.jsx"></script>
 <script type="text/babel">
 const { DesignCanvas, DCSection, DCArtboard, DCPostIt } = window;
-const { TxLayoutA, TxLayoutB, TxLayoutC, TxPickerTree, TxPickerCols, TxPickerCmd, TxZoomDemo, TxDragDemo, TxAtoms, TxTabletLand, TxTabletPort, TxMobileChat, TxMobileSheet, TxMobileSwitcher, TxRwdTokens, TxTokensFull, TokenSheet } = window;
+const { TxLayoutA, TxLayoutB, TxLayoutC, TxPickerTree, TxPickerCols, TxPickerCmd, TxZoomDemo, TxDragDemo, TxAtoms, TxTabletLand, TxTabletPort, TxMobileChat, TxMobileSheet, TxMobileSwitcher, TxRwdTokens, TxTokensFull, TxTokensPrefs, TokenSheet } = window;
 
 function App() {
   return (
     <DesignCanvas title="Tmux Workspace 版面探索 — 依 feat/discuss-layout 十點需求">
-      <DCSection id="tokens" title="00 · Design Tokens 總表" subtitle="本探索全部元件的 token：色彩・字・間距・pane・tab・狀態列・drawer/sheet・dock・picker・拖拉・z-index・動效；成品在 tokens/App.proposal.css">
+      <DCSection id="tokens" title="00 · Design Tokens 總表" subtitle="本探索全部元件的 token：色彩・字・間距・pane・tab・狀態列・drawer/sheet・dock・picker・拖拉・z-index・動效，加上使用者三軸（theme・font-size・density）與 command palette；成品在 tokens/App.proposal.css">
         <DCArtboard id="tk-palette" label="色彩 — V1 陶土・暗（同前次提案，沒動）" width={860} height={700}>
           <TokenSheet theme="theme-clay-dark" />
         </DCArtboard>
         <DCArtboard id="tk-full" label="元件 Tokens — pane / tab / drawer / dock / picker / 動效" width={940} height={1380}>
           <TxTokensFull />
+        </DCArtboard>
+        <DCArtboard id="tk-prefs" label="偏好設定 Tokens — theme / font-size / density ＋ Command Palette" width={940} height={1380}>
+          <TxTokensPrefs />
         </DCArtboard>
       </DCSection>
 
