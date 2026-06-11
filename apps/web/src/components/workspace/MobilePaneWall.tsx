@@ -73,7 +73,7 @@ export function MobilePaneWall({
         data-testid="mobile-pane-wall-toggle"
         aria-label="open pane switcher"
         onClick={() => setOpen(true)}
-        className="fixed bottom-8 right-3 z-float size-(--mobile-wall-toggle) rounded-(--radius-mobile-toggle) bg-surface border border-border text-text shadow-floating"
+        className="fixed bottom-8 right-3 z-float size-(--mobile-wall-toggle) rounded-(--radius-mobile-toggle) bg-bg border border-border text-text shadow-floating"
       >
         ⊞
       </button>

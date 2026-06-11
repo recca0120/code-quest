@@ -216,6 +216,7 @@
   --tab-h: 32px;
   --statusline-h: 26px;
   --busy-dot-size: 6px;
+  --busy-dot-size-sm: 5px;
   --busy-pulse: 1.2s;
   /* busy 燈專用 pulse（emit `animate-busy-pulse`）— 沿用內建 pulse keyframes，
      週期接 --busy-pulse（reduced-motion 時歸零）。不可改全域 animate-pulse：

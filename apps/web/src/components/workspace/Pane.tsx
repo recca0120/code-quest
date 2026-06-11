@@ -123,11 +123,7 @@ function Toolbar({
           {typeIcon}
         </span>
       )}
-      {title && (
-        <span className="font-semibold text-bright truncate text-[length:var(--text-ui)]">
-          {title}
-        </span>
-      )}
+      {title && <span className="font-semibold text-bright truncate">{title}</span>}
       {branch && <span className="font-mono text-subtle">⎇ {branch}</span>}
       {isZoomed && (
         <span
@@ -162,7 +158,7 @@ function Toolbar({
                 e.stopPropagation();
                 onSplitV?.();
               }}
-              className={cn(TOOL_BTN, 'text-muted hover:text-text rotate-90')}
+              className={cn(TOOL_BTN, 'text-subtle hover:text-text rotate-90')}
               title="Split vertically"
             >
               <ViewColumnsIcon className="w-3.5 h-3.5" />
@@ -189,7 +185,7 @@ function Toolbar({
             onClose?.();
           }}
           disabled={isOnly}
-          className={cn(TOOL_BTN, 'text-muted hover:text-text disabled:opacity-30')}
+          className={cn(TOOL_BTN, 'text-subtle hover:text-text disabled:opacity-30')}
           title="Close pane"
         >
           <XMarkIcon className="w-3.5 h-3.5" />

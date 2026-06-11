@@ -191,7 +191,7 @@ function CommandModeView({
 
   return (
     <div data-testid="command-mode" className="flex flex-col">
-      <div className="flex items-center gap-2 border-b border-border-subtle px-4 mb-2">
+      <div className="flex items-center gap-2 border-b border-border-subtle px-4 py-3 mb-2">
         <span aria-hidden="true" className="text-accent font-bold">
           ›
         </span>
@@ -311,7 +311,7 @@ function MessageSearchView({
 
   return (
     <div data-testid="message-search-mode" className="flex flex-col">
-      <div className="flex items-center gap-2 border-b border-border-subtle px-4 mb-2">
+      <div className="flex items-center gap-2 border-b border-border-subtle px-4 py-3 mb-2">
         <button
           type="button"
           onClick={() => onQueryChange('›')}
@@ -566,7 +566,7 @@ export function PanePicker({
         ) : (
           // biome-ignore lint/a11y/noStaticElementInteractions: 鍵盤協定容器——焦點落在內部互動元素上
           <div onKeyDown={handleKeyDown} data-testid="pane-picker-miller">
-            <div className="flex items-center gap-2 border-b border-border-subtle px-4 mb-2">
+            <div className="flex items-center gap-2 border-b border-border-subtle px-4 py-3 mb-2">
               <span aria-hidden="true" className="text-subtle">
                 ⌕
               </span>
