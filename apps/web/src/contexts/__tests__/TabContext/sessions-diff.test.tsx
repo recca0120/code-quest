@@ -13,7 +13,7 @@
 import type { SessionStateSummary } from '@code-quest/schemas';
 import { createFakeServer } from '@code-quest/server/test';
 import { act, render } from '@testing-library/react';
-import { describe, expect, it, onTestFinished } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished } from 'vitest';
 import { AppConfigProvider } from '@/contexts/AppInitContext';
 import { SessionProvider, useSession } from '@/contexts/SessionContext';
 import { SocketProvider } from '@/contexts/SocketContext';
@@ -84,6 +84,11 @@ async function renderHarness() {
 
   return { summoner, claude: summoner.claude() };
 }
+
+beforeEach(() => {
+  stateProbe = null;
+  actionsProbe = null;
+});
 
 describe('sessions diff — 1-added/1-removed swap heuristic', () => {
   it('does NOT replace the active tab when the removed session is a background one', async () => {

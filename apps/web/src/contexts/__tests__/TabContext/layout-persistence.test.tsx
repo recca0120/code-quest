@@ -20,7 +20,7 @@ import {
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { AppConfigProvider, useAppConfigActions } from '@/contexts/AppInitContext';
 import { GitProvider } from '@/contexts/GitContext';
@@ -134,6 +134,10 @@ function renderClient(summoner: FakeSummoner, extra?: React.ReactNode) {
     </SocketProvider>,
   );
 }
+
+beforeEach(() => {
+  initAckCount = 0;
+});
 
 describe('app:init rehydrate', () => {
   it('rehydrates tabs when app:init ACK contains layout (applies incoming activeTabId)', async () => {
