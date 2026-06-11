@@ -260,24 +260,20 @@ describe('底部狀態列（spec: focused pane 決定狀態列 context）', () =
   });
 });
 
-describe('CommandPalette（⌘⇧K；⌘K 讓位給 PanePicker）', () => {
-  it('⌘⇧K 開 palette（非 picker）；esc 關閉', async () => {
+describe('⌘⇧K 直開指令模式（unified-command-entry：行為搬家 palette → picker command mode）', () => {
+  it('⌘⇧K 開 picker 指令模式（非三欄）；esc 關閉', async () => {
     const { user, addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();
 
-    // palette hotkey 走 NO_FORM（composer 聚焦時不觸發）→ 先點空白處移出焦點
     await user.click(document.body);
-    // useHotkeys 的 mod 在非 mac（jsdom）解析為 Ctrl
     await user.keyboard('{Control>}{Shift>}K{/Shift}{/Control}');
-    expect(await screen.findByRole('dialog', { name: 'Command Palette' })).toBeInTheDocument();
-    // 開的是 palette 不是 picker（⌘K 才是 picker）
+    // 指令模式（非三欄 picker、非獨立 palette）
+    expect(await screen.findByTestId('command-mode')).toBeInTheDocument();
     expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
 
     await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog', { name: 'Command Palette' })).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByTestId('command-mode')).not.toBeInTheDocument());
   });
 });
 
@@ -454,5 +450,21 @@ describe('⌘=/⌘-/⌘0 字級快捷鍵（preferences-axis-alignment 2.5）', (
 
     await user.keyboard('{Meta>}0{/Meta}');
     expect(usePreferencesStore.getState().fontSize).toBe('m');
+  });
+});
+
+describe('⌘⇧K 直開指令模式（unified-command-entry 4.1）', () => {
+  it('⌘⇧K 開 modal 且搜尋列預填 ›（直達指令模式）', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.keyboard('{Control>}{Shift>}K{/Shift}{/Control}');
+    // 應出現指令模式（非 picker 三欄）
+    expect(await screen.findByTestId('command-mode')).toBeInTheDocument();
+    expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
+    // 搜尋列值以 › 開頭
+    const input = screen.getByLabelText('picker search');
+    expect((input as HTMLInputElement).value).toMatch(/^›/);
   });
 });

@@ -136,13 +136,12 @@ function DocumentTitle() {
 }
 
 export function Workspace(): React.JSX.Element {
-  const { openPalette, registerActions } = useCommandPaletteActions();
-  // ⌘K 讓給 PanePicker（handoff §4：唯一內容入口）；palette 改 ⌘⇧K
-  useHotkeys('mod+shift+k', () => openPalette(), NO_FORM);
+  const { registerActions } = useCommandPaletteActions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
   const [panePickerOpen, setOpenInPaneModalOpen] = useState(false);
+  const [pickerInitialQuery, setPickerInitialQuery] = useState<string | undefined>();
   const [openInPaneTargetPaneId, setOpenInPaneTargetPaneId] = useState<string | undefined>();
   const [pendingSession, setPendingSession] = useState<{
     projectCwd: string;
@@ -169,10 +168,13 @@ export function Workspace(): React.JSX.Element {
   // session:states tick; inline arrows here would defeat memo(TabContainer)
   // and churn paneEnvironment (the D5 render-isolation invariant)
   const handleSessionCreated = useCallback(() => setPendingSession(null), []);
-  const handleOpenModal = useCallback((paneId?: string) => {
+  const handleOpenModal = useCallback((paneId?: string, opts?: { initialQuery?: string }) => {
     setOpenInPaneTargetPaneId(paneId);
+    setPickerInitialQuery(opts?.initialQuery);
     setOpenInPaneModalOpen(true);
   }, []);
+  // ⌘⇧K 直開指令模式（unified-command-entry：› 前綴預填）
+  useHotkeys('mod+shift+k', () => handleOpenModal(undefined, { initialQuery: '›' }), NO_FORM);
   const handleOpenSettings = useCallback(() => setSettingsOpen(true), []);
   const handleOpenAddProjectDialog = useCallback(() => setDialogOpen(true), []);
   const handleNewWorktree = useCallback(
@@ -278,6 +280,7 @@ export function Workspace(): React.JSX.Element {
           <ConnectedPanePicker
             open={panePickerOpen}
             onClose={() => setOpenInPaneModalOpen(false)}
+            initialQuery={pickerInitialQuery}
             sessions={sessions.map((s) => ({
               channelId: s.channelId,
               title: s.title,

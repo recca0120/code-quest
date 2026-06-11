@@ -323,3 +323,56 @@ describe('搜尋與入口（spec: 頂部搜尋列／新增入口）', () => {
     expect(screen.getByTestId('pane-picker-miller')).toBeInTheDocument();
   });
 });
+
+// ── unified-command-entry ──
+
+describe('指令模式偵測與切換（unified-command-entry 1.1）', () => {
+  it('搜尋列輸入 › 前綴 → 三欄隱藏、顯示指令列表；刪掉 › → 回三欄', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    // 預設：picker 模式（三欄可見）
+    expect(screen.getByTestId('pane-picker-miller')).toBeInTheDocument();
+    expect(screen.queryByTestId('command-mode')).not.toBeInTheDocument();
+
+    // 先打 › 觸發模式切換，再打 theme
+    await user.type(screen.getByLabelText('picker search'), '›');
+    await user.type(screen.getByLabelText('picker search'), 'theme');
+    expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
+    expect(screen.getByTestId('command-mode')).toBeInTheDocument();
+
+    // 清空 › → 回 picker 模式
+    await user.clear(screen.getByLabelText('picker search'));
+    expect(screen.getByTestId('pane-picker-miller')).toBeInTheDocument();
+    expect(screen.queryByTestId('command-mode')).not.toBeInTheDocument();
+  });
+});
+
+describe('指令模式 UI（unified-command-entry 3.1）', () => {
+  it('› 後文字 fuzzy filter items；⏎ 執行選中項', async () => {
+    const user = userEvent.setup();
+    const props = setup();
+
+    // 先打 › 觸發模式切換，再打 theme
+    await user.type(screen.getByLabelText('picker search'), '›');
+    await user.type(screen.getByLabelText('picker search'), 'theme');
+    const commandMode = screen.getByTestId('command-mode');
+    // 應顯示 theme 相關指令
+    expect(within(commandMode).getAllByTestId(/^command-item-/).length).toBeGreaterThan(0);
+
+    // ⏎ 執行第一項
+    await user.keyboard('{Enter}');
+    // 執行後 picker 應關閉
+    expect(props.onClose).toHaveBeenCalled();
+  });
+
+  it('› 後輸入不匹配文字 → 零結果', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.type(screen.getByLabelText('picker search'), '›');
+    await user.type(screen.getByLabelText('picker search'), 'zzzznothing');
+    const commandMode = screen.getByTestId('command-mode');
+    expect(within(commandMode).queryAllByTestId(/^command-item-/)).toHaveLength(0);
+  });
+});

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { PANE_TYPE_REGISTRY, type PaneTypeEntry } from './pane-registry';
+import { useCommandFeatures } from './useCommandFeatures';
 
 interface SessionInfo {
   channelId: string;
@@ -40,6 +41,8 @@ interface PickerOpenOpts {
 interface PanePickerProps {
   open: boolean;
   onClose: () => void;
+  /** 開啟時的初始搜尋列值（⌘⇧K 預填 '›' 直達指令模式） */
+  initialQuery?: string;
   sessions?: SessionInfo[];
   pastSessions?: PastSessionInfo[];
   projects?: ProjectInfo[];
@@ -118,11 +121,105 @@ function ImportView({
   );
 }
 
+// ── CommandModeView（unified-command-entry §3）──────────────────────────────
+
+function CommandModeView({
+  query,
+  onQueryChange,
+  onClose,
+}: {
+  query: string;
+  onQueryChange: (q: string) => void;
+  onClose: () => void;
+}): React.JSX.Element {
+  const features = useCommandFeatures();
+  const commandQuery = query.slice(1).toLowerCase(); // 去掉 › 前綴
+  const [sel, setSel] = useState(0);
+
+  const filtered = useMemo(
+    () =>
+      commandQuery
+        ? features.filter(
+            (f) => f.label.toLowerCase().includes(commandQuery) || f.id.includes(commandQuery),
+          )
+        : features,
+    [features, commandQuery],
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: commandQuery derives from query; sel must reset when search text changes
+  useEffect(() => {
+    setSel(0);
+  }, [query]);
+
+  function handleKey(e: React.KeyboardEvent): void {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSel((i) => Math.min(i + 1, filtered.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSel((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const item = filtered[sel];
+      if (item) {
+        item.execute();
+        onClose();
+      }
+    }
+  }
+
+  return (
+    <div data-testid="command-mode" className="flex flex-col">
+      <div className="flex items-center gap-2 border-b border-border px-2 mb-2">
+        <span aria-hidden="true" className="text-accent font-bold">
+          ›
+        </span>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder="輸入指令…"
+          aria-label="picker search"
+          className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-dim"
+        />
+        <kbd className="font-mono text-2xs text-subtle border border-border rounded px-1 py-0.5">
+          esc
+        </kbd>
+      </div>
+      <div className="flex flex-col overflow-y-auto" style={{ maxHeight: 'var(--palette-max-h)' }}>
+        {filtered.map((f, idx) => (
+          <button
+            key={f.id}
+            type="button"
+            data-testid={`command-item-${f.id}`}
+            data-active={sel === idx || undefined}
+            onClick={() => {
+              f.execute();
+              onClose();
+            }}
+            className={`flex items-center gap-2 px-3 text-sm text-left rounded-(--radius-row) ${
+              sel === idx ? 'bg-selected text-selected-text' : 'hover:bg-hover-tint'
+            }`}
+            style={{ minHeight: 'var(--palette-row-h)' }}
+          >
+            <span className="truncate">{f.label}</span>
+            {f.description && (
+              <span className="ml-auto text-2xs text-subtle truncate">{f.description}</span>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── PanePicker（Miller 三欄，handoff §4：乙案定案）───────────────────────────
 
 export function PanePicker({
   open,
   onClose,
+  initialQuery,
   sessions = [],
   pastSessions = [],
   projects = [],
@@ -148,14 +245,14 @@ export function PanePicker({
   // 開啟時重置；預設選 active project 的第一個 worktree、焦點在欄3（最常見：直接開內容）
   useEffect(() => {
     if (open) {
-      setQuery('');
+      setQuery(initialQuery ?? '');
       setCol(2);
       setSelProjectCwd(null);
       setSelWorktreePath(null);
       setSel3(0);
       setImportTarget(null);
     }
-  }, [open]);
+  }, [open, initialQuery]);
 
   const q = query.toLowerCase();
   // 搜尋語意：欄1 只在「有 project 命中」時過濾——查 worktree/session 名時
@@ -302,6 +399,8 @@ export function PanePicker({
             onImport={onImport}
             onBack={() => setImportTarget(null)}
           />
+        ) : query.startsWith('›') ? (
+          <CommandModeView query={query} onQueryChange={setQuery} onClose={handleClose} />
         ) : (
           // biome-ignore lint/a11y/noStaticElementInteractions: 鍵盤協定容器——焦點落在內部互動元素上
           <div onKeyDown={handleKeyDown} data-testid="pane-picker-miller">
