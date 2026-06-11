@@ -75,20 +75,16 @@ function useKeyboardShortcuts(onOpenPicker?: (paneId?: string) => void): void {
         const LABELS: Record<FontSize, string> = { s: 'S', m: 'M', l: 'L', xl: 'XL' };
         if (e.key === '=' || e.key === '+') {
           e.preventDefault();
-          const next = SIZES[idx + 1];
-          if (next) {
-            setFontSize(next);
-            window.dispatchEvent(new CustomEvent('font-size-hint', { detail: LABELS[next] }));
-          }
+          const next = SIZES[(idx + 1) % SIZES.length] ?? fontSize;
+          setFontSize(next);
+          window.dispatchEvent(new CustomEvent('font-size-hint', { detail: LABELS[next] }));
           return;
         }
         if (e.key === '-') {
           e.preventDefault();
-          const next = SIZES[idx - 1];
-          if (next) {
-            setFontSize(next);
-            window.dispatchEvent(new CustomEvent('font-size-hint', { detail: LABELS[next] }));
-          }
+          const next = SIZES[(idx - 1 + SIZES.length) % SIZES.length] ?? fontSize;
+          setFontSize(next);
+          window.dispatchEvent(new CustomEvent('font-size-hint', { detail: LABELS[next] }));
           return;
         }
         if (e.key === '0') {

@@ -7,14 +7,14 @@
 
 ## 1. ⌘= 循環
 
-- [ ] 1.1 [test] font-size 為 xl 時 ⌘= → 循環回 s（非停住）
-- [ ] 1.2 [impl] KeyboardShortcutsProvider：⌘= 的 idx 計算改用 modulo wrap
+- [x] 1.1 [test] font-size 為 xl 時 ⌘= → 循環回 s（非停住）
+- [x] 1.2 [impl] KeyboardShortcutsProvider：⌘= 的 idx 計算改用 modulo wrap
 
 ## 2. ⌘- 循環
 
-- [ ] 2.1 [test] font-size 為 s 時 ⌘- → 循環到 xl（非停住）
-- [ ] 2.2 [impl] KeyboardShortcutsProvider：⌘- 的 idx 計算改用 modulo wrap
+- [x] 2.1 [test] font-size 為 s 時 ⌘- → 循環到 xl（非停住）
+- [x] 2.2 [impl] KeyboardShortcutsProvider：⌘- 的 idx 計算改用 modulo wrap
 
 ## 3. 收尾
 
-- [ ] 3.1 [verify] tsc clean + vitest green
+- [x] 3.1 [verify] tsc clean + vitest green

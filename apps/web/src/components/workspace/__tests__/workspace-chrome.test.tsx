@@ -451,12 +451,13 @@ describe('⌘=/⌘-/⌘0 字級快捷鍵（preferences-axis-alignment 2.5）', (
     await user.keyboard('{Meta>}={/Meta}');
     expect(usePreferencesStore.getState().fontSize).toBe('xl');
 
-    // 到頂不爆
+    // 到頂循環回 s
     await user.keyboard('{Meta>}={/Meta}');
-    expect(usePreferencesStore.getState().fontSize).toBe('xl');
+    expect(usePreferencesStore.getState().fontSize).toBe('s');
 
+    // s 時 ⌘- 循環到 xl
     await user.keyboard('{Meta>}-{/Meta}');
-    expect(usePreferencesStore.getState().fontSize).toBe('l');
+    expect(usePreferencesStore.getState().fontSize).toBe('xl');
 
     await user.keyboard('{Meta>}0{/Meta}');
     expect(usePreferencesStore.getState().fontSize).toBe('m');
