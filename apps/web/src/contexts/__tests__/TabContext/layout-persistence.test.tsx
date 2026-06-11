@@ -138,7 +138,7 @@ function renderClient(summoner: FakeSummoner, extra?: React.ReactNode) {
 describe('app:init rehydrate', () => {
   it('rehydrates tabs when app:init ACK contains layout (applies incoming activeTabId)', async () => {
     const container = createTestContainer();
-    seedLayout(container, VALID_LAYOUT);
+    await seedLayout(container, VALID_LAYOUT);
     const server = createFakeServer(container);
     onTestFinished(() => server.destroy());
 
@@ -172,7 +172,7 @@ describe('app:init rehydrate', () => {
 describe('provider remount replay (client-structure-cleanup 4.1)', () => {
   it('a remounted TabProvider must not apply a stale init snapshot over a newer synced layout', async () => {
     const container = createTestContainer();
-    seedLayout(container, VALID_LAYOUT); // rev 1
+    await seedLayout(container, VALID_LAYOUT); // rev 1
     const server = createFakeServer(container);
     onTestFinished(() => server.destroy());
     const summoner = createFakeSummoner(server);
@@ -319,7 +319,7 @@ describe('debounced layout:save', () => {
 
     // ③ server store：真 handler 存下合併後的 3 tabs（rev 1 — 只配發過一次）
     const summonerKey = container.get<{ provider: string }>(TYPES.ChannelManager).provider;
-    const stored = container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKey);
+    const stored = await container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKey);
     expect(stored?.rev).toBe(1);
     expect(stored?.layout.tabs).toHaveLength(3);
   });

@@ -91,8 +91,10 @@ describe('rail 狀態 persist roundtrip（spec: per-pane persist）', () => {
     // 收合 rail → debounce save 後 server store 的 session leaf 帶 rail
     await view1.user.click(screen.getByRole('button', { name: 'collapse rail' }));
     await waitFor(
-      () => {
-        const stored = container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKeyOf(container));
+      async () => {
+        const stored = await container
+          .get<LayoutStore>(TYPES.LayoutStore)
+          .get(summonerKeyOf(container));
         const root = stored?.layout.tabs[0]?.paneRoot;
         if (root?.type !== 'leaf' || root.content.type !== 'session') throw new Error('pending');
         expect(root.content.rail).toMatchObject({ open: false });
@@ -229,8 +231,10 @@ describe('rail 拖寬把手（rail resize；persist width）', () => {
     fireEvent.pointerUp(window, { pointerId: 1, clientX: 400 });
     expect(screen.getByTestId('chat-rail-wrapper').style.width).toBe('318px');
     await waitFor(
-      () => {
-        const stored = container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKeyOf(container));
+      async () => {
+        const stored = await container
+          .get<LayoutStore>(TYPES.LayoutStore)
+          .get(summonerKeyOf(container));
         const root = stored?.layout.tabs[0]?.paneRoot;
         if (root?.type !== 'leaf' || root.content.type !== 'session') throw new Error('pending');
         expect(root.content.rail).toMatchObject({ width: 318 });
@@ -269,8 +273,10 @@ describe('rail 拖寬把手（rail resize；persist width）', () => {
 
     // 放開的邊界值走 debounce persist 進 server LayoutStore
     await waitFor(
-      () => {
-        const stored = container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKeyOf(container));
+      async () => {
+        const stored = await container
+          .get<LayoutStore>(TYPES.LayoutStore)
+          .get(summonerKeyOf(container));
         const root = stored?.layout.tabs[0]?.paneRoot;
         if (root?.type !== 'leaf' || root.content.type !== 'session') throw new Error('pending');
         expect(root.content.rail).toMatchObject({ width: 180 });

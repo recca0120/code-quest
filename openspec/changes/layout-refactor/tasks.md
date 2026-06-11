@@ -8,5 +8,5 @@
 
 ## Sub-changes
 
-- [ ] 1. `pane-channelid-unify` — sessionId → channelId 命名統一 + codecs 簡化
-- [ ] 2. `layout-store-persist` — LayoutStore 落盤 + 錯誤處理 + spec 補完
+- [x] 1. `pane-channelid-unify` — sessionId → channelId 命名統一 + codecs 簡化
+- [x] 2. `layout-store-persist` — LayoutStore 落盤 + 錯誤處理 + spec 補完

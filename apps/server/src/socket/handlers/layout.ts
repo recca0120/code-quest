@@ -9,14 +9,12 @@ export function create({
   layoutStore,
   channelManager,
 }: Pick<HandlerContext, 'emitter' | 'layoutStore' | 'channelManager'>): void {
-  function handleSave(
+  async function handleSave(
     _ch: Channel | null,
     payload: unknown,
     socket?: TypedSocket,
     callback?: SocketCallback,
-  ): void {
-    // No migration on the write path: a stale (unversioned v1) client must not
-    // downgrade stored v2 data — its write is rejected and observable via ack.
+  ): Promise<void> {
     const parsed = persistedLayoutSchema.safeParse(payload);
     if (!parsed.success) {
       logger.warn({ err: parsed.error.message }, 'layout:save rejected: invalid payload');
@@ -24,12 +22,8 @@ export function create({
       return;
     }
 
-    // Enforce the channelId-uniqueness invariant at the wire boundary
     const layout = dedupeLayoutChannelIds(parsed.data);
-    // Per-summoner isolation: keyed by the provider identity (same namespace as
-    // settingsStore); all sockets of this server belong to the same summoner,
-    // so broadcastAllExcept below is already summoner-scoped.
-    const rev = layoutStore.set(channelManager.provider, layout);
+    const rev = await layoutStore.set(channelManager.provider, layout);
     callback?.({ ok: true, rev });
 
     if (socket) {

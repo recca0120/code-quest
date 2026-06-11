@@ -106,7 +106,7 @@ describe('兩個 React client 經真 layout:save handler 同步', () => {
 
     // ③ server store 確實存了 2 tabs（rev 1）
     const summonerKey = container.get<{ provider: string }>(TYPES.ChannelManager).provider;
-    const stored = container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKey);
+    const stored = await container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKey);
     expect(stored?.rev).toBe(1);
     expect(stored?.layout.tabs).toHaveLength(2);
 

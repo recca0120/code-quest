@@ -18,6 +18,7 @@ import {
   persistedLayoutSchema,
 } from '@code-quest/schemas';
 import { type Dispatch, type SetStateAction, useContext, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import { AppConfigActionsContext } from './AppInitContext.tsx';
 import { deserializeNode, serializeLayout } from './pane-codecs.ts';
 import { firstLeafId, hasLeaf, type WorkspaceTabStateValue } from './pane-tree.ts';
@@ -145,6 +146,9 @@ export function useLayoutPersistence(
             lastSeenRevRef.current = Math.max(lastSeenRevRef.current, rev);
           }
           lastAppliedJsonRef.current = json;
+        } else {
+          const error = (res as { error?: string })?.error ?? 'unknown error';
+          toast.error(`Layout save failed: ${error}`);
         }
       });
     }, 500);

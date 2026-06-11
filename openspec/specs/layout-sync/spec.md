@@ -1,7 +1,7 @@
 # layout-sync Specification
 
 ## Purpose
-TBD - created by archiving change layout-persistence. Update Purpose after archive.
+Workspace layout（tab/pane tree 結構）的 client-server 同步協定。Client 透過 `layout:save` 上傳佈局，Server 以 monotonic rev 配發版本號並 `layout:sync` broadcast 給其他 socket。`app:init` 回傳最新 stored layout 供 rehydrate。Schema 為 v2，支援 session/files/git/openspec/worktrees pane types + rail state + dedupe guard。
 ## Requirements
 ### Requirement: Wire versioning with forward-safe migration
 

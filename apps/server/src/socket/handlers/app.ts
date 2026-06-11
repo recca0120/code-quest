@@ -51,7 +51,7 @@ export function create({
         browserIntegrationSupported: false,
       },
       capabilities: { worktree: gitService.capabilities.worktree },
-      layout: storedLayoutToWire(layoutStore.get(channelManager.provider)),
+      layout: storedLayoutToWire(await layoutStore.get(channelManager.provider)),
     });
   }
 

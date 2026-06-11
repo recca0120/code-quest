@@ -116,8 +116,8 @@ describe('釘選成 pane（spec: 釘選成 pane）', () => {
     // layout 存檔含 git leaf（debounce 真管線）
     const summonerKey = container.get<{ provider: string }>(TYPES.ChannelManager).provider;
     await waitFor(
-      () => {
-        const stored = container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKey);
+      async () => {
+        const stored = await container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKey);
         const root = stored?.layout.tabs[0]?.paneRoot;
         if (root?.type !== 'split') throw new Error('pending');
         expect(root.second).toMatchObject({ content: { type: 'git' } });

@@ -9,7 +9,7 @@ import { TYPES } from '../types.ts';
  * touching LayoutStore directly — it owns the summoner-key resolution and will
  * absorb the API change when LayoutStore goes async (persistence refactor).
  */
-export function seedLayout(container: Container, layout: PersistedLayout): void {
+export async function seedLayout(container: Container, layout: PersistedLayout): Promise<void> {
   const summonerKey = container.get<ChannelManager>(TYPES.ChannelManager).provider;
-  container.get<LayoutStore>(TYPES.LayoutStore).set(summonerKey, layout);
+  await container.get<LayoutStore>(TYPES.LayoutStore).set(summonerKey, layout);
 }

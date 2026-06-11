@@ -48,7 +48,7 @@ import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelEmitter } from './socket/channel-emitter.ts';
 import { ChannelManager, type SessionLookup } from './socket/channel-manager.ts';
 import { SessionHistory } from './socket/handlers/session/history.ts';
-import { LayoutStore } from './socket/layout-store.ts';
+import { InMemoryLayoutStore, type LayoutStore } from './socket/layout-store.ts';
 import { RawRecorder } from './socket/raw-recorder.ts';
 import { SocketServer } from './socket/server.ts';
 import { type RunnerFactory, TYPES } from './types.ts';
@@ -168,7 +168,7 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
   container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
   container.bind<ChannelEmitter>(TYPES.ChannelEventRouter).toConstantValue(emitter);
-  container.bind<LayoutStore>(TYPES.LayoutStore).toConstantValue(new LayoutStore());
+  container.bind<LayoutStore>(TYPES.LayoutStore).toConstantValue(new InMemoryLayoutStore());
 
   // ProjectAutoUpserter — bridges session lifecycle → project entity (Direction C).
   // Constructed after emitter so it can broadcast updates.

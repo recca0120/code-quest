@@ -2,7 +2,7 @@ import type { PersistedLayout } from '@code-quest/schemas';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../../test/index.ts';
 import { TYPES } from '../../types.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import { LayoutStore } from '../layout-store.ts';
+import { InMemoryLayoutStore, type LayoutStore } from '../layout-store.ts';
 
 function summonerKeyOf(container: ReturnType<typeof createTestContainer>): string {
   return container.get<ChannelManager>(TYPES.ChannelManager).provider;
@@ -24,23 +24,23 @@ const VALID_LAYOUT: PersistedLayout = {
 };
 
 describe('LayoutStore', () => {
-  it('get returns null when not set', () => {
-    const store = new LayoutStore();
-    expect(store.get('summoner-1')).toBeNull();
+  it('get returns null when not set', async () => {
+    const store = new InMemoryLayoutStore();
+    expect(await store.get('summoner-1')).toBeNull();
   });
 
-  it('set returns a monotonically increasing rev; get returns layout with rev', () => {
-    const store = new LayoutStore();
-    expect(store.set('summoner-1', VALID_LAYOUT)).toBe(1);
-    expect(store.set('summoner-1', VALID_LAYOUT)).toBe(2);
-    expect(store.get('summoner-1')).toEqual({ layout: VALID_LAYOUT, rev: 2 });
+  it('set returns a monotonically increasing rev; get returns layout with rev', async () => {
+    const store = new InMemoryLayoutStore();
+    expect(await store.set('summoner-1', VALID_LAYOUT)).toBe(1);
+    expect(await store.set('summoner-1', VALID_LAYOUT)).toBe(2);
+    expect(await store.get('summoner-1')).toEqual({ layout: VALID_LAYOUT, rev: 2 });
   });
 
-  it('different summoners do not share layouts or revs', () => {
-    const store = new LayoutStore();
-    store.set('summoner-1', VALID_LAYOUT);
-    expect(store.get('summoner-2')).toBeNull();
-    expect(store.set('summoner-2', VALID_LAYOUT)).toBe(1);
+  it('different summoners do not share layouts or revs', async () => {
+    const store = new InMemoryLayoutStore();
+    await store.set('summoner-1', VALID_LAYOUT);
+    expect(await store.get('summoner-2')).toBeNull();
+    expect(await store.set('summoner-2', VALID_LAYOUT)).toBe(1);
   });
 });
 
@@ -57,7 +57,10 @@ describe('layout:save handler — ack + rev (9.1 / 13.7)', () => {
     const ack2 = await claude.send<{ ok: boolean; rev: number }>('layout:save', VALID_LAYOUT);
     expect(ack2).toEqual({ ok: true, rev: 2 });
 
-    expect(layoutStore.get(summonerKeyOf(container))).toEqual({ layout: VALID_LAYOUT, rev: 2 });
+    expect(await layoutStore.get(summonerKeyOf(container))).toEqual({
+      layout: VALID_LAYOUT,
+      rev: 2,
+    });
   });
 
   it('broadcasts layout:sync with rev to other sockets (not sender)', async () => {
@@ -101,7 +104,7 @@ describe('layout:save handler — ack + rev (9.1 / 13.7)', () => {
     const ack = await claude1.send<{ ok: boolean }>('layout:save', { invalid: true });
 
     expect(ack.ok).toBe(false);
-    expect(layoutStore.get(summonerKeyOf(container))).toBeNull();
+    expect(await layoutStore.get(summonerKeyOf(container))).toBeNull();
     expect(received).toHaveLength(0);
   });
 
@@ -144,7 +147,7 @@ describe('layout:save handler — ack + rev (9.1 / 13.7)', () => {
     await claude.send('layout:save', dupLayout);
 
     // storing 半邊
-    const stored = layoutStore.get(summonerKeyOf(container));
+    const stored = await layoutStore.get(summonerKeyOf(container));
     const root = stored?.layout.tabs[0]?.paneRoot;
     if (root?.type !== 'split') throw new Error('expected split');
     expect(root.second).toMatchObject({
@@ -171,7 +174,10 @@ describe('layout:save handler — ack + rev (9.1 / 13.7)', () => {
     const ack = await claude.send<{ ok: boolean }>('layout:save', v1Payload);
 
     expect(ack.ok).toBe(false);
-    expect(layoutStore.get(summonerKeyOf(container))).toEqual({ layout: VALID_LAYOUT, rev: 1 });
+    expect(await layoutStore.get(summonerKeyOf(container))).toEqual({
+      layout: VALID_LAYOUT,
+      rev: 1,
+    });
   });
 });
 
