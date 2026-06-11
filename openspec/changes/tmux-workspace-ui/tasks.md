@@ -35,14 +35,14 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 
 ## 3. P3 — Chat rail/dock ＋ Drawer
 
-- [ ] 3.1 [test] rail 三分頁渲染（per-worktree 資料 priming：git/fs/openspec）＋count 徽章
-- [ ] 3.2 [impl] PaneRail（218px、三分頁、hint 列）
-- [ ] 3.3 [test] ⇥ 收合 ↔ dock chips 還原（同資料源、count 一致）
-- [ ] 3.4 [impl] PaneDock chips
-- [ ] 3.5 [test] params.railOpen/railTab persist roundtrip（layout save→sync→還原；schema optional 欄位＋缺省）
-- [ ] 3.6 [impl] wire schema params 演進＋migration 缺省
-- [ ] 3.7 [test] <720px 自動收合（ResizeObserver fake）；不自動展開
-- [ ] 3.8 [impl] pane ResizeObserver
+- [x] 3.1 [test] rail 三分頁渲染（per-worktree 資料 priming：git/fs/openspec）＋count 徽章
+- [x] 3.2 [impl] PaneRail（218px、三分頁、hint 列）
+- [x] 3.3 [test] ⇥ 收合 ↔ dock chips 還原（同資料源、count 一致）
+- [x] 3.4 [impl] PaneDock chips
+- [x] 3.5 [test] params.railOpen/railTab persist roundtrip（layout save→sync→還原；schema optional 欄位＋缺省）
+- [x] 3.6 [impl] wire schema params 演進＋migration 缺省
+- [x] 3.7 [test] <720px 自動收合（ResizeObserver fake）；不自動展開
+- [x] 3.8 [impl] pane ResizeObserver
 - [ ] 3.9 [test] drawer 單例開/關/esc/遮罩；釘選成 pane＝右側 split＋drawer 關閉＋debounce save
 - [ ] 3.10 [impl] DrawerHost＋pin（registry 轉 descriptor）
 - [ ] 3.11 [test] ⌘⏎ rail 分頁升級成 pane

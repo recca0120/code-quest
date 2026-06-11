@@ -78,6 +78,39 @@ describe('persistedLayoutSchema v2 (contract)', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts session leaf with rail state and preserves it (tmux-workspace-ui P3)', () => {
+    const layout = {
+      version: 2,
+      tabs: [
+        {
+          id: 't1',
+          paneRoot: {
+            type: 'leaf',
+            id: 'p1',
+            content: {
+              type: 'session',
+              channelId: 'ch-1',
+              cwd: '/repo',
+              rail: { open: false, tab: 'git' },
+            },
+          },
+        },
+      ],
+      activeTabId: 't1',
+    };
+    const parsed = persistedLayoutSchema.parse(layout);
+    const leaf = parsed.tabs[0]?.paneRoot;
+    if (leaf?.type !== 'leaf' || leaf.content.type !== 'session') throw new Error('shape');
+    expect(leaf.content.rail).toEqual({ open: false, tab: 'git' });
+  });
+
+  it('session leaf without rail still parses (optional — backward compatible)', () => {
+    const parsed = persistedLayoutSchema.parse(V2_LAYOUT);
+    const first = parsed.tabs[0]?.paneRoot;
+    if (first?.type !== 'split' || first.first.type !== 'leaf') throw new Error('shape');
+    expect('rail' in first.first.content ? first.first.content.rail : undefined).toBeUndefined();
+  });
+
   it('rejects a payload without version', () => {
     const { version: _v, ...noVersion } = V2_LAYOUT;
     expect(persistedLayoutSchema.safeParse(noVersion).success).toBe(false);

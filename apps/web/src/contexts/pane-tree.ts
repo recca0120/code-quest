@@ -7,8 +7,14 @@
 // 'follow' variant joins at worktree-centric D5 — shape reserved in wire v2, not constructible yet
 type PaneTarget = { kind: 'fixed'; cwd: string };
 
+export type RailTab = 'files' | 'git' | 'spec';
+export interface RailState {
+  open: boolean;
+  tab: RailTab;
+}
+
 export type PaneContent =
-  | { type: 'session'; sessionId: string | null; cwd: string | null }
+  | { type: 'session'; sessionId: string | null; cwd: string | null; rail?: RailState }
   | { type: 'git'; target: PaneTarget }
   | { type: 'files'; target: PaneTarget }
   | { type: 'openspec'; target: PaneTarget }

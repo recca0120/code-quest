@@ -32,7 +32,12 @@ type Serializers = {
 };
 
 const SERIALIZERS: Serializers = {
-  session: (c) => ({ type: 'session', channelId: c.sessionId, cwd: c.cwd }),
+  session: (c) => ({
+    type: 'session',
+    channelId: c.sessionId,
+    cwd: c.cwd,
+    ...(c.rail ? { rail: c.rail } : {}),
+  }),
   git: (c) => ({ type: 'git', target: c.target }),
   files: (c) => ({ type: 'files', target: c.target }),
   openspec: (c) => ({ type: 'openspec', target: c.target }),
@@ -61,7 +66,12 @@ type Deserializers = {
 };
 
 const DESERIALIZERS: Deserializers = {
-  session: (p) => ({ type: 'session', sessionId: p.channelId, cwd: p.cwd }),
+  session: (p) => ({
+    type: 'session',
+    sessionId: p.channelId,
+    cwd: p.cwd,
+    ...(p.rail ? { rail: p.rail } : {}),
+  }),
   git: (p) => fromTarget('git', p.target),
   files: (p) => fromTarget('files', p.target),
   openspec: (p) => fromTarget('openspec', p.target),

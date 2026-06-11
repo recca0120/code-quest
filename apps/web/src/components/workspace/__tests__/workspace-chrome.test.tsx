@@ -180,8 +180,8 @@ describe('PanePicker 全管線（P2：⌘K／標準工作組）', () => {
     // 標準工作組：focused pane 開 chat、右側直欄 files/git
     await user.click(screen.getByTestId('picker-combo-standard'));
     await waitFor(() => expect(screen.getAllByTestId('split-pane-leaf').length).toBe(4));
-    // files 與 git pane 都在（aria-label region）
-    expect(screen.getByRole('region', { name: 'files-pane' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'git-pane' })).toBeInTheDocument();
+    // files 與 git pane 都在（rail 內也有 files/git view → 用 getAllBy 不取唯一）
+    expect(screen.getAllByRole('region', { name: 'files-pane' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('region', { name: 'git-pane' }).length).toBeGreaterThan(0);
   });
 });

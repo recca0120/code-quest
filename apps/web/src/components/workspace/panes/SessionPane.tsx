@@ -1,13 +1,24 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useProjectState } from '@/contexts/ProjectContext';
-import { type PaneContent, useTabState } from '@/contexts/TabContext';
+import {
+  type PaneContent,
+  type RailState,
+  usePaneActions,
+  useTabState,
+} from '@/contexts/TabContext';
 import { RightPane } from '../RightPane.tsx';
 import { TabContent } from '../TabContent.tsx';
 import { useWorktreeLookup } from '../useAvailableWorktrees.ts';
+import { PaneDock } from './PaneDock.tsx';
 import { usePaneEnvironment } from './PaneEnvironmentContext.tsx';
 import { PaneShell, type PaneToolbarCommonProps } from './PaneShell.tsx';
+
+/** handoff 定案：新 chat 預設展開側欄 */
+const DEFAULT_RAIL: RailState = { open: true, tab: 'files' };
+/** pane 寬低於此值自動收合 rail 成 dock（handoff §3） */
+const RAIL_AUTO_COLLAPSE_PX = 720;
 
 type SessionContent = Extract<PaneContent, { type: 'session' }>;
 
@@ -30,7 +41,30 @@ export function SessionPane({
   const env = usePaneEnvironment();
   const lookup = useWorktreeLookup();
   const { projects, activeProjectCwd } = useProjectState();
-  const [rightOpen, setRightOpen] = useState(false);
+  const { setContentInPane } = usePaneActions();
+
+  const rail = content.rail ?? DEFAULT_RAIL;
+  const railRef = useRef(rail);
+  railRef.current = rail;
+  const setRail = (next: RailState) => setContentInPane(paneId, { ...content, rail: next });
+  const setRailRef = useRef(setRail);
+  setRailRef.current = setRail;
+
+  // pane 太窄自動收合（觀察 pane 元素，非 window）；恢復寬度不自動展開。
+  // jsdom 無 layout——RO 不觸發（或不存在），預設展開行為不受影響。
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      if (width > 0 && width < RAIL_AUTO_COLLAPSE_PX && railRef.current.open) {
+        setRailRef.current({ ...railRef.current, open: false });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const meta = content.sessionId ? tabs[content.sessionId] : null;
 
@@ -68,18 +102,32 @@ export function SessionPane({
       toolbarProps={{ ...toolbarProps, branch: meta.branch, title: meta.title }}
       scrollable={false}
     >
-      <TabContent
-        channelId={content.sessionId}
-        cwd={meta.cwd}
-        branch={meta.branch}
-        title={meta.title}
-        projectName={projectName}
-        mode={meta.mode}
-        onToggleLeft={env.onToggleLeft}
-        onToggleRight={meta.cwd ? () => setRightOpen((v) => !v) : undefined}
-        onNewChannel={(newCwd) => env.onNewTab({ cwd: newCwd })}
-        rightPane={rightOpen && meta.cwd ? <RightPane cwd={meta.cwd} /> : undefined}
-      />
+      <div ref={bodyRef} className="flex flex-col h-full min-h-0">
+        <div className="flex-1 min-h-0">
+          <TabContent
+            channelId={content.sessionId}
+            cwd={meta.cwd}
+            branch={meta.branch}
+            title={meta.title}
+            projectName={projectName}
+            mode={meta.mode}
+            onToggleLeft={env.onToggleLeft}
+            onToggleRight={meta.cwd ? () => setRail({ ...rail, open: !rail.open }) : undefined}
+            onNewChannel={(newCwd) => env.onNewTab({ cwd: newCwd })}
+            rightPane={
+              rail.open && meta.cwd ? (
+                <RightPane
+                  cwd={meta.cwd}
+                  activeTab={rail.tab}
+                  onTabChange={(tab) => setRail({ ...rail, tab })}
+                  onCollapse={() => setRail({ ...rail, open: false })}
+                />
+              ) : undefined
+            }
+          />
+        </div>
+        {!rail.open && meta.cwd && <PaneDock onOpen={(tab) => setRail({ open: true, tab })} />}
+      </div>
     </PaneShell>
   );
 }

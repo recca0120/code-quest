@@ -20,12 +20,20 @@ function roundedRatio(rng: () => number): number {
 }
 
 function arbContent(rng: () => number, i: number): PaneContent {
-  const pick = Math.floor(rng() * 6);
+  const pick = Math.floor(rng() * 7);
   switch (pick) {
     case 0:
       return { type: 'session', sessionId: `ch-${i}`, cwd: `/repo/wt-${i}` };
     case 1:
       return { type: 'session', sessionId: null, cwd: null };
+    case 6:
+      // rail state（tmux-workspace-ui P3）— roundtrip 必須保留
+      return {
+        type: 'session',
+        sessionId: `ch-${i}`,
+        cwd: `/repo/wt-${i}`,
+        rail: { open: rng() > 0.5, tab: (['files', 'git', 'spec'] as const)[i % 3]! },
+      };
     case 2:
       return { type: 'git', target: { kind: 'fixed', cwd: `/repo/wt-${i}` } };
     case 3:

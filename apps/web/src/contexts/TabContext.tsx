@@ -14,7 +14,7 @@ import { WorkspaceLayoutProvider } from './WorkspaceLayoutContext.tsx';
 
 // ── Re-exports（拆分前的公開介面維持不變）──
 
-export type { PaneContent, PaneNode, WorkspaceTab } from './pane-tree.ts';
+export type { PaneContent, PaneNode, RailState, RailTab, WorkspaceTab } from './pane-tree.ts';
 export {
   buildSessionPaneLabels,
   collectSessionsInPaneTree,
