@@ -18,9 +18,10 @@ export function createColorThemeFeature({
     order: 10,
     tabs: ['actions'],
     options: [
-      { value: 'dark', label: 'Dark' },
+      { value: 'clay-dark', label: 'Dark' },
       { value: 'light', label: 'Light' },
-      { value: 'system', label: 'System' },
+      { value: 'roast', label: 'Roast' },
+      { value: 'auto', label: 'System' },
     ],
     currentValue: colorTheme,
     onSelect: setColorTheme,

@@ -22,17 +22,17 @@ type Story = StoryObj<typeof meta>;
 export const Closed: Story = { args: { open: false } };
 export const Open: Story = { args: { open: true } };
 
-export const DarkComfortable: Story = {
+export const DarkDefault: Story = {
   args: { open: true },
-  decorators: [withThemePreset({ theme: 'dark', density: 'comfortable' })],
+  decorators: [withThemePreset({ theme: 'clay-dark', density: 'default' })],
 };
 export const DarkCompact: Story = {
   args: { open: true },
-  decorators: [withThemePreset({ theme: 'dark', density: 'compact' })],
+  decorators: [withThemePreset({ theme: 'clay-dark', density: 'compact' })],
 };
-export const LightComfortable: Story = {
+export const LightDefault: Story = {
   args: { open: true },
-  decorators: [withThemePreset({ theme: 'light', density: 'comfortable' })],
+  decorators: [withThemePreset({ theme: 'light', density: 'default' })],
 };
 export const LightCompact: Story = {
   args: { open: true },

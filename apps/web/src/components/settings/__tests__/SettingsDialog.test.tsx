@@ -7,9 +7,9 @@ import { SettingsDialog } from '../SettingsDialog.tsx';
 
 function resetStore() {
   usePreferencesStore.setState({
-    colorTheme: 'dark',
-    fontSize: 'md',
-    density: 'comfortable',
+    colorTheme: 'clay-dark',
+    fontSize: 'm',
+    density: 'default',
     hiddenItems: [],
   });
   usePreferencesStore.setState({ enabledTypes: null });
@@ -74,15 +74,16 @@ describe('SettingsDialog', () => {
       expect(screen.getByLabelText('density-pills')).toBeInTheDocument();
     });
 
-    it('color theme pills include Dark, Light, and System', () => {
+    it('color theme pills include Dark, Light, Roast, and System', () => {
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
       expect(screen.getByRole('radio', { name: 'Dark' })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'Light' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Roast' })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'System' })).toBeInTheDocument();
     });
 
     it('reflects current store values as selected pills', () => {
-      usePreferencesStore.setState({ colorTheme: 'light', fontSize: 'lg', density: 'compact' });
+      usePreferencesStore.setState({ colorTheme: 'light', fontSize: 'l', density: 'compact' });
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
       expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
       expect(screen.getByRole('radio', { name: 'Large' })).toBeChecked();
@@ -93,7 +94,7 @@ describe('SettingsDialog', () => {
       const user = userEvent.setup();
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
       await user.click(screen.getByRole('radio', { name: 'Large' }));
-      expect(usePreferencesStore.getState().fontSize).toBe('lg');
+      expect(usePreferencesStore.getState().fontSize).toBe('l');
     });
 
     it('clicking Light theme updates store', async () => {

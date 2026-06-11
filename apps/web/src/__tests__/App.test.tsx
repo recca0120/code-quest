@@ -23,22 +23,22 @@ describe('App', () => {
   it('syncs preferences axes to <html> data-attrs', async () => {
     usePreferencesStore.setState({
       colorTheme: 'light',
-      fontSize: 'lg',
+      fontSize: 'l',
       density: 'compact',
     });
     render(<App />);
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
-    expect(document.documentElement.dataset.font).toBe('lg');
+    expect(document.documentElement.dataset.font).toBe('l');
     expect(document.documentElement.dataset.density).toBe('compact');
   });
 
   it('writes resolved effective theme to data-theme when preference is system', async () => {
-    usePreferencesStore.setState({ colorTheme: 'system' });
+    usePreferencesStore.setState({ colorTheme: 'auto' });
     render(<App />);
     await waitFor(() => {
       const theme = document.documentElement.dataset.theme;
-      expect(theme === 'dark' || theme === 'light').toBe(true);
+      expect(theme === 'clay-dark' || theme === 'light').toBe(true);
     });
-    expect(document.documentElement.dataset.theme).not.toBe('system');
+    expect(document.documentElement.dataset.theme).not.toBe('auto');
   });
 });

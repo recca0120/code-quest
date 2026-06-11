@@ -429,3 +429,30 @@ describe('permission mode pane 邊框派發（6.5；spec: focused 樣式與 perm
     });
   });
 });
+
+describe('⌘=/⌘-/⌘0 字級快捷鍵（preferences-axis-alignment 2.5）', () => {
+  it('⌘= 升一檔（m→l）、⌘- 降一檔（l→m）、⌘0 重設 m', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    const { usePreferencesStore } = await import('@/stores/usePreferencesStore');
+    expect(usePreferencesStore.getState().fontSize).toBe('m');
+
+    await user.keyboard('{Meta>}={/Meta}');
+    expect(usePreferencesStore.getState().fontSize).toBe('l');
+
+    await user.keyboard('{Meta>}={/Meta}');
+    expect(usePreferencesStore.getState().fontSize).toBe('xl');
+
+    // 到頂不爆
+    await user.keyboard('{Meta>}={/Meta}');
+    expect(usePreferencesStore.getState().fontSize).toBe('xl');
+
+    await user.keyboard('{Meta>}-{/Meta}');
+    expect(usePreferencesStore.getState().fontSize).toBe('l');
+
+    await user.keyboard('{Meta>}0{/Meta}');
+    expect(usePreferencesStore.getState().fontSize).toBe('m');
+  });
+});

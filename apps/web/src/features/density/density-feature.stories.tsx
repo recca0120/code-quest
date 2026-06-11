@@ -40,5 +40,6 @@ const meta: Meta<typeof DensityFeaturePreview> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Comfortable: Story = { args: { density: 'comfortable' } };
 export const Compact: Story = { args: { density: 'compact' } };
+export const Default: Story = { args: { density: 'default' } };
+export const Relaxed: Story = { args: { density: 'relaxed' } };

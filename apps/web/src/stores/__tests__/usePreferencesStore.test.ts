@@ -7,30 +7,30 @@ const STORAGE_KEY = 'code-quest:preferences';
 describe('usePreferencesStore', () => {
   beforeEach(() => {
     usePreferencesStore.setState({
-      colorTheme: 'dark',
-      fontSize: 'md',
-      density: 'comfortable',
+      colorTheme: 'clay-dark',
+      fontSize: 'm',
+      density: 'default',
       hiddenItems: [],
     });
   });
 
   it('has correct default state', () => {
     const state = usePreferencesStore.getState();
-    expect(state.colorTheme).toBe('dark');
-    expect(state.fontSize).toBe('md');
-    expect(state.density).toBe('comfortable');
+    expect(state.colorTheme).toBe('clay-dark');
+    expect(state.fontSize).toBe('m');
+    expect(state.density).toBe('default');
     expect(state.hiddenItems).toEqual([]);
   });
 
   it('setColorTheme accepts the system value', () => {
-    usePreferencesStore.getState().setColorTheme('system');
-    expect(usePreferencesStore.getState().colorTheme).toBe('system');
+    usePreferencesStore.getState().setColorTheme('auto');
+    expect(usePreferencesStore.getState().colorTheme).toBe('auto');
   });
 
-  it('migration from v2 without persisted colorTheme defaults to system', () => {
+  it('migration from v2 without persisted colorTheme defaults to clay-dark', () => {
     memoryBackend.setItem(STORAGE_KEY, JSON.stringify({ state: { fontSize: 'lg' }, version: 2 }));
     usePreferencesStore.persist.rehydrate();
-    expect(usePreferencesStore.getState().colorTheme).toBe('system');
+    expect(usePreferencesStore.getState().colorTheme).toBe('clay-dark');
   });
 
   it('setColorTheme accepts light and persists', () => {
@@ -41,8 +41,8 @@ describe('usePreferencesStore', () => {
   });
 
   it('axis setters update individual fields', () => {
-    usePreferencesStore.getState().setFontSize('lg');
-    expect(usePreferencesStore.getState().fontSize).toBe('lg');
+    usePreferencesStore.getState().setFontSize('l');
+    expect(usePreferencesStore.getState().fontSize).toBe('l');
 
     usePreferencesStore.getState().setDensity('compact');
     expect(usePreferencesStore.getState().density).toBe('compact');
@@ -71,9 +71,9 @@ describe('usePreferencesStore', () => {
   });
 
   it('persists axis changes via zustand persist', () => {
-    usePreferencesStore.getState().setFontSize('sm');
+    usePreferencesStore.getState().setFontSize('s');
     const stored = JSON.parse(readPersistedRaw(STORAGE_KEY) ?? '{}');
-    expect(stored.state.fontSize).toBe('sm');
+    expect(stored.state.fontSize).toBe('s');
   });
 
   it('migrates v2 → v3: legacy onboarding/review booleans fold into hiddenItems', () => {
@@ -95,7 +95,7 @@ describe('usePreferencesStore', () => {
     expect(state.colorTheme).toBe('light');
     expect(state.hiddenItems).toContain('onboarding-overlay');
     expect(state.hiddenItems).toContain('banner-review-upsell');
-    expect(state.fontSize).toBe('md');
+    expect(state.fontSize).toBe('m');
   });
 
   it('migrates v2 → v3: false booleans do not produce hiddenItems entries', () => {

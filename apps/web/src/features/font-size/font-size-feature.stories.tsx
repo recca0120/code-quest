@@ -40,6 +40,7 @@ const meta: Meta<typeof FontSizeFeaturePreview> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Small: Story = { args: { fontSize: 'sm' } };
-export const Medium: Story = { args: { fontSize: 'md' } };
-export const Large: Story = { args: { fontSize: 'lg' } };
+export const Small: Story = { args: { fontSize: 's' } };
+export const Medium: Story = { args: { fontSize: 'm' } };
+export const Large: Story = { args: { fontSize: 'l' } };
+export const ExtraLarge: Story = { args: { fontSize: 'xl' } };

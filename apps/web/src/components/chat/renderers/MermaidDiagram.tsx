@@ -29,7 +29,7 @@ export function MermaidDiagram({ code }: { code: string }): React.JSX.Element | 
 
     async function render() {
       try {
-        initializeMermaid(theme === 'dark' ? 'dark' : 'default');
+        initializeMermaid(theme === 'clay-dark' || theme === 'roast' ? 'dark' : 'default');
         const result = await mermaid.render(idRef.current, code);
         // mermaid appends a hidden element to body with this id; remove it to avoid accumulation
         document.getElementById(`d${idRef.current}`)?.remove();

@@ -8,6 +8,7 @@ import {
   usePaneState,
   useTabState,
 } from '@/contexts/TabContext';
+import { type FontSize, usePreferencesStore } from '@/stores/usePreferencesStore';
 import { guardSplitMinSize } from './pane-min-size.ts';
 import { SessionManager } from './SessionManager';
 import { SessionManagerContext } from './SessionManagerContext';
@@ -71,6 +72,28 @@ function useKeyboardShortcuts(
   useEffect(() => {
     function handler(e: KeyboardEvent): void {
       const meta = e.metaKey || e.ctrlKey;
+
+      // ⌘=/⌘-/⌘0 字級快捷鍵（preferences-axis-alignment §4c）
+      if (meta && !e.shiftKey && !e.altKey) {
+        const SIZES: FontSize[] = ['s', 'm', 'l', 'xl'];
+        const { fontSize, setFontSize } = usePreferencesStore.getState();
+        const idx = SIZES.indexOf(fontSize);
+        if (e.key === '=' || e.key === '+') {
+          e.preventDefault();
+          if (idx < SIZES.length - 1) setFontSize(SIZES[idx + 1] ?? fontSize);
+          return;
+        }
+        if (e.key === '-') {
+          e.preventDefault();
+          if (idx > 0) setFontSize(SIZES[idx - 1] ?? fontSize);
+          return;
+        }
+        if (e.key === '0') {
+          e.preventDefault();
+          setFontSize('m');
+          return;
+        }
+      }
 
       // esc 解除 zoom（handoff §6）——drawer／dialog 開著時讓位（它們自己吃 esc）
       if (e.key === 'Escape' && !meta && zoomedPaneId !== null) {

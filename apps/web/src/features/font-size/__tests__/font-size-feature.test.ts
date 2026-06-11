@@ -3,45 +3,50 @@ import { createFontSizeFeature } from '../font-size-feature.ts';
 
 describe('createFontSizeFeature', () => {
   it('has correct id/section/label', () => {
-    const feature = createFontSizeFeature({ fontSize: 'md', setFontSize: vi.fn() });
+    const feature = createFontSizeFeature({ fontSize: 'm', setFontSize: vi.fn() });
     expect(feature.id).toBe('font-size');
     expect(feature.section).toBe('Settings');
     expect(feature.label).toBe('Font size');
   });
 
-  it('state is choice with Small/Medium/Large options', () => {
+  it('state is choice with Small/Medium/Large/Extra Large options', () => {
     const setFontSize = vi.fn();
-    const feature = createFontSizeFeature({ fontSize: 'md', setFontSize });
+    const feature = createFontSizeFeature({ fontSize: 'm', setFontSize });
     expect(feature.state).toMatchObject({
       kind: 'choice',
       options: [
-        { value: 'sm', label: 'Small' },
-        { value: 'md', label: 'Medium' },
-        { value: 'lg', label: 'Large' },
+        { value: 's', label: 'Small' },
+        { value: 'm', label: 'Medium' },
+        { value: 'l', label: 'Large' },
+        { value: 'xl', label: 'Extra Large' },
       ],
-      currentValue: 'md',
+      currentValue: 'm',
     });
     if (feature.state?.kind !== 'choice') throw new Error('expected choice');
-    feature.state.onSelect('lg');
-    expect(setFontSize).toHaveBeenCalledWith('lg');
+    feature.state.onSelect('l');
+    expect(setFontSize).toHaveBeenCalledWith('l');
   });
 
-  it('execute cycles sm -> md -> lg -> sm', () => {
+  it('execute cycles s -> m -> l -> xl -> s', () => {
     const setFontSize = vi.fn();
-    createFontSizeFeature({ fontSize: 'sm', setFontSize }).execute();
-    expect(setFontSize).toHaveBeenLastCalledWith('md');
+    createFontSizeFeature({ fontSize: 's', setFontSize }).execute();
+    expect(setFontSize).toHaveBeenLastCalledWith('m');
 
     setFontSize.mockClear();
-    createFontSizeFeature({ fontSize: 'md', setFontSize }).execute();
-    expect(setFontSize).toHaveBeenLastCalledWith('lg');
+    createFontSizeFeature({ fontSize: 'm', setFontSize }).execute();
+    expect(setFontSize).toHaveBeenLastCalledWith('l');
 
     setFontSize.mockClear();
-    createFontSizeFeature({ fontSize: 'lg', setFontSize }).execute();
-    expect(setFontSize).toHaveBeenLastCalledWith('sm');
+    createFontSizeFeature({ fontSize: 'l', setFontSize }).execute();
+    expect(setFontSize).toHaveBeenLastCalledWith('xl');
+
+    setFontSize.mockClear();
+    createFontSizeFeature({ fontSize: 'xl', setFontSize }).execute();
+    expect(setFontSize).toHaveBeenLastCalledWith('s');
   });
 
   it('ui.closeSilent is true (picking a pill keeps Cmd+K open)', () => {
-    const feature = createFontSizeFeature({ fontSize: 'md', setFontSize: vi.fn() });
+    const feature = createFontSizeFeature({ fontSize: 'm', setFontSize: vi.fn() });
     expect(feature.ui?.closeSilent).toBe(true);
   });
 });

@@ -15,8 +15,9 @@ export function createDensityFeature({ density, setDensity }: DensityFeatureDeps
     order: 11,
     tabs: ['actions'],
     options: [
-      { value: 'comfortable', label: 'Comfortable' },
       { value: 'compact', label: 'Compact' },
+      { value: 'default', label: 'Default' },
+      { value: 'relaxed', label: 'Relaxed' },
     ],
     currentValue: density,
     onSelect: setDensity,

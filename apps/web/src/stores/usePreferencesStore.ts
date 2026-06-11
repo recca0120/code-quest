@@ -6,6 +6,7 @@ import {
   type Density,
   DISMISSIBLE_IDS,
   type FontSize,
+  migratePreferences,
   type PreferencesState as PersistedPreferences,
   preferencesStateSchema,
 } from './preferences-schema.ts';
@@ -34,9 +35,9 @@ const DEFAULTS: PersistedPreferences & {
   expandedProjects: string[];
   enabledTypes: string[] | null;
 } = {
-  colorTheme: 'system',
-  fontSize: 'md',
-  density: 'comfortable',
+  colorTheme: 'clay-dark',
+  fontSize: 'm',
+  density: 'default',
   hiddenItems: [],
   expandedProjects: [],
   enabledTypes: null,
@@ -45,15 +46,15 @@ const DEFAULTS: PersistedPreferences & {
 const persistedPreferencesSchema = preferencesStateSchema.partial();
 
 interface V2Shape {
-  colorTheme?: ColorTheme;
-  fontSize?: FontSize;
-  density?: Density;
+  colorTheme?: string;
+  fontSize?: string;
+  density?: string;
   hiddenItems?: string[];
   isOnboardingDismissed?: boolean;
   isReviewUpsellDismissed?: boolean;
 }
 
-function migrateV2ToV3(persisted: V2Shape): Partial<PersistedPreferences> {
+function migrateV2ToV3(persisted: V2Shape): Record<string, unknown> {
   const hidden = new Set(persisted.hiddenItems ?? []);
   if (persisted.isOnboardingDismissed) hidden.add(DISMISSIBLE_IDS.onboardingOverlay);
   if (persisted.isReviewUpsellDismissed) hidden.add(DISMISSIBLE_IDS.reviewUpsellBanner);
@@ -101,7 +102,7 @@ export const usePreferencesStore: UseBoundStore<
     {
       name: 'code-quest:preferences',
       storage: localStoragePersist(),
-      version: 4,
+      version: 5,
       partialize: ({
         colorTheme,
         fontSize,
@@ -118,8 +119,13 @@ export const usePreferencesStore: UseBoundStore<
         enabledTypes,
       }),
       migrate: (persisted: unknown, fromVersion: number) => {
-        const v2 = fromVersion < 3 ? migrateV2ToV3((persisted ?? {}) as V2Shape) : persisted;
-        const parsed = persistedPreferencesSchema.safeParse(v2);
+        const v2 =
+          fromVersion < 3
+            ? migrateV2ToV3((persisted ?? {}) as V2Shape)
+            : ((persisted as Record<string, unknown>) ?? {});
+        // v4→v5：舊值域遷移（dark→clay-dark, sm→s, comfortable→default 等）
+        const v5 = fromVersion < 5 ? migratePreferences(v2) : v2;
+        const parsed = persistedPreferencesSchema.safeParse(v5);
         const prev = parsed.success ? parsed.data : {};
         return { ...DEFAULTS, ...prev } as PreferencesState;
       },

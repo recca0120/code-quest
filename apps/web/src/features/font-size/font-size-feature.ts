@@ -15,9 +15,10 @@ export function createFontSizeFeature({ fontSize, setFontSize }: FontSizeFeature
     order: 12,
     tabs: ['actions'],
     options: [
-      { value: 'sm', label: 'Small' },
-      { value: 'md', label: 'Medium' },
-      { value: 'lg', label: 'Large' },
+      { value: 's', label: 'Small' },
+      { value: 'm', label: 'Medium' },
+      { value: 'l', label: 'Large' },
+      { value: 'xl', label: 'Extra Large' },
     ],
     currentValue: fontSize,
     onSelect: setFontSize,

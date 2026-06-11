@@ -19,6 +19,6 @@ function getPrefersDark(): boolean {
 export function useEffectiveColorTheme(): EffectiveColorTheme {
   const preference = usePreferencesStore((s) => s.colorTheme);
   const prefersDark = useSyncExternalStore(subscribePrefersDark, getPrefersDark, () => true);
-  if (preference === 'system') return prefersDark ? 'dark' : 'light';
+  if (preference === 'auto') return prefersDark ? 'clay-dark' : 'light';
   return preference;
 }

@@ -68,7 +68,8 @@ export function App(): React.JSX.Element {
   useEffect(() => {
     const ds = document.documentElement.dataset;
     ds.theme = effectiveColorTheme;
-    ds.font = fontSize;
+    ds.fontsize = fontSize;
+    ds.font = fontSize; // 舊軸向後相容（rem cascade）
     ds.density = density;
   }, [effectiveColorTheme, fontSize, density]);
 

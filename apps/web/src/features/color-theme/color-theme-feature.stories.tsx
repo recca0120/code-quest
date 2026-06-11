@@ -40,5 +40,7 @@ const meta: Meta<typeof ColorThemeFeaturePreview> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Dark: Story = { args: { colorTheme: 'dark' } };
+export const Dark: Story = { args: { colorTheme: 'clay-dark' } };
 export const Light: Story = { args: { colorTheme: 'light' } };
+export const Roast: Story = { args: { colorTheme: 'roast' } };
+export const Auto: Story = { args: { colorTheme: 'auto' } };

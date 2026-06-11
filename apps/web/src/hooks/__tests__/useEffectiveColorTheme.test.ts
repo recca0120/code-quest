@@ -47,17 +47,17 @@ describe('useEffectiveColorTheme', () => {
     originalMatchMedia = window.matchMedia;
     mqlFactory = createMatchMediaStub(true);
     window.matchMedia = vi.fn(mqlFactory);
-    usePreferencesStore.setState({ colorTheme: 'system' });
+    usePreferencesStore.setState({ colorTheme: 'auto' });
   });
 
   afterEach(() => {
     window.matchMedia = originalMatchMedia;
   });
 
-  it('returns dark when preference is dark', () => {
-    usePreferencesStore.setState({ colorTheme: 'dark' });
+  it('returns clay-dark when preference is clay-dark', () => {
+    usePreferencesStore.setState({ colorTheme: 'clay-dark' });
     const { result } = renderHook(() => useEffectiveColorTheme());
-    expect(result.current).toBe('dark');
+    expect(result.current).toBe('clay-dark');
   });
 
   it('returns light when preference is light', () => {
@@ -66,18 +66,24 @@ describe('useEffectiveColorTheme', () => {
     expect(result.current).toBe('light');
   });
 
-  it('returns dark when preference is system and OS prefers dark', () => {
-    mqlFactory = createMatchMediaStub(true);
-    window.matchMedia = vi.fn(mqlFactory);
-    usePreferencesStore.setState({ colorTheme: 'system' });
+  it('returns roast when preference is roast', () => {
+    usePreferencesStore.setState({ colorTheme: 'roast' });
     const { result } = renderHook(() => useEffectiveColorTheme());
-    expect(result.current).toBe('dark');
+    expect(result.current).toBe('roast');
   });
 
-  it('returns light when preference is system and OS prefers light', () => {
+  it('returns clay-dark when preference is auto and OS prefers dark', () => {
+    mqlFactory = createMatchMediaStub(true);
+    window.matchMedia = vi.fn(mqlFactory);
+    usePreferencesStore.setState({ colorTheme: 'auto' });
+    const { result } = renderHook(() => useEffectiveColorTheme());
+    expect(result.current).toBe('clay-dark');
+  });
+
+  it('returns light when preference is auto and OS prefers light', () => {
     mqlFactory = createMatchMediaStub(false);
     window.matchMedia = vi.fn(mqlFactory);
-    usePreferencesStore.setState({ colorTheme: 'system' });
+    usePreferencesStore.setState({ colorTheme: 'auto' });
     const { result } = renderHook(() => useEffectiveColorTheme());
     expect(result.current).toBe('light');
   });
@@ -85,10 +91,10 @@ describe('useEffectiveColorTheme', () => {
   it('re-renders when OS preference changes live', () => {
     const stub = mqlFactory();
     window.matchMedia = vi.fn(() => stub);
-    usePreferencesStore.setState({ colorTheme: 'system' });
+    usePreferencesStore.setState({ colorTheme: 'auto' });
 
     const { result } = renderHook(() => useEffectiveColorTheme());
-    expect(result.current).toBe('dark');
+    expect(result.current).toBe('clay-dark');
 
     act(() => {
       stub._set(false);

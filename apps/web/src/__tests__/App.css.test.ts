@@ -248,3 +248,10 @@ describe('T10 — theme-transition token', () => {
     expect(themeBlock).toMatch(/--theme-transition:\s*120ms\s+ease/);
   });
 });
+
+// ── T11 — theme transition rule ──
+describe('T11 — theme transition CSS rule', () => {
+  it('base layer has bg/text/border transition using --theme-transition', () => {
+    expect(appCss).toMatch(/transition[\s\S]*?var\(--theme-transition\)/);
+  });
+});

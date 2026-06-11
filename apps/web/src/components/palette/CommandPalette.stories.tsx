@@ -80,18 +80,18 @@ export const Mobile: Story = {
   render: () => <PaletteStory />,
 };
 
-export const DarkComfortable: Story = {
-  decorators: [withThemePreset({ theme: 'dark', density: 'comfortable' })],
+export const DarkDefault: Story = {
+  decorators: [withThemePreset({ theme: 'clay-dark', density: 'default' })],
   render: () => <PaletteStory />,
 };
 
 export const DarkCompact: Story = {
-  decorators: [withThemePreset({ theme: 'dark', density: 'compact' })],
+  decorators: [withThemePreset({ theme: 'clay-dark', density: 'compact' })],
   render: () => <PaletteStory />,
 };
 
-export const LightComfortable: Story = {
-  decorators: [withThemePreset({ theme: 'light', density: 'comfortable' })],
+export const LightDefault: Story = {
+  decorators: [withThemePreset({ theme: 'light', density: 'default' })],
   render: () => <PaletteStory />,
 };
 
