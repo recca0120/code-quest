@@ -22,23 +22,23 @@ TDD；測試照 fake-summoner-client skill。
 
 - [x] 3.1 [test] CommandModeView：fuzzy match `›` 後文字過濾 items；⏎ 執行選中項；esc 關閉 modal
 - [x] 3.2 [impl] CommandModeView 元件（列高 --palette-row-h、命中底色 --color-palette-match）
-- [ ] 3.3 [test] `›search` 指令：選中後切到訊息搜尋 view（沿用 CommandPalette 的 Messages filter UI）
-- [ ] 3.4 [impl] 訊息搜尋整合（MessageList jumpTo 路徑保留）
+- [x] 3.3 [test] `›search` 指令：選中後切到訊息搜尋 view（沿用 CommandPalette 的 Messages filter UI）
+- [x] 3.4 [impl] 訊息搜尋整合（MessageList jumpTo 路徑保留）
 
 ## 4. 入口接線
 
 - [x] 4.1 [test] ⌘K 開 modal（picker 模式）；⌘⇧K 開 modal 且搜尋列預填 `›`（指令模式）
 - [x] 4.2 [impl] KeyboardShortcutsProvider / Workspace.tsx 接線；CommandPaletteContext → PanePicker open state 合併
-- [ ] 4.3 [test+impl] CommandPalette.tsx 獨立 mount 移除（<CommandPalette /> 從 Workspace render tree 拿掉）；CommandPaletteContext 簡化為 open/prefill state
+- [x] 4.3 [test+impl] CommandPalette.tsx 獨立 mount 移除（<CommandPalette /> 從 Workspace render tree 拿掉）；CommandPaletteContext 簡化為 open/prefill state
 
 ## 5. Modal shell 動態寬
 
-- [ ] 5.1 [test] picker 模式寬 980px；指令模式寬 640px（同一 modal，寬度跟模式走）
-- [ ] 5.2 [impl] Dialog size 動態切換（picker vs palette）
-- [ ] 5.3 [test] 進場動效 scale 0.98→1 + fade（--dur-palette 160ms）
-- [ ] 5.4 [impl] Dialog 進場 CSS
+- [x] 5.1 [test] picker 模式寬 980px；指令模式寬 640px（同一 modal，寬度跟模式走）
+- [x] 5.2 [impl] Dialog size 動態切換（picker vs palette）
+- [x] 5.3 [test] 進場動效 scale 0.98→1 + fade（--dur-palette 160ms）
+- [x] 5.4 [impl] Dialog 進場 CSS
 
 ## 6. 收尾
 
-- [ ] 6.1 [verify] 全套綠 + Playwright：⌘K → 三欄 → 打 › → 指令列表 → theme clay-dark → 切回三欄
-- [ ] 6.2 [cleanup] 移除孤立的 CommandPalette 相關 dead code（若有）
+- [x] 6.1 [verify] 全套綠 + Playwright：⌘K → 三欄 → 打 › → 指令列表 → theme clay-dark → 切回三欄
+- [x] 6.2 [cleanup] 移除孤立的 CommandPalette 相關 dead code（若有）

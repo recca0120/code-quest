@@ -570,6 +570,21 @@
   }
 }
 
+@keyframes paletteIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@utility animate-palette-in {
+  animation: paletteIn var(--dur-palette) ease-out both;
+}
+
 /* Global thin scrollbar — matches VS Code Dark+ style */
 * {
   scrollbar-width: thin;

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
+import { useCommandPaletteActions, useCommandPaletteState } from '@/contexts/CommandPaletteContext';
 import { DrawerProvider } from '@/contexts/DrawerContext.tsx';
 import { useGitActions, useGitState } from '@/contexts/GitContext';
 import { useNavigationState } from '@/contexts/NavigationContext';
@@ -18,7 +18,6 @@ import {
   usePaneState,
 } from '@/contexts/TabContext';
 import { NO_FORM } from '@/utils/hotkey-options';
-import { CommandPalette } from '../palette/CommandPalette.tsx';
 import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { CreateWorktreeDialog } from '../project/CreateWorktreeDialog.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
@@ -41,6 +40,7 @@ function ConnectedPanePicker(props: PanePickerConfig) {
     usePaneActions();
   const { focusedPaneId, paneRoot } = usePaneState();
   const { listSessions, resume } = useSession();
+  const { jumpTo } = useCommandPaletteActions();
   const [pastSessions, setPastSessions] = useState<
     Array<{ id: string; channelId: string; title?: string; cwd?: string; createdAt: string }>
   >([]);
@@ -117,6 +117,10 @@ function ConnectedPanePicker(props: PanePickerConfig) {
         openToolColumn(cwd);
         props.onNewSession?.(cwd, projectCwd, undefined);
       }}
+      onJumpTo={(channelId, messageId) => {
+        jumpTo(channelId, messageId);
+        props.onClose();
+      }}
     />
   );
 }
@@ -136,7 +140,8 @@ function DocumentTitle() {
 }
 
 export function Workspace(): React.JSX.Element {
-  const { registerActions } = useCommandPaletteActions();
+  const { registerActions, closePalette } = useCommandPaletteActions();
+  const { open: paletteOpen, defaultTab: paletteDefaultTab } = useCommandPaletteState();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
@@ -175,6 +180,15 @@ export function Workspace(): React.JSX.Element {
   }, []);
   // ⌘⇧K 直開指令模式（unified-command-entry：› 前綴預填）
   useHotkeys('mod+shift+k', () => handleOpenModal(undefined, { initialQuery: '›' }), NO_FORM);
+
+  // openPalette（⌘F 等）轉接到 PanePicker（unified-command-entry 4.3）
+  useEffect(() => {
+    if (paletteOpen) {
+      closePalette();
+      const initialQuery = paletteDefaultTab === 'messages' ? '›search ' : '›';
+      handleOpenModal(undefined, { initialQuery });
+    }
+  }, [paletteOpen, paletteDefaultTab, closePalette, handleOpenModal]);
   const handleOpenSettings = useCallback(() => setSettingsOpen(true), []);
   const handleOpenAddProjectDialog = useCallback(() => setDialogOpen(true), []);
   const handleNewWorktree = useCallback(
@@ -238,7 +252,6 @@ export function Workspace(): React.JSX.Element {
 
   return (
     <main className="flex flex-col flex-1 overflow-hidden">
-      <CommandPalette />
       <DocumentTitle />
       {projects.length === 0 ? (
         <EmptyState

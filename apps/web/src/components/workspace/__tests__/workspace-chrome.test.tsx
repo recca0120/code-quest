@@ -453,6 +453,19 @@ describe('⌘=/⌘-/⌘0 字級快捷鍵（preferences-axis-alignment 2.5）', (
   });
 });
 
+describe('⌘F 開訊息搜尋（unified-command-entry 4.3：palette 統一）', () => {
+  it('⌘F 開 PanePicker 訊息搜尋模式（非獨立 CommandPalette）', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.keyboard('{Control>}f{/Control}');
+    // 應出現訊息搜尋模式（不是獨立 CommandPalette dialog）
+    expect(await screen.findByTestId('message-search-mode')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Command Palette' })).not.toBeInTheDocument();
+  });
+});
+
 describe('⌘⇧K 直開指令模式（unified-command-entry 4.1）', () => {
   it('⌘⇧K 開 modal 且搜尋列預填 ›（直達指令模式）', async () => {
     const { user, addProject } = await renderWithWorkspace();

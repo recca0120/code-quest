@@ -376,3 +376,63 @@ describe('指令模式 UI（unified-command-entry 3.1）', () => {
     expect(within(commandMode).queryAllByTestId(/^command-item-/)).toHaveLength(0);
   });
 });
+
+describe('Modal shell 動態寬（unified-command-entry 5.1）', () => {
+  it('picker 模式 → dialog 使用 picker size；指令模式 → palette size', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    // picker 模式：dialog 有 picker 寬度 class
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.className).toMatch(/picker-w/);
+
+    // 切到指令模式
+    await user.type(screen.getByLabelText('picker search'), '›');
+    expect(dialog.className).toMatch(/palette-w/);
+    expect(dialog.className).not.toMatch(/picker-w/);
+
+    // 切回 picker 模式
+    await user.clear(screen.getByLabelText('picker search'));
+    expect(dialog.className).toMatch(/picker-w/);
+    expect(dialog.className).not.toMatch(/palette-w/);
+  });
+});
+
+describe('進場動效（unified-command-entry 5.3）', () => {
+  it('dialog 具有 data-state=open 且 animate class（scale+fade）', () => {
+    setup();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveAttribute('data-state', 'open');
+    expect(dialog.className).toMatch(/animate-palette-in/);
+  });
+});
+
+describe('›search 訊息搜尋模式（unified-command-entry 3.3）', () => {
+  it('選中 search 指令 → 切到訊息搜尋 view（query 變 ›search ）', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    // 進入指令模式
+    await user.type(screen.getByLabelText('picker search'), '›');
+    expect(screen.getByTestId('command-mode')).toBeInTheDocument();
+
+    // 點選「搜尋對話訊息」
+    await user.click(screen.getByTestId('command-item-search-messages'));
+
+    // 應切到訊息搜尋 view（非指令模式、非三欄）
+    expect(screen.getByTestId('message-search-mode')).toBeInTheDocument();
+    expect(screen.queryByTestId('command-mode')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
+  });
+
+  it('直接輸入 ›search 加空格 → 訊息搜尋 view', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.type(screen.getByLabelText('picker search'), '›');
+    await user.type(screen.getByLabelText('picker search'), 'search ');
+
+    expect(screen.getByTestId('message-search-mode')).toBeInTheDocument();
+    expect(screen.queryByTestId('command-mode')).not.toBeInTheDocument();
+  });
+});

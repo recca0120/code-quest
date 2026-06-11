@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import { defaultEnabledTypes } from '@/contexts/channel/MessageVisibilityContext';
+import { useChannelsStore } from '@/stores/channels-store';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
+import type { Message } from '@/types/ui';
+import { isMessageVisible } from '@/utils/isMessageVisible';
+import { PaletteMessageList } from '../palette/PaletteMessageList';
+import { paletteMessageResults } from '../palette/palette-message-results';
 import { PANE_TYPE_REGISTRY, type PaneTypeEntry } from './pane-registry';
 import { useCommandFeatures } from './useCommandFeatures';
 
@@ -57,6 +64,7 @@ interface PanePickerProps {
   onNewWorktree?: (projectCwd: string) => void;
   onImport?: (format: ImportFormat, cwd: string) => void;
   onAddProject?: () => void;
+  onJumpTo?: (channelId: string, messageId: string) => void;
 }
 
 function relativeTime(iso: string): string {
@@ -161,10 +169,16 @@ function CommandModeView({
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const item = filtered[sel];
-      if (item) {
-        item.execute();
-        onClose();
-      }
+      if (item) executeItem(item);
+    }
+  }
+
+  function executeItem(item: (typeof filtered)[number]): void {
+    if (item.id === 'search-messages') {
+      onQueryChange('›search ');
+    } else {
+      item.execute();
+      onClose();
     }
   }
 
@@ -194,10 +208,7 @@ function CommandModeView({
             type="button"
             data-testid={`command-item-${f.id}`}
             data-active={sel === idx || undefined}
-            onClick={() => {
-              f.execute();
-              onClose();
-            }}
+            onClick={() => executeItem(f)}
             className={`flex items-center gap-2 px-3 text-sm text-left rounded-(--radius-row) ${
               sel === idx ? 'bg-selected text-selected-text' : 'hover:bg-hover-tint'
             }`}
@@ -209,6 +220,139 @@ function CommandModeView({
             )}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── MessageSearchView（unified-command-entry §3.3/3.4：訊息搜尋模式）─────────
+
+function MessageSearchView({
+  query,
+  onQueryChange,
+  onClose,
+  onJumpTo,
+}: {
+  query: string;
+  onQueryChange: (q: string) => void;
+  onClose: () => void;
+  onJumpTo?: (channelId: string, messageId: string) => void;
+}): React.JSX.Element {
+  const searchQuery = query.startsWith('›search ') ? query.slice('›search '.length) : '';
+  const channels = useChannelsStore((s) => s.channels);
+  const visibilityTypes = usePreferencesStore((s) => s.enabledTypes);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const enabledTypes = useMemo(
+    () => (visibilityTypes !== null ? new Set(visibilityTypes) : defaultEnabledTypes()),
+    [visibilityTypes],
+  );
+
+  const allMessages = useMemo(() => {
+    const result: Array<{ channelId: string; message: Message }> = [];
+    for (const [channelId, entry] of channels) {
+      for (const message of entry.messages) {
+        const hasContent =
+          message.content.length > 0 ||
+          (message.type === 'assistant_turn' &&
+            (message as import('@/types/ui').AssistantTurn).blocks.length > 0);
+        if (hasContent && isMessageVisible(message, enabledTypes)) {
+          result.push({ channelId, message });
+        }
+      }
+    }
+    return result;
+  }, [channels, enabledTypes]);
+
+  const visibleMessages = useMemo(() => allMessages.map((e) => e.message), [allMessages]);
+
+  const channelByMessageId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const entry of allMessages) {
+      map.set(entry.message.id, entry.channelId);
+    }
+    return map;
+  }, [allMessages]);
+
+  const messageResults = paletteMessageResults(visibleMessages, searchQuery);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset idx when search changes
+  useEffect(() => {
+    setActiveIdx(0);
+  }, [searchQuery]);
+
+  function handleJumpTo(messageId: string): void {
+    const channelId = channelByMessageId.get(messageId);
+    if (channelId) onJumpTo?.(channelId, messageId);
+    onClose();
+  }
+
+  function handleKey(e: React.KeyboardEvent): void {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIdx((i) => Math.min(i + 1, messageResults.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const msg = messageResults[activeIdx];
+      if (msg) handleJumpTo(msg.id);
+    }
+  }
+
+  return (
+    <div data-testid="message-search-mode" className="flex flex-col">
+      <div className="flex items-center gap-2 border-b border-border px-2 mb-2">
+        <button
+          type="button"
+          onClick={() => onQueryChange('›')}
+          className="text-sm font-mono text-subtle hover:text-text"
+        >
+          ←
+        </button>
+        <span aria-hidden="true" className="text-accent font-bold">
+          ›search
+        </span>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder="搜尋對話訊息…"
+          aria-label="picker search"
+          className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-dim"
+        />
+        <kbd className="font-mono text-2xs text-subtle border border-border rounded px-1 py-0.5">
+          esc
+        </kbd>
+      </div>
+      <div className="overflow-y-auto" style={{ maxHeight: 'var(--palette-max-h)' }}>
+        <PaletteMessageList
+          results={messageResults}
+          query={searchQuery}
+          activeIdx={activeIdx}
+          onActiveChange={setActiveIdx}
+          onJumpTo={handleJumpTo}
+          onClose={onClose}
+          listRef={listRef}
+        />
+        {messageResults.length === 0 && (
+          <p className="px-4 py-6 text-sm text-subtle text-center">
+            {searchQuery ? '找不到符合的訊息' : '目前沒有對話訊息'}
+          </p>
+        )}
+      </div>
+      <div className="border-t border-border px-4 py-1.5 flex gap-4 shrink-0">
+        <span className="text-xs font-mono text-faint tracking-wider">
+          {searchQuery
+            ? `${messageResults.length} result${messageResults.length === 1 ? '' : 's'}`
+            : `${visibleMessages.length} messages`}
+        </span>
+        <span className="text-xs font-mono text-faint tracking-wider ml-auto">
+          ↑↓ navigate · ↵ jump · ← back · esc close
+        </span>
       </div>
     </div>
   );
@@ -234,6 +378,7 @@ export function PanePicker({
   onNewWorktree,
   onImport,
   onAddProject,
+  onJumpTo,
 }: PanePickerProps): React.JSX.Element {
   const [query, setQuery] = useState('');
   const [col, setCol] = useState<0 | 1 | 2>(2);
@@ -388,16 +533,26 @@ export function PanePicker({
     onClose();
   }
 
+  const isCommandOrSearch = query.startsWith('›');
+  const dialogSize = isCommandOrSearch ? 'palette' : 'picker';
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       {/* 視覺無標題（handoff §4：頂部即搜尋列）；title 留給 Radix 作 sr-only a11y 名稱 */}
-      <DialogContent title="Open in pane" hideTitle size="picker">
+      <DialogContent title="Open in pane" hideTitle size={dialogSize}>
         {importTarget ? (
           <ImportView
             worktreePath={importTarget.path}
             branch={importTarget.branch}
             onImport={onImport}
             onBack={() => setImportTarget(null)}
+          />
+        ) : query === '›search' || query.startsWith('›search ') ? (
+          <MessageSearchView
+            query={query}
+            onQueryChange={setQuery}
+            onClose={handleClose}
+            onJumpTo={onJumpTo}
           />
         ) : query.startsWith('›') ? (
           <CommandModeView query={query} onQueryChange={setQuery} onClose={handleClose} />
