@@ -28,7 +28,7 @@ chat pane 寬 <720px 時 rail SHALL 自動收合成 dock（ResizeObserver 觀察
 
 ### Requirement: 升級成 pane 與開 drawer
 
-rail/dock 的項目 SHALL 支援：點項目（或 chip）開 drawer 看完整內容；`⌘⏎` 把目前 rail 分頁升級成獨立 pane（descriptor 經 registry 轉 leaf，於 chat pane 右側垂直分割）。
+rail SHALL 支援：⤢ 以 drawer 檢視目前分頁完整內容（項目級 drawer 留 registry diff 類型擴充後實作）；`⌘⏎` 把目前 rail 分頁升級成獨立 pane（descriptor 經 registry 轉 leaf，於 chat pane 右側垂直分割）。
 
 #### Scenario: ⌘⏎ 升級
 - **WHEN** rail 顯示 git 分頁時按 ⌘⏎

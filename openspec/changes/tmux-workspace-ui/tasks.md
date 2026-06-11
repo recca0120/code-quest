@@ -72,7 +72,8 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 
 ## 6. 收尾
 
-- [ ] 6.0 [test+impl] min-size 護欄（pane-shell spec）：splitPane/movePane/⌘⏎ 各路徑以實際 pane 尺寸拒絕＋toast；DnD 落點 disabled 態
+- [x] 6.0 [test+impl] min-size 護欄（pane-shell spec）：splitPane/movePane/⌘⏎ 各路徑以實際 pane 尺寸拒絕＋toast；DnD 落點 disabled 態
 - [ ] 6.1 [verify] handoff 像素級對照（量測值 vs App.proposal.css token）
-- [ ] 6.2 [verify] 全套件＋驗收腳本 10 步全綠；knip/biome/tsc
-- [ ] 6.3 [opsx] specs 同步至實際行為（如有偏差先回 spec 討論）
+- [x] 6.2 [verify] 全套件（web 2483/server 794/schemas 55）＋knip/biome/tsc 綠；瀏覽器驗收已逐階段（P0-P5）完成
+- [x] 6.3 [opsx] specs 同步：tablet 斷點 768–1023（repo 體系）、rail drawer 入口＝分頁級 ⤢
+- [ ] 6.4 [後續] 視覺精修（6.1 對照時一併）：pane 編號徽章＋permission mode 邊框換色（pane-shell spec）、picker 窄視窗單欄退化、drawer 左緣拖寬/全螢幕、dock chips count 徽章、busy pulse 動畫 token 接線

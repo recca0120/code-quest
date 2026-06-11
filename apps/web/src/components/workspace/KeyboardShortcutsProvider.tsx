@@ -7,6 +7,7 @@ import {
   usePaneState,
   useTabState,
 } from '@/contexts/TabContext';
+import { guardSplitMinSize } from './pane-min-size.ts';
 import { SessionManager } from './SessionManager';
 import { SessionManagerContext } from './SessionManagerContext';
 import { useCreateSessionInPane } from './useCreateSessionInPane.ts';
@@ -141,13 +142,13 @@ function useKeyboardShortcuts(
 
       if (!isMobile && e.key === '\\' && !e.altKey && !e.shiftKey) {
         e.preventDefault();
-        splitPane('h');
+        if (guardSplitMinSize(focusedPaneId, 'h')) splitPane('h');
         return;
       }
 
       if (!isMobile && e.key === '-' && !e.altKey && !e.shiftKey) {
         e.preventDefault();
-        splitPane('v');
+        if (guardSplitMinSize(focusedPaneId, 'v')) splitPane('v');
         return;
       }
 

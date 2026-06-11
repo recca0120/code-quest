@@ -4,7 +4,7 @@
 
 ### Requirement: 斷點只改渲染數，不銷毀 pane tree
 
-`visiblePaneIds` SHALL 由 zoom > RWD 上限 > 全部 推導：desktop（≥1024）全樹、tablet（640–1024）上限 2、mobile（<640）單 pane。被收納的 pane SHALL 保留 state 與 session 連線（不 unmount session——SessionPool 保活）；回到桌面 SHALL 原樹還原。
+`visiblePaneIds` SHALL 由 zoom > RWD 上限 > 全部 推導：desktop（≥1024）全樹、tablet（768–1023）上限 2、mobile（<768）單 pane（沿用 repo 既有 767 斷點體系，與 handoff 的 640 偏差已確認）。被收納的 pane SHALL 保留 state 與 session 連線（不 unmount session——SessionPool 保活）；回到桌面 SHALL 原樹還原。
 
 #### Scenario: 縮到 tablet 再回桌面
 - **WHEN** 4-pane 桌面視窗縮至 800px 再放回 1440px

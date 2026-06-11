@@ -84,3 +84,27 @@ describe('斷點只改渲染數，不銷毀 pane tree（spec 核心原則）', (
     expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(chatCountBefore);
   });
 });
+
+describe('min-size 護欄（spec: 最小尺寸護欄；6.0）', () => {
+  it('pane 實寬 < 640（2×320）時拒絕水平分割並 toast；夠寬則放行', async () => {
+    setupMatchMedia(1440, widthMatcher);
+    const view = await renderWithWorkspace();
+    const project = await view.addProject();
+    await project.launchSession();
+
+    const leaf = screen.getByTestId('split-pane-leaf');
+    const spy = vi
+      .spyOn(leaf, 'getBoundingClientRect')
+      .mockReturnValue({ width: 500, height: 800 } as DOMRect);
+
+    await view.user.click(screen.getByTestId('pane-split-h'));
+    // 分割被拒：仍 1 leaf＋toast 提示
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
+    expect(await screen.findByText(/太小無法分割/)).toBeInTheDocument();
+
+    // 夠寬放行
+    spy.mockReturnValue({ width: 1200, height: 800 } as DOMRect);
+    await view.user.click(screen.getByTestId('pane-split-h'));
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
+  });
+});

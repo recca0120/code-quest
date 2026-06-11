@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
+import { guardSplitMinSize } from '../pane-min-size.ts';
 import type { PaneToolbarCommonProps } from './PaneShell.tsx';
 import { SessionPane } from './SessionPane.tsx';
 import { FilesPane, GitPane, OpenspecPane } from './tool-panes.tsx';
@@ -20,10 +21,12 @@ export const PaneLeafBody: React.NamedExoticComponent<{
     paneId: node.id,
     isOnly: paneRoot.type === 'leaf',
     onSplitH: () => {
+      if (!guardSplitMinSize(node.id, 'h')) return;
       focusPane(node.id);
       splitPane('h');
     },
     onSplitV: () => {
+      if (!guardSplitMinSize(node.id, 'v')) return;
       focusPane(node.id);
       splitPane('v');
     },
