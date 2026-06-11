@@ -27,7 +27,8 @@ export function WorktreeSwitcher({
   const { setContentInPane } = usePaneActions();
   const [open, setOpen] = useState(false);
   const current = availableWorktrees?.find((w) => w.path === cwd);
-  const displayLabel = current ? branchLabel(current) : cwd;
+  const cwdNotInListing = !current;
+  const displayLabel = current ? branchLabel(current) : (cwd.split('/').pop() ?? cwd);
 
   return (
     <div className="relative flex items-center gap-1">
@@ -41,6 +42,15 @@ export function WorktreeSwitcher({
           {icon} {label}
         </span>
         <span className="ml-1">{displayLabel}</span>
+        {cwdNotInListing && (
+          <span
+            data-testid="worktree-warning-badge"
+            className="text-warning text-2xs ml-0.5"
+            title="Worktree not found in listing"
+          >
+            ⚠
+          </span>
+        )}
         <span>▾</span>
       </button>
       {open && availableWorktrees && availableWorktrees.length > 0 && (
@@ -58,6 +68,7 @@ export function WorktreeSwitcher({
               }}
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-hover-tint"
             >
+              {wt.path === cwd ? '✓ ' : ''}
               {branchLabel(wt)}
               {wt.projectName ? ` (${wt.projectName})` : ''}
             </button>

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { WorktreeSwitcher } from '@/components/workspace/WorktreeSwitcher';
@@ -75,6 +75,51 @@ describe('WorktreeSwitcher (T.4) shows icon, label and current branch', () => {
     expect(dropdown).toBeInTheDocument();
     expect(dropdown).toHaveTextContent('⎇ main (app)');
     expect(dropdown).toHaveTextContent('⎇ feat-auth (app)');
+  });
+});
+
+describe('WorktreeSwitcher — cwd 不在 listing 時 fallback（A3）', () => {
+  it('cwd 不在 availableWorktrees → 顯示 basename + 警示 badge', () => {
+    render(
+      <Wrapper>
+        <WorktreeSwitcher
+          icon="±"
+          label="Git"
+          cwd="/unknown/path/my-worktree"
+          paneId="p1"
+          availableWorktrees={availableWorktrees}
+          makeContent={(c) => ({ type: 'git', target: { kind: 'fixed', cwd: c } })}
+        />
+      </Wrapper>,
+    );
+    const btn = screen.getByRole('button', { name: /worktree switcher/i });
+    expect(btn.textContent).toContain('my-worktree');
+    expect(btn.textContent).not.toContain('/unknown/path/my-worktree');
+    expect(screen.getByTestId('worktree-warning-badge')).toBeInTheDocument();
+  });
+});
+
+describe('WorktreeSwitcher — 下拉 ✓ 標記（A3）', () => {
+  it('下拉列表中目前 worktree 顯示 ✓ 標記', async () => {
+    const user = userEvent.setup();
+    render(
+      <Wrapper>
+        <WorktreeSwitcher
+          icon="±"
+          label="Git"
+          cwd="/project/main"
+          paneId="p1"
+          availableWorktrees={availableWorktrees}
+          makeContent={(c) => ({ type: 'git', target: { kind: 'fixed', cwd: c } })}
+        />
+      </Wrapper>,
+    );
+    await user.click(screen.getByRole('button', { name: /worktree switcher/i }));
+    const dropdown = screen.getByTestId('cwd-dropdown');
+    const mainBtn = within(dropdown).getByRole('button', { name: /main/i });
+    expect(mainBtn.textContent).toContain('✓');
+    const featBtn = within(dropdown).getByRole('button', { name: /feat-auth/i });
+    expect(featBtn.textContent).not.toContain('✓');
   });
 });
 
