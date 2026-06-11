@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { leafIdsInOrder, type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { PaneDivider } from './PaneDivider';
 import { PaneLeafBody } from './panes/PaneLeafBody.tsx';
+import { useMobileMode } from './useMobileMode';
 import { useVisiblePaneIds } from './useVisiblePanes.ts';
 
 /** 五落點 overlay（handoff §7）：拖曳 hover 在 leaf 上時浮出
@@ -48,6 +49,10 @@ function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): 
 
 function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
   const { focusPane } = usePaneActions();
+  const { paneRoot, focusedPaneId } = usePaneState();
+  const isFocused = focusedPaneId === node.id;
+  // 唯一 pane／尚無 focus 時不 dim（dim 只用來區分 focus 對象）
+  const isDimmed = !isFocused && focusedPaneId !== null && paneRoot.type === 'split';
   // dragenter/leave 是巢狀冒泡事件——counter 避免子元素間移動時閃爍
   const [dragDepth, setDragDepth] = useState(0);
 
@@ -68,8 +73,13 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
       onDragLeave={() => setDragDepth((d) => Math.max(0, d - 1))}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => setDragDepth(0)}
+      data-focused={isFocused || undefined}
       style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
-      className="flex flex-1 min-w-0 min-h-0"
+      className={`flex flex-1 min-w-0 min-h-0 flex-col rounded-(--pane-radius) border ${
+        isFocused
+          ? 'border-(--color-pane-focus) ring-1 ring-(--color-pane-focus-ring)'
+          : `border-border ${isDimmed ? 'opacity-(--pane-dim-opacity)' : ''}`
+      }`}
     >
       <PaneLeafBody node={node} />
       {dragDepth > 0 && <DropZones paneId={node.id} onHide={() => setDragDepth(0)} />}
@@ -129,10 +139,33 @@ function PaneTreeNode({ node, visible }: { node: PaneNode; visible: Set<string> 
 }
 
 export function PaneTree(): React.JSX.Element {
-  const { paneRoot } = usePaneState();
+  const { paneRoot, focusedPaneId } = usePaneState();
+  const { focusPane } = usePaneActions();
   const { visible } = useVisiblePaneIds();
+  const isMobile = useMobileMode();
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  // mobile 左右滑切 pane（handoff §8）：左滑＝下一個、右滑＝上一個（先序）
+  function handleTouchEnd(e: React.TouchEvent): void {
+    if (!isMobile || touchStartX === null) return;
+    const dx = (e.changedTouches[0]?.clientX ?? touchStartX) - touchStartX;
+    setTouchStartX(null);
+    if (Math.abs(dx) < 50) return;
+    const leaves = leafIdsInOrder(paneRoot);
+    const current = focusedPaneId && leaves.includes(focusedPaneId) ? focusedPaneId : leaves[0];
+    if (!current) return;
+    const idx = leaves.indexOf(current);
+    const next = dx < 0 ? leaves[idx + 1] : leaves[idx - 1];
+    if (next) focusPane(next);
+  }
+
   return (
-    <div data-testid="split-pane-root" className="flex flex-1 min-w-0 min-h-0 overflow-hidden">
+    <div
+      data-testid="split-pane-root"
+      className="flex flex-1 min-w-0 min-h-0 overflow-hidden"
+      onTouchStart={(e) => setTouchStartX(e.changedTouches[0]?.clientX ?? null)}
+      onTouchEnd={handleTouchEnd}
+    >
       <PaneTreeNode node={paneRoot} visible={visible} />
     </div>
   );

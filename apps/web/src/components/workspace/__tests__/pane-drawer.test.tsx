@@ -39,6 +39,23 @@ describe('drawer 單例（spec: 全域單例 drawer）', () => {
     await user.click(screen.getByTestId('drawer-overlay'));
     expect(screen.queryByTestId('workspace-drawer')).not.toBeInTheDocument();
   });
+
+  it('⤢ 全螢幕 toggle；左緣把手存在（拖寬熱區）', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByRole('button', { name: 'open in drawer' }));
+    const drawer = await screen.findByTestId('workspace-drawer');
+    // jsdom 不解析 max(var(...)) —— 只斷言「非全螢幕」與把手存在
+    expect(drawer.style.width).not.toBe('100%');
+    expect(screen.getByTestId('drawer-grabber')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'toggle drawer fullscreen' }));
+    expect(drawer.style.width).toBe('100%');
+    await user.click(screen.getByRole('button', { name: 'toggle drawer fullscreen' }));
+    expect(drawer.style.width).not.toBe('100%');
+  });
 });
 
 describe('釘選成 pane（spec: 釘選成 pane）', () => {

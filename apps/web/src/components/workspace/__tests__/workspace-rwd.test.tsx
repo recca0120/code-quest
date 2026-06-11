@@ -5,7 +5,7 @@
  * - 回桌面原樹還原
  * 全真 pipeline：renderWithWorkspace＋fake-match-media。
  */
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setupMatchMedia } from '@/test/fake-match-media';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
@@ -70,6 +70,37 @@ describe('斷點只改渲染數，不銷毀 pane tree（spec 核心原則）', (
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(4);
     expect(screen.queryByTestId('condensed-pane-strip')).not.toBeInTheDocument();
     expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(chatCountBefore);
+  });
+
+  it('mobile 卡片牆：⊞ 開 2 欄卡片、點卡切 pane；左右滑切換 focus', async () => {
+    const { mm } = await fourPanes();
+    await act(async () => {
+      mm.triggerChange(375);
+    });
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
+
+    // ⊞ 開卡片牆 → 每個 leaf 一張卡
+    await screen.getByTestId('mobile-pane-wall-toggle').click();
+    const wall = await screen.findByTestId('mobile-pane-wall');
+    const cards = within(wall).getAllByTestId(/^pane-wall-card-/);
+    expect(cards).toHaveLength(4);
+
+    // 點第三張卡 → 該 pane 成為 solo、牆關閉
+    const targetId = cards[2]!.dataset.paneId!;
+    cards[2]!.click();
+    await waitFor(() => {
+      expect(screen.queryByTestId('mobile-pane-wall')).not.toBeInTheDocument();
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(targetId);
+    });
+
+    // 左滑（往左滑＝下一個 pane）
+    const root = screen.getByTestId('split-pane-root');
+    const before = screen.getByTestId('split-pane-leaf').dataset.paneId;
+    fireEvent.touchStart(root, { changedTouches: [{ clientX: 300, clientY: 200 }] });
+    fireEvent.touchEnd(root, { changedTouches: [{ clientX: 100, clientY: 200 }] });
+    await waitFor(() =>
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).not.toBe(before),
+    );
   });
 
   it('mobile 單 pane：condensed sessions 一樣保活', async () => {

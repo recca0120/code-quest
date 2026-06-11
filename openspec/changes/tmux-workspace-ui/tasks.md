@@ -68,12 +68,13 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 - [x] 5.5 [test] mobile：單 pane（既有）＋收納保活（卡片牆/左右滑/bottom sheet 留 5.8）
 - [x] 5.6 [impl] mobile 單 pane 經 visiblePaneIds 一般化（16px composer token 已備）
 - [x] 5.7 [verify] Playwright：三斷點截圖、縮放往返 state 保留
-- [ ] 5.8 [後續] mobile 進階：卡片牆切換器、左右滑切 pane、drawer→bottom sheet（snap 0/66/100）、safe-area dock；tablet 直向 slide-over
+- [x] 5.8 mobile 進階：卡片牆切換器＋左右滑切 pane＋drawer bottom sheet（max-md 固定 2/3 高；snap 三段留後）＋safe-area dock（tablet 直向 slide-over 留後）
 
 ## 6. 收尾
 
 - [x] 6.0 [test+impl] min-size 護欄（pane-shell spec）：splitPane/movePane/⌘⏎ 各路徑以實際 pane 尺寸拒絕＋toast；DnD 落點 disabled 態
-- [ ] 6.1 [verify] handoff 像素級對照（量測值 vs App.proposal.css token）
+- [x] 6.1 [verify] handoff 像素級對照：tab bar 38／tab 32／statusline 26／pane header 30／radius 10／rail 218（token 接線）／陶土色全過
 - [x] 6.2 [verify] 全套件（web 2483/server 794/schemas 55）＋knip/biome/tsc 綠；瀏覽器驗收已逐階段（P0-P5）完成
 - [x] 6.3 [opsx] specs 同步：tablet 斷點 768–1023（repo 體系）、rail drawer 入口＝分頁級 ⤢
-- [ ] 6.4 [後續] 視覺精修（6.1 對照時一併）：pane 編號徽章＋permission mode 邊框換色（pane-shell spec）、picker 窄視窗單欄退化、drawer 左緣拖寬/全螢幕、dock chips count 徽章、busy pulse 動畫 token 接線
+- [x] 6.4 視覺精修：pane 編號徽章（先序、focused=accent）＋focused 殼（pane-focus token＋非 focus dim）、picker 窄視窗單欄退化（lg: 斷點）、drawer 左緣拖寬＋⤢ 全螢幕、dock git count 徽章
+- [ ] 6.5 [後續] permission mode pane 邊框換色（需 channel permissionMode 跨 context 暴露）、files/spec dock count、bottom sheet 三段 snap、pane-jump 1–9 鍵

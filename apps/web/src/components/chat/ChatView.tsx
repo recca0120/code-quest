@@ -97,7 +97,9 @@ export function ChatView({
             </ChatShell.Footer>
           </ChatShell>
           {rightPane && (
-            <div className="w-72 shrink-0 border-l border-border overflow-y-auto">{rightPane}</div>
+            <div className="w-(--rail-w) shrink-0 border-l border-border overflow-y-auto">
+              {rightPane}
+            </div>
           )}
         </div>
       </div>

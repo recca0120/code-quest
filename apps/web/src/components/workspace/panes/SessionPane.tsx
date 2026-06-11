@@ -130,7 +130,9 @@ export function SessionPane({
             }
           />
         </div>
-        {!rail.open && meta.cwd && <PaneDock onOpen={(tab) => setRail({ open: true, tab })} />}
+        {!rail.open && meta.cwd && (
+          <PaneDock cwd={meta.cwd} onOpen={(tab) => setRail({ open: true, tab })} />
+        )}
       </div>
     </PaneShell>
   );

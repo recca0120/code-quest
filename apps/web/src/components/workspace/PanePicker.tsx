@@ -312,7 +312,7 @@ export function PanePicker({
               aria-label="picker search"
               className="w-full bg-transparent border-b border-border px-2 py-1.5 mb-2 text-sm outline-none placeholder:text-dim"
             />
-            <div className="flex gap-3 min-h-64">
+            <div className="flex flex-col lg:flex-row gap-3 min-h-64">
               {/* 欄1 Projects */}
               <div
                 data-testid="pane-picker-col-projects"
@@ -358,7 +358,7 @@ export function PanePicker({
               {/* 欄2 Worktrees */}
               <div
                 data-testid="pane-picker-col-worktrees"
-                className="flex flex-col border-l border-border-subtle pl-3"
+                className="flex flex-col lg:border-l border-t lg:border-t-0 border-border-subtle lg:pl-3 pt-2 lg:pt-0"
                 style={{ flex: 5 }}
               >
                 <p className="section-label mb-1">Worktrees</p>
@@ -413,7 +413,7 @@ export function PanePicker({
               {/* 欄3 內容（type grid＋進行中＋resume＋常用組合） */}
               <div
                 data-testid="pane-picker-col-content"
-                className="flex flex-col border-l border-border-subtle pl-3 overflow-y-auto"
+                className="flex flex-col lg:border-l border-t lg:border-t-0 border-border-subtle lg:pl-3 pt-2 lg:pt-0 overflow-y-auto"
                 style={{ flex: 6 }}
               >
                 <p className="section-label mb-1">新增 pane</p>

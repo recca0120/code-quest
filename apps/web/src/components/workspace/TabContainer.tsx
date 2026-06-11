@@ -11,6 +11,7 @@ import {
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
 import { CondensedPaneStrip } from './CondensedPaneStrip.tsx';
+import { MobilePaneWall } from './MobilePaneWall.tsx';
 import { PaneTree } from './PaneTree.tsx';
 import { type PaneEnvironment, PaneEnvironmentProvider } from './panes/PaneEnvironmentContext.tsx';
 import { SessionPool } from './panes/SessionPool.tsx';
@@ -147,6 +148,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
           <PaneTree />
           <CondensedPaneStrip />
         </div>
+        <MobilePaneWall />
       </PaneEnvironmentProvider>
       <WorkspaceStatusline />
     </div>

@@ -171,3 +171,22 @@ describe('zoom bar（4.5）', () => {
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
   });
 });
+
+// P6.4: pane 殼精修（spec: pane-shell 共通殼）
+describe('pane 編號徽章與 focused 殼樣式（6.4）', () => {
+  it('每個 pane header 顯示先序編號徽章；focused pane 徽章與殼高亮', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    await user.click(screen.getByTestId('pane-split-h'));
+
+    const badges = screen.getAllByTestId('pane-index-badge');
+    expect(badges.map((b) => b.textContent)).toEqual(['1', '2']);
+
+    // focus 第二個 pane → 殼 data-focused、徽章 data-focused
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+    await user.click(leaves[1]!);
+    expect(leaves[1]).toHaveAttribute('data-focused');
+    expect(leaves[0]).not.toHaveAttribute('data-focused');
+    expect(badges[1]).toHaveAttribute('data-focused');
+  });
+});

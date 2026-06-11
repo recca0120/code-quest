@@ -1,6 +1,6 @@
 import { ViewColumnsIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { usePaneState } from '@/contexts/TabContext';
+import { leafIdsInOrder, usePaneState } from '@/contexts/TabContext';
 import { cn } from '@/utils/cn';
 import { useMobileMode } from './useMobileMode';
 
@@ -31,8 +31,9 @@ function Toolbar({
   onSwap,
   children,
 }: ToolbarProps): React.JSX.Element {
-  const { focusedPaneId, zoomedPaneId } = usePaneState();
+  const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
   const isFocused = focusedPaneId === paneId;
+  const paneIndex = leafIdsInOrder(paneRoot).indexOf(paneId);
   const isZoomed = zoomedPaneId === paneId;
   const isMobile = useMobileMode();
   const [isDragging, setIsDragging] = useState(false);
@@ -66,8 +67,20 @@ function Toolbar({
       onDragEnd={handleDragEnd}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
-      className="flex items-center gap-1 px-2 py-1 text-xs border-b border-border data-[focused]:ring-1 data-[focused]:ring-primary"
+      className="flex items-center gap-1 px-2 text-xs border-b border-border h-(--pane-header-h) shrink-0 data-[focused]:ring-1 data-[focused]:ring-primary"
     >
+      {paneIndex >= 0 && (
+        <span
+          data-testid="pane-index-badge"
+          data-focused={isFocused || undefined}
+          aria-hidden="true"
+          className={`flex items-center justify-center size-4 rounded-(--radius-chip) font-mono text-2xs font-bold shrink-0 ${
+            isFocused ? 'bg-accent text-selected-text' : 'bg-surface-hover text-subtle'
+          }`}
+        >
+          {paneIndex + 1}
+        </span>
+      )}
       {isZoomed && (
         <span data-testid="pane-zoomed-indicator" className="text-accent">
           ⊠ zoomed
