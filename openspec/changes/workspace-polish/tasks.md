@@ -1,5 +1,11 @@
 # Workspace Polish — Tasks
 
+## 開發紀律（所有 change 共通）
+- **TDD**：先測試（RED）再實作（GREEN）；行為刪除先盤點測試引用
+- **測試寫法**：照 `.claude/skills/fake-summoner-client/SKILL.md`（全真 pipeline＋priming＋UI 驅動＋多層驗證）
+- **Tailwind**：照 `.claude/skills/tailwind-v4/SKILL.md`（token-first＋no literal-px arbitrary）
+
+
 TDD；測試照 fake-summoner-client skill。按優先序排列。
 
 ## A. 小項收斂（worktree-centric 繼承）
