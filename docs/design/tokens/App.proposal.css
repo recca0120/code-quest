@@ -1,0 +1,203 @@
+/* ============================================================
+   App.proposal.css — 可直接替換 apps/web/src/App.css 的 token 段落
+   V1 陶土・暗 = 預設 dark；V2 紙・亮 = data-theme="light"
+   命名完全沿用現有體系，元件端不需改 class。
+   ============================================================ */
+
+@theme {
+  --font-sans: "Outfit", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+
+  /* --- V1 陶土・暗（預設） --- */
+  --color-bg: #191613;
+  --color-surface: #211d18;
+  --color-surface-hover: #29241e;
+  --color-border: #38322a;
+  --color-border-subtle: color-mix(in srgb, var(--color-border) 55%, transparent);
+
+  --color-text: #d8d2c6;
+  --color-text-muted: #a39b8d;
+  --color-text-bright: #f2ede3;
+  --color-text-subtle: #756d5e;
+  --color-text-dim: #5a523f;
+  --color-text-faint: #3b362c;
+
+  /* accent + 語意色 — oklch 等彩度等明度家族
+     accent  = oklch(0.71 0.12 41)  陶土
+     success = oklch(0.71 0.08 140)
+     warning = oklch(0.76 0.09 84)
+     danger  = oklch(0.66 0.14 31)
+     info    = oklch(0.70 0.07 250) */
+  --color-accent: #d97757;
+  --color-success: #84b07e;
+  --color-warning: #d4ab6a;
+  --color-danger: #df6c55;
+  --color-info: #82a3c9;
+  --color-assistant: #d97757;
+
+  /* 移除 --color-toggle / --color-button（VS Code 藍）：
+     按鈕主色 → accent；plan 模式與連結 → info */
+
+  --color-code: #211d18;
+  --color-code-block: #141109;
+  --color-input-bg: #262019;
+  --color-input-overlay: rgba(0, 0, 0, 0.2);
+  --color-success-bg: rgba(132, 176, 126, 0.1);
+  --color-warning-bg: rgba(212, 171, 106, 0.1);
+  --color-danger-bg: rgba(223, 108, 85, 0.1);
+
+  --color-selected: rgba(217, 119, 87, 0.14);
+  --color-selected-text: #f2ede3;
+  --color-claude-clay-orange: #d97757;
+
+  --color-accent-rgb: 217, 119, 87;
+  --color-info-rgb: 130, 163, 201;
+  --color-shadow-rgb: 8, 6, 4;
+  --color-text-rgb: 216, 210, 198;
+  --color-hover-tint-rgb: 242, 237, 227;
+  --color-hover-tint: rgba(var(--color-hover-tint-rgb), 0.05);
+
+  /* floating surface：捨棄漸層，單色 + 一致陰影 */
+  --color-overlay: rgba(12, 9, 6, 0.72);
+  --color-floating-bg-from: #221e19;
+  --color-floating-bg-to: #221e19;
+  --color-floating-border: #38322a;
+  --color-floating-border-subtle: #2b2620;
+  --color-floating-shadow: rgba(8, 6, 4, 0.6);
+  --color-accent-glow: rgba(217, 119, 87, 0.1);
+  --color-row-active-bg: rgba(217, 119, 87, 0.07);
+  --color-accent-mark-bg: rgba(217, 119, 87, 0.3);
+
+  --shadow-floating: 0 16px 40px rgba(8, 6, 4, 0.6);
+
+  --color-mode-accent: var(--color-claude-clay-orange);
+  --color-mode-accent-rgb: var(--color-accent-rgb);
+
+  /* 短別名（保留，指向同一組值） */
+  --color-input: var(--color-input-bg);
+  --color-muted: var(--color-text-muted);
+  --color-dim: var(--color-text-dim);
+  --color-faint: var(--color-text-faint);
+  --color-subtle: var(--color-text-subtle);
+  --color-bright: var(--color-text-bright);
+
+  /* radius 階（新增）：chip 4 / row 7 / card 10 / composer 14 */
+  --radius-chip: 4px;
+  --radius-row: 7px;
+  --radius-card: 10px;
+  --radius-composer: 14px;
+}
+
+/* --- V2 紙・亮 --- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #faf9f5;
+  --color-surface: #f1efe8;
+  --color-surface-hover: #e9e6dc;
+  --color-border: #ddd9cc;
+  --color-text: #403c33;
+  --color-text-muted: #71695c;
+  --color-text-bright: #211d15;
+  --color-text-subtle: #8d8576;
+  --color-text-dim: #a59d8e;
+  --color-text-faint: #d4cfc2;
+  --color-accent: #c6613f;
+  --color-success: #5f8a4e;
+  --color-warning: #9c7a2d;
+  --color-danger: #bf4d33;
+  --color-info: #4f74a4;
+  --color-assistant: #c6613f;
+  --color-code: #f1efe8;
+  --color-code-block: #f3f1e9;
+  --color-input-bg: #ffffff;
+  --color-input-overlay: rgba(60, 50, 35, 0.05);
+  --color-success-bg: rgba(95, 138, 78, 0.1);
+  --color-warning-bg: rgba(156, 122, 45, 0.1);
+  --color-danger-bg: rgba(191, 77, 51, 0.08);
+  --color-selected: rgba(198, 97, 63, 0.12);
+  --color-selected-text: #211d15;
+  --color-claude-clay-orange: #c6613f;
+
+  --color-accent-rgb: 198, 97, 63;
+  --color-info-rgb: 79, 116, 164;
+  --color-shadow-rgb: 60, 50, 35;
+  --color-text-rgb: 64, 60, 51;
+  --color-hover-tint-rgb: 33, 29, 21;
+  --color-hover-tint: rgba(var(--color-hover-tint-rgb), 0.05);
+
+  --color-overlay: rgba(60, 50, 35, 0.32);
+  --color-floating-bg-from: #fffefa;
+  --color-floating-bg-to: #fffefa;
+  --color-floating-border: #ddd9cc;
+  --color-floating-border-subtle: #eae6da;
+  --color-floating-shadow: rgba(60, 50, 35, 0.14);
+  --color-accent-glow: rgba(198, 97, 63, 0.08);
+  --color-row-active-bg: rgba(198, 97, 63, 0.08);
+  --color-accent-mark-bg: rgba(198, 97, 63, 0.25);
+  --shadow-floating: 0 12px 32px rgba(60, 50, 35, 0.14);
+}
+
+/* --- RWD tokens（追加到 @theme 區塊內） ---
+   斷點：<640 mobile／640–1024 tablet／≥1024 desktop。
+   原則：pane tree 不銷毀，斷點只改變「同時渲染幾個 pane」。 */
+@theme {
+  /* Tailwind v4 斷點（產出 sm: / lg: variants） */
+  --breakpoint-sm: 40rem;  /* 640px — 以下為 mobile：單 pane、卡片牆、bottom sheet */
+  --breakpoint-lg: 64rem;  /* 1024px — 以下為 tablet：上限 2 pane、邊條、slide-over */
+
+  /* pane 約束 */
+  --pane-min-w: 320px;     /* 分割後任一 pane 低於此寬 → 拒絕分割 */
+  --pane-min-h: 160px;
+  --pane-max-visible-sm: 1;
+  --pane-max-visible-md: 2;
+
+  /* 觸控目標 */
+  --hit-min: 44px;             /* mobile 最小可點高度 */
+  --hit-dock-chip: 40px;
+  --safe-bottom: env(safe-area-inset-bottom);
+
+  /* mobile 字級覆寫用 */
+  --text-body-sm: 14px;
+  --text-input-sm: 16px;       /* composer 16px 防 iOS 聚焦縮放 */
+
+  /* sheet / slide-over（沿用既有 z-index tiers：float 30、overlay 40） */
+  --radius-sheet: 16px;
+}
+
+/* --- tmux workspace 元件 tokens（pane / tab / statusline / drawer / dock / motion） --- */
+@theme {
+  /* pane */
+  --pane-header-h: 30px;
+  --pane-gap: 6px;
+  --pane-radius: 10px;
+  --pane-dim-opacity: 0.75;
+  --color-pane-focus: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  --color-pane-focus-ring: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  --pane-group-stripe: 3px; /* chat 附帶工具的同色繫帶 */
+  --rail-w: 218px; /* chat pane 內建側欄寬（決策 13） */
+
+  /* tab bar（取代 session bar）＋ 狀態列 */
+  --tabbar-h: 38px;
+  --tab-h: 32px;
+  --statusline-h: 26px;
+  --busy-dot-size: 6px;
+  --busy-pulse: 1.2s;
+
+  /* drawer / bottom sheet / slide-over */
+  --drawer-w: 56%;
+  --drawer-min-w: 480px;
+  --slideover-w: 58%;
+  --sheet-snap-half: 66%;
+  --divider-hit: 6px;   /* resize 熱區（視覺 1px） */
+
+  /* dock / picker / 拖曳 */
+  --dock-chip-h: 28px;  /* mobile 覆寫為 --hit-dock-chip 40px */
+  --picker-w-sm: 560px;
+  --picker-w-lg: 980px;
+
+  /* motion */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-drawer: 240ms;
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

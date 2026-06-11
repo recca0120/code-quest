@@ -136,14 +136,17 @@ describe('三欄資料源與聯動（spec: Miller 三欄結構）', () => {
 });
 
 describe('進行中／resume／組合（spec: 欄3 sections）', () => {
-  it('進行中只列選定 worktree 的 sessions；busy 標示；Show here 帶 targetPaneId', async () => {
+  it('進行中只列選定 worktree 的 sessions；busy 標示；整列點擊 onShowHere 帶 targetPaneId（決策 15）', async () => {
     const user = userEvent.setup();
     const props = setup({ targetPaneId: 'pane-7' });
     // 預設 worktree = main（/projects/app）→ 只有 Task A
-    expect(screen.getByTestId('modal-session-item-ch-1')).toBeInTheDocument();
+    const row = screen.getByTestId('modal-session-item-ch-1');
+    expect(row).toBeInTheDocument();
     expect(screen.queryByTestId('modal-session-item-ch-2')).not.toBeInTheDocument();
 
-    await user.click(within(screen.getByTestId('modal-session-item-ch-1')).getByText('Show here'));
+    // design 無獨立 Show here 鈕——整列即點擊目標
+    expect(within(row).queryByText('Show here')).not.toBeInTheDocument();
+    await user.click(row);
     expect(props.onShowHere).toHaveBeenCalledWith('ch-1', 'pane-7');
 
     // 切到 feat-x → Task B（busy ●＋paneLabel）

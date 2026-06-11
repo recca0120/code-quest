@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('PaneLeafContent (TG.4) rail toggle（單一 pane header；chat-pane-header-unification）', () => {
-  it('☰/⊞ 按鈕在 pane header 內（breadcrumb 已移除——單一 header）', async () => {
+  it('⊞ 按鈕在 pane header 內（breadcrumb 已移除——單一 header）', async () => {
     const { addProject } = await renderWithWorkspace();
     const { launchSession } = await addProject();
     await launchSession();
@@ -15,6 +15,8 @@ describe('PaneLeafContent (TG.4) rail toggle（單一 pane header；chat-pane-he
     expect(within(header).getByRole('button', { name: /toggle right pane/i })).toBeInTheDocument();
     // breadcrumb 整條移除
     expect(screen.queryByLabelText('chat-breadcrumb')).not.toBeInTheDocument();
+    // ☰ 左欄 toggle 死鏈移除（Workspace 從未傳 onToggleLeft——分支不可達）
+    expect(screen.queryByRole('button', { name: /toggle left sidebar/i })).not.toBeInTheDocument();
   });
 
   it('rail 預設展開（handoff：新 chat 預設展開側欄）', async () => {

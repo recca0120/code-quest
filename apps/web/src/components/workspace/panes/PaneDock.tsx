@@ -1,6 +1,6 @@
-import type { RailTab } from '@/contexts/TabContext';
+import type { PaneContent, RailTab } from '@/contexts/TabContext';
 import { cn } from '@/utils/cn';
-import { RAIL_TABS } from '../RightPane.tsx';
+import { RAIL_TABS, railTabContent } from '../RightPane.tsx';
 import { usePaneToolCounts } from '../usePaneToolCounts.ts';
 
 /**
@@ -11,18 +11,30 @@ export function PaneDock({
   cwd,
   onOpen,
   activeTab,
+  onPromote,
 }: {
   cwd?: string;
   onOpen: (tab: RailTab) => void;
   /** rail 收合前最後停留的分頁——對應 chip 顯示 active 態（handoff §3） */
   activeTab?: RailTab;
+  /** ⌘⏎（焦點在 dock 區內）把 activeTab 升級成獨立 pane（spec SHALL） */
+  onPromote?: (content: PaneContent) => void;
 }): React.JSX.Element {
   // chip count（handoff §3：files·N／git·N／spec·N）——與 rail 分頁同一 hook
   const counts = usePaneToolCounts(cwd);
 
+  function handleKeyDown(e: React.KeyboardEvent): void {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && onPromote && cwd) {
+      e.preventDefault();
+      onPromote(railTabContent(activeTab ?? 'files', cwd));
+    }
+  }
+
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: ⌘⏎ 升級——chip 鈕為焦點載體，容器只攔組合鍵
     <div
       data-testid="pane-dock"
+      onKeyDown={handleKeyDown}
       className="flex items-center gap-1.5 px-3 py-1 border-t border-border-subtle bg-surface shrink-0 max-md:pb-(--safe-bottom)"
     >
       {RAIL_TABS.map(({ key, label, icon }) => (

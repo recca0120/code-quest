@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tmux Workspace 版面探索</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="proposal/tokens.css" />
+<link rel="stylesheet" href="proposal/tmux.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>html, body { margin: 0; height: 100%; }</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="lib/design-canvas.jsx"></script>
+<script type="text/babel" src="proposal/token-sheet.jsx"></script>
+<script type="text/babel" src="proposal/tmux-mocks.jsx"></script>
+<script type="text/babel" src="proposal/tmux-details.jsx"></script>
+<script type="text/babel" src="proposal/tmux-rwd.jsx"></script>
+<script type="text/babel" src="proposal/tmux-rwd-tokens.jsx"></script>
+<script type="text/babel" src="proposal/tmux-tokens-full.jsx"></script>
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard, DCPostIt } = window;
+const { TxLayoutA, TxLayoutB, TxLayoutC, TxPickerTree, TxPickerCols, TxPickerCmd, TxZoomDemo, TxDragDemo, TxAtoms, TxTabletLand, TxTabletPort, TxMobileChat, TxMobileSheet, TxMobileSwitcher, TxRwdTokens, TxTokensFull, TokenSheet } = window;
+
+function App() {
+  return (
+    <DesignCanvas title="Tmux Workspace 版面探索 — 依 feat/discuss-layout 十點需求">
+      <DCSection id="tokens" title="00 · Design Tokens 總表" subtitle="本探索全部元件的 token：色彩・字・間距・pane・tab・狀態列・drawer/sheet・dock・picker・拖拉・z-index・動效；成品在 tokens/App.proposal.css">
+        <DCArtboard id="tk-palette" label="色彩 — V1 陶土・暗（同前次提案，沒動）" width={860} height={700}>
+          <TokenSheet theme="theme-clay-dark" />
+        </DCArtboard>
+        <DCArtboard id="tk-full" label="元件 Tokens — pane / tab / drawer / dock / picker / 動效" width={940} height={1380}>
+          <TxTokensFull />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="layouts" title="01 · 整體版面 — chat 附帶工具的三種策略" subtitle="共同點：無 session bar、tab = 獨立 pane tree、底部狀態列、所有分隔線可拖。差異在 files/git/openspec 怎麼跟著 chat">
+        <DCArtboard id="lay-a" label="A · 全分割 — 附帶工具是真 pane（同色繫帶分組）" width={1440} height={900}>
+          <TxLayoutA />
+        </DCArtboard>
+        <DCArtboard id="lay-b" label="B · 內建側欄 — 附帶工具收進 chat pane 右欄" width={1440} height={900}>
+          <TxLayoutB />
+        </DCArtboard>
+        <DCArtboard id="lay-c" label="C · Dock + Drawer — 工具收成底部 chips，點開浮層" width={1440} height={900}>
+          <TxLayoutC />
+        </DCArtboard>
+        <DCPostIt id="lay-note" width={320}>
+          取捨：
+          A — 最 tmux、所有東西都能拖能 zoom；但 pane 多時 header 吃高度。
+          B — 多 chat 並排時最整齊，每個 chat 自帶工具；但側欄內容窄、深度操作要升級成 pane。
+          C — chat 最大化，工具用到才出現；drawer 是浮層、不進 pane tree，需要常駐監看時要手動釘選。
+          可混用：B/C 的「⌘⏎ 升級成 pane」就會落回 A 的形態。
+        </DCPostIt>
+      </DCSection>
+
+      <DCSection id="picker" title="02 · PanePicker — 入口統一：Project → worktree → pane" subtitle="新增 project、新增 worktree、開新 chat/files/git/openspec/terminal、resume 歷史，全部在同一個 ⌘K 介面">
+        <DCArtboard id="pk-tree" label="甲 · 階層樹（單欄，全部攤開）" width={760} height={620}>
+          <TxPickerTree />
+        </DCArtboard>
+        <DCArtboard id="pk-cols" label="乙 · Miller 三欄（逐層聚焦）" width={980} height={560}>
+          <TxPickerCols />
+        </DCArtboard>
+        <DCArtboard id="pk-cmd" label="丙 · 指令分段式（breadcrumb＋常用組合）" width={820} height={520}>
+          <TxPickerCmd />
+        </DCArtboard>
+        <DCPostIt id="pk-note" width={300}>
+          甲適合 project 少（一眼全覽、↑↓走到底）；乙在 project / worktree 多時可掃描性最好；丙打字最快、還能放「常用組合」一鍵開整組 pane。鍵盤協定三案共用：⏎ 當前 pane、⌘⏎ 分割開啟。
+        </DCPostIt>
+      </DCSection>
+
+      <DCSection id="full" title="03 · 完整內容檢視 — drawer 之外的選項" subtitle="需求 4：看 files/git/openspec 完整內容。方案甲＝drawer（見版面 C）；方案乙＝pane zoom">
+        <DCArtboard id="zoom" label="乙 · Pane Zoom（⌘⇧Z 暫時全版，esc 返回）" width={1280} height={800}>
+          <TxZoomDemo />
+        </DCArtboard>
+        <DCPostIt id="full-note" width={300}>
+          建議兩個都要：drawer 給「列表點一下快速看」（不動 pane tree、esc 即走）；zoom 給「已是 pane、想專心看」。drawer 右上常駐「釘選成 pane」讓兩個世界互通。
+        </DCPostIt>
+      </DCSection>
+
+      <DCSection id="interact" title="04 · 互動細節 — 拖曳重排、resize、pane registry" subtitle="需求 2、5、10">
+        <DCArtboard id="drag" label="拖曳重排 — header 拖起，五落點（上下左右＋置換）" width={1280} height={760}>
+          <TxDragDemo />
+        </DCArtboard>
+        <DCArtboard id="atoms" label="分隔線三態 ＋ pane 類型 registry（terminal 等隨時擴充）" width={980} height={470}>
+          <TxAtoms />
+        </DCArtboard>
+        <DCPostIt id="q-note" width={320}>
+          想跟你確認的點：
+          ① chat 開新 session 時，附帶工具預設展開（A/B）還是收合（C）？
+          ② 一個 tab 裡允許混不同 project 的 pane 嗎？還是 tab 綁定 project？
+          ③ drawer 偏好右側滑入還是底部升起？
+          ④ tab 預設命名：worktree 名？第一個 chat 標題？
+          ⑤ 「常用組合」（一鍵開 chat＋files＋git）值得做嗎？
+        </DCPostIt>
+      </DCSection>
+
+      <DCSection id="rwd" title="05 · RWD — tablet / mobile 降級策略" subtitle="原則：pane tree 不銷毀，只改變「同時渲染幾個」——desktop 全樹、tablet 上限 2、mobile 單一；drawer → slide-over → bottom sheet 逐級變形">
+        <DCArtboard id="rwd-tokens" label="RWD Design Tokens（斷點・pane 約束・觸控目標・手勢）" width={900} height={760}>
+          <TxRwdTokens />
+        </DCArtboard>
+        <DCArtboard id="tab-land" label="Tablet 橫向 1112×834 — 上限 2 pane＋右側邊條收納" width={1112} height={834}>
+          <TxTabletLand />
+        </DCArtboard>
+        <DCArtboard id="tab-port" label="Tablet 直向 834×1112 — 單 pane＋slide-over" width={834} height={1112}>
+          <TxTabletPort />
+        </DCArtboard>
+        <DCArtboard id="mob-chat" label="Mobile 390×844 — chat 全幅＋dock＋①②③切 pane" width={390} height={844}>
+          <TxMobileChat />
+        </DCArtboard>
+        <DCArtboard id="mob-sheet" label="Mobile — drawer 變形：bottom sheet 三段" width={390} height={844}>
+          <TxMobileSheet />
+        </DCArtboard>
+        <DCArtboard id="mob-switch" label="Mobile — pane 切換器（卡片牆）" width={390} height={844}>
+          <TxMobileSwitcher />
+        </DCArtboard>
+        <DCPostIt id="rwd-note" width={320}>
+          重點決策：手機不提供分割與拖拉（沒有空間也沒有 hover），pane tree 攝平成卡片牆；tab 下拉切換；composer 輸入字 16px 防 iOS 縮放；dock／sheet 加 safe-area。平板保留拖拉但限 2 pane，超出自動收邊條。
+        </DCPostIt>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

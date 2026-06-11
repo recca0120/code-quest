@@ -16,7 +16,6 @@ interface ToolbarProps {
   onSplitV?: () => void;
   onZoom?: () => void;
   onClose?: () => void;
-  onSwap?: (targetId: string) => void;
   children?: React.ReactNode;
 }
 
@@ -33,7 +32,6 @@ function Toolbar({
   onSplitV,
   onZoom,
   onClose,
-  onSwap,
   children,
 }: ToolbarProps): React.JSX.Element {
   const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
@@ -96,14 +94,7 @@ function Toolbar({
     removeGhost();
   }
 
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    const sourceId = e.dataTransfer.getData('text/plain');
-    if (sourceId && sourceId !== paneId && onSwap) {
-      onSwap(sourceId);
-    }
-  }
-
+  // 決策 14：header 只當 drag source——置換唯一落點是 PaneTree 的 drop-zone-center
   return (
     <div
       role="toolbar"
@@ -113,8 +104,6 @@ function Toolbar({
       draggable="true"
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
       className="flex items-center gap-2 px-2.5 text-xs bg-surface border-b border-(--color-border-subtle) h-(--pane-header-h) shrink-0"
     >
       {paneIndex >= 0 && (

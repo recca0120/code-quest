@@ -6,7 +6,6 @@ import { createContext, useContext } from 'react';
  * status tick or ratio drag never churns every pane (pane-tree D5).
  */
 export interface PaneEnvironment {
-  onToggleLeft?: () => void;
   onNewTab: (opts?: {
     cwd?: string;
     projectCwd?: string;

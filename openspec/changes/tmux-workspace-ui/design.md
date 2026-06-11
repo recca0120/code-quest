@@ -56,6 +56,8 @@ P0 tokens（純 CSS，行為零變）→ P1 chrome（tab bar＋狀態列＋Sessi
 - **永遠對照 handoff 的定案值**：間距/字級/色彩不可憑感覺，token 名以 App.proposal.css 為準；icon 文字 glyph 換 heroicons 對應款
 - **`prefers-reduced-motion`** 時動效全關（token 已備）
 - **狀態列快捷鍵提示**要跟 KeyboardShortcutsProvider 實際綁定一致（單一來源：從 registry/常數導出，不可手抄兩份）
+- **drawer width 維持 DrawerHost local state**（暫態檢視偏好，不入 context）——決策 2026-06-11
+- **尺寸 token 與 TS 常數以 TS 為權威**（`pane-min-size.ts`），CSS token 供樣式層——決策 2026-06-11
 
 ## 5. 驗證事項（每階段 DoD）
 

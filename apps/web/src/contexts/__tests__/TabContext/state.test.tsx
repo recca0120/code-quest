@@ -3,12 +3,11 @@ import { act, render, renderHook, screen, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { WorktreeSessionList } from '@/components/project/WorktreeSessionList';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
 import { NavigationIntentBridge } from '@/components/workspace/NavigationIntentBridge';
 import { PaneTree } from '@/components/workspace/PaneTree';
 import { CommandPaletteProvider } from '@/contexts/CommandPaletteContext';
-import { useNavigationState } from '@/contexts/NavigationContext';
+import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
 import { useSession } from '@/contexts/SessionContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, useTabActions, useTabState } from '@/contexts/TabContext';
@@ -31,11 +30,14 @@ describe('TabProvider', () => {
   /**
    * pendingActivateChannel intent（Decision 10）— 真 UI 管線版。
    *
-   * 慣例（fake-summoner-client skill）：requestActivateChannel 由真
-   * WorktreeSessionList 的 session row 點擊觸發（production 入口；SessionManager
-   * 的 item 走 setSessionInPane，不經 intent）。sessions 不用 rerender props 餵，
-   * 改經真 SessionProvider 由 claude.pushServerEvent('session:states'/'session:dead')
-   * 流入（bridge 鏡像 Workspace.tsx 的 useSession().sessions → TabProvider 接線）。
+   * 驅動：requestActivateChannel 直呼（fake-summoner-client skill 例外，註明——
+   * requestActivateChannel 是 NavigationContext 的公開 action、即受測 API；原
+   * production 載體 WorktreeSessionList 已刪除（孤檔清理），現存載體
+   * （WorktreeChildList 的 resume dialog／ProjectCard）需整套 git+resume pipeline，
+   * 與 intent 消費語意無關）。sessions 不用 rerender props 餵，改經真
+   * SessionProvider 由 claude.pushServerEvent('session:states'/'session:dead')
+   * 流入（bridge 鏡像 Workspace.tsx 的 useSession().sessions → TabProvider 接線），
+   * ActivateDriver 的按鈕也由真 sessions 派生（session row 語意）。
    * activation 的 DOM 表徵：真 PaneTree（placeExistingSession → focused
    * pane-header 顯示 title）＋ ⌘⇧M SessionManager（KeyboardShortcutsProvider）。
    * Probe 僅讀 state（activeTabId / pendingActivateChannel），不做受測驅動。
@@ -69,11 +71,30 @@ describe('TabProvider', () => {
       );
     }
 
-    async function renderHarness(opts: {
-      tabProviderCwd: string;
-      worktreePath: string;
-      projectCwd: string;
-    }) {
+    /** intent 驅動（受測 API 直呼——skill 例外，理由見上方 doc comment）：
+     *  按鈕由真 SessionProvider 的 sessions 派生（≒ session row），點擊呼叫
+     *  NavigationContext 公開 action requestActivateChannel。 */
+    function ActivateDriver() {
+      const { sessions } = useSession();
+      const { requestActivateChannel } = useNavigationActions();
+      return (
+        <>
+          {sessions
+            .filter((s) => s.state !== 'exited')
+            .map((s) => (
+              <button
+                key={s.channelId}
+                type="button"
+                onClick={() => requestActivateChannel(s.channelId)}
+              >
+                {`Activate: ${s.title ?? s.channelId.slice(0, 8)}`}
+              </button>
+            ))}
+        </>
+      );
+    }
+
+    async function renderHarness(opts: { tabProviderCwd: string }) {
       setupMatchMedia(1280); // desktop：pane toolbar / manager 為桌面版佈局
       const { summoner, Wrapper } = createTestWrapper();
       const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -86,7 +107,7 @@ describe('TabProvider', () => {
               <KeyboardShortcutsProvider>
                 <PaneTree />
               </KeyboardShortcutsProvider>
-              <WorktreeSessionList worktreePath={opts.worktreePath} projectCwd={opts.projectCwd} />
+              <ActivateDriver />
               <Probe />
             </TabProviderBridge>
           </CommandPaletteProvider>
@@ -109,12 +130,8 @@ describe('TabProvider', () => {
       });
     }
 
-    it('channel already in tabs → 點真 session row 即 activate＋清除 pending，session 落入 pane', async () => {
-      const { claude, user } = await renderHarness({
-        tabProviderCwd: '/proj',
-        worktreePath: '/proj',
-        projectCwd: '/proj',
-      });
+    it('channel already in tabs → 點 session 的 activate 即 activate＋清除 pending，session 落入 pane', async () => {
+      const { claude, user } = await renderHarness({ tabProviderCwd: '/proj' });
 
       await pushStates(claude, [
         {
@@ -131,7 +148,7 @@ describe('TabProvider', () => {
       expect(activeText()).toBe('ch-1');
       expect(screen.getByTestId('empty-pane')).toBeInTheDocument();
 
-      await user.click(screen.getByLabelText('Session: One'));
+      await user.click(screen.getByRole('button', { name: 'Activate: One' }));
 
       await waitFor(() => {
         expect(activeText()).toBe('ch-1');
@@ -157,13 +174,9 @@ describe('TabProvider', () => {
     });
 
     it('channel NOT yet in tabs（disconnected row）→ pending 等待不清除，session 復活才 activate', async () => {
-      const { claude, user } = await renderHarness({
-        tabProviderCwd: '/proj',
-        worktreePath: '/proj',
-        projectCwd: '/proj',
-      });
+      const { claude, user } = await renderHarness({ tabProviderCwd: '/proj' });
 
-      // disconnected session：sidebar 仍列 row（只濾 exited），但 TERMINAL_STATES
+      // disconnected session：driver 仍列按鈕（只濾 exited），但 TERMINAL_STATES
       // 使 sessions diff 不建 tab —— intent 目標「不在 tabs」的真實場景
       await pushStates(claude, [
         {
@@ -176,7 +189,7 @@ describe('TabProvider', () => {
       ]);
       expect(activeText()).toBe('null');
 
-      await user.click(screen.getByLabelText('Session: Late'));
+      await user.click(screen.getByRole('button', { name: 'Activate: Late' }));
 
       // Decision 10：wait（no clear）——pending 保持、不 activate
       expect(pendingText()).toContain('"channelId":"ch-late"');
@@ -212,11 +225,7 @@ describe('TabProvider', () => {
 
     it('global TabProvider：provider cwd 與 session cwd 不同也照樣 activate（Decision 4 無 cwd guard）', async () => {
       // 全域 TabProvider 掛在 /proj，被點的 sessions 屬於 /other 的 worktree
-      const { claude, user } = await renderHarness({
-        tabProviderCwd: '/proj',
-        worktreePath: '/other/wt',
-        projectCwd: '/other',
-      });
+      const { claude, user } = await renderHarness({ tabProviderCwd: '/proj' });
 
       await pushStates(claude, [
         {
@@ -239,7 +248,7 @@ describe('TabProvider', () => {
       // 首個 session 自動成為 active tab —— 點擊後必須切換才證明 intent 被消費
       expect(activeText()).toBe('ch-a');
 
-      await user.click(screen.getByLabelText('Session: Target'));
+      await user.click(screen.getByRole('button', { name: 'Activate: Target' }));
 
       await waitFor(() => {
         expect(activeText()).toBe('ch-target');

@@ -31,16 +31,32 @@ interface RightPaneProps {
   onCollapse?: () => void;
   /** ⤢ 以 drawer 檢視目前分頁完整內容 */
   onOpenDrawer?: (content: PaneContent) => void;
-  /** ⊞ 把目前分頁升級成獨立 pane（同 cwd） */
+  /** ⊞ 把目前分頁升級成獨立 pane（同 cwd）；rail 內 ⌘⏎ 同義（spec SHALL） */
   onPromote?: (content: PaneContent) => void;
+  /** rail persist 寬（px）；拖把手期間由外層以 local state 覆寫 */
+  width?: number;
+  /** 拖寬把手 pointermove（local 即時反映，不寫 persist） */
+  onWidthDrag?: (width: number) => void;
+  /** 拖寬把手 pointerup（寫 persist）；未提供時不顯示把手 */
+  onWidthCommit?: (width: number) => void;
   initialTab?: RailTab;
   onMention?: (path: string) => void;
 }
 
 /** rail 分頁 → pane descriptor（registry 同型；'spec' 對應 'openspec' leaf） */
-function railTabContent(tab: RailTab, cwd: string): PaneContent {
+export function railTabContent(tab: RailTab, cwd: string): PaneContent {
   const type = tab === 'spec' ? 'openspec' : tab;
   return { type, target: { kind: 'fixed', cwd } };
+}
+
+/** rail 寬 clamp（拖寬把手）：下限 180、上限 560（pane寬-360 的簡化定案） */
+const RAIL_MIN_W = 180;
+const RAIL_MAX_W = 560;
+/** 預設 rail 寬——與 App.css `--rail-w` token 同值（拖曳起點的基準） */
+const RAIL_DEFAULT_W = 218;
+
+function clampRailWidth(width: number): number {
+  return Math.min(RAIL_MAX_W, Math.max(RAIL_MIN_W, width));
 }
 
 const TRIGGER_BASE = cn(
@@ -55,6 +71,9 @@ export function RightPane({
   onCollapse,
   onOpenDrawer,
   onPromote,
+  width,
+  onWidthDrag,
+  onWidthCommit,
   initialTab = 'files',
   onMention,
 }: RightPaneProps): React.JSX.Element {
@@ -71,12 +90,50 @@ export function RightPane({
     setMounted((prev) => (prev.has(next) ? prev : new Set([...prev, next])));
   }
 
+  // ⌘⏎ 升級成 pane（spec SHALL）：焦點在 rail 區內即生效，與 ⊞ 鈕同義
+  function handleKeyDown(e: React.KeyboardEvent): void {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && onPromote) {
+      e.preventDefault();
+      onPromote(railTabContent(active, cwd));
+    }
+  }
+
+  // 左緣拖寬把手（仿 DrawerHost grabber）：move 走 local state、up 才 commit persist
+  function handleGrabberDown(e: React.PointerEvent<HTMLDivElement>): void {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const startX = e.clientX;
+    const startW = width ?? RAIL_DEFAULT_W;
+    let latest = startW;
+    function onMove(ev: PointerEvent): void {
+      latest = clampRailWidth(startW + (startX - ev.clientX));
+      onWidthDrag?.(latest);
+    }
+    function onUp(): void {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      onWidthCommit?.(latest);
+    }
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
   return (
     <Tabs.Root
       value={active}
       onValueChange={handleTabChange}
-      className="flex flex-col h-full bg-surface"
+      onKeyDown={handleKeyDown}
+      className="relative flex flex-col h-full bg-surface"
     >
+      {onWidthCommit && (
+        // resize 把手——6px 熱區＋中央把手條（仿 DrawerHost grabber）
+        <div
+          data-testid="rail-grabber"
+          onPointerDown={handleGrabberDown}
+          className="group absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 flex items-center justify-center z-10"
+        >
+          <span className="w-(--drawer-grab-bar-w) h-11 rounded-full bg-text-dim group-hover:bg-accent" />
+        </div>
+      )}
       <Tabs.List className="flex items-center border-b border-border-subtle">
         {RAIL_TABS.map(({ key, label, icon }) => (
           <Tabs.Trigger key={key} value={key} className={TRIGGER_BASE}>

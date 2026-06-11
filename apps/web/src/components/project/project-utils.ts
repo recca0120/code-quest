@@ -1,6 +1,6 @@
 import type { Project } from '@/contexts/ProjectContext';
 
-export function byLastOpenedDesc(a: Project, b: Project): number {
+function byLastOpenedDesc(a: Project, b: Project): number {
   return a.lastOpenedAt < b.lastOpenedAt ? 1 : -1;
 }
 

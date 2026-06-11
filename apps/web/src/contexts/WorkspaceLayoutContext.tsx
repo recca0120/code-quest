@@ -44,7 +44,11 @@ export function usePaneState(): PaneStateValue {
 // ── Pane actions context ──
 
 interface PaneActionsValue {
-  splitPane: (direction: 'h' | 'v') => void;
+  /**
+   * 分割 pane（預設 focused；paneId 指定目標）並回傳新 leaf id——分割後自動開
+   * picker（handoff「分割（開 picker 選內容）」）需要它。無目標可分割時回 null。
+   */
+  splitPane: (direction: 'h' | 'v', paneId?: string) => string | null;
   splitPaneAndAssign: (direction: 'h' | 'v', sessionId: string, cwd: string | null) => void;
   /** 分割 focused pane 並在新半邊放入任意 content（picker ⌘⏎ 分割開啟） */
   splitPaneAndSetContent: (direction: 'h' | 'v', content: PaneContent) => void;
@@ -162,11 +166,25 @@ export function WorkspaceLayoutProvider({ children }: { children: ReactNode }): 
   }));
 
   const [paneActions] = useState<PaneActionsValue>(() => ({
-    splitPane: (direction) => {
-      updateActiveTab((t) => {
-        const { root: newRoot, newLeafId } = splitNode(t.paneRoot, t.focusedPaneId, direction);
-        return { ...t, paneRoot: newRoot, focusedPaneId: newLeafId ?? t.focusedPaneId };
-      });
+    splitPane: (direction, paneId) => {
+      // 回傳值來自 setState updater 的同步（eager）求值——splitPane 必須是該
+      // 事件裡此 state 的第一個 dispatch（PaneLeafBody 以 paneId 參數取代先
+      // focusPane 再 split 的雙 dispatch）。無法同步求值時回 null（不開 picker）。
+      let result: string | null = null;
+      setWsState((prev) => ({
+        ...prev,
+        workspaceTabs: prev.workspaceTabs.map((t) => {
+          if (t.id !== prev.activeWorkspaceTabId) return t;
+          const { root: newRoot, newLeafId } = splitNode(
+            t.paneRoot,
+            paneId ?? t.focusedPaneId,
+            direction,
+          );
+          result = newLeafId;
+          return { ...t, paneRoot: newRoot, focusedPaneId: newLeafId ?? t.focusedPaneId };
+        }),
+      }));
+      return result;
     },
     splitPaneAndAssign: (direction, sessionId, cwd) => {
       updateActiveTab((t) => {

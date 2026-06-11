@@ -28,10 +28,14 @@ async function fourPanes() {
   const view = await renderWithWorkspace();
   const project = await view.addProject();
   await project.launchSession();
-  // 標準工作組路徑外，手動 split 出 4 panes：split-h ×3（先序鏈）
+  // 標準工作組路徑外，手動 split 出 4 panes：split-h ×3（先序鏈）。
+  // 分割自動開 picker（handoff：分割（開 picker 選內容））——esc 關閉留空 pane
   await view.user.click(screen.getAllByTestId('pane-split-h')[0]!);
+  await view.user.keyboard('{Escape}');
   await view.user.click(screen.getAllByTestId('pane-split-h')[1]!);
+  await view.user.keyboard('{Escape}');
   await view.user.click(screen.getAllByTestId('pane-split-h')[2]!);
+  await view.user.keyboard('{Escape}');
   expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(4);
   return { mm, view };
 }
@@ -129,13 +133,15 @@ describe('min-size 護欄（spec: 最小尺寸護欄；6.0）', () => {
       .mockReturnValue({ width: 500, height: 800 } as DOMRect);
 
     await view.user.click(screen.getByTestId('pane-split-h'));
-    // 分割被拒：仍 1 leaf＋toast 提示
+    // 分割被拒：仍 1 leaf＋toast 提示；min-size guard 拒絕時不自動開 picker
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
     expect(await screen.findByText(/太小無法分割/)).toBeInTheDocument();
+    expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
 
-    // 夠寬放行
+    // 夠寬放行（分割成功 → picker 自動開啟）
     spy.mockReturnValue({ width: 1200, height: 800 } as DOMRect);
     await view.user.click(screen.getByTestId('pane-split-h'));
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
+    expect(screen.getByTestId('pane-picker-miller')).toBeInTheDocument();
   });
 });

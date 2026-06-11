@@ -97,9 +97,9 @@ describe('KeyboardShortcuts (K.2) ⌘W close pane', () => {
   });
 });
 
-// K.3: ⌘\ splits focused pane horizontally
-describe('KeyboardShortcuts (K.3) ⌘\\ split horizontal', () => {
-  it('⌘\\ splits focused pane into two side-by-side panes', async () => {
+// K.3: ⌘D splits focused pane vertically (side-by-side, handoff 定案)
+describe('KeyboardShortcuts (K.3) ⌘D split ⇄', () => {
+  it('⌘D splits focused pane into two side-by-side panes', async () => {
     const user = userEvent.setup();
     let paneType = '';
     let splitDir: string | undefined;
@@ -107,6 +107,54 @@ describe('KeyboardShortcuts (K.3) ⌘\\ split horizontal', () => {
       const { paneRoot } = usePaneState();
       paneType = paneRoot.type;
       if (paneRoot.type === 'split') splitDir = paneRoot.direction;
+      return null;
+    }
+    render(
+      <Wrapper>
+        <Probe />
+        <button type="button" data-testid="focus-target" aria-label="focus target" />
+      </Wrapper>,
+    );
+    await user.click(screen.getByTestId('focus-target'));
+    await user.keyboard('{Meta>}d{/Meta}');
+    expect(paneType).toBe('split');
+    expect(splitDir).toBe('h');
+  });
+});
+
+// K.4: ⌘⇧D splits focused pane horizontally (stacked, handoff 定案)
+describe('KeyboardShortcuts (K.4) ⌘⇧D split ⇵', () => {
+  it('⌘⇧D splits focused pane into two stacked panes', async () => {
+    const user = userEvent.setup();
+    let paneType = '';
+    let splitDir: string | undefined;
+    function Probe() {
+      const { paneRoot } = usePaneState();
+      paneType = paneRoot.type;
+      if (paneRoot.type === 'split') splitDir = paneRoot.direction;
+      return null;
+    }
+    render(
+      <Wrapper>
+        <Probe />
+        <button type="button" data-testid="focus-target" aria-label="focus target" />
+      </Wrapper>,
+    );
+    await user.click(screen.getByTestId('focus-target'));
+    await user.keyboard('{Meta>}{Shift>}D{/Shift}{/Meta}');
+    expect(paneType).toBe('split');
+    expect(splitDir).toBe('v');
+  });
+});
+
+// 舊綁定移除（handoff 定案改 ⌘D 系後 ⌘\/⌘- 不再分割）
+describe('KeyboardShortcuts — 移除 ⌘\\ / ⌘- 分割綁定', () => {
+  it('⌘\\ 與 ⌘- 都不再分割', async () => {
+    const user = userEvent.setup();
+    let paneType = '';
+    function Probe() {
+      const { paneRoot } = usePaneState();
+      paneType = paneRoot.type;
       return null;
     }
     render(
@@ -117,33 +165,9 @@ describe('KeyboardShortcuts (K.3) ⌘\\ split horizontal', () => {
     );
     await user.click(screen.getByTestId('focus-target'));
     await user.keyboard('{Meta>}\\{/Meta}');
-    expect(paneType).toBe('split');
-    expect(splitDir).toBe('h');
-  });
-});
-
-// K.4: ⌘- splits focused pane vertically
-describe('KeyboardShortcuts (K.4) ⌘- split vertical', () => {
-  it('⌘- splits focused pane into two stacked panes', async () => {
-    const user = userEvent.setup();
-    let paneType = '';
-    let splitDir: string | undefined;
-    function Probe() {
-      const { paneRoot } = usePaneState();
-      paneType = paneRoot.type;
-      if (paneRoot.type === 'split') splitDir = paneRoot.direction;
-      return null;
-    }
-    render(
-      <Wrapper>
-        <Probe />
-        <button type="button" data-testid="focus-target" aria-label="focus target" />
-      </Wrapper>,
-    );
-    await user.click(screen.getByTestId('focus-target'));
+    expect(paneType).toBe('leaf');
     await user.keyboard('{Meta>}-{/Meta}');
-    expect(paneType).toBe('split');
-    expect(splitDir).toBe('v');
+    expect(paneType).toBe('leaf');
   });
 });
 

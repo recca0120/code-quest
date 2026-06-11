@@ -12,11 +12,11 @@
 
 ### Requirement: tablet 行為
 
-超出上限的 pane SHALL 收成右側 34px 直立 tab 條（vertical-rl），點擊與目前 pane 交換；直向 SHALL 單 pane＋slide-over（寬 58%，拖到底固定成分割）；拖曳保留。
+超出上限的 pane SHALL 收成右側 34px 直立 tab 條（vertical-rl），點擊把該 pane 帶進視野（可見集合由 focused 衍生）；直向 SHALL 單 pane＋slide-over（寬 58%，拖到底固定成分割）；拖曳保留。
 
-#### Scenario: 直立 tab 條交換
+#### Scenario: 直立 tab 條帶進視野
 - **WHEN** 點直立條中的 pane ③
-- **THEN** ③ 與目前可見 pane 交換（pane tree 結構不變，只換 visible 集合）
+- **THEN** ③ 取得 focus 並帶進視野（可見集合由 focused 衍生；pane tree 結構不變，只換 visible 集合）
 
 ### Requirement: mobile 行為
 

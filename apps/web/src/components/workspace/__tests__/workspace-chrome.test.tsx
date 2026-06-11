@@ -187,6 +187,43 @@ describe('PanePicker 全管線（P2：⌘K／標準工作組）', () => {
   });
 });
 
+describe('分割自動開 picker（handoff：分割（開 picker 選內容））', () => {
+  it('⌘D 分割後自動開 picker；targetPaneId=新 leaf（選 git 落在新 leaf）', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
+    await user.keyboard('{Meta>}d{/Meta}');
+
+    // 分割成功＋picker 自動開啟
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
+    expect(await screen.findByTestId('pane-picker-miller')).toBeInTheDocument();
+
+    // picker 的 target 是新 leaf：選 git 類型卡 → git pane 落在第二個（新）leaf
+    await user.click(screen.getByTestId('picker-type-git'));
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+    expect(within(leaves[1]!).getByRole('region', { name: 'git-pane' })).toBeInTheDocument();
+    // 原 leaf 的 chat 不受影響
+    expect(within(leaves[0]!).getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+  });
+
+  it('pane header 分割鈕（◫）分割後也自動開 picker', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByTestId('pane-split-h'));
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
+    expect(await screen.findByTestId('pane-picker-miller')).toBeInTheDocument();
+
+    // esc 關閉 picker → 新 leaf 維持空 pane
+    await user.keyboard('{Escape}');
+    expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
+    expect(screen.getByTestId('empty-pane')).toBeInTheDocument();
+  });
+});
+
 describe('permission mode pane 邊框派發（6.5；spec: focused 樣式與 permission mode 換色）', () => {
   it('init 帶 plan mode 的 session，其 pane wrapper 取得 data-mode="plan"', async () => {
     const container = createTestContainer();

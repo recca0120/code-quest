@@ -85,20 +85,31 @@ describe('App.css static shape', () => {
 
   describe('T5 — mode → CSS var dispatch', () => {
     const modes = [
-      ['normal', /--color-claude-clay-orange/, '0.2'],
-      ['plan', /--color-info\b/, '0.2'],
-      ['acceptEdits', /--color-text\b/, '0.1'],
-      ['bypassPermissions', /--color-danger/, '0'],
-      ['auto', /--color-danger/, '0'],
+      ['normal', /--color-claude-clay-orange/, '0.2', '45'],
+      ['plan', /--color-info\b/, '0.2', '55'],
+      ['acceptEdits', /--color-text\b/, '0.1', '55'],
+      ['bypassPermissions', /--color-danger/, '0', '55'],
+      ['auto', /--color-danger/, '0', '55'],
     ] as const;
 
-    for (const [mode, accentRef, shadowAlpha] of modes) {
+    for (const [mode, accentRef, shadowAlpha, composerMix] of modes) {
       it(`declares --mode-accent + --mode-shadow-alpha=${shadowAlpha} for data-mode="${mode}"`, () => {
         const block = extractBlock(
           new RegExp(`\\[data-mode="${mode}"\\][^{]*\\{([\\s\\S]*?)\\n\\}`),
         );
         expect(block).toMatch(accentRef);
         expect(block).toMatch(new RegExp(`--mode-shadow-alpha:\\s*${shadowAlpha}\\b`));
+      });
+
+      it(`declares --color-composer-border as ${composerMix}% mode-accent mix for data-mode="${mode}"`, () => {
+        const block = extractBlock(
+          new RegExp(`\\[data-mode="${mode}"\\][^{]*\\{([\\s\\S]*?)\\n\\}`),
+        );
+        expect(block).toMatch(
+          new RegExp(
+            `--color-composer-border:\\s*color-mix\\(in srgb,\\s*var\\(--color-mode-accent\\)\\s*${composerMix}%,\\s*var\\(--color-border\\)\\)`,
+          ),
+        );
       });
     }
   });
@@ -114,9 +125,10 @@ describe('T2 tint consumers use theme tokens (no bg-white*, no hover-tint-*)', (
 });
 
 describe('T1 ChatInputArea uses surface/border tokens', () => {
-  it('uses bg-surface + border-border', () => {
+  it('uses bg-surface + at-rest mode-tinted composer border', () => {
     expect(chatInputAreaSrc).toMatch(/bg-surface\b/);
-    expect(chatInputAreaSrc).toMatch(/border-border\b/);
+    expect(chatInputAreaSrc).toMatch(/border-\(--color-composer-border\)/);
+    expect(chatInputAreaSrc).not.toMatch(/border-border\b/);
     expect(chatInputAreaSrc).not.toMatch(/(bg|border)-chat-input-/);
   });
   it('outer div has data-mode attribute derived from permissionMode', () => {

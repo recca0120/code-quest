@@ -474,13 +474,16 @@ export function PanePicker({
                 {activeSessions.length > 0 && (
                   <>
                     <p className="section-label mb-1">進行中</p>
+                    {/* 整列可點即 Show here（決策 15，design 無獨立鈕）；⏎ 走 activate 同路徑 */}
                     {contentItems.map((item, idx) =>
                       item.kind === 'active' ? (
-                        <div
+                        <button
                           key={item.session.channelId}
+                          type="button"
                           data-testid={`modal-session-item-${item.session.channelId}`}
                           data-active={(col === 2 && sel3 === idx) || undefined}
-                          className={`flex items-center justify-between px-2 py-1.5 rounded-(--radius-row) text-sm ${
+                          onClick={() => activate(item)}
+                          className={`flex items-center px-2 py-1.5 rounded-(--radius-row) text-sm text-left ${
                             col === 2 && sel3 === idx ? 'bg-selected' : 'hover:bg-hover-tint'
                           }`}
                         >
@@ -495,14 +498,7 @@ export function PanePicker({
                               </span>
                             )}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => onShowHere?.(item.session.channelId, targetPaneId)}
-                            className="px-2 py-1 text-xs rounded bg-accent text-selected-text ml-2 shrink-0"
-                          >
-                            Show here
-                          </button>
-                        </div>
+                        </button>
                       ) : null,
                     )}
                   </>

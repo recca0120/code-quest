@@ -3,7 +3,7 @@
  *
  * Fix-1: ⌘T 帶 focused pane 的 cwd
  * Fix-2: Focused pane 有 CSS 視覺指示
- * Fix-3: PaneDivider resize 最小 200px
+ * Fix-3: PaneDivider resize 下限（已同源 pane-min-size；斷言搬至 PaneDivider.test 4.3）
  * Fix-4: 跨 worktree sessions 不被過濾（state 層；顯示層由 panes/manager 承接）
  * Fix-5: RightPane cwd 跟隨 tool pane
  * Fix-6: dragSourceId 用 dataTransfer 避免 race
@@ -13,7 +13,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
 import { Pane } from '@/components/workspace/Pane';
-import { PaneDivider } from '@/components/workspace/PaneDivider';
 import { SocketProvider } from '@/contexts/SocketContext';
 import {
   TabProvider,
@@ -115,38 +114,9 @@ describe('Fix-2: Focused pane has CSS ring indicator', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────
-// Fix-3: PaneDivider 最小 200px
+// Fix-3: PaneDivider 拖曳下限——200px 已改與 split 最小尺寸同源（決策 10），
+// 行為斷言搬至 PaneDivider.test (4.3)（direction-aware MIN_W/MIN_H）。
 // ─────────────────────────────────────────────────────────────────────
-describe('Fix-3: PaneDivider enforces 200px minimum', () => {
-  it('clamps ratio so neither pane is smaller than 200px', () => {
-    const ratios: number[] = [];
-    render(<PaneDivider direction="h" containerSize={800} onRatioChange={(r) => ratios.push(r)} />);
-
-    const divider = screen.getByTestId('pane-divider');
-
-    // Simulate drag that would push ratio below 200/800 = 0.25
-    fireEvent.pointerDown(divider, { clientX: 400, pointerId: 1 });
-    fireEvent.pointerMove(window, { clientX: 50 }); // would give ratio ~0.056
-    fireEvent.pointerUp(window);
-
-    const minRatio = 200 / 800; // 0.25
-    expect(ratios[ratios.length - 1]).toBeGreaterThanOrEqual(minRatio);
-  });
-
-  it('clamps ratio so right pane is not smaller than 200px', () => {
-    const ratios: number[] = [];
-    render(<PaneDivider direction="h" containerSize={800} onRatioChange={(r) => ratios.push(r)} />);
-
-    const divider = screen.getByTestId('pane-divider');
-
-    fireEvent.pointerDown(divider, { clientX: 400, pointerId: 1 });
-    fireEvent.pointerMove(window, { clientX: 750 }); // would give ratio ~0.9375
-    fireEvent.pointerUp(window);
-
-    const maxRatio = (800 - 200) / 800; // 0.75
-    expect(ratios[ratios.length - 1]).toBeLessThanOrEqual(maxRatio);
-  });
-});
 
 // ─────────────────────────────────────────────────────────────────────
 // Fix-4: 跨 worktree sessions 不被過濾（worktreeFilter 已移除；SessionBar 已由 tmux-workspace-ui P1 移除）
@@ -236,6 +206,8 @@ describe('Fix-5: Tool pane content has accessible cwd', () => {
 
 // ─────────────────────────────────────────────────────────────────────
 // Fix-6: DragDrop 用 dataTransfer 避免 race condition
+// （drop 端讀 dataTransfer 由 PaneDragDrop D.5 落點測試覆蓋——
+//   決策 14 後 header 只當 drag source，不再兼任 drop target）
 // ─────────────────────────────────────────────────────────────────────
 describe('Fix-6: PaneHeader drag uses dataTransfer (no module-level state)', () => {
   it('dragstart stores paneId in dataTransfer', () => {
@@ -248,20 +220,5 @@ describe('Fix-6: PaneHeader drag uses dataTransfer (no module-level state)', () 
     const dt = new DataTransfer();
     fireEvent.dragStart(header, { dataTransfer: dt });
     expect(dt.getData('text/plain')).toBe('pane-abc');
-  });
-
-  it('drop reads paneId from dataTransfer, not module state', () => {
-    const swapped: string[] = [];
-
-    render(
-      <Wrapper>
-        <Pane.Toolbar paneId="pane-target" onSwap={(id) => swapped.push(id)} />
-      </Wrapper>,
-    );
-    const header = screen.getByTestId('pane-header');
-    const dt = new DataTransfer();
-    dt.setData('text/plain', 'pane-source');
-    fireEvent.drop(header, { dataTransfer: dt });
-    expect(swapped).toEqual(['pane-source']);
   });
 });

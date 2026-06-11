@@ -20,7 +20,7 @@ function roundedRatio(rng: () => number): number {
 }
 
 function arbContent(rng: () => number, i: number): PaneContent {
-  const pick = Math.floor(rng() * 7);
+  const pick = Math.floor(rng() * 8);
   switch (pick) {
     case 0:
       return { type: 'session', sessionId: `ch-${i}`, cwd: `/repo/wt-${i}` };
@@ -33,6 +33,18 @@ function arbContent(rng: () => number, i: number): PaneContent {
         sessionId: `ch-${i}`,
         cwd: `/repo/wt-${i}`,
         rail: { open: rng() > 0.5, tab: (['files', 'git', 'spec'] as const)[i % 3]! },
+      };
+    case 7:
+      // rail width（rail resize）— roundtrip 必須保留
+      return {
+        type: 'session',
+        sessionId: `ch-${i}`,
+        cwd: `/repo/wt-${i}`,
+        rail: {
+          open: rng() > 0.5,
+          tab: (['files', 'git', 'spec'] as const)[i % 3]!,
+          width: 180 + Math.floor(rng() * 380),
+        },
       };
     case 2:
       return { type: 'git', target: { kind: 'fixed', cwd: `/repo/wt-${i}` } };

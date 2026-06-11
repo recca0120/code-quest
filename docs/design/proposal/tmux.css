@@ -1,0 +1,317 @@
+/* ============================================================
+   tmux 版面探索 — 補充樣式（疊在 proposal/tokens.css 之上）
+   全部使用 token 變數，不寫死顏色
+   ============================================================ */
+
+/* ---------- 頂部 tab bar（每個 tab = 一棵 pane tree；無 session bar） ---------- */
+.tx-tabbar {
+  display: flex; align-items: center; gap: 4px;
+  height: 38px; padding: 0 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tx-tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 12px; border-radius: 8px 8px 0 0;
+  margin-top: 6px; align-self: flex-end; height: 32px;
+  font-size: 12px; color: var(--text-muted);
+  border: 1px solid transparent; border-bottom: none;
+  white-space: nowrap; flex-shrink: 0;
+}
+.tx-tabbar .cq-logo { white-space: nowrap; flex-shrink: 0; }
+.tx-tab.active {
+  background: var(--bg); color: var(--text-bright);
+  border-color: var(--border);
+  position: relative;
+}
+.tx-tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--bg); }
+.tx-tab .no { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-subtle); }
+.tx-tab.active .no { color: var(--accent); font-weight: 700; }
+.tx-tab .busy { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: cq-pulse 1.2s infinite; }
+.tx-tab .x { color: var(--text-subtle); margin-left: 2px; }
+
+/* ---------- pane 群組（chat 附帶 files/git/openspec：同色細條） ---------- */
+.tx-group-a { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 70%, transparent); }
+.tx-group-b { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--info) 70%, transparent); }
+.cq-pane.focused.tx-group-a { box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 70%, transparent), 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
+
+/* ---------- chat pane 內建側欄（版面 B） ---------- */
+.tx-rail { display: flex; min-height: 0; flex: 1; }
+.tx-rail-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.tx-rail-side {
+  width: 218px; flex-shrink: 0;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--surface);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.tx-rail-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); }
+.tx-rail-tab {
+  flex: 1; text-align: center; padding: 7px 0;
+  font-size: 11px; color: var(--text-subtle);
+  border-bottom: 2px solid transparent;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.tx-rail-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); }
+.tx-rail-tab .cnt { font-size: 9px; font-family: "JetBrains Mono", monospace; color: var(--text-subtle); }
+.tx-rail-collapse { margin-left: auto; color: var(--text-subtle); font-size: 11px; padding: 0 8px; }
+
+/* ---------- dock 列（版面 C：chat pane 底部工具 chips） ---------- */
+.tx-dock {
+  display: flex; gap: 6px; align-items: center;
+  padding: 6px 12px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.tx-dock-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 99px;
+  font-size: 11px; color: var(--text-muted);
+  background: var(--bg); border: 1px solid var(--border);
+}
+.tx-dock-chip.active { border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); color: var(--text-bright); background: var(--accent-soft); }
+.tx-dock-chip .badge { font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: var(--accent-strong); }
+.tx-dock-hint { margin-left: auto; font-size: 10px; color: var(--text-dim); }
+
+/* ---------- drawer（完整內容檢視） ---------- */
+.tx-drawer-back { position: absolute; inset: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 45%, transparent); }
+.tx-drawer {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 56%;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-float);
+  display: flex; flex-direction: column;
+  z-index: 31;
+}
+.tx-drawer-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface);
+  font-size: 12px; color: var(--text-muted);
+}
+.tx-drawer-head .ttl { color: var(--text-bright); font-weight: 600; font-family: "JetBrains Mono", monospace; font-size: 12px; }
+.tx-drawer-head .acts { margin-left: auto; display: flex; gap: 6px; }
+.tx-btn {
+  font-size: 11px; padding: 4px 10px; border-radius: 7px;
+  border: 1px solid var(--border); color: var(--text-muted); background: var(--bg);
+  display: flex; align-items: center; gap: 5px;
+}
+.tx-btn.primary { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent-strong); }
+.tx-drawer-grab {
+  position: absolute; left: -3px; top: 0; bottom: 0; width: 6px; cursor: col-resize;
+}
+.tx-drawer-grab::after { content: ""; position: absolute; left: 2px; top: 50%; height: 44px; width: 3px; transform: translateY(-50%); border-radius: 2px; background: var(--text-dim); }
+
+/* ---------- zoom 模式（tmux z） ---------- */
+.tx-zoom-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 14px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  font-size: 11.5px; color: var(--accent-strong);
+}
+
+/* ---------- 拖曳重排 drop zones ---------- */
+.tx-dropzones { position: absolute; inset: 0; z-index: 12; }
+.tx-dz {
+  position: absolute; border: 2px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 10px; background: var(--accent-soft);
+  display: grid; place-items: center;
+  font-size: 11px; color: var(--accent-strong); font-weight: 600;
+}
+.tx-dz.hot { background: color-mix(in srgb, var(--accent) 25%, transparent); border-style: solid; }
+.tx-ghost {
+  position: absolute; z-index: 14;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, var(--border));
+  border-radius: 10px; background: var(--surface);
+  box-shadow: var(--shadow-float);
+  opacity: 0.92; transform: rotate(-1.5deg);
+  overflow: hidden;
+}
+
+/* ---------- divider / resize ---------- */
+.tx-divider-demo { display: flex; align-items: center; gap: 24px; }
+.tx-div-v { width: 6px; height: 120px; border-radius: 3px; position: relative; background: transparent; }
+.tx-div-v::before { content: ""; position: absolute; left: 2.5px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+.tx-div-v.hover { background: var(--accent-soft); }
+.tx-div-v.hover::before { background: var(--accent); width: 2px; left: 2px; }
+.tx-div-v.hover::after { content: "⋮"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--accent); font-size: 13px; }
+
+/* ---------- terminal pane ---------- */
+.tx-term { flex: 1; background: var(--code-block); font-family: "JetBrains Mono", monospace; font-size: 11.5px; line-height: 1.8; padding: 10px 14px; color: var(--text-muted); overflow: hidden; }
+.tx-term .ps { color: var(--success); }
+.tx-term .cmd { color: var(--text-bright); }
+.tx-term .dim { color: var(--text-subtle); }
+
+/* ---------- picker（樹狀 / 兩欄） ---------- */
+.tx-picker {
+  width: 100%; height: 100%;
+  background: var(--surface);
+  display: flex; flex-direction: column;
+  font-family: "Outfit", system-ui, sans-serif;
+  font-size: 13px; color: var(--text); text-align: left;
+}
+.tx-picker-head { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); color: var(--text-subtle); display: flex; gap: 8px; align-items: center; }
+.tx-tree { padding: 8px 10px; overflow: hidden; flex: 1; }
+.tx-node { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 7px; font-size: 12.5px; color: var(--text-muted); }
+.tx-node.active { background: var(--selected); color: var(--text-bright); }
+.tx-node .glyph { width: 15px; text-align: center; color: var(--text-subtle); flex-shrink: 0; }
+.tx-node.active .glyph { color: var(--accent); }
+.tx-node .meta { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text-subtle); display: flex; gap: 8px; }
+.tx-node.lv1 { padding-left: 28px; }
+.tx-node.lv2 { padding-left: 46px; }
+.tx-typegrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 4px 0; }
+.tx-type {
+  border: 1px solid var(--border); border-radius: 9px;
+  padding: 10px 8px; text-align: center;
+  font-size: 11.5px; color: var(--text-muted);
+  background: var(--bg);
+  display: flex; flex-direction: column; gap: 3px; align-items: center;
+}
+.tx-type.active { border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); background: var(--accent-soft); color: var(--text-bright); }
+.tx-type .ico { font-size: 16px; color: var(--text-subtle); }
+.tx-type.active .ico { color: var(--accent); }
+.tx-type .k { font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--text-dim); }
+.tx-cols { display: flex; flex: 1; min-height: 0; }
+.tx-col { flex: 1; min-width: 0; padding: 8px 10px; overflow: hidden; }
+.tx-col + .tx-col { border-left: 1px solid var(--border-subtle); }
+.tx-col-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 4px 10px 6px; }
+
+/* ============================================================
+   RWD — tablet / mobile 降級策略
+   ============================================================ */
+
+/* 邊緣 pane 收納條（tablet：放不下的 pane 收成直立 tab） */
+.tx-edge {
+  width: 34px; flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 4px; align-items: center;
+}
+.tx-edge-tab {
+  writing-mode: vertical-rl;
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 4px; border-radius: 7px;
+  font-size: 10.5px; color: var(--text-muted);
+  background: var(--bg); border: 1px solid var(--border);
+}
+.tx-edge-tab .cq-pane-no { transform: rotate(90deg); }
+
+/* slide-over（tablet 直向：第二 pane 浮層） */
+.tx-slideover {
+  position: absolute; top: 10px; right: 10px; bottom: 10px; width: 58%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-float);
+  display: flex; flex-direction: column; overflow: hidden;
+  z-index: 25;
+}
+
+/* ---------- mobile ---------- */
+.txm-bar {
+  display: flex; align-items: center; gap: 8px;
+  height: 48px; padding: 0 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.txm-tabdrop {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 12px; border-radius: 9px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 13px; color: var(--text-bright); font-weight: 600;
+  min-height: 36px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.txm-dots { display: flex; gap: 5px; margin-left: auto; align-items: center; }
+.txm-dot {
+  width: 22px; height: 22px; border-radius: 7px;
+  display: grid; place-items: center;
+  font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 700;
+  background: var(--surface-hover); color: var(--text-subtle);
+}
+.txm-dot.active { background: var(--accent); color: #fff; }
+.txm-iconbtn {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: grid; place-items: center;
+  color: var(--text-muted); font-size: 16px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+
+/* mobile 底部 dock（44px+ 觸控目標） */
+.txm-dock {
+  display: flex; gap: 6px; align-items: center;
+  padding: 8px 10px calc(8px + 12px);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.txm-dock .tx-dock-chip { min-height: 40px; padding: 8px 13px; font-size: 12px; }
+
+/* mobile bottom sheet（drawer 的手機形態） */
+.txm-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 66%;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -16px 40px rgba(8, 6, 4, 0.55);
+  display: flex; flex-direction: column;
+  z-index: 30; overflow: hidden;
+}
+.txm-grabber { width: 44px; height: 5px; border-radius: 3px; background: var(--text-dim); margin: 8px auto 4px; flex-shrink: 0; }
+.txm-sheet-back { position: absolute; inset: 0; background: color-mix(in srgb, var(--bg) 50%, transparent); z-index: 29; }
+
+/* mobile pane 切換器（卡片牆） */
+.txm-switch {
+  flex: 1; padding: 14px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  align-content: start;
+  background: var(--bg); overflow: hidden;
+}
+.txm-card {
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface);
+  height: 190px; overflow: hidden;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.txm-card.active { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
+.txm-card .preview { flex: 1; overflow: hidden; transform: scale(0.92); transform-origin: top left; pointer-events: none; opacity: 0.85; }
+.txm-card .cap {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 10px; font-size: 11px; color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle); background: var(--surface);
+}
+.txm-card .x { margin-left: auto; color: var(--text-subtle); }
+.txm-new {
+  border: 1.5px dashed var(--border); border-radius: 12px;
+  height: 190px; display: grid; place-items: center;
+  color: var(--text-subtle); font-size: 13px;
+}
+
+/* mobile 精簡狀態列 */
+.txm-status {
+  display: flex; align-items: center; gap: 10px;
+  height: 22px; padding: 0 12px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+  color: var(--text-subtle); flex-shrink: 0;
+}
+
+/* ---------- 標註 ---------- */
+.tx-note {
+  position: absolute; z-index: 40;
+  background: var(--gold); color: #211d15;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 9px; border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  white-space: nowrap;
+}
+.tx-note::before { content: ""; position: absolute; width: 8px; height: 8px; background: inherit; transform: rotate(45deg); }
+.tx-note.pt-b::before { bottom: -4px; left: 18px; }
+.tx-note.pt-t::before { top: -4px; left: 18px; }

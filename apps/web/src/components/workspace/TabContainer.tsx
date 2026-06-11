@@ -35,7 +35,6 @@ interface PendingNewSession {
 }
 
 interface TabContainerProps {
-  onToggleLeft?: () => void;
   pendingNewSession?: PendingNewSession | null;
   onSessionCreated?: () => void;
   onOpenModal?: (paneId?: string) => void;
@@ -45,7 +44,6 @@ interface TabContainerProps {
 }
 
 export const TabContainer: React.FC<TabContainerProps> = memo(function TabContainer({
-  onToggleLeft,
   pendingNewSession,
   onSessionCreated,
   onOpenModal,
@@ -106,12 +104,11 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   // latest handleCreateTab through a ref so ratio drags / tabs ticks never churn it
   const paneEnvironment = useMemo<PaneEnvironment>(
     () => ({
-      onToggleLeft,
       onNewTab: (opts) => handleCreateTabRef.current(opts),
       onOpenModal,
       onNewWorktree,
     }),
-    [onToggleLeft, onOpenModal, onNewWorktree],
+    [onOpenModal, onNewWorktree],
   );
 
   // Global empty state only when the layout itself is the pristine default —

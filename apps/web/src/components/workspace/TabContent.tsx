@@ -6,6 +6,8 @@ export interface TabContentProps extends Pick<TabMeta, 'cwd' | 'mode' | 'branch'
   channelId: string;
   onNewChannel?: (cwd: string) => void;
   rightPane?: React.ReactNode;
+  /** rail 寬（px）→ ChatView rail wrapper 的 inline width（rail resize persist） */
+  railWidth?: number;
 }
 
 /**
@@ -20,6 +22,7 @@ export function TabContent({
   mode,
   onNewChannel,
   rightPane,
+  railWidth,
 }: TabContentProps): React.JSX.Element {
   const { setTabTitle, setTabStatus, setTabPermissionMode } = useTabActions();
   return (
@@ -35,7 +38,7 @@ export function TabContent({
       }}
       onNewChannel={onNewChannel}
     >
-      <ChatView rightPane={rightPane} />
+      <ChatView rightPane={rightPane} railWidth={railWidth} />
     </ChannelProvider>
   );
 }

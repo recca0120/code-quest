@@ -47,7 +47,7 @@ export function ChatInputArea(): React.JSX.Element {
         ref={containerRef}
         data-mode={toPermissionMode(permissionMode)}
         className={cn(
-          'rounded-xl bg-surface border border-border transition-all relative shadow-sm',
+          'rounded-xl bg-surface border border-(--color-composer-border) transition-all relative shadow-sm',
           'focus-within:border-mode-accent',
           'focus-within:shadow-[0_1px_2px_rgba(var(--color-mode-accent-rgb),var(--mode-shadow-alpha,0))]',
         )}

@@ -1,7 +1,7 @@
 /**
  * Phase D bug fixes (pane-tree-named-components §D):
  * - 4.1/4.2 zoom/mobile solo rendering at PaneSplit（修「zoom 不放大」佔位空洞）
- * - 4.4 toolbar DnD swap（修死碼）
+ * - 4.4 DnD swap 走中央落點（決策 14：header 只當 drag source）
  * - 4.6 純 tool-pane layout 不被空狀態 gate 吃掉
  *
  * 慣例（fake-summoner-client skill / layout-sync-pipeline.test.tsx）：
@@ -9,7 +9,8 @@
  * 掛載順序）＋ createFakeSummoner（內建真 createFakeServer）。驅動走真 UI：
  * split 按 pane-split-h、focus 點 pane leaf、zoom 走 KeyboardShortcutsProvider 的
  * ⌘⇧Z。probe 直呼 actions 僅做 arrange（塞 tool-pane content）；DnD 的
- * dataTransfer 假物件是 happy-dom 限制，dragStart/drop 對象維持真 pane-header。
+ * dataTransfer 假物件是 happy-dom 限制，dragStart 對象維持真 pane-header、
+ * drop 對象為中央落點 drop-zone-center（置換唯一入口）。
  */
 import type { PersistedLayout } from '@code-quest/schemas';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -192,8 +193,8 @@ describe('mobile solo rendering (4.2) — focused pane fills the area', () => {
   });
 });
 
-describe('toolbar DnD swap (4.4)', () => {
-  it('拖 pane A 的 header 丟到 pane B 的 header — 兩 leaf content 互換', async () => {
+describe('central drop-zone swap (4.4／決策 14)', () => {
+  it('拖 pane A 的 header 丟到 pane B 的中央落點 — 兩 leaf content 互換', async () => {
     const { container, user, summoner, state, actions } = renderTree();
     // priming：讓真 FilesView 的 fs:browse('/b') 走允許的 root（而非 error 空狀態）
     summoner.filesystem().setRoots(['/b']);
@@ -229,7 +230,9 @@ describe('toolbar DnD swap (4.4)', () => {
       effectAllowed: '',
     };
     fireEvent.dragStart(within(firstLeafEl).getByTestId('pane-header'), { dataTransfer });
-    fireEvent.drop(within(secondLeafEl).getByTestId('pane-header'), { dataTransfer });
+    // dragenter 目標 leaf 浮出五落點，drop 在中央落點＝置換
+    fireEvent.dragEnter(secondLeafEl);
+    fireEvent.drop(within(secondLeafEl).getByTestId('drop-zone-center'), { dataTransfer });
 
     // state 層：content 互換
     const leaves = leavesOf(state().paneRoot);

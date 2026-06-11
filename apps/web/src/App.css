@@ -533,24 +533,28 @@
   --color-mode-accent: var(--color-claude-clay-orange);
   --color-mode-accent-rgb: var(--color-accent-rgb);
   --mode-shadow-alpha: 0.2;
+  --color-composer-border: color-mix(in srgb, var(--color-mode-accent) 45%, var(--color-border));
 }
 
 [data-mode="plan"] {
   --color-mode-accent: var(--color-info);
   --color-mode-accent-rgb: var(--color-info-rgb);
   --mode-shadow-alpha: 0.2;
+  --color-composer-border: color-mix(in srgb, var(--color-mode-accent) 55%, var(--color-border));
 }
 
 [data-mode="acceptEdits"] {
   --color-mode-accent: var(--color-text);
   --color-mode-accent-rgb: var(--color-text-rgb);
   --mode-shadow-alpha: 0.1;
+  --color-composer-border: color-mix(in srgb, var(--color-mode-accent) 55%, var(--color-border));
 }
 
 [data-mode="bypassPermissions"],
 [data-mode="auto"] {
   --color-mode-accent: var(--color-danger);
   --mode-shadow-alpha: 0;
+  --color-composer-border: color-mix(in srgb, var(--color-mode-accent) 55%, var(--color-border));
 }
 
 /* --- Base resets --- */

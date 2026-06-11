@@ -91,9 +91,9 @@ describe('MobileMode (M.2) PaneHeader hides split buttons on mobile', () => {
   });
 });
 
-// M.3: ⌘\ and ⌘- are no-op on mobile
+// M.3: ⌘D and ⌘⇧D are no-op on mobile
 describe('MobileMode (M.3) keyboard split shortcuts no-op on mobile', () => {
-  it('⌘\\ does not split on mobile', async () => {
+  it('⌘D does not split on mobile', async () => {
     mockMobile(true);
     const user = userEvent.setup();
     let paneType = '';
@@ -112,11 +112,11 @@ describe('MobileMode (M.3) keyboard split shortcuts no-op on mobile', () => {
     );
 
     await user.click(screen.getByTestId('focus-target'));
-    await user.keyboard('{Meta>}\\{/Meta}');
+    await user.keyboard('{Meta>}d{/Meta}');
     expect(paneType).toBe('leaf');
   });
 
-  it('⌘- does not split on mobile', async () => {
+  it('⌘⇧D does not split on mobile', async () => {
     mockMobile(true);
     const user = userEvent.setup();
     let paneType = '';
@@ -135,7 +135,7 @@ describe('MobileMode (M.3) keyboard split shortcuts no-op on mobile', () => {
     );
 
     await user.click(screen.getByTestId('focus-target'));
-    await user.keyboard('{Meta>}-{/Meta}');
+    await user.keyboard('{Meta>}{Shift>}D{/Shift}{/Meta}');
     expect(paneType).toBe('leaf');
   });
 });

@@ -153,15 +153,15 @@ function useKeyboardShortcuts(
         return;
       }
 
-      if (!isMobile && e.key === '\\' && !e.altKey && !e.shiftKey) {
+      // ⌘D 垂直分割（左右排）／⌘⇧D 水平分割（上下排）——handoff 定案鍵位。
+      // 分割成功後自動開 picker 選內容（target = 新 leaf）；min-size 拒絕時不開。
+      if (!isMobile && (e.key === 'd' || e.key === 'D') && !e.altKey) {
         e.preventDefault();
-        if (guardSplitMinSize(focusedPaneId, 'h')) splitPane('h');
-        return;
-      }
-
-      if (!isMobile && e.key === '-' && !e.altKey && !e.shiftKey) {
-        e.preventDefault();
-        if (guardSplitMinSize(focusedPaneId, 'v')) splitPane('v');
+        const direction = e.shiftKey ? 'v' : 'h';
+        if (guardSplitMinSize(focusedPaneId, direction)) {
+          const newLeafId = splitPane(direction);
+          if (newLeafId) onOpenPicker?.(newLeafId);
+        }
         return;
       }
 
@@ -250,8 +250,8 @@ function useKeyboardShortcuts(
 /** 狀態列快捷鍵提示（handoff §1）——單一來源：必須與本 provider 的實際綁定同步。 */
 export const WORKSPACE_SHORTCUT_HINTS = [
   { keys: '⌘K', label: 'picker' },
-  { keys: '⌘\\', label: 'split ⇄' },
-  { keys: '⌘-', label: 'split ⇵' },
+  { keys: '⌘D', label: 'split ⇄' },
+  { keys: '⌘⇧D', label: 'split ⇵' },
   { keys: '⌘⇧Z', label: 'zoom' },
   { keys: '⌘⇧M', label: 'sessions' },
   { keys: '⌥1-9', label: 'jump' },

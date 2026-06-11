@@ -11,6 +11,8 @@ export type RailTab = 'files' | 'git' | 'spec';
 export interface RailState {
   open: boolean;
   tab: RailTab;
+  /** rail 拖寬把手的 persist 寬度（px）；缺省走 --rail-w token */
+  width?: number;
 }
 
 export type PaneContent =

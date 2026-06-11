@@ -73,7 +73,10 @@ describe('Phase 1 integration (9.1)', () => {
     expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(sessionLeafId);
 
     // ── Split（真 UI：pane header 的 pane-split-h）→ 2 leaves，focus 移到新空 leaf
+    // 分割自動開 picker（handoff：分割（開 picker 選內容））——此流程驗證分割本身，esc 關閉
     await user.click(screen.getByTestId('pane-split-h'));
+    await screen.findByTestId('pane-picker-miller');
+    await user.keyboard('{Escape}');
     const leaves = screen.getAllByTestId('split-pane-leaf');
     expect(leaves).toHaveLength(2);
     expect(leaves[0]!.dataset.paneId).toBe(sessionLeafId);

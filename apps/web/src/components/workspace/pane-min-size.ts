@@ -1,8 +1,11 @@
 import { toast } from 'sonner';
 
-/** handoff §2：pane 最小 320×160——低於下限拒絕分割並 toast 提示。 */
-const MIN_W = 320;
-const MIN_H = 160;
+/**
+ * handoff §2：pane 最小 320×160——低於下限拒絕分割並 toast 提示。
+ * 同步 App.css token --pane-min-w / --pane-min-h；divider 拖曳 clamp 同源（決策 10）。
+ */
+export const MIN_W = 320;
+export const MIN_H = 160;
 
 /**
  * 以 pane 的實際 DOM 尺寸檢查分割是否會低於最小尺寸。

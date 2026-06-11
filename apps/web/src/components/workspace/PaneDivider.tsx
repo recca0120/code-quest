@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MIN_H, MIN_W } from './pane-min-size';
 
 interface PaneDividerProps {
   direction: 'h' | 'v';
@@ -30,7 +31,8 @@ export function PaneDivider({
     function handleMove(moveEvent: PointerEvent) {
       const currentPos = isHorizontal ? moveEvent.clientX : moveEvent.clientY;
       const delta = currentPos - startPos;
-      const minPx = 200;
+      // 下限與 split 最小尺寸同源（決策 10）：h 向 --pane-min-w、v 向 --pane-min-h
+      const minPx = isHorizontal ? MIN_W : MIN_H;
       const minRatio = totalSize > 0 ? minPx / totalSize : 0.1;
       const maxRatio = totalSize > 0 ? (totalSize - minPx) / totalSize : 0.9;
       // 以拖曳起點的 ratio 起算（非固定 0.5）——連續拖不會跳回 50%

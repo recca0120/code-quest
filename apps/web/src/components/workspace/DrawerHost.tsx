@@ -120,7 +120,7 @@ export function DrawerHost(): React.JSX.Element | null {
         aria-label="close drawer overlay"
         data-testid="drawer-overlay"
         onClick={closeDrawer}
-        className={`absolute inset-0 bg-overlay cursor-default transition-opacity duration-(--dur-drawer) ease-(--ease-out-soft) ${entered ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-bg/45 cursor-default transition-opacity duration-(--dur-drawer) ease-(--ease-out-soft) ${entered ? 'opacity-100' : 'opacity-0'}`}
       />
       <aside
         data-testid="workspace-drawer"

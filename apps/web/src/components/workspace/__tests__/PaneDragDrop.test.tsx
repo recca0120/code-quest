@@ -1,7 +1,10 @@
 /**
- * Pane Drag & Drop D.1–D.2
+ * Pane Drag & Drop D.1/D.3/D.5
+ *
+ * 置換（swap）唯一入口＝中央落點 drop-zone-center（決策 14：pane header 不再兼任
+ * drop target，header 只當 drag source）。
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Pane } from '@/components/workspace/Pane';
@@ -9,7 +12,7 @@ import { PaneTree } from '@/components/workspace/PaneTree';
 import { GitProvider } from '@/contexts/GitContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SocketProvider } from '@/contexts/SocketContext';
-import { TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
+import { type PaneNode, TabProvider, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
 
 function Wrapper({ children }: { children: React.ReactNode }) {
@@ -112,14 +115,38 @@ describe('PaneDragDrop (D.3) ghost drag image', () => {
   });
 });
 
-// D.2: dropping on another header swaps pane contents
-describe('PaneDragDrop (D.2) drop swaps pane contents', () => {
-  it('drop on target pane header calls swapPane', async () => {
-    const swappedPairs: [string, string][] = [];
+/** 先序走訪取 leaf content——swap 驗證用（leaf id 不變、content 互換）。 */
+function leafContents(node: PaneNode): Record<string, PaneNode & { type: 'leaf' }> {
+  if (node.type === 'leaf') return { [node.id]: node };
+  return { ...leafContents(node.first), ...leafContents(node.second) };
+}
 
+/** 兩 leaf 塞不同 git cwd（/a、/b）——content 互換才有可觀察差異。 */
+function primeDistinctContents(
+  actions: ReturnType<typeof usePaneActions>,
+  sourceId: string,
+  targetId: string,
+) {
+  act(() => {
+    actions.setContentInPane(sourceId, { type: 'git', target: { kind: 'fixed', cwd: '/a' } });
+  });
+  act(() => {
+    actions.setContentInPane(targetId, { type: 'git', target: { kind: 'fixed', cwd: '/b' } });
+  });
+}
+
+// 決策 14：header 不再是 drop target——置換統一走中央落點（D.5 center 覆蓋）
+describe('PaneDragDrop pane header is not a drop target (決策 14)', () => {
+  it('drop 在另一個 header 上不觸發置換（content 不互換）', async () => {
+    let state: ReturnType<typeof usePaneState> | null = null;
+    let actions: ReturnType<typeof usePaneActions> | null = null;
+    function Probe() {
+      state = usePaneState();
+      actions = usePaneActions();
+      return null;
+    }
     function Setup() {
       const { splitPane } = usePaneActions();
-
       return (
         <button type="button" onClick={() => splitPane('h')}>
           setup
@@ -127,64 +154,30 @@ describe('PaneDragDrop (D.2) drop swaps pane contents', () => {
       );
     }
 
-    let paneIds = { leftId: '', rightId: '' };
-    const lastPaneIds = () => paneIds;
-
-    function TwoPaneHeaders() {
-      const { paneRoot } = usePaneState();
-      const { swapPane } = usePaneActions();
-
-      if (paneRoot.type !== 'split') return null;
-      const left = paneRoot.first;
-      const right = paneRoot.second;
-      if (!left || !right) return null;
-      paneIds = { leftId: left.id, rightId: right.id };
-
-      return (
-        <>
-          <Pane.Toolbar
-            paneId={left.id}
-            onSwap={(targetId) => {
-              swappedPairs.push([left.id, targetId]);
-              swapPane(left.id, targetId);
-            }}
-          />
-          <Pane.Toolbar
-            paneId={right.id}
-            onSwap={(targetId) => {
-              swappedPairs.push([right.id, targetId]);
-              swapPane(right.id, targetId);
-            }}
-          />
-        </>
-      );
-    }
-
     render(
       <Wrapper>
-        <Setup />
-        <TwoPaneHeaders />
+        <TabProvider>
+          <Setup />
+          <Probe />
+          <PaneTree />
+        </TabProvider>
       </Wrapper>,
     );
-
     await userEvent.click(screen.getByRole('button', { name: 'setup' }));
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+    const sourceId = leaves[0]!.dataset.paneId!;
+    const targetId = leaves[1]!.dataset.paneId!;
+    primeDistinctContents(actions!, sourceId, targetId);
 
     const headers = screen.getAllByTestId('pane-header');
-    expect(headers).toHaveLength(2);
-
-    // Simulate drag from left header to right header using dataTransfer
-    const leftHeader = headers[0]!;
-    const rightHeader = headers[1]!;
     const dt = new DataTransfer();
+    fireEvent.dragStart(headers[0]!, { dataTransfer: dt });
+    fireEvent.drop(headers[1]!, { dataTransfer: dt });
 
-    fireEvent.dragStart(leftHeader, { dataTransfer: dt });
-    // dt.getData returns the paneId set by dragStart handler
-    fireEvent.drop(rightHeader, { dataTransfer: dt });
-
-    // drop 在右 header → 右側的 onSwap 必須收到「被拖來的左側」paneId
-    // （只驗 length 的話，swap 方向錯置也會綠）
-    const probe = lastPaneIds();
-    expect(swappedPairs).toEqual([[probe.rightId, probe.leftId]]);
+    // header 不是落點：content 留在原位
+    const contents = leafContents(state!.paneRoot);
+    expect(contents[sourceId]!.content).toMatchObject({ target: { cwd: '/a' } });
+    expect(contents[targetId]!.content).toMatchObject({ target: { cwd: '/b' } });
   });
 });
 
@@ -265,11 +258,19 @@ describe('PaneDragDrop 五落點（D.5）', () => {
     expect(center).not.toHaveAttribute('data-hot');
   });
 
-  it('drop 中央落點 → 置換（既有 swap 行為，結構不變）', async () => {
+  it('drop 中央落點 → 置換（leaf id 不變、content 互換、結構不變）', async () => {
+    let state: ReturnType<typeof usePaneState> | null = null;
+    let actions: ReturnType<typeof usePaneActions> | null = null;
+    function Probe() {
+      state = usePaneState();
+      actions = usePaneActions();
+      return null;
+    }
     render(
       <Wrapper>
         <TabProvider>
           <Setup />
+          <Probe />
           <PaneTree />
         </TabProvider>
       </Wrapper>,
@@ -277,13 +278,18 @@ describe('PaneDragDrop 五落點（D.5）', () => {
     await userEvent.click(screen.getByRole('button', { name: 'setup' }));
     const leaves = screen.getAllByTestId('split-pane-leaf');
     const sourceId = leaves[0]!.dataset.paneId!;
+    const targetId = leaves[1]!.dataset.paneId!;
+    primeDistinctContents(actions!, sourceId, targetId);
 
-    fireEvent.dragEnter(leaves[1]!);
+    fireEvent.dragEnter(screen.getAllByTestId('split-pane-leaf')[1]!);
     fireEvent.drop(screen.getByTestId('drop-zone-center'), {
       dataTransfer: { getData: () => sourceId },
     });
     // swap：leaf id 不變（content 互換）、結構不變
     const after = screen.getAllByTestId('split-pane-leaf');
-    expect(after.map((l) => l.dataset.paneId)).toEqual(leaves.map((l) => l.dataset.paneId));
+    expect(after.map((l) => l.dataset.paneId)).toEqual([sourceId, targetId]);
+    const contents = leafContents(state!.paneRoot);
+    expect(contents[sourceId]!.content).toMatchObject({ target: { cwd: '/b' } });
+    expect(contents[targetId]!.content).toMatchObject({ target: { cwd: '/a' } });
   });
 });

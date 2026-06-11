@@ -78,3 +78,12 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 - [x] 6.3 [opsx] specs 同步：tablet 斷點 768–1023（repo 體系）、rail drawer 入口＝分頁級 ⤢
 - [x] 6.4 視覺精修：pane 編號徽章（先序、focused=accent）＋focused 殼（pane-focus token＋非 focus dim）、picker 窄視窗單欄退化（lg: 斷點）、drawer 左緣拖寬＋⤢ 全螢幕、dock git count 徽章
 - [x] 6.5 permission mode pane 邊框換色（Config onChange→TabMeta→pane data-mode→CSS dispatch）、files/spec dock count、bottom sheet 三段 snap（grabber 拖放）、⌥1–9 pane jump
+
+## 7. 後續任務（backlog，2026-06-11 design 比對）
+
+- [ ] 7.1 tablet 直向 slide-over（寬 58%，拖到底固定成分割）
+- [ ] 7.2 mobile 專屬頂列（txm-bar：tab 下拉＋pane 編號圓點＋⊞ 切換器）
+- [ ] 7.3 卡片牆強化：preview 縮影＋「＋」新增卡＋取代現行切換版面
+- [ ] 7.4 diff/terminal registry 類型實作（registry 條目已預留）
+- [ ] 7.5 pane 重排 200ms 動效（--dur-base，prefers-reduced-motion 關閉）
+- [ ] 7.6 tool pane header 與共通殼（handoff §2）整併評估

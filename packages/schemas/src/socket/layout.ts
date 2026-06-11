@@ -18,8 +18,15 @@ const persistedPaneContentSchema = z
       channelId: z.string().nullable(),
       cwd: z.string().nullable(),
       // chat 附帶工具（rail/dock）的 per-pane 顯示狀態（tmux-workspace-ui P3）；
-      // optional 演進，缺省由 client 補 { open: true, tab: 'files' }
-      rail: z.object({ open: z.boolean(), tab: z.enum(['files', 'git', 'spec']) }).optional(),
+      // optional 演進，缺省由 client 補 { open: true, tab: 'files' }。
+      // width：rail 拖寬把手的 persist 寬度（px）——缺省走 --rail-w token
+      rail: z
+        .object({
+          open: z.boolean(),
+          tab: z.enum(['files', 'git', 'spec']),
+          width: z.number().optional(),
+        })
+        .optional(),
     }),
     z.object({ type: z.literal('files'), target: paneTargetSchema }),
     z.object({ type: z.literal('git'), target: paneTargetSchema }),

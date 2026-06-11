@@ -161,16 +161,16 @@ describe('Workspace — PanePicker wiring', () => {
     result.claude.prepareInit();
     await project.launchSession();
 
-    // Split to create an empty pane, then open modal via empty pane "New Session"
+    // Split 自動開 picker（handoff：分割（開 picker 選內容）），target = 新空 leaf
     await result.user.click(screen.getAllByTestId('pane-split-h')[0]!);
-    await result.user.click(screen.getByRole('button', { name: 'New Session' }));
+    await screen.findByTestId('pane-picker-miller');
 
-    // Modal has "Active" section — find session items by data-testid, click "Show here"
+    // Modal has "Active" section — find session items by data-testid; row itself is clickable（決策 15）
     const sessionItems = await screen.findAllByTestId(/^modal-session-item-/);
     const sessionItem = sessionItems[0]!;
     const channelId = sessionItem.getAttribute('data-testid')!.replace('modal-session-item-', '');
 
-    await result.user.click(sessionItem.querySelector('button')!);
+    await result.user.click(sessionItem);
 
     // Modal closes
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -188,9 +188,9 @@ describe('Workspace — PanePicker wiring', () => {
     const project = await result.addProject();
     await project.launchSession();
 
-    // Split pane to create an empty second pane, then open modal from it
+    // Split pane → picker 自動開啟，target = 新空 leaf
     await result.user.click(screen.getByTestId('pane-split-h'));
-    await result.user.click(screen.getByRole('button', { name: 'New Session' }));
+    await screen.findByTestId('pane-picker-miller');
 
     // Click the Git tool button in the right panel
     await result.user.click(await screen.findByTestId('picker-type-git'));
@@ -222,9 +222,9 @@ describe('Workspace — worktree listing auto-fetch', () => {
     const project = await result.addProject();
     await project.launchSession();
 
-    // Open pane split and then open modal
+    // Split → picker 自動開啟
     await result.user.click(screen.getByTestId('pane-split-h'));
-    await result.user.click(screen.getByRole('button', { name: 'New Session' }));
+    await screen.findByTestId('pane-picker-miller');
 
     // Modal 中 worktree branch 應出現（形如 "⎇ main"）
     await waitFor(() => {

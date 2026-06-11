@@ -104,6 +104,58 @@ describe('persistedLayoutSchema v2 (contract)', () => {
     expect(leaf.content.rail).toEqual({ open: false, tab: 'git' });
   });
 
+  it('preserves rail width (rail resize persist)', () => {
+    const layout = {
+      version: 2,
+      tabs: [
+        {
+          id: 't1',
+          paneRoot: {
+            type: 'leaf',
+            id: 'p1',
+            content: {
+              type: 'session',
+              channelId: 'ch-1',
+              cwd: '/repo',
+              rail: { open: true, tab: 'files', width: 320 },
+            },
+          },
+        },
+      ],
+      activeTabId: 't1',
+    };
+    const parsed = persistedLayoutSchema.parse(layout);
+    const leaf = parsed.tabs[0]?.paneRoot;
+    if (leaf?.type !== 'leaf' || leaf.content.type !== 'session') throw new Error('shape');
+    expect(leaf.content.rail).toEqual({ open: true, tab: 'files', width: 320 });
+  });
+
+  it('rail without width still parses (optional — backward compatible)', () => {
+    const layout = {
+      version: 2,
+      tabs: [
+        {
+          id: 't1',
+          paneRoot: {
+            type: 'leaf',
+            id: 'p1',
+            content: {
+              type: 'session',
+              channelId: 'ch-1',
+              cwd: '/repo',
+              rail: { open: false, tab: 'git' },
+            },
+          },
+        },
+      ],
+      activeTabId: 't1',
+    };
+    const parsed = persistedLayoutSchema.parse(layout);
+    const leaf = parsed.tabs[0]?.paneRoot;
+    if (leaf?.type !== 'leaf' || leaf.content.type !== 'session') throw new Error('shape');
+    expect(leaf.content.rail).toEqual({ open: false, tab: 'git' });
+  });
+
   it('session leaf without rail still parses (optional — backward compatible)', () => {
     const parsed = persistedLayoutSchema.parse(V2_LAYOUT);
     const first = parsed.tabs[0]?.paneRoot;

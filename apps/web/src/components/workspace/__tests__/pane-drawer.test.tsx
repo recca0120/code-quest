@@ -34,9 +34,10 @@ describe('drawer 單例（spec: 全域單例 drawer）', () => {
     await user.keyboard('{Escape}');
     expect(screen.queryByTestId('workspace-drawer')).not.toBeInTheDocument();
 
-    // 再開 → 遮罩點擊關閉
+    // 再開 → 遮罩點擊關閉；遮罩為 45% 輕遮罩（決策 8：bg-bg/45，非重 overlay token）
     await user.click(screen.getByRole('button', { name: 'open in drawer' }));
     await screen.findByTestId('workspace-drawer');
+    expect(screen.getByTestId('drawer-overlay')).toHaveClass('bg-bg/45');
     await user.click(screen.getByTestId('drawer-overlay'));
     expect(screen.queryByTestId('workspace-drawer')).not.toBeInTheDocument();
   });

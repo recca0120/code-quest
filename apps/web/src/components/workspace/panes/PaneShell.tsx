@@ -11,7 +11,6 @@ export interface PaneToolbarCommonProps {
   onSplitV?: () => void;
   onZoom?: () => void;
   onClose?: () => void;
-  onSwap?: (targetId: string) => void;
 }
 
 /**
