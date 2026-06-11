@@ -6,6 +6,7 @@
  * 全真 pipeline：renderWithWorkspace ＋ FakeGit priming，零自家 mock。
  */
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
+import { segments as s } from '@code-quest/test-kit';
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, onTestFinished } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -183,5 +184,28 @@ describe('PanePicker 全管線（P2：⌘K／標準工作組）', () => {
     // files 與 git pane 都在（rail 內也有 files/git view → 用 getAllBy 不取唯一）
     expect(screen.getAllByRole('region', { name: 'files-pane' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('region', { name: 'git-pane' }).length).toBeGreaterThan(0);
+  });
+});
+
+describe('permission mode pane 邊框派發（6.5；spec: focused 樣式與 permission mode 換色）', () => {
+  it('init 帶 plan mode 的 session，其 pane wrapper 取得 data-mode="plan"', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+    summoner
+      .claude()
+      .prepareInit(
+        s.init('sess-plan', { permissionMode: 'plan' }),
+        s.controlResponse('init', { models: [] }),
+      );
+
+    const view = await renderWithWorkspace({ summoner });
+    const project = await view.addProject();
+    await project.launchSession();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('split-pane-leaf')).toHaveAttribute('data-mode', 'plan');
+    });
   });
 });

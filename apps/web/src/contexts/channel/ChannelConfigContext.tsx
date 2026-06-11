@@ -117,10 +117,13 @@ const INITIAL_CONFIG: ConfigState = {
 export function ChannelConfigProvider({
   initialConfig,
   onNewChannel,
+  onChange,
   children,
 }: {
   initialConfig?: Partial<ConfigState>;
   onNewChannel?: (cwd: string) => void;
+  /** 回報 config 層變更給 shell（permissionMode → TabMeta → pane 殼換色） */
+  onChange?: (update: { permissionMode?: string }) => void;
   children: ReactNode;
 }): React.JSX.Element {
   const channelId = useChannelId();
@@ -134,6 +137,15 @@ export function ChannelConfigProvider({
 
   const onNewChannelRef = useRef(onNewChannel);
   onNewChannelRef.current = onNewChannel;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  // permissionMode 變更回報 shell（pane 殼邊框換色——handoff §2）
+  useEffect(() => {
+    if (configState.permissionMode) {
+      onChangeRef.current?.({ permissionMode: configState.permissionMode });
+    }
+  }, [configState.permissionMode]);
 
   // ── Fetch provider config on mount ──
   useEffect(() => {

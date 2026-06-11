@@ -11,8 +11,9 @@ import {
   type LayoutStore,
   TYPES,
 } from '@code-quest/server/test';
-import { screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it, onTestFinished } from 'vitest';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { setupMatchMedia } from '@/test/fake-match-media';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
 
@@ -106,5 +107,37 @@ describe('rail 升級成 pane（spec: 升級成 pane 與開 drawer）', () => {
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
     // rail 仍在（升級不收合）
     expect(screen.getByRole('region', { name: 'right-pane-body' })).toBeInTheDocument();
+  });
+});
+
+describe('mobile bottom sheet 三段 snap（6.5；spec: drawer 方向）', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('拖 grabber 到頂 snap 100%、拖到底關閉', async () => {
+    setupMatchMedia(375, (q, w) => {
+      if (q === '(max-width: 767px)') return w <= 767;
+      return false;
+    });
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    // mobile 下 rail 自動為 dock？rail 預設展開但 RO 不觸發——⤢ 仍可用
+    await user.click(screen.getByRole('button', { name: 'open in drawer' }));
+    const drawer = await screen.findByTestId('workspace-drawer');
+    expect(drawer.style.height).toBe('66%');
+
+    // 拖到頂（clientY 小 → ratio 高）→ snap 100%
+    const grabber = screen.getByTestId('sheet-grabber');
+    fireEvent.pointerDown(grabber, { pointerId: 1, clientY: 500 });
+    fireEvent.pointerUp(window, { pointerId: 1, clientY: 10 });
+    expect(drawer.style.height).toBe('100%');
+
+    // 拖到底（ratio < 0.33）→ 關閉
+    fireEvent.pointerDown(screen.getByTestId('sheet-grabber'), { pointerId: 2, clientY: 100 });
+    fireEvent.pointerUp(window, { pointerId: 2, clientY: window.innerHeight - 20 });
+    expect(screen.queryByTestId('workspace-drawer')).not.toBeInTheDocument();
   });
 });

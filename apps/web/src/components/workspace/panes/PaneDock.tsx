@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGitActions } from '@/contexts/GitContext';
+import { useOpenspecList } from '@/contexts/OpenspecContext';
 import type { RailTab } from '@/contexts/TabContext';
 import { RAIL_TABS } from '../RightPane.tsx';
 
@@ -16,6 +17,9 @@ export function PaneDock({
 }): React.JSX.Element {
   const { status } = useGitActions();
   const [gitCount, setGitCount] = useState<number | null>(null);
+  // spec count 被動讀（rail 開過 spec 分頁後 store 有資料）——dock 是 rail 的影子
+  const specList = useOpenspecList(cwd ?? '');
+  const specCount = specList && 'changes' in specList ? specList.changes.length : null;
 
   useEffect(() => {
     if (!cwd) return;
@@ -27,6 +31,13 @@ export function PaneDock({
       alive = false;
     };
   }, [cwd, status]);
+
+  // chip count（handoff §3：files·N／git·N／spec·N）
+  const counts: Partial<Record<RailTab, number | null>> = {
+    files: gitCount,
+    git: gitCount,
+    spec: specCount,
+  };
 
   return (
     <div
@@ -43,8 +54,10 @@ export function PaneDock({
         >
           {icon}
           <span>{label}</span>
-          {key === 'git' && gitCount !== null && gitCount > 0 && (
-            <span className="font-mono text-2xs text-accent">{gitCount}</span>
+          {(counts[key] ?? 0) > 0 && (
+            <span data-testid={`pane-dock-count-${key}`} className="font-mono text-2xs text-accent">
+              {counts[key]}
+            </span>
           )}
         </button>
       ))}

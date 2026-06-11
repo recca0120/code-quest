@@ -37,6 +37,8 @@ export {
 export interface TabMeta {
   title?: string;
   tabStatus: SessionStatus;
+  /** channel 的 permission mode（pane 殼邊框換色） */
+  permissionMode?: string;
   cwd?: string;
   /** Owning project root — written at creation (worktree-centric D2). */
   projectCwd?: string;
@@ -69,6 +71,7 @@ interface TabActionsValue {
   setActiveTab: (id: string) => void;
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
+  setTabPermissionMode: (id: string, mode: string) => void;
   createNewTab: (opts?: { cwd?: string; projectCwd?: string; branch?: string }) => {
     channelId: string;
     cwd: string | null;
@@ -155,6 +158,13 @@ export function TabProvider({
         const existing = prev.tabs[id];
         if (!existing) return prev;
         return { ...prev, tabs: { ...prev.tabs, [id]: { ...existing, tabStatus: status } } };
+      });
+    },
+    setTabPermissionMode: (id, mode) => {
+      setState((prev) => {
+        const existing = prev.tabs[id];
+        if (!existing || existing.permissionMode === mode) return prev;
+        return { ...prev, tabs: { ...prev.tabs, [id]: { ...existing, permissionMode: mode } } };
       });
     },
     createNewTab: (opts) => {

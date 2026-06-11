@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   findAncestorSplit,
   firstLeafId,
+  leafIdsInOrder,
   type PaneNode,
   usePaneActions,
   usePaneState,
@@ -79,6 +80,18 @@ function useKeyboardShortcuts(
         if (!overlayOpen) {
           e.preventDefault();
           zoomPane(null);
+          return;
+        }
+      }
+
+      // ⌥1–9：跳到先序第 N 個 pane（handoff 鍵盤協定）。用 e.code——
+      // macOS ⌥+數字會產生特殊字元（¡™£…），e.key 不可靠
+      if (!meta && e.altKey && !e.shiftKey && /^Digit[1-9]$/.test(e.code)) {
+        const leaves = leafIdsInOrder(paneRoot);
+        const target = leaves[Number(e.code.slice(5)) - 1];
+        if (target) {
+          e.preventDefault();
+          focusPane(target);
           return;
         }
       }
@@ -241,6 +254,7 @@ export const WORKSPACE_SHORTCUT_HINTS = [
   { keys: '⌘-', label: 'split ⇵' },
   { keys: '⌘⇧Z', label: 'zoom' },
   { keys: '⌘⇧M', label: 'sessions' },
+  { keys: '⌥1-9', label: 'jump' },
 ] as const;
 
 export function KeyboardShortcutsProvider({

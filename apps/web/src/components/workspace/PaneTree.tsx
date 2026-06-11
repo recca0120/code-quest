@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { leafIdsInOrder, type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
+import {
+  leafIdsInOrder,
+  type PaneNode,
+  usePaneActions,
+  usePaneState,
+  useTabState,
+} from '@/contexts/TabContext';
 import { PaneDivider } from './PaneDivider';
 import { PaneLeafBody } from './panes/PaneLeafBody.tsx';
 import { useMobileMode } from './useMobileMode';
@@ -50,7 +56,14 @@ function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): 
 function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
   const { focusPane } = usePaneActions();
   const { paneRoot, focusedPaneId } = usePaneState();
+  const { tabs } = useTabState();
   const isFocused = focusedPaneId === node.id;
+  // permission mode 派發（handoff §2：plan=info、bypass=danger）——
+  // [data-mode] CSS dispatch 改寫 --color-mode-accent，focused 邊框跟著換色
+  const permissionMode =
+    node.content.type === 'session' && node.content.sessionId
+      ? tabs[node.content.sessionId]?.permissionMode
+      : undefined;
   // 唯一 pane／尚無 focus 時不 dim（dim 只用來區分 focus 對象）
   const isDimmed = !isFocused && focusedPaneId !== null && paneRoot.type === 'split';
   // dragenter/leave 是巢狀冒泡事件——counter 避免子元素間移動時閃爍
@@ -74,6 +87,7 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => setDragDepth(0)}
       data-focused={isFocused || undefined}
+      data-mode={permissionMode}
       style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
       className={`flex flex-1 min-w-0 min-h-0 flex-col rounded-(--pane-radius) border ${
         isFocused

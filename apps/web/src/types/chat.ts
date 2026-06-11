@@ -83,4 +83,6 @@ export type InitOptions = {
 export type ChannelChangeUpdate = {
   title?: string;
   status?: SessionStatus;
+  /** channel 的 permission mode（pane 殼邊框換色用——handoff §2） */
+  permissionMode?: string;
 };

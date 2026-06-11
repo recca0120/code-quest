@@ -155,8 +155,10 @@
   --pane-gap: 6px;
   --pane-radius: 10px;
   --pane-dim-opacity: 0.75;
-  --color-pane-focus: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
-  --color-pane-focus-ring: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  /* 基於 mode-accent：pane wrapper 的 [data-mode] 派發讓 plan=info、bypass=danger
+     自動換 focused 邊框色（normal 的 mode-accent 即 clay accent） */
+  --color-pane-focus: color-mix(in srgb, var(--color-mode-accent) 55%, var(--color-border));
+  --color-pane-focus-ring: color-mix(in srgb, var(--color-mode-accent) 35%, transparent);
   --pane-group-stripe: 3px; /* chat 附帶工具的同色繫帶 */
   --rail-w: 218px; /* chat 內建側欄寬（handoff §3） */
 

@@ -4,6 +4,7 @@ import { GitView } from '@/components/git/GitView';
 import { SpecView } from '@/components/spec/SpecView';
 import { useDrawerActions, useDrawerState } from '@/contexts/DrawerContext';
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
+import { useMobileMode } from './useMobileMode';
 
 function drawerTitle(content: PaneContent): string {
   if ('target' in content && content.target.kind === 'fixed') return content.target.cwd;
@@ -36,13 +37,29 @@ export function DrawerHost(): React.JSX.Element | null {
   const { splitPaneAndSetContent } = usePaneActions();
   const [widthPx, setWidthPx] = useState<number | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const isMobile = useMobileMode();
+  // mobile bottom sheet 三段 snap（handoff §8：0／66／100）——0＝關閉
+  const [sheetSnap, setSheetSnap] = useState<66 | 100>(66);
 
   // 開新 drawer 時重置寬度狀態
   // biome-ignore lint/correctness/useExhaustiveDependencies: 以 drawer 身份重置
   useEffect(() => {
     setWidthPx(null);
     setFullscreen(false);
+    setSheetSnap(66);
   }, [drawer]);
+
+  function handleSheetGrabberDown(e: React.PointerEvent<HTMLDivElement>): void {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    function onUp(ev: PointerEvent): void {
+      window.removeEventListener('pointerup', onUp);
+      const ratio = 1 - ev.clientY / window.innerHeight;
+      if (ratio > 0.83) setSheetSnap(100);
+      else if (ratio > 0.33) setSheetSnap(66);
+      else closeDrawer();
+    }
+    window.addEventListener('pointerup', onUp);
+  }
 
   function handleGrabberDown(e: React.PointerEvent<HTMLDivElement>): void {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -88,13 +105,28 @@ export function DrawerHost(): React.JSX.Element | null {
       <aside
         data-testid="workspace-drawer"
         aria-label="drawer"
-        className="absolute bg-surface shadow-floating flex flex-col max-md:inset-x-0 max-md:bottom-0 max-md:h-2/3 max-md:rounded-t-(--radius-sheet) max-md:border-t md:right-0 md:top-0 md:bottom-0 md:border-l border-border max-md:pb-(--safe-bottom)"
-        style={{
-          // width + minWidth 等價 max(480px, 56%)，且 jsdom 可解析
-          width: fullscreen ? '100%' : widthPx !== null ? `${widthPx}px` : 'var(--drawer-w)',
-          minWidth: fullscreen ? undefined : 'var(--drawer-min-w)',
-        }}
+        className="absolute bg-surface shadow-floating flex flex-col max-md:inset-x-0 max-md:bottom-0 max-md:rounded-t-(--radius-sheet) max-md:border-t md:right-0 md:top-0 md:bottom-0 md:border-l border-border max-md:pb-(--safe-bottom)"
+        style={
+          isMobile
+            ? { height: `${sheetSnap}%` }
+            : {
+                // width + minWidth 等價 max(480px, 56%)，且 jsdom 可解析
+                width: fullscreen ? '100%' : widthPx !== null ? `${widthPx}px` : 'var(--drawer-w)',
+                minWidth: fullscreen ? undefined : 'var(--drawer-min-w)',
+              }
+        }
       >
+        {/* mobile sheet grabber（44×5）：上下拖 snap 0/66/100 */}
+        {isMobile && (
+          // biome-ignore lint/a11y/noStaticElementInteractions: sheet 拖拉把手——esc／遮罩為等效關閉
+          <div
+            data-testid="sheet-grabber"
+            onPointerDown={handleSheetGrabberDown}
+            className="flex justify-center py-1.5 cursor-grab shrink-0"
+          >
+            <span className="w-11 h-1 rounded-full bg-border" />
+          </div>
+        )}
         {/* 左緣拖寬把手（handoff §5：左緣 6px 熱區） */}
         {/* biome-ignore lint/a11y/noStaticElementInteractions: resize 把手——鍵盤等效為 ⤢ 全螢幕切換 */}
         <div

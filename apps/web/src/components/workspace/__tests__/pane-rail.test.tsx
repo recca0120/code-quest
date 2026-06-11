@@ -120,3 +120,26 @@ describe('窄 pane 自動收合（spec: <720px 自動收合）', () => {
     expect(screen.queryByRole('region', { name: 'right-pane-body' })).not.toBeInTheDocument();
   });
 });
+
+describe('dock chips count 徽章（6.5）', () => {
+  it('git 有變更時 files/git chips 顯示 changedFilesCount', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+    summoner.git()!.setChangedFiles([
+      { path: 'a.ts', status: 'M' },
+      { path: 'b.ts', status: 'A' },
+    ] as never);
+
+    const { user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByRole('button', { name: 'collapse rail' }));
+    await waitFor(() => {
+      expect(screen.getByTestId('pane-dock-count-git')).toHaveTextContent('2');
+      expect(screen.getByTestId('pane-dock-count-files')).toHaveTextContent('2');
+    });
+  });
+});

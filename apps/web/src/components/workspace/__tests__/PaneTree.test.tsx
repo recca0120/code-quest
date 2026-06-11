@@ -190,3 +190,20 @@ describe('pane 編號徽章與 focused 殼樣式（6.4）', () => {
     expect(badges[1]).toHaveAttribute('data-focused');
   });
 });
+
+// P6.5: pane-jump（handoff 鍵盤協定：1–9 跳到該編號 pane）
+describe('⌥1–9 pane jump（6.5）', () => {
+  it('⌥2 將 focus 跳到先序第 2 個 pane（⌥+數字用 e.code，避開 macOS 特殊字元）', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    await user.click(screen.getByTestId('pane-split-h'));
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+    await user.click(leaves[0]!);
+    expect(leaves[0]).toHaveAttribute('data-focused');
+
+    await user.keyboard('{Alt>}[Digit2]{/Alt}');
+    expect(leaves[1]).toHaveAttribute('data-focused');
+    await user.keyboard('{Alt>}[Digit1]{/Alt}');
+    expect(leaves[0]).toHaveAttribute('data-focused');
+  });
+});

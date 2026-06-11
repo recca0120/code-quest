@@ -134,6 +134,7 @@ export function ChannelProvider({
             <ChannelConfigProvider
               initialConfig={buildInitialConfig(initOptions)}
               onNewChannel={onNewChannel}
+              onChange={onChange}
             >
               <MessageVisibilityProvider>
                 <ChannelComposeProvider>{content}</ChannelComposeProvider>

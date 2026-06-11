@@ -28,7 +28,7 @@ export function TabContent({
   onNewChannel,
   rightPane,
 }: TabContentProps): React.JSX.Element {
-  const { setTabTitle, setTabStatus } = useTabActions();
+  const { setTabTitle, setTabStatus, setTabPermissionMode } = useTabActions();
   return (
     <ChannelProvider
       channelId={channelId}
@@ -38,6 +38,7 @@ export function TabContent({
       onChange={(update) => {
         if (update.title) setTabTitle(channelId, update.title);
         if (update.status) setTabStatus(channelId, update.status);
+        if (update.permissionMode) setTabPermissionMode(channelId, update.permissionMode);
       }}
       onNewChannel={onNewChannel}
     >

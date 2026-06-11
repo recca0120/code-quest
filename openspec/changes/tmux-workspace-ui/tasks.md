@@ -77,4 +77,4 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 - [x] 6.2 [verify] 全套件（web 2483/server 794/schemas 55）＋knip/biome/tsc 綠；瀏覽器驗收已逐階段（P0-P5）完成
 - [x] 6.3 [opsx] specs 同步：tablet 斷點 768–1023（repo 體系）、rail drawer 入口＝分頁級 ⤢
 - [x] 6.4 視覺精修：pane 編號徽章（先序、focused=accent）＋focused 殼（pane-focus token＋非 focus dim）、picker 窄視窗單欄退化（lg: 斷點）、drawer 左緣拖寬＋⤢ 全螢幕、dock git count 徽章
-- [ ] 6.5 [後續] permission mode pane 邊框換色（需 channel permissionMode 跨 context 暴露）、files/spec dock count、bottom sheet 三段 snap、pane-jump 1–9 鍵
+- [x] 6.5 permission mode pane 邊框換色（Config onChange→TabMeta→pane data-mode→CSS dispatch）、files/spec dock count、bottom sheet 三段 snap（grabber 拖放）、⌥1–9 pane jump
