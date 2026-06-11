@@ -73,7 +73,7 @@ function Toolbar({
       transform: 'rotate(-1.5deg)',
       opacity: '0.92',
       border: '1px solid color-mix(in srgb, var(--color-accent) 60%, var(--color-border))',
-      borderRadius: '10px',
+      borderRadius: 'var(--pane-radius)',
       boxShadow: 'var(--shadow-floating)',
       backgroundColor: 'var(--color-surface)',
       overflow: 'hidden',

@@ -119,7 +119,7 @@
   --color-bright: var(--color-text-bright);
 
   /* radius 階：chip 4 / row 7 / card 10 / composer 14 */
-  --radius-chip: 5px;
+  --radius-chip: 4px;
   --radius-row: 7px;
   --radius-card: 10px;
   --radius-composer: 14px;

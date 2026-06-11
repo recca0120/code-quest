@@ -129,8 +129,8 @@ describe('App.css static shape', () => {
 });
 
 describe('Design alignment audit — token values', () => {
-  it('--radius-chip is 5px (design spec §2 badge corner radius)', () => {
-    expect(themeBlock).toMatch(/--radius-chip:\s*5px/);
+  it('--radius-chip is 4px (App.proposal.css authority)', () => {
+    expect(themeBlock).toMatch(/--radius-chip:\s*4px/);
   });
 
   it('prefers-reduced-motion zeroes --theme-transition', () => {

@@ -89,7 +89,7 @@ describe('PaneDragDrop (D.3) ghost drag image', () => {
     expect(ghost.style.top).toBe('-10000px');
     expect(ghost.style.transform).toBe('rotate(-1.5deg)');
     expect(ghost.style.opacity).toBe('0.92');
-    expect(ghost.style.borderRadius).toBe('10px');
+    expect(ghost.style.borderRadius).toBe('var(--pane-radius)');
     // 半尺寸 cap 330×170
     expect(Number.parseFloat(ghost.style.width)).toBeLessThanOrEqual(330);
     expect(Number.parseFloat(ghost.style.height)).toBeLessThanOrEqual(170);
