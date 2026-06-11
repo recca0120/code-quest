@@ -1,7 +1,50 @@
+import { useState } from 'react';
 import { hasLeaf, type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { PaneDivider } from './PaneDivider';
 import { PaneLeafBody } from './panes/PaneLeafBody.tsx';
 import { useMobileMode } from './useMobileMode';
+
+/** 五落點 overlay（handoff §7）：拖曳 hover 在 leaf 上時浮出
+ * 上/下/左/右（該方向 split 放入）＋中央（置換）。 */
+const DROP_ZONES = [
+  { key: 'top', label: '上', style: { left: '30%', right: '30%', top: 4, height: '24%' } },
+  { key: 'bottom', label: '下', style: { left: '30%', right: '30%', bottom: 4, height: '24%' } },
+  { key: 'left', label: '左', style: { left: 4, top: 4, bottom: 4, width: '26%' } },
+  { key: 'right', label: '右', style: { right: 4, top: 4, bottom: 4, width: '26%' } },
+  { key: 'center', label: '置換', style: { left: '36%', right: '36%', top: '40%', height: '22%' } },
+] as const;
+
+function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): React.JSX.Element {
+  const { movePane, swapPane } = usePaneActions();
+  return (
+    <div className="absolute inset-0 z-raised" data-testid="drop-zones">
+      {DROP_ZONES.map((zone) => (
+        // biome-ignore lint/a11y/noStaticElementInteractions: drop target（dragover/drop）非點擊互動；鍵盤等效＝⌘\ split＋⌥方向鍵
+        <div
+          key={zone.key}
+          data-testid={`drop-zone-${zone.key}`}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const sourceId = e.dataTransfer.getData('text/plain');
+            onHide();
+            if (!sourceId || sourceId === paneId) return;
+            if (zone.key === 'center') {
+              swapPane(sourceId, paneId);
+            } else {
+              movePane(sourceId, paneId, zone.key);
+            }
+          }}
+          style={{ position: 'absolute', ...zone.style }}
+          className="flex items-center justify-center rounded-(--radius-row) border-2 border-dashed border-accent/55 bg-accent/10 text-xs text-accent [&:hover]:border-solid [&:hover]:bg-accent/25"
+        >
+          {zone.label}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** zoom（或 mobile 時的 focus）指定的「唯一顯示」pane id */
 function useSoloPaneId(): string | null {
@@ -12,6 +55,8 @@ function useSoloPaneId(): string | null {
 
 function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
   const { focusPane } = usePaneActions();
+  // dragenter/leave 是巢狀冒泡事件——counter 避免子元素間移動時閃爍
+  const [dragDepth, setDragDepth] = useState(0);
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: pane container handles click-to-focus; tabIndex={-1} is intentional for programmatic focus only
@@ -23,10 +68,18 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') focusPane(node.id);
       }}
-      style={{ flex: 1, overflow: 'hidden' }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        setDragDepth((d) => d + 1);
+      }}
+      onDragLeave={() => setDragDepth((d) => Math.max(0, d - 1))}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={() => setDragDepth(0)}
+      style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
       className="flex flex-1 min-w-0 min-h-0"
     >
       <PaneLeafBody node={node} />
+      {dragDepth > 0 && <DropZones paneId={node.id} onHide={() => setDragDepth(0)} />}
     </div>
   );
 }

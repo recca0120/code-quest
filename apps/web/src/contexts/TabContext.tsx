@@ -18,10 +18,12 @@ export type { PaneContent, PaneNode, RailState, RailTab, WorkspaceTab } from './
 export {
   buildSessionPaneLabels,
   collectSessionsInPaneTree,
+  findAncestorSplit,
   findPaneBySession,
   firstLeafId,
   firstPaneCwd,
   hasLeaf,
+  leafIdsInOrder,
   paneCwd,
 } from './pane-tree.ts';
 export {

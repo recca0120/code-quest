@@ -16,6 +16,7 @@ import { SessionPool } from './panes/SessionPool.tsx';
 import { useCreateSessionInPane } from './useCreateSessionInPane.ts';
 import { WorkspaceStatusline } from './WorkspaceStatusline.tsx';
 import { WorkspaceTabBar } from './WorkspaceTabBar.tsx';
+import { ZoomBar } from './ZoomBar.tsx';
 
 type PaneLeafNode = Extract<PaneNode, { type: 'leaf' }>;
 
@@ -135,6 +136,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   return (
     <div data-testid="tab-container" className="flex flex-col flex-1 min-w-0 overflow-hidden">
       <WorkspaceTabBar onOpenSettings={onOpenSettings} onAddProject={onAddProject} />
+      <ZoomBar />
       <PaneEnvironmentProvider value={paneEnvironment}>
         {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}
         <SessionPool />

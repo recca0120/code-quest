@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  findAncestorSplit,
   firstLeafId,
   type PaneNode,
   usePaneActions,
@@ -39,7 +40,7 @@ function useKeyboardShortcuts(
   onOpenPicker?: (paneId?: string) => void,
 ): void {
   const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
-  const { splitPane, closePane, focusPane, swapPane, zoomPane } = usePaneActions();
+  const { splitPane, closePane, focusPane, swapPane, zoomPane, updateRatio } = usePaneActions();
   const { createSessionInPane } = useCreateSessionInPane();
   const { tabs } = useTabState();
   const isMobile = useMobileMode();
@@ -68,6 +69,42 @@ function useKeyboardShortcuts(
   useEffect(() => {
     function handler(e: KeyboardEvent): void {
       const meta = e.metaKey || e.ctrlKey;
+
+      // esc 解除 zoom（handoff §6）——drawer／dialog 開著時讓位（它們自己吃 esc）
+      if (e.key === 'Escape' && !meta && zoomedPaneId !== null) {
+        const overlayOpen = document.querySelector(
+          '[data-testid="workspace-drawer"], [role="dialog"]',
+        );
+        if (!overlayOpen) {
+          e.preventDefault();
+          zoomPane(null);
+          return;
+        }
+      }
+
+      // ⌥方向鍵：微調 focused pane 邊界（handoff §7；固定步進 5%）
+      if (
+        !meta &&
+        e.altKey &&
+        !e.shiftKey &&
+        focusedPaneId &&
+        (e.key === 'ArrowLeft' ||
+          e.key === 'ArrowRight' ||
+          e.key === 'ArrowUp' ||
+          e.key === 'ArrowDown')
+      ) {
+        const horizontal = e.key === 'ArrowLeft' || e.key === 'ArrowRight';
+        const found = findAncestorSplit(paneRoot, focusedPaneId, horizontal ? 'h' : 'v');
+        if (found) {
+          e.preventDefault();
+          const grow = e.key === 'ArrowRight' || e.key === 'ArrowDown';
+          // first 邊長大＝ratio 增；focused 在 second 時方向反轉
+          const delta = (grow ? 0.05 : -0.05) * (found.paneInFirst ? 1 : -1);
+          updateRatio(found.splitId, Math.min(0.9, Math.max(0.1, found.ratio + delta)));
+          return;
+        }
+      }
+
       if (!meta) return;
 
       if (e.key === 'k' && !e.altKey && !e.shiftKey) {
@@ -192,6 +229,7 @@ function useKeyboardShortcuts(
     zoomedPaneId,
     setSessionManagerOpen,
     onOpenPicker,
+    updateRatio,
   ]);
 }
 

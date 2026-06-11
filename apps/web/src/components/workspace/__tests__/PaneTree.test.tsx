@@ -11,6 +11,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
 import { PaneTree } from '@/components/workspace/PaneTree';
+import { ZoomBar } from '@/components/workspace/ZoomBar';
 import { AppConfigProvider } from '@/contexts/AppInitContext';
 import { GitProvider } from '@/contexts/GitContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
@@ -27,6 +28,7 @@ function renderPaneTree() {
           <GitProvider>
             <TabProvider>
               <KeyboardShortcutsProvider>
+                <ZoomBar />
                 <PaneTree />
               </KeyboardShortcutsProvider>
             </TabProvider>
@@ -110,5 +112,62 @@ describe('SplitPane (2.3) zoom hides other panes', () => {
     expect(leaves).toHaveLength(1);
     expect(leaves[0]!.dataset.paneId).toBe(firstLeafId);
     expect(screen.queryByTestId('pane-divider')).toBeNull();
+  });
+});
+
+// P4: divider 強化（tmux-workspace-ui；spec: divider 操作）
+describe('divider 強化（4.3）', () => {
+  it('雙擊 divider 重設 ratio 為 50%（佈局寬度回半分）', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    // split 後拖一個不對稱 ratio（直接以鍵盤微調製造偏移更穩——⌥→ ×3）
+    await user.click(screen.getByTestId('pane-split-h'));
+    const leaf = screen.getAllByTestId('split-pane-leaf')[0]!;
+    await user.click(leaf);
+    await user.keyboard('{Alt>}{ArrowRight}{ArrowRight}{ArrowRight}{/Alt}');
+    const firstWrapper = () =>
+      screen.getByTestId('split-pane-split').firstElementChild as HTMLElement;
+    expect(firstWrapper().style.width).not.toBe('50%');
+
+    // 雙擊回 50%
+    await user.dblClick(screen.getByTestId('pane-divider'));
+    expect(firstWrapper().style.width).toBe('50%');
+  });
+
+  it('⌥←/⌥→ 微調 focused pane 邊界（固定步進）', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    await user.click(screen.getByTestId('pane-split-h'));
+    const before = (screen.getByTestId('split-pane-split').firstElementChild as HTMLElement).style
+      .width;
+    await user.click(screen.getAllByTestId('split-pane-leaf')[0]!);
+    await user.keyboard('{Alt>}{ArrowRight}{/Alt}');
+    const after = (screen.getByTestId('split-pane-split').firstElementChild as HTMLElement).style
+      .width;
+    expect(after).not.toBe(before);
+    expect(Number.parseFloat(after)).toBeGreaterThan(Number.parseFloat(before));
+  });
+});
+
+// P4: zoom bar（tmux-workspace-ui；spec: zoom bar）
+describe('zoom bar（4.5）', () => {
+  it('zoom 時頂部出現 zoom bar（pane 編號/總數）；esc 解除返回分割', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    await user.click(screen.getByTestId('pane-split-h'));
+    expect(screen.queryByTestId('zoom-bar')).not.toBeInTheDocument();
+
+    // zoom 第二個 pane
+    await user.click(screen.getAllByTestId('split-pane-leaf')[1]!);
+    await user.keyboard('{Meta>}{Shift>}Z{/Shift}{/Meta}');
+    const bar = screen.getByTestId('zoom-bar');
+    expect(bar).toHaveTextContent(/pane ②/);
+    expect(bar).toHaveTextContent(/共 2 個/);
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
+
+    // esc 解除 zoom
+    await user.keyboard('{Escape}');
+    expect(screen.queryByTestId('zoom-bar')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
   });
 });

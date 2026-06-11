@@ -51,13 +51,13 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 
 ## 4. P4 — DnD 五落點 ＋ divider 強化
 
-- [ ] 4.1 [test] 五落點分發：四方向→split+移入（含樹收斂）、中央→swap；min-size 拒絕→落點 disabled
-- [ ] 4.2 [impl] DropZones＋reducer action
-- [ ] 4.3 [test] divider 雙擊回 50%＋存檔；⌥方向鍵微調 focused pane 邊界
-- [ ] 4.4 [impl] divider/keyboard 接線
-- [ ] 4.5 [test] zoom bar 渲染（pane 編號/標題/N）＋esc 解除（優先序：picker/drawer 先吃 esc）
-- [ ] 4.6 [impl] ZoomBar＋esc 協定
-- [ ] 4.7 [verify] Playwright：ghost 視覺、實拖 divider reflow、五落點 hover
+- [x] 4.1 [test] 五落點分發：四方向→split+移入（含樹收斂）、中央→swap（min-size 拒絕→落點 disabled 移至 6.4 與 pane-shell 護欄一併實作——需要 pane 尺寸資訊）
+- [x] 4.2 [impl] DropZones＋reducer action
+- [x] 4.3 [test] divider 雙擊回 50%＋存檔；⌥方向鍵微調 focused pane 邊界
+- [x] 4.4 [impl] divider/keyboard 接線
+- [x] 4.5 [test] zoom bar 渲染（pane 編號/標題/N）＋esc 解除（優先序：picker/drawer 先吃 esc）
+- [x] 4.6 [impl] ZoomBar＋esc 協定
+- [x] 4.7 [verify] Playwright：ghost 視覺、實拖 divider reflow、五落點 hover
 
 ## 5. P5 — RWD
 
@@ -71,6 +71,7 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 
 ## 6. 收尾
 
+- [ ] 6.0 [test+impl] min-size 護欄（pane-shell spec）：splitPane/movePane/⌘⏎ 各路徑以實際 pane 尺寸拒絕＋toast；DnD 落點 disabled 態
 - [ ] 6.1 [verify] handoff 像素級對照（量測值 vs App.proposal.css token）
 - [ ] 6.2 [verify] 全套件＋驗收腳本 10 步全綠；knip/biome/tsc
 - [ ] 6.3 [opsx] specs 同步至實際行為（如有偏差先回 spec 討論）

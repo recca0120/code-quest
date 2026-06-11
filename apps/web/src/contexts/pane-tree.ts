@@ -173,6 +173,69 @@ export function paneCwd(node: PaneNode, paneId: string): string | null {
   return paneCwd(node.first, paneId) ?? paneCwd(node.second, paneId);
 }
 
+export type DropEdge = 'top' | 'bottom' | 'left' | 'right';
+
+/** 先序遍歷的 leaf 清單（pane 編號的單一來源：①②③…） */
+export function leafIdsInOrder(node: PaneNode): string[] {
+  if (node.type === 'leaf') return [node.id];
+  return [...leafIdsInOrder(node.first), ...leafIdsInOrder(node.second)];
+}
+
+/** focused pane 往上最近的指定方向 split（⌥方向鍵微調邊界用）。 */
+export function findAncestorSplit(
+  root: PaneNode,
+  paneId: string,
+  direction: 'h' | 'v',
+): { splitId: string; ratio: number; paneInFirst: boolean } | null {
+  if (root.type === 'leaf') return null;
+  const inFirst = hasLeaf(root.first, paneId);
+  const inSecond = hasLeaf(root.second, paneId);
+  if (!inFirst && !inSecond) return null;
+  const child = inFirst ? root.first : root.second;
+  // 先往深處找（最近的祖先優先）
+  const deeper = findAncestorSplit(child, paneId, direction);
+  if (deeper) return deeper;
+  if (root.direction === direction) {
+    return { splitId: root.id, ratio: root.ratio, paneInFirst: inFirst };
+  }
+  return null;
+}
+
+/** 五落點的方向落點（handoff §7）：source 移除（樹收斂）後，target 於該
+ * 方向 split 放入 source 的 content。中央置換走既有 swap。 */
+export function movePaneTo(
+  root: PaneNode,
+  sourceId: string,
+  targetId: string,
+  edge: DropEdge,
+): PaneNode {
+  if (sourceId === targetId) return root;
+  let sourceLeaf: PaneNode | null = null;
+  mapNode(root, (n) => {
+    if (n.type === 'leaf' && n.id === sourceId) sourceLeaf = n;
+    return n;
+  });
+  if (!sourceLeaf || !hasLeaf(root, targetId)) return root;
+  const removed = closeNode(root, sourceId);
+  if (removed === root && root.type === 'split') return root; // source 不存在
+  const direction: 'h' | 'v' = edge === 'left' || edge === 'right' ? 'h' : 'v';
+  const sourceFirst = edge === 'left' || edge === 'top';
+  const moved: PaneNode = sourceLeaf;
+  return mapNode(removed, (n) => {
+    if (n.type === 'leaf' && n.id === targetId) {
+      return {
+        type: 'split',
+        id: crypto.randomUUID(),
+        direction,
+        ratio: 0.5,
+        first: sourceFirst ? moved : n,
+        second: sourceFirst ? n : moved,
+      };
+    }
+    return n;
+  });
+}
+
 export function findPaneBySession(node: PaneNode, channelId: string): string | null {
   if (node.type === 'leaf') {
     return node.content.type === 'session' && node.content.sessionId === channelId ? node.id : null;

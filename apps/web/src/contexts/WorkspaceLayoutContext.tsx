@@ -7,11 +7,13 @@
 import { createContext, type ReactNode, useContext, useState } from 'react';
 import {
   closeNode,
+  type DropEdge,
   firstLeafId,
   hasLeaf,
   makeLeaf,
   makeWorkspaceTab,
   mapNode,
+  movePaneTo,
   type PaneContent,
   type PaneNode,
   splitNode,
@@ -48,6 +50,8 @@ interface PaneActionsValue {
   splitPaneAndSetContent: (direction: 'h' | 'v', content: PaneContent) => void;
   /** 標準工作組（picker ⌘1）：focused pane 右側建 files/git 直欄，focus 留在原 pane */
   openToolColumn: (cwd: string) => void;
+  /** DnD 方向落點（handoff §7）：source 移到 target 的某一側（樹收斂＋split 放入） */
+  movePane: (sourceId: string, targetId: string, edge: DropEdge) => void;
   closePane: (paneId: string) => void;
   focusPane: (paneId: string) => void;
   updateRatio: (splitNodeId: string, ratio: number) => void;
@@ -187,6 +191,13 @@ export function WorkspaceLayoutProvider({ children }: { children: ReactNode }): 
           ),
           focusedPaneId: newLeafId,
         };
+      });
+    },
+    movePane: (sourceId, targetId, edge) => {
+      updateActiveTab((t) => {
+        const next = movePaneTo(t.paneRoot, sourceId, targetId, edge);
+        if (next === t.paneRoot) return t;
+        return { ...t, paneRoot: next, focusedPaneId: sourceId ? targetId : t.focusedPaneId };
       });
     },
     openToolColumn: (cwd) => {

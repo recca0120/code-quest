@@ -38,11 +38,14 @@ export function PaneDivider({
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: resize 拖曳把手——鍵盤等效為 focused pane 的 ⌥方向鍵微調（KeyboardShortcutsProvider）
     <div
       data-testid="pane-divider"
       data-direction={direction}
       onPointerDown={handlePointerDown}
-      className={`flex-shrink-0 bg-border hover:bg-primary/40 transition-colors cursor-${isHorizontal ? 'col' : 'row'}-resize ${isHorizontal ? 'w-1' : 'h-1'}`}
+      onDoubleClick={() => onRatioChange(0.5)}
+      title="拖曳調整大小・雙擊回 50%"
+      className={`flex-shrink-0 bg-border hover:bg-accent/40 transition-colors cursor-${isHorizontal ? 'col' : 'row'}-resize ${isHorizontal ? 'w-1' : 'h-1'}`}
     />
   );
 }
