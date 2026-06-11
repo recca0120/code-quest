@@ -10,10 +10,10 @@
 
 ## session-history + radix-tab-conversation — 跨檔重複
 - [x] 抽取共用 helper（joinChannel / renderAndJoinB / setupClientWindows）到 channel-history-helpers.tsx
-- [ ] 合併或去除重複的「history 不顯示 Running/Done」測試
+- [x] 合併或去除重複的「history 不顯示 Running/Done」測試 — verified: 非真重複，session-history 測 local_agent (task_notification + auto-complete)，radix-tab 測 sub-agent + local_bash，場景不同保留
 
 ## WorkspaceTopbar.test.tsx — 驗 wiring 不驗行為
-- [ ] 改 3 個測試（Settings / ToggleLeft / Search）驗 UI 效果而非 callback 被呼叫
+- [x] 改 3 個測試（Settings / ToggleLeft / Search）驗 UI 效果而非 callback 被呼叫 — N/A：WorkspaceTopbar 元件及測試已在先前重構中移除
 
 ## WorkspaceLayoutRWD.test.tsx — 重複斷言
 - [x] 合併兩個驗同一 element min-w-0 的測試為一個
@@ -23,4 +23,4 @@
 - [x] ToolBlock.test.tsx：改用 role/text query，不用 CSS class selector
 - [x] ChannelContext.test.tsx：刪 expect(channelId).toBeTruthy()
 - [x] ChannelComposeProvider.test.tsx：修正測試名與 expect 方向相反
-- [ ] RightPane.test.tsx：移除 spy browseEntries 呼叫次數，改驗 UI 不閃爍或不重新請求
+- [x] RightPane.test.tsx：移除 spy browseEntries 呼叫次數，改驗 UI 不閃爍或不重新請求 — 已無 spy/呼叫次數斷言，全部改用 role/region 驗 UI
