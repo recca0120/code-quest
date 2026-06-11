@@ -1,121 +1,107 @@
 /**
  * Group 9: Phase 1 integration test
  * Full flow: workspace tab management + split pane + session assignment + zoom
+ *
+ * 慣例（fake-summoner-client skill）：renderWithWorkspace 全真 provider stack
+ * ＋ createFakeSummoner（真 createFakeServer/container，無 vi.mock），驅動全走真 UI——
+ * session assignment 走 PanePicker（唯一內容入口）、add tab 用 workspace-tab-add、
+ * tab 切換用 click workspace-tab、split 用 pane header 的 pane-split-h、
+ * focus 用 click leaf、zoom/unzoom 用 ⌘⇧Z。
+ * 多層驗證：① UI 反射 ② summoner.sentEvents ③ server ChannelManager。
+ *
+ * 註：真 workspace 的 pristine 狀態（零 session＋預設 layout）渲染全域
+ * EmptyState（無 tab bar）——「1 tab／1 pane」的初始斷言改在首個 session
+ * launch 後驗證（layout chrome 此時才出現）。
  */
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
-import { PaneTree } from '@/components/workspace/PaneTree';
-import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
-import { SocketProvider } from '@/contexts/SocketContext';
-import { TabProvider, usePaneActions, usePaneState, useWorkspaceTab } from '@/contexts/TabContext';
+import { createFakeServer, createTestContainer, TYPES } from '@code-quest/server/test';
+import { screen, within } from '@testing-library/react';
+import { describe, expect, it, onTestFinished } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
-
-vi.mock('@/contexts/GitContext', () => ({
-  useGitState: () => ({ listing: {} }),
-}));
-vi.mock('@/contexts/ProjectContext', () => ({
-  useProjectState: () => ({ activeProjectCwd: null, projects: [] }),
-}));
-
-function Wrapper({ children }: { children: React.ReactNode }) {
-  const summoner = createFakeSummoner();
-  return (
-    <SocketProvider socket={summoner.socket}>
-      <TabProvider>{children}</TabProvider>
-    </SocketProvider>
-  );
-}
+import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('Phase 1 integration (9.1)', () => {
   it('full flow: workspace tab + split pane + session assignment + zoom', async () => {
-    const user = userEvent.setup();
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
 
-    function ControlPanel() {
-      const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
-      const { splitPane, setSessionInPane, focusPane, zoomPane } = usePaneActions();
-      const { workspaceTabs, addWorkspaceTab } = useWorkspaceTab();
+    const { claude, user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
 
-      const leafId = paneRoot.type === 'leaf' ? paneRoot.id : null;
-      const splitSecondId =
-        paneRoot.type === 'split' && paneRoot.second.type === 'leaf' ? paneRoot.second.id : null;
+    // Pristine 狀態：全域 EmptyState（layout chrome 尚未出現）
+    expect(screen.getByText('No open sessions')).toBeInTheDocument();
+    expect(screen.queryByTestId('workspace-tab')).not.toBeInTheDocument();
 
-      function countLeaves(node: typeof paneRoot): number {
-        if (node.type === 'leaf') return 1;
-        return countLeaves(node.first) + countLeaves(node.second);
-      }
+    // ── Session assignment（真 PanePicker 管線：New Session → chat 卡 → session:launch）
+    const channelId = await project.launchSession();
+    expect(channelId).not.toBe('');
+    // ② socket 層：恰好一次真 launch RPC
+    expect(summoner.sentEvents('session:launch')).toHaveLength(1);
+    // ③ server 層：恰好一個 alive channel
+    const manager = container.get<{ getAliveChannels(): unknown[] }>(TYPES.ChannelManager);
+    expect(manager.getAliveChannels()).toHaveLength(1);
 
-      return (
-        <div>
-          <span data-testid="tab-count">{workspaceTabs.length}</span>
-          <span data-testid="pane-count">{countLeaves(paneRoot)}</span>
-          <span data-testid="zoomed-id">{zoomedPaneId ?? 'none'}</span>
-          <span data-testid="focused-id">{focusedPaneId ?? 'none'}</span>
-          <button type="button" onClick={() => addWorkspaceTab()}>
-            new-tab
-          </button>
-          <button type="button" onClick={() => splitPane('h')}>
-            split-h
-          </button>
-          <button
-            type="button"
-            onClick={() => leafId && setSessionInPane(leafId, 'session-abc', null)}
-          >
-            set-session
-          </button>
-          <button type="button" onClick={() => leafId && focusPane(leafId)}>
-            focus-leaf
-          </button>
-          <button type="button" onClick={() => splitSecondId && focusPane(splitSecondId)}>
-            focus-second
-          </button>
-          <button type="button" onClick={() => focusedPaneId && zoomPane(focusedPaneId)}>
-            zoom
-          </button>
-          <button type="button" onClick={() => zoomPane(null)}>
-            unzoom
-          </button>
-        </div>
-      );
-    }
-
-    render(
-      <Wrapper>
-        <ControlPanel />
-        <WorkspaceTabBar />
-        <PaneTree />
-      </Wrapper>,
-    );
-
-    // Initial state: 1 workspace tab, 1 pane
-    expect(screen.getByTestId('tab-count')).toHaveTextContent('1');
-    expect(screen.getByTestId('pane-count')).toHaveTextContent('1');
-    expect(screen.getByTestId('zoomed-id')).toHaveTextContent('none');
-
-    // Add new workspace tab
-    await user.click(screen.getByRole('button', { name: 'new-tab' }));
-    expect(screen.getByTestId('tab-count')).toHaveTextContent('2');
-
-    // Split the pane horizontally
-    await user.click(screen.getByRole('button', { name: 'split-h' }));
-    expect(screen.getByTestId('pane-count')).toHaveTextContent('2');
-
-    // Focus first leaf and set session
-    await user.click(screen.getByRole('button', { name: 'focus-leaf' }));
-    await user.click(screen.getByRole('button', { name: 'set-session' }));
-
-    // Focus second leaf for zoom
-    await user.click(screen.getByRole('button', { name: 'focus-second' }));
-
-    // Zoom focused pane
-    await user.click(screen.getByRole('button', { name: 'zoom' }));
-    expect(screen.getByTestId('zoomed-id')).not.toHaveTextContent('none');
-
-    // Solo rendering: only the zoomed leaf stays in the DOM (fills the root)
+    // Initial layout: 1 workspace tab、1 pane、無 zoom
+    expect(screen.getAllByTestId('workspace-tab')).toHaveLength(1);
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
+    expect(screen.queryByTestId('zoom-bar')).not.toBeInTheDocument();
 
-    // Unzoom
-    await user.click(screen.getByRole('button', { name: 'unzoom' }));
-    expect(screen.getByTestId('zoomed-id')).toHaveTextContent('none');
+    // ① UI 反射 focused leaf 的 content.sessionId：launch 後 leaf 掛上該 channel 的
+    //    chat（content.sessionId 解析到 live session meta 才會渲染 TabContent），
+    //    且該 channel 的 assistant 訊息（真 pipeline）出現在這個 leaf 裡
+    const sessionLeaf = screen.getByTestId('split-pane-leaf');
+    expect(sessionLeaf).toHaveAttribute('data-focused');
+    expect(within(sessionLeaf).getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+    await sendUserMessage(user, 'phase1 ping');
+    await emitAssistantTurn(claude, 'phase1-session-bound');
+    expect(within(sessionLeaf).getByText('phase1-session-bound')).toBeInTheDocument();
+    const sessionLeafId = sessionLeaf.dataset.paneId;
+
+    // ── Add workspace tab（真 UI：workspace-tab-add）→ 新 tab 變 active、帶自己的空 pane
+    await user.click(screen.getByTestId('workspace-tab-add'));
+    const wsTabs = screen.getAllByTestId('workspace-tab');
+    expect(wsTabs).toHaveLength(2);
+    expect(wsTabs[1]).toHaveAttribute('data-active');
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
+    expect(screen.getByTestId('empty-pane')).toBeInTheDocument();
+
+    // ── 切回第一個 workspace tab（真 UI：click tab 本體）→ session leaf 還在
+    await user.click(screen.getAllByTestId('workspace-tab')[0]!);
+    expect(screen.getAllByTestId('workspace-tab')[0]).toHaveAttribute('data-active');
+    expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(sessionLeafId);
+
+    // ── Split（真 UI：pane header 的 pane-split-h）→ 2 leaves，focus 移到新空 leaf
+    await user.click(screen.getByTestId('pane-split-h'));
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+    expect(leaves).toHaveLength(2);
+    expect(leaves[0]!.dataset.paneId).toBe(sessionLeafId);
+    // session 留在原 leaf；新 leaf 是空 pane 且取得 focus
+    expect(within(leaves[0]!).getByText('phase1-session-bound')).toBeInTheDocument();
+    expect(within(leaves[1]!).getByTestId('empty-pane')).toBeInTheDocument();
+    expect(leaves[1]).toHaveAttribute('data-focused');
+    expect(leaves[0]).not.toHaveAttribute('data-focused');
+
+    // ── Focus（真 UI：click leaf）→ focus 回到 session leaf
+    await user.click(leaves[0]!);
+    expect(leaves[0]).toHaveAttribute('data-focused');
+    expect(leaves[1]).not.toHaveAttribute('data-focused');
+
+    // ── Zoom focused pane（⌘⇧Z，KeyboardShortcutsProvider）
+    await user.keyboard('{Meta>}{Shift>}Z{/Shift}{/Meta}');
+    expect(screen.getByTestId('zoom-bar')).toHaveTextContent(/pane ①/);
+    // Solo rendering: only the zoomed leaf stays in the DOM (fills the root)
+    const zoomed = screen.getAllByTestId('split-pane-leaf');
+    expect(zoomed).toHaveLength(1);
+    expect(zoomed[0]!.dataset.paneId).toBe(sessionLeafId);
+    expect(screen.queryByTestId('pane-divider')).not.toBeInTheDocument();
+    // zoomed leaf 仍掛著 session 內容
+    expect(within(zoomed[0]!).getByText('phase1-session-bound')).toBeInTheDocument();
+
+    // ── Unzoom（⌘⇧Z toggle）→ 回到 2-pane 分割
+    await user.keyboard('{Meta>}{Shift>}Z{/Shift}{/Meta}');
+    expect(screen.queryByTestId('zoom-bar')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
   });
 });

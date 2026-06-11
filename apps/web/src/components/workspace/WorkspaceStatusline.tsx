@@ -48,13 +48,19 @@ export function WorkspaceStatusline(): React.JSX.Element {
       )}
       <span className="ml-auto flex items-center gap-3">
         {WORKSPACE_SHORTCUT_HINTS.map((hint) => (
-          <span key={hint.keys} className="hidden sm:inline text-subtle">
+          // md(768) 起才顯桌面快捷鍵提示：640–767 視為 mobile 段
+          <span key={hint.keys} className="hidden md:inline text-subtle">
             <b className="text-muted font-semibold">{hint.keys}</b> {hint.label}
           </span>
         ))}
         {busyCount > 0 && (
           <span data-testid="statusline-busy" className="flex items-center gap-1 text-accent">
-            <span aria-hidden="true" className="size-1.5 rounded-full bg-accent animate-pulse" />
+            {/* 尺寸接 --busy-dot-size＝6px；design 自身 5/6 不一致（statusline 5px、tab 6px），
+                5px 無 scale/token，統一取 6px */}
+            <span
+              aria-hidden="true"
+              className="size-(--busy-dot-size) rounded-full bg-accent animate-busy-pulse"
+            />
             {busyCount} busy
           </span>
         )}

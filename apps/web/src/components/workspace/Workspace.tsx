@@ -11,7 +11,8 @@ import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import {
-  buildSessionPaneLabels,
+  findPaneBySession,
+  leafIdsInOrder,
   TabProvider,
   usePaneActions,
   usePaneState,
@@ -31,6 +32,9 @@ type PanePickerConfig = Omit<
   React.ComponentProps<typeof PanePicker>,
   'onShowHere' | 'onOpenToolPane' | 'onResume' | 'pastSessions'
 >;
+
+/** pane 編號 glyph（與 ZoomBar 同款；超出範圍退 #N） */
+const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 
 function ConnectedPanePicker(props: PanePickerConfig) {
   const { setSessionInPane, setContentInPane, focusPane, splitPaneAndSetContent, openToolColumn } =
@@ -57,12 +61,18 @@ function ConnectedPanePicker(props: PanePickerConfig) {
     });
   }, [props.open, listSessions]);
 
-  const sessionPaneLabels = buildSessionPaneLabels(paneRoot);
+  // 進行中列的 pane 編號（handoff §4）：與 ZoomBar/Pane badge 同源 leafIdsInOrder ①②…
+  const leaves = leafIdsInOrder(paneRoot);
 
-  const enrichedSessions = props.sessions?.map((s) => ({
-    ...s,
-    paneLabel: sessionPaneLabels.get(s.channelId) || undefined,
-  }));
+  const enrichedSessions = props.sessions?.map((s) => {
+    const paneId = findPaneBySession(paneRoot, s.channelId);
+    const idx = paneId ? leaves.indexOf(paneId) : -1;
+    return {
+      ...s,
+      paneLabel:
+        idx >= 0 ? `pane ${idx < CIRCLED.length ? CIRCLED[idx] : `#${idx + 1}`}` : undefined,
+    };
+  });
 
   return (
     <PanePicker

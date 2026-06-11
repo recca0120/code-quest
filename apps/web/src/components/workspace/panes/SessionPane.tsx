@@ -13,6 +13,7 @@ import {
   usePaneActions,
   useTabState,
 } from '@/contexts/TabContext';
+import { PANE_TYPE_REGISTRY } from '../pane-registry';
 import { RightPane } from '../RightPane.tsx';
 import { TabContent } from '../TabContent.tsx';
 import { useWorktreeLookup } from '../useAvailableWorktrees.ts';
@@ -22,6 +23,8 @@ import { PaneShell, type PaneToolbarCommonProps } from './PaneShell.tsx';
 
 /** handoff 定案：新 chat 預設展開側欄 */
 const DEFAULT_RAIL: RailState = { open: true, tab: 'files' };
+/** session pane 的類型 icon ＝ registry 的 chat entry（✦，handoff §2） */
+const CHAT_TYPE_ICON = PANE_TYPE_REGISTRY.find((entry) => entry.key === 'chat')?.icon;
 /** pane 寬低於此值自動收合 rail 成 dock（handoff §3） */
 const RAIL_AUTO_COLLAPSE_PX = 720;
 
@@ -79,7 +82,7 @@ export function SessionPane({
       ? `Last: ${hintWorktree.projectName} ⎇ ${hintWorktree.branch ?? hintWorktree.name}`
       : undefined;
     return (
-      <PaneShell toolbarProps={toolbarProps} scrollable={false}>
+      <PaneShell toolbarProps={{ ...toolbarProps, typeIcon: CHAT_TYPE_ICON }} scrollable={false}>
         <EmptyState
           data-testid="empty-pane"
           icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}
@@ -98,7 +101,12 @@ export function SessionPane({
 
   return (
     <PaneShell
-      toolbarProps={{ ...toolbarProps, branch: meta.branch, title: meta.title }}
+      toolbarProps={{
+        ...toolbarProps,
+        branch: meta.branch,
+        title: meta.title,
+        typeIcon: CHAT_TYPE_ICON,
+      }}
       scrollable={false}
       tools={
         // 單一 pane header（chat-pane-header-unification）：breadcrumb 的按鈕上移
@@ -149,7 +157,11 @@ export function SessionPane({
           />
         </div>
         {!rail.open && meta.cwd && (
-          <PaneDock cwd={meta.cwd} onOpen={(tab) => setRail({ open: true, tab })} />
+          <PaneDock
+            cwd={meta.cwd}
+            activeTab={rail.tab}
+            onOpen={(tab) => setRail({ open: true, tab })}
+          />
         )}
       </div>
     </PaneShell>

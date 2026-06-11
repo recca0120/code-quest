@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn';
 export const Dialog: typeof RadixDialog.Root = RadixDialog.Root;
 export const DialogClose: typeof RadixDialog.Close = RadixDialog.Close;
 
-type DialogSize = 'md' | 'lg' | 'fullscreen';
+type DialogSize = 'md' | 'lg' | 'picker' | 'fullscreen';
 
 interface DialogContentProps {
   children: ReactNode;
@@ -27,6 +27,8 @@ interface DialogContentProps {
 const SIZE_CLASSES: Record<DialogSize, string> = {
   md: 'dialog-viewport p-4',
   lg: 'w-160 dialog-viewport p-4',
+  // PanePicker（handoff §4）：寬 980（<lg 退 560 單欄堆疊）、圓角 14 僅此變體
+  picker: 'w-(--picker-w-sm) lg:w-(--picker-w-lg) dialog-viewport p-4 rounded-(--radius-composer)',
   fullscreen: 'w-screen h-screen max-w-none max-h-none p-0 rounded-none border-0',
 };
 

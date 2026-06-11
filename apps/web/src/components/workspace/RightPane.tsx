@@ -7,6 +7,7 @@ import { SpecView } from '@/components/spec/SpecView';
 import type { PaneContent, RailTab } from '@/contexts/TabContext';
 import { cn } from '@/utils/cn';
 import { tabTrigger } from '../ui/_tokens.ts';
+import { usePaneToolCounts } from './usePaneToolCounts.ts';
 
 interface TabSpec {
   key: RailTab;
@@ -60,6 +61,8 @@ export function RightPane({
   const [uncontrolled, setUncontrolled] = useState<RailTab>(initialTab);
   const active = activeTab ?? uncontrolled;
   const [mounted, setMounted] = useState<ReadonlySet<RailTab>>(() => new Set([active]));
+  // 分頁 count 徽章（handoff §3：files·N／git·N／spec·N）——與 dock chips 同一 hook
+  const counts = usePaneToolCounts(cwd);
 
   function handleTabChange(value: string) {
     const next = value as RailTab;
@@ -74,11 +77,21 @@ export function RightPane({
       onValueChange={handleTabChange}
       className="flex flex-col h-full bg-surface"
     >
-      <Tabs.List className="flex items-center border-b border-border">
+      <Tabs.List className="flex items-center border-b border-border-subtle">
         {RAIL_TABS.map(({ key, label, icon }) => (
           <Tabs.Trigger key={key} value={key} className={TRIGGER_BASE}>
             {icon}
-            <span>{label}</span>
+            <span>
+              {label}
+              {(counts[key] ?? 0) > 0 && (
+                <span
+                  data-testid={`rail-tab-count-${key}`}
+                  className="font-mono text-2xs text-accent"
+                >
+                  ·{counts[key]}
+                </span>
+              )}
+            </span>
           </Tabs.Trigger>
         ))}
         {onOpenDrawer && (

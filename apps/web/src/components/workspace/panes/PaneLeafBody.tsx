@@ -15,7 +15,7 @@ export const PaneLeafBody: React.NamedExoticComponent<{
   node: Extract<PaneNode, { type: 'leaf' }>;
 }> = memo(function PaneLeafBody({ node }) {
   const { paneRoot } = usePaneState();
-  const { splitPane, closePane, focusPane, swapPane } = usePaneActions();
+  const { splitPane, closePane, focusPane, swapPane, zoomPane } = usePaneActions();
 
   const toolbarProps: PaneToolbarCommonProps = {
     paneId: node.id,
@@ -29,6 +29,10 @@ export const PaneLeafBody: React.NamedExoticComponent<{
       if (!guardSplitMinSize(node.id, 'v')) return;
       focusPane(node.id);
       splitPane('v');
+    },
+    onZoom: () => {
+      focusPane(node.id);
+      zoomPane(node.id);
     },
     onClose: () => closePane(node.id),
     onSwap: (sourceId) => swapPane(sourceId, node.id),

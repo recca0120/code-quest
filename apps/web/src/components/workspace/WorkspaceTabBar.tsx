@@ -58,7 +58,9 @@ export function WorkspaceTabBar({
       data-testid="workspace-tab-bar"
       role="tablist"
       aria-label="workspace tabs"
-      className="flex items-center gap-1 px-2 border-b border-border overflow-x-auto bg-surface h-(--tabbar-h) shrink-0"
+      // 底線用 tabbar-hairline-b（inset shadow）+ pb-px 取代 border-b：active tab 的
+      // after 蓋線留在 padding-box 內不被裁切，且 overflow-x-auto 保持 tabs 多時可捲
+      className="flex items-center gap-1 px-2.5 pb-px tabbar-hairline-b overflow-x-auto bg-surface h-(--tabbar-h) shrink-0"
     >
       {/* logo（handoff §1：18px 圓角方塊＋名稱 13px/700） */}
       <span className="flex items-center gap-1.5 mr-2 shrink-0 select-none" aria-hidden="true">
@@ -88,22 +90,24 @@ export function WorkspaceTabBar({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.target === e.currentTarget) switchWorkspaceTab(tab.id);
             }}
-            className={`flex items-center gap-1.5 px-2 text-xs whitespace-nowrap rounded-t-lg h-(--tab-h) self-end border border-b-0 cursor-pointer ${
+            // gap-2(8px) 近似 design 的 7px（無 scale；compact density 下恰為 7px）；
+            // active 的 after = 2px bg-bg 蓋線，接縫蓋掉 bar 底線（design .tx-tab.active::after）
+            className={`flex items-center gap-2 px-3 text-xs whitespace-nowrap rounded-t-lg h-(--tab-h) self-end border border-b-0 cursor-pointer ${
               isActive
-                ? 'bg-bg border-border text-bright'
+                ? 'bg-bg border-border text-bright relative after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-bg'
                 : 'border-transparent text-muted hover:bg-surface-hover'
             }`}
           >
             <span
               aria-hidden="true"
-              className={`font-mono text-2xs ${isActive ? 'text-accent' : 'text-subtle'}`}
+              className={`font-mono text-2xs ${isActive ? 'text-accent font-bold' : 'text-subtle'}`}
             >
               {index + 1}
             </span>
             {isBusy && (
               <span
                 aria-hidden="true"
-                className="size-1.5 rounded-full bg-accent animate-pulse"
+                className="size-(--busy-dot-size) rounded-full bg-accent animate-busy-pulse"
                 data-testid="workspace-tab-busy-dot"
               />
             )}
@@ -149,7 +153,7 @@ export function WorkspaceTabBar({
                 e.stopPropagation();
                 removeWorkspaceTab(tab.id);
               }}
-              className="ml-1 opacity-60 hover:opacity-100"
+              className="ml-0.5 text-subtle hover:text-text"
             >
               ×
             </button>
@@ -175,7 +179,7 @@ export function WorkspaceTabBar({
       </button>
       <span
         aria-hidden="true"
-        className="font-mono text-2xs text-subtle border border-border rounded px-1 py-0.5"
+        className="font-mono text-2xs text-muted bg-bg border border-border rounded px-1.5 py-0.5"
         title="Pane picker (⌘K)"
       >
         ⌘K

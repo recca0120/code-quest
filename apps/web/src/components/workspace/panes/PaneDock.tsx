@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useGitActions } from '@/contexts/GitContext';
-import { useOpenspecList } from '@/contexts/OpenspecContext';
 import type { RailTab } from '@/contexts/TabContext';
+import { cn } from '@/utils/cn';
 import { RAIL_TABS } from '../RightPane.tsx';
+import { usePaneToolCounts } from '../usePaneToolCounts.ts';
 
 /**
  * Dock chips（handoff §3：rail 收合態）——chat 底部一列 pill，與 rail
@@ -11,33 +10,15 @@ import { RAIL_TABS } from '../RightPane.tsx';
 export function PaneDock({
   cwd,
   onOpen,
+  activeTab,
 }: {
   cwd?: string;
   onOpen: (tab: RailTab) => void;
+  /** rail 收合前最後停留的分頁——對應 chip 顯示 active 態（handoff §3） */
+  activeTab?: RailTab;
 }): React.JSX.Element {
-  const { status } = useGitActions();
-  const [gitCount, setGitCount] = useState<number | null>(null);
-  // spec count 被動讀（rail 開過 spec 分頁後 store 有資料）——dock 是 rail 的影子
-  const specList = useOpenspecList(cwd ?? '');
-  const specCount = specList && 'changes' in specList ? specList.changes.length : null;
-
-  useEffect(() => {
-    if (!cwd) return;
-    let alive = true;
-    void status(cwd).then((res) => {
-      if (alive && 'changedFilesCount' in res) setGitCount(res.changedFilesCount);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [cwd, status]);
-
-  // chip count（handoff §3：files·N／git·N／spec·N）
-  const counts: Partial<Record<RailTab, number | null>> = {
-    files: gitCount,
-    git: gitCount,
-    spec: specCount,
-  };
+  // chip count（handoff §3：files·N／git·N／spec·N）——與 rail 分頁同一 hook
+  const counts = usePaneToolCounts(cwd);
 
   return (
     <div
@@ -50,7 +31,12 @@ export function PaneDock({
           type="button"
           data-testid={`pane-dock-chip-${key}`}
           onClick={() => onOpen(key)}
-          className="flex items-center gap-1 px-2.5 text-xs rounded-full border border-border hover:bg-hover-tint h-(--dock-chip-h)"
+          className={cn(
+            'flex items-center gap-1 px-2.5 text-2xs rounded-full border h-(--dock-chip-h)',
+            key === activeTab
+              ? 'bg-accent-soft border-accent text-bright'
+              : 'border-border hover:bg-hover-tint',
+          )}
         >
           {icon}
           <span>{label}</span>
@@ -61,8 +47,9 @@ export function PaneDock({
           )}
         </button>
       ))}
-      <span className="ml-auto font-mono text-2xs text-dim whitespace-nowrap hidden sm:inline">
-        點 chip 展開側欄
+      <span className="ml-auto font-mono text-2xs text-dim whitespace-nowrap">
+        <span className="max-md:hidden">點 chip 展開側欄</span>
+        <span className="md:hidden">左右滑切 pane</span>
       </span>
     </div>
   );

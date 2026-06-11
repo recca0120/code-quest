@@ -4,11 +4,18 @@ import { GitView } from '@/components/git/GitView';
 import { SpecView } from '@/components/spec/SpecView';
 import { useDrawerActions, useDrawerState } from '@/contexts/DrawerContext';
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
+import { PANE_TYPE_REGISTRY } from './pane-registry';
 import { useMobileMode } from './useMobileMode';
 
 function drawerTitle(content: PaneContent): string {
   if ('target' in content && content.target.kind === 'fixed') return content.target.cwd;
   return content.type;
+}
+
+/** 類型 icon（handoff §5 header）：content.type → registry（session 走 chat 鍵） */
+function drawerIcon(content: PaneContent): string | null {
+  const key = content.type === 'session' ? 'chat' : content.type;
+  return PANE_TYPE_REGISTRY.find((entry) => entry.key === key)?.icon ?? null;
 }
 
 function renderDrawerBody(content: PaneContent): React.ReactNode {
@@ -40,13 +47,26 @@ export function DrawerHost(): React.JSX.Element | null {
   const isMobile = useMobileMode();
   // mobile bottom sheet 三段 snap（handoff §8：0／66／100）——0＝關閉
   const [sheetSnap, setSheetSnap] = useState<66 | 100>(66);
+  // 滑入動效：初掛 translate-x-full（mobile translate-y-full）→ 0，遮罩 fade
+  const [entered, setEntered] = useState(false);
 
-  // 開新 drawer 時重置寬度狀態
+  // 開新 drawer 時重置寬度狀態，並起動滑入 transition
   // biome-ignore lint/correctness/useExhaustiveDependencies: 以 drawer 身份重置
   useEffect(() => {
     setWidthPx(null);
     setFullscreen(false);
     setSheetSnap(66);
+    setEntered(false);
+    if (!drawer) return;
+    // 兩拍 rAF：先讓初掛 translate 進到樣式計算，下一拍翻轉觸發 transition
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setEntered(true));
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
   }, [drawer]);
 
   function handleSheetGrabberDown(e: React.PointerEvent<HTMLDivElement>): void {
@@ -100,12 +120,12 @@ export function DrawerHost(): React.JSX.Element | null {
         aria-label="close drawer overlay"
         data-testid="drawer-overlay"
         onClick={closeDrawer}
-        className="absolute inset-0 bg-overlay cursor-default"
+        className={`absolute inset-0 bg-overlay cursor-default transition-opacity duration-(--dur-drawer) ease-(--ease-out-soft) ${entered ? 'opacity-100' : 'opacity-0'}`}
       />
       <aside
         data-testid="workspace-drawer"
         aria-label="drawer"
-        className="absolute bg-surface shadow-floating flex flex-col max-md:inset-x-0 max-md:bottom-0 max-md:rounded-t-(--radius-sheet) max-md:border-t md:right-0 md:top-0 md:bottom-0 md:border-l border-border max-md:pb-(--safe-bottom)"
+        className={`absolute bg-bg shadow-floating flex flex-col max-md:inset-x-0 max-md:bottom-0 max-md:rounded-t-(--radius-sheet) max-md:border-t md:right-0 md:top-0 md:bottom-0 md:border-l border-border max-md:pb-(--safe-bottom) transition-transform duration-(--dur-drawer) ease-(--ease-out-soft) ${entered ? 'translate-x-0 translate-y-0' : 'max-md:translate-y-full md:translate-x-full'}`}
         style={
           isMobile
             ? { height: `${sheetSnap}%` }
@@ -124,28 +144,40 @@ export function DrawerHost(): React.JSX.Element | null {
             onPointerDown={handleSheetGrabberDown}
             className="flex justify-center py-1.5 cursor-grab shrink-0"
           >
-            <span className="w-11 h-1 rounded-full bg-border" />
+            <span className="w-11 h-(--sheet-grabber-h) rounded-full bg-text-dim" />
           </div>
         )}
-        {/* 左緣拖寬把手（handoff §5：左緣 6px 熱區） */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: resize 把手——鍵盤等效為 ⤢ 全螢幕切換 */}
-        <div
-          data-testid="drawer-grabber"
-          onPointerDown={handleGrabberDown}
-          className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40"
-        />
-        <header className="flex items-center gap-2 px-4 h-10 border-b border-border shrink-0">
+        {/* 左緣拖寬把手（handoff §5：左緣 6px 熱區＋中央 44px 把手條）——mobile sheet 不提供 */}
+        {!isMobile && (
+          // biome-ignore lint/a11y/noStaticElementInteractions: resize 把手——鍵盤等效為 ⤢ 全螢幕切換
+          <div
+            data-testid="drawer-grabber"
+            onPointerDown={handleGrabberDown}
+            className="group absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 flex items-center justify-center"
+          >
+            <span className="w-(--drawer-grab-bar-w) h-11 rounded-full bg-text-dim group-hover:bg-accent" />
+          </div>
+        )}
+        <header className="flex items-center gap-2 px-4 h-10 border-b border-border-subtle bg-surface shrink-0">
+          {drawerIcon(drawer.content) && (
+            <span aria-hidden="true" className="text-dim">
+              {drawerIcon(drawer.content)}
+            </span>
+          )}
           <span className="font-mono text-xs font-semibold truncate">
             {drawerTitle(drawer.content)}
           </span>
+          {/* diffstat（handoff §5）：資料管線尚未提供 diff 統計——有資料後補在標題右側 */}
           <span className="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePin}
-              className="px-2 py-1 text-xs rounded bg-accent text-selected-text"
-            >
-              ⊞ 釘選成 pane
-            </button>
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={handlePin}
+                className="px-2 py-1 text-xs rounded-(--radius-row) bg-accent-soft border border-accent/45 text-accent"
+              >
+                ⊞ 釘選成 pane
+              </button>
+            )}
             <button
               type="button"
               aria-label="toggle drawer fullscreen"
@@ -167,7 +199,9 @@ export function DrawerHost(): React.JSX.Element | null {
         </header>
         <div className="flex-1 min-h-0 overflow-auto">{renderDrawerBody(drawer.content)}</div>
         <footer className="px-4 py-1.5 border-t border-border-subtle font-mono text-2xs text-dim shrink-0">
-          esc 關閉／拖左緣調寬度／釘選後成為 pane tree 的新 leaf
+          {isMobile
+            ? '上拉全螢幕／下拉關閉'
+            : 'esc 關閉／拖左緣調寬度／釘選後成為 pane tree 的新 leaf'}
         </footer>
       </aside>
     </div>

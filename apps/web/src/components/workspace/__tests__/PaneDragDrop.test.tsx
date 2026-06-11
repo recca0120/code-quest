@@ -3,7 +3,7 @@
  */
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Pane } from '@/components/workspace/Pane';
 import { PaneTree } from '@/components/workspace/PaneTree';
 import { GitProvider } from '@/contexts/GitContext';
@@ -58,6 +58,57 @@ describe('PaneDragDrop (D.1) pane header drag indicator', () => {
     expect(header).toHaveAttribute('data-dragging');
     fireEvent.dragEnd(header);
     expect(header).not.toHaveAttribute('data-dragging');
+  });
+});
+
+// D.3: ghost 縮影（handoff §7）——dragstart 以 pane clone 設 setDragImage
+describe('PaneDragDrop (D.3) ghost drag image', () => {
+  it('dragstart clone 最近的 [data-pane-id] 當 ghost（-1.5°/0.92/offscreen）；dragend 移除節點', () => {
+    render(
+      <Wrapper>
+        <div data-pane-id="p1">
+          <Pane.Toolbar paneId="p1" />
+        </div>
+      </Wrapper>,
+    );
+    const header = screen.getByTestId('pane-header');
+    const setDragImage = vi.fn();
+    fireEvent.dragStart(header, {
+      dataTransfer: { setData: vi.fn(), setDragImage, effectAllowed: '' },
+    });
+
+    expect(setDragImage).toHaveBeenCalledTimes(1);
+    const ghost = setDragImage.mock.calls[0]![0] as HTMLElement;
+    // clone 自 pane 殼、插入 DOM（setDragImage 來源需在 DOM 內）但置 offscreen
+    expect(document.body.contains(ghost)).toBe(true);
+    expect(ghost.getAttribute('data-pane-id')).toBe('p1');
+    expect(ghost.style.position).toBe('fixed');
+    expect(ghost.style.top).toBe('-10000px');
+    expect(ghost.style.transform).toBe('rotate(-1.5deg)');
+    expect(ghost.style.opacity).toBe('0.92');
+    expect(ghost.style.borderRadius).toBe('10px');
+    // 半尺寸 cap 330×170
+    expect(Number.parseFloat(ghost.style.width)).toBeLessThanOrEqual(330);
+    expect(Number.parseFloat(ghost.style.height)).toBeLessThanOrEqual(170);
+
+    fireEvent.dragEnd(header);
+    expect(document.body.contains(ghost)).toBe(false);
+  });
+
+  it('setDragImage 不可用（jsdom 無此方法／happy-dom 擲 Not implemented）→ 安全略過、不留 ghost 節點', () => {
+    render(
+      <Wrapper>
+        <div data-pane-id="p1">
+          <Pane.Toolbar paneId="p1" />
+        </div>
+      </Wrapper>,
+    );
+    const header = screen.getByTestId('pane-header');
+    const before = document.body.childElementCount;
+    // 不帶 setDragImage stub → RTL 以真 DataTransfer 建事件，happy-dom 原生 setDragImage 擲錯
+    fireEvent.dragStart(header, { dataTransfer: { setData: vi.fn(), effectAllowed: '' } });
+    expect(header).toHaveAttribute('data-dragging');
+    expect(document.body.childElementCount).toBe(before);
   });
 });
 
@@ -182,6 +233,36 @@ describe('PaneDragDrop 五落點（D.5）', () => {
     expect(after[1]!.dataset.paneId).toBe(sourceId);
     // 落點收掉
     expect(screen.queryByTestId('drop-zones')).not.toBeInTheDocument();
+  });
+
+  it('落點命中態：dragenter 切 data-hot、dragleave 移除（drag 中 :hover 無效，§7）', async () => {
+    render(
+      <Wrapper>
+        <TabProvider>
+          <Setup />
+          <PaneTree />
+        </TabProvider>
+      </Wrapper>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'setup' }));
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+
+    fireEvent.dragEnter(leaves[1]!);
+    const zone = screen.getByTestId('drop-zone-right');
+    expect(zone).not.toHaveAttribute('data-hot');
+
+    fireEvent.dragEnter(zone);
+    expect(zone).toHaveAttribute('data-hot');
+
+    // 移到另一個落點：新落點 hot、舊落點解除
+    const center = screen.getByTestId('drop-zone-center');
+    fireEvent.dragEnter(center);
+    fireEvent.dragLeave(zone);
+    expect(center).toHaveAttribute('data-hot');
+    expect(zone).not.toHaveAttribute('data-hot');
+
+    fireEvent.dragLeave(center);
+    expect(center).not.toHaveAttribute('data-hot');
   });
 
   it('drop 中央落點 → 置換（既有 swap 行為，結構不變）', async () => {

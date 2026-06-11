@@ -5,8 +5,11 @@ export interface PaneToolbarCommonProps {
   isOnly?: boolean;
   branch?: string;
   title?: string;
+  /** pane 類型 glyph（handoff §2）；session pane 傳 chat ✦ */
+  typeIcon?: React.ReactNode;
   onSplitH?: () => void;
   onSplitV?: () => void;
+  onZoom?: () => void;
   onClose?: () => void;
   onSwap?: (targetId: string) => void;
 }
@@ -31,7 +34,11 @@ export function PaneShell({
   return (
     <Pane>
       <Pane.Toolbar {...toolbarProps}>{tools}</Pane.Toolbar>
-      {scrollable ? <Pane.Content>{children}</Pane.Content> : children}
+      {/* 非 focus dim 只作用於 body（handoff §2：header 不 dim）——
+          PaneLeaf wrapper 掛 group/pane＋data-dimmed，這層容器收 dim */}
+      <div className="flex flex-col flex-1 min-w-0 min-h-0 group-data-[dimmed]/pane:opacity-(--pane-dim-opacity)">
+        {scrollable ? <Pane.Content>{children}</Pane.Content> : children}
+      </div>
     </Pane>
   );
 }

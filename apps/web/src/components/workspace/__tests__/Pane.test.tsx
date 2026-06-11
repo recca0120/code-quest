@@ -27,13 +27,26 @@ describe('Pane.Toolbar (3.1) session pane shows branch and title', () => {
     expect(screen.getByText(/Task A/)).toBeInTheDocument();
   });
 
-  it('displays · separator between branch and title', () => {
+  // handoff §2 組成順序：標題→meta（⎇ branch），無「·」分隔
+  it('renders title before ⎇ branch meta without · separator', () => {
     render(
       <Wrapper>
         <Pane.Toolbar branch="main" title="Task A" paneId="p1" />
       </Wrapper>,
     );
-    expect(screen.getByTestId('pane-header').textContent).toMatch(/main\s*·\s*Task A/);
+    const text = screen.getByTestId('pane-header').textContent ?? '';
+    expect(text).toMatch(/Task A\s*⎇\s*main/);
+    expect(text).not.toContain('·');
+  });
+
+  // handoff §2：session pane header 顯示類型 icon（chat ✦）
+  it('renders the typeIcon glyph before the title', () => {
+    render(
+      <Wrapper>
+        <Pane.Toolbar paneId="p1" title="Task A" typeIcon="✦" />
+      </Wrapper>,
+    );
+    expect(screen.getByTestId('pane-header').textContent).toMatch(/✦\s*Task A/);
   });
 });
 
@@ -172,6 +185,22 @@ describe('Pane.Toolbar (TG.1) no tool icons', () => {
     expect(screen.queryByRole('button', { name: /Files/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Git/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Spec/i })).not.toBeInTheDocument();
+  });
+});
+
+// handoff §2 動作列：⤢ zoom 鈕（desktop；mobile 與 split 鈕一致不顯示）
+describe('Pane.Toolbar zoom button', () => {
+  it('zoom button triggers onZoom', async () => {
+    const user = userEvent.setup();
+    const onZoom = vi.fn();
+
+    render(
+      <Wrapper>
+        <Pane.Toolbar paneId="p1" onZoom={onZoom} />
+      </Wrapper>,
+    );
+    await user.click(screen.getByTestId('pane-zoom'));
+    expect(onZoom).toHaveBeenCalledOnce();
   });
 });
 

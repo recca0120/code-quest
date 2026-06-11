@@ -40,7 +40,7 @@ export function ChatView({ rightPane }: ChatViewProps): React.JSX.Element {
             </ChatShell.Footer>
           </ChatShell>
           {rightPane && (
-            <div className="w-(--rail-w) shrink-0 border-l border-border overflow-y-auto">
+            <div className="w-(--rail-w) shrink-0 border-l border-border-subtle overflow-y-auto">
               {rightPane}
             </div>
           )}

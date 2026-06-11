@@ -14,15 +14,17 @@ import { useVisiblePaneIds } from './useVisiblePanes.ts';
 /** 五落點 overlay（handoff §7）：拖曳 hover 在 leaf 上時浮出
  * 上/下/左/右（該方向 split 放入）＋中央（置換）。 */
 const DROP_ZONES = [
-  { key: 'top', label: '上', style: { left: '30%', right: '30%', top: 4, height: '24%' } },
-  { key: 'bottom', label: '下', style: { left: '30%', right: '30%', bottom: 4, height: '24%' } },
-  { key: 'left', label: '左', style: { left: 4, top: 4, bottom: 4, width: '26%' } },
-  { key: 'right', label: '右', style: { right: 4, top: 4, bottom: 4, width: '26%' } },
+  { key: 'top', label: '上', style: { left: '30%', right: '30%', top: 8, height: '24%' } },
+  { key: 'bottom', label: '下', style: { left: '30%', right: '30%', bottom: 8, height: '24%' } },
+  { key: 'left', label: '左', style: { left: 8, top: 8, bottom: 8, width: '26%' } },
+  { key: 'right', label: '右', style: { right: 8, top: 8, bottom: 8, width: '26%' } },
   { key: 'center', label: '置換', style: { left: '36%', right: '36%', top: '40%', height: '22%' } },
 ] as const;
 
 function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): React.JSX.Element {
   const { movePane, swapPane } = usePaneActions();
+  // 命中態走 dragenter/leave 切 data-hot——HTML5 drag 進行中 :hover 不生效
+  const [hotKey, setHotKey] = useState<string | null>(null);
   return (
     <div className="absolute inset-0 z-raised" data-testid="drop-zones">
       {DROP_ZONES.map((zone) => (
@@ -30,6 +32,9 @@ function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): 
         <div
           key={zone.key}
           data-testid={`drop-zone-${zone.key}`}
+          data-hot={hotKey === zone.key || undefined}
+          onDragEnter={() => setHotKey(zone.key)}
+          onDragLeave={() => setHotKey((k) => (k === zone.key ? null : k))}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
@@ -44,7 +49,7 @@ function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): 
             }
           }}
           style={{ position: 'absolute', ...zone.style }}
-          className="flex items-center justify-center rounded-(--radius-row) border-2 border-dashed border-accent/55 bg-accent/10 text-xs text-accent [&:hover]:border-solid [&:hover]:bg-accent/25"
+          className="flex items-center justify-center rounded-(--radius-card) border-2 border-dashed border-accent/55 bg-accent/10 text-2xs font-semibold text-accent data-[hot]:border-solid data-[hot]:bg-accent/25"
         >
           {zone.label}
         </div>
@@ -64,7 +69,9 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
     node.content.type === 'session' && node.content.sessionId
       ? tabs[node.content.sessionId]?.permissionMode
       : undefined;
-  // 唯一 pane／尚無 focus 時不 dim（dim 只用來區分 focus 對象）
+  // 唯一 pane／尚無 focus 時不 dim（dim 只用來區分 focus 對象）。
+  // dim 套在內容層（handoff §2：.dimmed 只 dim .cq-pane-body 不含 header）——
+  // wrapper 掛 group/pane＋data-dimmed，PaneShell 的 body 容器以 group-data-[dimmed]/pane 收
   const isDimmed = !isFocused && focusedPaneId !== null && paneRoot.type === 'split';
   // dragenter/leave 是巢狀冒泡事件——counter 避免子元素間移動時閃爍
   const [dragDepth, setDragDepth] = useState(0);
@@ -87,12 +94,13 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => setDragDepth(0)}
       data-focused={isFocused || undefined}
+      data-dimmed={isDimmed || undefined}
       data-mode={permissionMode}
       style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
-      className={`flex flex-1 min-w-0 min-h-0 flex-col rounded-(--pane-radius) border ${
+      className={`group/pane flex flex-1 min-w-0 min-h-0 flex-col rounded-(--pane-radius) border ${
         isFocused
           ? 'border-(--color-pane-focus) ring-1 ring-(--color-pane-focus-ring)'
-          : `border-border ${isDimmed ? 'opacity-(--pane-dim-opacity)' : ''}`
+          : 'border-border'
       }`}
     >
       <PaneLeafBody node={node} />
@@ -137,6 +145,7 @@ function PaneSplit({
       </div>
       <PaneDivider
         direction={node.direction}
+        ratio={node.ratio}
         onRatioChange={(ratio) => updateRatio(node.id, ratio)}
       />
       <div style={secondStyle} className="flex min-w-0 min-h-0">

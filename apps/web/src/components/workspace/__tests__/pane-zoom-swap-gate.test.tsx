@@ -23,6 +23,7 @@ import { CommandPaletteProvider } from '@/contexts/CommandPaletteContext';
 import { FsProvider } from '@/contexts/FsContext';
 import { GitProvider } from '@/contexts/GitContext';
 import { NavigationProvider } from '@/contexts/NavigationContext';
+import { OpenspecProvider } from '@/contexts/OpenspecContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SessionProvider } from '@/contexts/SessionContext';
 import { SocketProvider } from '@/contexts/SocketContext';
@@ -73,14 +74,16 @@ function Harness({
             <NavigationProvider>
               <GitProvider>
                 <FsProvider>
-                  <CommandPaletteProvider>
-                    <TabProvider>
-                      <KeyboardShortcutsProvider>
-                        <Probe />
-                        {children}
-                      </KeyboardShortcutsProvider>
-                    </TabProvider>
-                  </CommandPaletteProvider>
+                  <OpenspecProvider>
+                    <CommandPaletteProvider>
+                      <TabProvider>
+                        <KeyboardShortcutsProvider>
+                          <Probe />
+                          {children}
+                        </KeyboardShortcutsProvider>
+                      </TabProvider>
+                    </CommandPaletteProvider>
+                  </OpenspecProvider>
                 </FsProvider>
               </GitProvider>
             </NavigationProvider>

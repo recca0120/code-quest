@@ -22,7 +22,7 @@ const sessions = [
     status: 'busy' as const,
     branch: 'feat-x',
     cwd: '/projects/app-feat',
-    paneLabel: 'Left pane',
+    paneLabel: 'pane ②',
   },
 ];
 
@@ -150,7 +150,7 @@ describe('進行中／resume／組合（spec: 欄3 sections）', () => {
     await user.click(within(col.worktrees()).getByText('feat-x'));
     const item = screen.getByTestId('modal-session-item-ch-2');
     expect(within(item).getByText('●')).toBeInTheDocument();
-    expect(within(item).getByText(/Left pane/)).toBeInTheDocument();
+    expect(within(item).getByText(/pane ②/)).toBeInTheDocument();
   });
 
   it('resume 列表只列選定 worktree 的歷史，點擊呼叫 onResume(sessionId)', async () => {

@@ -293,7 +293,8 @@ export function PanePicker({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent title="Open in pane" size="lg">
+      {/* 視覺無標題（handoff §4：頂部即搜尋列）；title 留給 Radix 作 sr-only a11y 名稱 */}
+      <DialogContent title="Open in pane" hideTitle size="picker">
         {importTarget ? (
           <ImportView
             worktreePath={importTarget.path}
@@ -304,14 +305,22 @@ export function PanePicker({
         ) : (
           // biome-ignore lint/a11y/noStaticElementInteractions: 鍵盤協定容器——焦點落在內部互動元素上
           <div onKeyDown={handleKeyDown} data-testid="pane-picker-miller">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="搜尋 project / worktree / session…"
-              aria-label="picker search"
-              className="w-full bg-transparent border-b border-border px-2 py-1.5 mb-2 text-sm outline-none placeholder:text-dim"
-            />
+            <div className="flex items-center gap-2 border-b border-border px-2 mb-2">
+              <span aria-hidden="true" className="text-subtle">
+                ⌕
+              </span>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="搜尋 project / worktree / session…"
+                aria-label="picker search"
+                className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-dim"
+              />
+              <kbd className="font-mono text-2xs text-subtle border border-border rounded px-1 py-0.5">
+                esc
+              </kbd>
+            </div>
             <div className="flex flex-col lg:flex-row gap-3 min-h-64">
               {/* 欄1 Projects */}
               <div
@@ -337,7 +346,13 @@ export function PanePicker({
                         : 'hover:bg-hover-tint'
                     }`}
                   >
-                    <span aria-hidden="true">⌂</span>
+                    {/* active 列 glyph 上 accent（design .tx-node.active .glyph） */}
+                    <span
+                      aria-hidden="true"
+                      className={p.cwd === projectCwd ? 'text-accent' : 'text-subtle'}
+                    >
+                      ⌂
+                    </span>
                     <span className="truncate">{p.name}</span>
                     <span className="ml-auto font-mono text-2xs text-subtle">
                       {(allWorktrees[p.cwd] ?? []).length}⎇
@@ -389,7 +404,12 @@ export function PanePicker({
                             : 'hover:bg-hover-tint'
                         }`}
                       >
-                        <span aria-hidden="true">⎇</span>
+                        <span
+                          aria-hidden="true"
+                          className={w.path === worktreePath ? 'text-accent' : 'text-subtle'}
+                        >
+                          ⎇
+                        </span>
                         <span className="font-mono text-xs truncate">{w.branch ?? w.name}</span>
                         <span className="ml-auto font-mono text-2xs text-subtle whitespace-nowrap">
                           {chats.length > 0 && `${chats.length} chat${chats.length > 1 ? 's' : ''}`}
@@ -417,6 +437,8 @@ export function PanePicker({
                 style={{ flex: 6 }}
               >
                 <p className="section-label mb-1">新增 pane</p>
+                {/* 類型卡照 design .tx-type：bg-bg＋border-border、radius 9px 無 token 以
+                    --radius-card(10) 近似、hover ≈ border-accent/55＋row-active-bg */}
                 <div className="grid grid-cols-3 gap-1.5 mb-2">
                   {contentItems.map((item, idx) =>
                     item.kind === 'type' ? (
@@ -433,10 +455,10 @@ export function PanePicker({
                         onClick={(e) =>
                           activate(item, e.metaKey || e.ctrlKey ? { split: true } : undefined)
                         }
-                        className={`flex flex-col items-center gap-0.5 px-2 py-2 text-xs rounded-(--radius-row) border ${
+                        className={`flex flex-col items-center gap-0.5 px-2 py-2 text-xs rounded-(--radius-card) border ${
                           col === 2 && sel3 === idx
                             ? 'border-accent bg-selected'
-                            : 'border-border hover:bg-hover-tint'
+                            : 'border-border bg-bg hover:border-accent/55 hover:bg-(--color-row-active-bg)'
                         }`}
                       >
                         <span aria-hidden="true">{item.entry.icon}</span>

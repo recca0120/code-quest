@@ -92,7 +92,9 @@ function historyCycleDown(ref: InputHistory): string {
 }
 
 const TEXTAREA_BASE_CLASS =
-  'w-full bg-transparent text-text pl-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-muted overflow-hidden [grid-area:1/1]';
+  // max-md:text-(length:--text-input-sm) — composer 16px 防 iOS 聚焦自動縮放；
+  // 鏡像 div 共用同 class，量測行高才一致
+  'w-full bg-transparent text-text max-md:text-(length:--text-input-sm) pl-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-muted overflow-hidden [grid-area:1/1]';
 
 function isSpeechSupported(): boolean {
   return (

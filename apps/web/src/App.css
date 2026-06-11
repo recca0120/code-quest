@@ -95,6 +95,9 @@
   --color-accent-glow: rgba(217, 119, 87, 0.1);
   --color-row-active-bg: rgba(217, 119, 87, 0.07);
   --color-accent-mark-bg: rgba(217, 119, 87, 0.3);
+  /* accent 淡底（design tokens.css: --accent-soft）——active dock chip 等；
+     由 --color-accent 派生，跟著 data-theme 自動換色 */
+  --color-accent-soft: color-mix(in srgb, var(--color-accent) 13%, transparent);
 
   --shadow-floating: 0 16px 40px rgba(8, 6, 4, 0.6);
 
@@ -122,12 +125,12 @@
 }
 
 /* --- RWD tokens ---
-   斷點：<640 mobile／640–1024 tablet／≥1024 desktop。
+   斷點：<768 mobile／768–1024 tablet／≥1024 desktop（mobile/tablet 界線用內建 md）。
    原則：pane tree 不銷毀，斷點只改變「同時渲染幾個 pane」。 */
 @theme {
   /* Tailwind v4 斷點（產出 sm: / lg: variants） */
-  --breakpoint-sm: 40rem; /* 640px — 以下為 mobile：單 pane、卡片牆、bottom sheet */
-  --breakpoint-lg: 64rem; /* 1024px — 以下為 tablet：上限 2 pane、邊條、slide-over */
+  --breakpoint-sm: 40rem; /* 640px 輔助斷點 — mobile/tablet 主界線為內建 md＝768px：以下單 pane、卡片牆、bottom sheet、不顯桌面快捷鍵提示 */
+  --breakpoint-lg: 64rem; /* 1024px — 768–1024 為 tablet：上限 2 pane、邊條、slide-over */
 
   /* pane 約束 */
   --pane-min-w: 320px; /* 分割後任一 pane 低於此寬 → 拒絕分割 */
@@ -146,6 +149,9 @@
 
   /* sheet / slide-over（沿用既有 z-index tiers：float 30、overlay 40） */
   --radius-sheet: 16px;
+
+  /* mobile 卡片牆（handoff §8：2 欄、卡 190px 高） */
+  --wall-card-h: 190px;
 }
 
 /* --- tmux workspace 元件 tokens（pane / tab / statusline / drawer / dock / motion） --- */
@@ -168,10 +174,16 @@
   --statusline-h: 26px;
   --busy-dot-size: 6px;
   --busy-pulse: 1.2s;
+  /* busy 燈專用 pulse（emit `animate-busy-pulse`）— 沿用內建 pulse keyframes，
+     週期接 --busy-pulse（reduced-motion 時歸零）。不可改全域 animate-pulse：
+     skeleton / StatusDot / ToolUseBlock 共用 2s 版。 */
+  --animate-busy-pulse: pulse var(--busy-pulse) infinite;
 
   /* drawer / bottom sheet / slide-over */
   --drawer-w: 56%;
   --drawer-min-w: 480px;
+  --drawer-grab-bar-w: 3px; /* 左緣把手中央 44px 把手條的寬（handoff §5） */
+  --sheet-grabber-h: 5px; /* mobile sheet grabber 44×5（handoff §8） */
   --slideover-w: 58%;
   --sheet-snap-half: 66%;
   --divider-hit: 6px; /* resize 熱區（視覺 1px） */
@@ -186,6 +198,18 @@
   --dur-base: 200ms;
   --dur-drawer: 240ms;
   --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Tailwind 全域 transition 預設（取代內建 150ms / ease）—
+     `transition` utility 未指定 duration/ease 時接 120ms + soft ease */
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-out-soft);
+}
+
+/* mobile（<768）：dock chips 升至觸控高度（handoff §8：mobile dock chips 高 40px） */
+@media (max-width: 767px) {
+  :root {
+    --dock-chip-h: var(--hit-dock-chip);
+  }
 }
 
 /* prefers-reduced-motion — 動效全關（handoff: Interactions & Behavior） */
@@ -195,6 +219,19 @@
     --dur-base: 0ms;
     --dur-drawer: 0ms;
     --busy-pulse: 0s;
+  }
+
+  /* 全域殺招：token 沒接到的 animation/transition 也一律關閉。
+     !important 是刻意的 a11y 措施——必須蓋過任何 utility / inline duration */
+  *,
+  ::before,
+  ::after {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion 全域 kill 需蓋過所有來源 */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion 全域 kill 需蓋過所有來源 */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: reduced-motion 全域 kill 需蓋過所有來源 */
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -382,6 +419,14 @@
   box-shadow: inset 0 0 0 1px var(--color-border);
 }
 
+/* Tab bar 底線 — 畫在 scrollport 內側（inset shadow）而非真 border-b：
+   active tab 的 after:-bottom-px 蓋線（2px bg-bg）才能留在 padding-box 內，
+   不被 overflow-x-auto 裁切（容器保持可捲）。需搭配容器 pb-px，讓 hairline
+   落在 tab 底邊正下方的 1px padding 帶。 */
+@utility tabbar-hairline-b {
+  box-shadow: inset 0 -1px 0 0 var(--color-border);
+}
+
 @utility floating-popover-lg {
   background: linear-gradient(
     180deg,
@@ -405,15 +450,15 @@
 }
 
 @utility animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn var(--dur-base) ease-out;
 }
 
 @utility animate-fade-in-fast {
-  animation: fadeIn 0.15s ease-out;
+  animation: fadeIn var(--dur-fast) ease-out;
 }
 
 @utility animate-slide-up {
-  animation: slideUp 0.15s ease-out;
+  animation: slideUp var(--dur-fast) ease-out;
 }
 
 @keyframes fadeIn {
