@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { FilesView } from '@/components/files/FilesView';
 import { GitView } from '@/components/git/GitView';
 import { SpecView } from '@/components/spec/SpecView';
-import type { RailTab } from '@/contexts/TabContext';
+import type { PaneContent, RailTab } from '@/contexts/TabContext';
 import { cn } from '@/utils/cn';
 import { tabTrigger } from '../ui/_tokens.ts';
 
@@ -28,8 +28,18 @@ interface RightPaneProps {
   onTabChange?: (tab: RailTab) => void;
   /** ⇥ 收合（rail → dock）；未提供時不顯示收合鈕 */
   onCollapse?: () => void;
+  /** ⤢ 以 drawer 檢視目前分頁完整內容 */
+  onOpenDrawer?: (content: PaneContent) => void;
+  /** ⊞ 把目前分頁升級成獨立 pane（同 cwd） */
+  onPromote?: (content: PaneContent) => void;
   initialTab?: RailTab;
   onMention?: (path: string) => void;
+}
+
+/** rail 分頁 → pane descriptor（registry 同型；'spec' 對應 'openspec' leaf） */
+function railTabContent(tab: RailTab, cwd: string): PaneContent {
+  const type = tab === 'spec' ? 'openspec' : tab;
+  return { type, target: { kind: 'fixed', cwd } };
 }
 
 const TRIGGER_BASE = cn(
@@ -42,6 +52,8 @@ export function RightPane({
   activeTab,
   onTabChange,
   onCollapse,
+  onOpenDrawer,
+  onPromote,
   initialTab = 'files',
   onMention,
 }: RightPaneProps): React.JSX.Element {
@@ -69,13 +81,24 @@ export function RightPane({
             <span>{label}</span>
           </Tabs.Trigger>
         ))}
+        {onOpenDrawer && (
+          <button
+            type="button"
+            aria-label="open in drawer"
+            title="以 drawer 檢視完整內容"
+            onClick={() => onOpenDrawer(railTabContent(active, cwd))}
+            className="px-1.5 h-9 text-subtle hover:text-text"
+          >
+            ⤢
+          </button>
+        )}
         {onCollapse && (
           <button
             type="button"
             aria-label="collapse rail"
             title="收合側欄"
             onClick={onCollapse}
-            className="px-2 h-9 text-subtle hover:text-text"
+            className="px-1.5 h-9 text-subtle hover:text-text"
           >
             ⇥
           </button>
@@ -94,6 +117,21 @@ export function RightPane({
           {(mounted.has('spec') || active === 'spec') && <SpecView cwd={cwd} />}
         </TabContent>
       </section>
+      {onPromote && (
+        <div className="flex items-center gap-2 px-2 py-1 border-t border-border-subtle shrink-0">
+          <button
+            type="button"
+            aria-label="promote rail to pane"
+            onClick={() => onPromote(railTabContent(active, cwd))}
+            className="font-mono text-2xs text-subtle hover:text-text"
+          >
+            ⊞ 升級成 pane
+          </button>
+          <span className="ml-auto font-mono text-2xs text-dim hidden lg:inline">
+            ⤢ 開 drawer 看完整內容
+          </span>
+        </div>
+      )}
     </Tabs.Root>
   );
 }

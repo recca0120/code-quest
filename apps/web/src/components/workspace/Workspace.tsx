@@ -5,6 +5,7 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
+import { DrawerProvider } from '@/contexts/DrawerContext.tsx';
 import { useGitActions, useGitState } from '@/contexts/GitContext';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
@@ -20,6 +21,7 @@ import { CommandPalette } from '../palette/CommandPalette.tsx';
 import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { CreateWorktreeDialog } from '../project/CreateWorktreeDialog.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
+import { DrawerHost } from './DrawerHost.tsx';
 import { KeyboardShortcutsProvider } from './KeyboardShortcutsProvider.tsx';
 import { NavigationIntentBridge } from './NavigationIntentBridge.tsx';
 import { PanePicker } from './PanePicker.tsx';
@@ -242,24 +244,27 @@ export function Workspace(): React.JSX.Element {
           }
         >
           <NavigationIntentBridge />
-          <KeyboardShortcutsProvider
-            onNewSession={(cwd, projectCwd) => {
-              setActiveProject(projectCwd);
-              setPendingSession({ projectCwd, sessionCwd: cwd });
-            }}
-            onNewWorktree={handleNewWorktree}
-            onAddProject={handleOpenAddProjectDialog}
-            onOpenPicker={handleOpenModal}
-          >
-            <TabContainer
-              pendingNewSession={pendingNewSession}
-              onSessionCreated={handleSessionCreated}
-              onOpenModal={handleOpenModal}
-              onOpenSettings={handleOpenSettings}
-              onAddProject={handleOpenAddProjectDialog}
+          <DrawerProvider>
+            <KeyboardShortcutsProvider
+              onNewSession={(cwd, projectCwd) => {
+                setActiveProject(projectCwd);
+                setPendingSession({ projectCwd, sessionCwd: cwd });
+              }}
               onNewWorktree={handleNewWorktree}
-            />
-          </KeyboardShortcutsProvider>
+              onAddProject={handleOpenAddProjectDialog}
+              onOpenPicker={handleOpenModal}
+            >
+              <TabContainer
+                pendingNewSession={pendingNewSession}
+                onSessionCreated={handleSessionCreated}
+                onOpenModal={handleOpenModal}
+                onOpenSettings={handleOpenSettings}
+                onAddProject={handleOpenAddProjectDialog}
+                onNewWorktree={handleNewWorktree}
+              />
+              <DrawerHost />
+            </KeyboardShortcutsProvider>
+          </DrawerProvider>
           <ConnectedPanePicker
             open={panePickerOpen}
             onClose={() => setOpenInPaneModalOpen(false)}

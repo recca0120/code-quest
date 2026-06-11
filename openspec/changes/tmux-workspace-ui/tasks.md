@@ -43,11 +43,11 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 - [x] 3.6 [impl] wire schema params 演進＋migration 缺省
 - [x] 3.7 [test] <720px 自動收合（ResizeObserver fake）；不自動展開
 - [x] 3.8 [impl] pane ResizeObserver
-- [ ] 3.9 [test] drawer 單例開/關/esc/遮罩；釘選成 pane＝右側 split＋drawer 關閉＋debounce save
-- [ ] 3.10 [impl] DrawerHost＋pin（registry 轉 descriptor）
-- [ ] 3.11 [test] ⌘⏎ rail 分頁升級成 pane
-- [ ] 3.12 [impl] 升級路徑
-- [ ] 3.13 [verify] Playwright：drawer 滑入/拖寬、rail 收合動效
+- [x] 3.9 [test] drawer 單例開/關/esc/遮罩；釘選成 pane＝右側 split＋drawer 關閉＋debounce save
+- [x] 3.10 [impl] DrawerHost＋pin（registry 轉 descriptor）
+- [x] 3.11 [test] ⌘⏎ rail 分頁升級成 pane
+- [x] 3.12 [impl] 升級路徑
+- [x] 3.13 [verify] Playwright：drawer 滑入/拖寬、rail 收合動效
 
 ## 4. P4 — DnD 五落點 ＋ divider 強化
 

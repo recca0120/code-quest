@@ -1,6 +1,7 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useDrawerActionsOptional } from '@/contexts/DrawerContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import {
   type PaneContent,
@@ -41,7 +42,8 @@ export function SessionPane({
   const env = usePaneEnvironment();
   const lookup = useWorktreeLookup();
   const { projects, activeProjectCwd } = useProjectState();
-  const { setContentInPane } = usePaneActions();
+  const { setContentInPane, splitPaneAndSetContent } = usePaneActions();
+  const openDrawer = useDrawerActionsOptional()?.openDrawer;
 
   const rail = content.rail ?? DEFAULT_RAIL;
   const railRef = useRef(rail);
@@ -121,6 +123,8 @@ export function SessionPane({
                   activeTab={rail.tab}
                   onTabChange={(tab) => setRail({ ...rail, tab })}
                   onCollapse={() => setRail({ ...rail, open: false })}
+                  onOpenDrawer={openDrawer}
+                  onPromote={(c) => splitPaneAndSetContent('h', c)}
                 />
               ) : undefined
             }
