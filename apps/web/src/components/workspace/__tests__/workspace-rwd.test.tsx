@@ -221,6 +221,97 @@ describe('斷點只改渲染數，不銷毀 pane tree（spec 核心原則）', (
   });
 });
 
+describe('MobileTopBar（mobile-rwd-polish B2）', () => {
+  it('mobile mode → MobileTopBar 渲染；desktop → 不渲染', async () => {
+    const mm = setupMatchMedia(1440, widthMatcher);
+    const view = await renderWithWorkspace();
+    const project = await view.addProject();
+    await project.launchSession();
+
+    // desktop: no topbar
+    expect(screen.queryByTestId('mobile-topbar')).not.toBeInTheDocument();
+
+    // → mobile
+    await act(async () => mm.triggerChange(375));
+    expect(screen.getByTestId('mobile-topbar')).toBeInTheDocument();
+
+    // → back to desktop
+    await act(async () => mm.triggerChange(1440));
+    expect(screen.queryByTestId('mobile-topbar')).not.toBeInTheDocument();
+  });
+
+  it('pane dots 顯示 leaf 數量；focused 有 accent；點擊切換 pane', async () => {
+    const { mm, view } = await fourPanes();
+    await act(async () => mm.triggerChange(375));
+
+    const topbar = screen.getByTestId('mobile-topbar');
+    const dots = within(topbar).getAllByTestId(/^mobile-pane-dot-/);
+    expect(dots).toHaveLength(4);
+
+    // focused dot has accent marker
+    const focusedDot = dots.find((d) => d.hasAttribute('data-active'));
+    expect(focusedDot).toBeTruthy();
+
+    // 點其他 dot 切 pane
+    const otherDot = dots.find((d) => !d.hasAttribute('data-active'))!;
+    const targetId = otherDot.dataset.paneId!;
+    await view.user.click(otherDot);
+    await waitFor(() =>
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(targetId),
+    );
+  });
+
+  it('⊞ 按鈕開啟 MobilePaneWall', async () => {
+    const mm = setupMatchMedia(1440, widthMatcher);
+    const view = await renderWithWorkspace();
+    const project = await view.addProject();
+    await project.launchSession();
+    await view.user.click(screen.getAllByTestId('pane-split-h')[0]!);
+    await view.user.keyboard('{Escape}');
+
+    await act(async () => mm.triggerChange(375));
+
+    const topbar = screen.getByTestId('mobile-topbar');
+    await view.user.click(within(topbar).getByTestId('mobile-topbar-wall-toggle'));
+    expect(await screen.findByTestId('mobile-pane-wall')).toBeInTheDocument();
+  });
+});
+
+describe('卡片牆 Preview 縮影（mobile-rwd-polish B3）', () => {
+  it('chat pane 卡片顯示 title preview；tool pane 卡片顯示 registry icon + basename；＋ 新增卡', async () => {
+    const mm = setupMatchMedia(1440, widthMatcher);
+    const view = await renderWithWorkspace();
+    const project = await view.addProject();
+    await project.launchSession();
+
+    // split 開 git pane
+    const leaf = screen.getByTestId('split-pane-leaf');
+    vi.spyOn(leaf, 'getBoundingClientRect').mockReturnValue({
+      width: 1200,
+      height: 800,
+    } as DOMRect);
+    await view.user.click(screen.getAllByTestId('pane-split-h')[0]!);
+    // picker 裡選 git
+    await view.user.click(await screen.findByTestId('picker-type-git'));
+
+    await act(async () => mm.triggerChange(375));
+
+    // 開卡片牆
+    const topbar = screen.getByTestId('mobile-topbar');
+    await view.user.click(within(topbar).getByTestId('mobile-topbar-wall-toggle'));
+    const wall = await screen.findByTestId('mobile-pane-wall');
+    const cards = within(wall).getAllByTestId(/^pane-wall-card-/);
+    expect(cards).toHaveLength(2);
+
+    // chat card 有 preview（✦ icon）
+    const chatPreview = within(wall).getAllByTestId(/^pane-wall-preview-/);
+    expect(chatPreview.length).toBeGreaterThanOrEqual(1);
+
+    // ＋ 新增卡存在
+    expect(within(wall).getByTestId('pane-wall-add-card')).toBeInTheDocument();
+  });
+});
+
 describe('tablet portrait slide-over（handoff §8 直向）', () => {
   function portraitMatcher(query: string, width: number): boolean {
     if (query === '(max-width: 767px)') return width <= 767;

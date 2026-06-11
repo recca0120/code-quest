@@ -8,10 +8,28 @@ import {
   useTabState,
 } from '@/contexts/TabContext';
 import { leafLabel } from './pane-label.ts';
+import { PANE_TYPE_REGISTRY } from './pane-registry';
+import { usePaneEnvironment } from './panes/PaneEnvironmentContext.tsx';
 import { useMobileMode } from './useMobileMode';
 
 const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 const BUSY_STATUSES = new Set(['processing', 'busy', 'cancelling']);
+
+function cardPreview(
+  node: PaneNode,
+  tabs: Record<string, { title?: string; cwd?: string }>,
+): { icon: string; preview: string } | null {
+  if (node.type !== 'leaf') return null;
+  const c = node.content;
+  if (c.type === 'session') {
+    const meta = c.sessionId ? tabs[c.sessionId] : null;
+    return { icon: '✦', preview: meta?.title ?? '' };
+  }
+  const entry = PANE_TYPE_REGISTRY.find((e) => e.key === c.type);
+  if (!entry) return null;
+  const cwd = 'target' in c ? c.target.cwd : '';
+  return { icon: entry.icon, preview: cwd.split('/').pop() ?? cwd };
+}
 
 function findLeaf(node: PaneNode, id: string): PaneNode | null {
   if (node.type === 'leaf') return node.id === id ? node : null;
@@ -23,12 +41,26 @@ function findLeaf(node: PaneNode, id: string): PaneNode | null {
  * 點卡＝focusPane（solo rendering 跟著換）。active 卡 accent 框、busy 圓點、
  * × 關閉（>1 leaf 時）。⊞ 開關。
  */
-export function MobilePaneWall(): React.JSX.Element | null {
+interface MobilePaneWallProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function MobilePaneWall({
+  open: externalOpen,
+  onOpenChange,
+}: MobilePaneWallProps = {}): React.JSX.Element | null {
   const { paneRoot, focusedPaneId } = usePaneState();
   const { focusPane, closePane } = usePaneActions();
   const { tabs } = useTabState();
   const isMobile = useMobileMode();
-  const [open, setOpen] = useState(false);
+  const { onOpenModal } = usePaneEnvironment();
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    onOpenChange?.(v);
+  };
 
   if (!isMobile) return null;
   const leaves = leafIdsInOrder(paneRoot);
@@ -118,9 +150,35 @@ export function MobilePaneWall(): React.JSX.Element | null {
                     )}
                   </span>
                   <span className="truncate text-text">{leafLabel(paneRoot, id)}</span>
+                  {(() => {
+                    const info = leaf ? cardPreview(leaf, tabs) : null;
+                    return info ? (
+                      <span
+                        data-testid={`pane-wall-preview-${id}`}
+                        className="flex items-center gap-1 text-2xs text-subtle truncate w-full"
+                      >
+                        <span>{info.icon}</span>
+                        <span className="truncate">{info.preview}</span>
+                      </span>
+                    ) : null;
+                  })()}
                 </div>
               );
             })}
+            {onOpenModal && (
+              <button
+                type="button"
+                data-testid="pane-wall-add-card"
+                onClick={() => {
+                  setOpen(false);
+                  onOpenModal();
+                }}
+                className="flex flex-col items-center justify-center h-(--wall-card-h) rounded-(--radius-card) border border-dashed border-border bg-surface text-subtle hover:text-text hover:border-accent cursor-pointer"
+              >
+                <span className="text-xl">＋</span>
+                <span className="text-2xs">新增 pane</span>
+              </button>
+            )}
           </div>
         </div>
       )}

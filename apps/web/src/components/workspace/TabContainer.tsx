@@ -1,5 +1,5 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useNavigationActions } from '@/contexts/NavigationContext';
@@ -12,6 +12,7 @@ import {
 } from '@/contexts/TabContext';
 import { CondensedPaneStrip } from './CondensedPaneStrip.tsx';
 import { MobilePaneWall } from './MobilePaneWall.tsx';
+import { MobileTopBar } from './MobileTopBar.tsx';
 import { PaneTree } from './PaneTree.tsx';
 import { type PaneEnvironment, PaneEnvironmentProvider } from './panes/PaneEnvironmentContext.tsx';
 import { SessionPool } from './panes/SessionPool.tsx';
@@ -53,6 +54,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 }) {
   const { tabs } = useTabState();
   const { setActiveCwd } = useNavigationActions();
+  const [wallOpen, setWallOpen] = useState(false);
 
   const { activeProjectCwd } = useProjectState();
   const { paneRoot, focusedPaneId } = usePaneState();
@@ -140,12 +142,14 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
         {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}
         <SessionPool />
 
+        <MobileTopBar onOpenWall={() => setWallOpen(true)} />
+
         {/* Pane area: sessions assigned to panes render here */}
         <div className="flex flex-1 min-w-0 min-h-0">
           <PaneTree />
           <CondensedPaneStrip />
         </div>
-        <MobilePaneWall />
+        <MobilePaneWall open={wallOpen} onOpenChange={setWallOpen} />
       </PaneEnvironmentProvider>
       <WorkspaceStatusline />
     </div>
