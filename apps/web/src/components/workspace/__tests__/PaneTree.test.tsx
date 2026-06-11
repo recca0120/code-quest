@@ -114,6 +114,20 @@ describe('SplitPane (4.3) divider renders and updates ratio on drag', () => {
   });
 });
 
+describe('pane 開合重排動效（B5）', () => {
+  it('split 容器的 first/second wrapper 有 transition class（dur-base）', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    await user.click(screen.getByTestId('pane-split-h'));
+
+    const split = screen.getByTestId('split-pane-split');
+    const firstWrapper = split.firstElementChild as HTMLElement;
+    const secondWrapper = split.lastElementChild as HTMLElement;
+    expect(firstWrapper.className).toMatch(/transition/);
+    expect(secondWrapper.className).toMatch(/transition/);
+  });
+});
+
 // 2.3: zoom hides non-zoomed panes
 describe('SplitPane (2.3) zoom hides other panes', () => {
   it('zoomed pane is visible; other panes are hidden', async () => {

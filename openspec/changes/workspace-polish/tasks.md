@@ -19,7 +19,7 @@ TDD；測試照 fake-summoner-client skill。按優先序排列。
 
 ## B. 功能增強（tmux §7 繼承）
 
-- [ ] B5 [test+impl] pane 開合重排 200ms 動效（--dur-base＋flex-basis transition 或 FLIP）
+- [x] B5 [test+impl] pane 開合重排 200ms 動效（--dur-base＋flex-basis transition 或 FLIP）
 - [ ] B1 [test+impl] tablet 直向 slide-over（58%、圓角 12、z-25、右滑收回、左拖固定成分割）
 - [ ] B2 [test+impl] mobile 專屬頂列（txm-bar 48px：tab 下拉＋pane 編號 dots ①②③＋⊞ 切換器）
 - [ ] B3 [test+impl] 卡片牆 preview 縮影＋「＋」新增卡＋取代切換版面

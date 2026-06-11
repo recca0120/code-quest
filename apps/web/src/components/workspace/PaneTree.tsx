@@ -140,7 +140,10 @@ function PaneSplit({
       data-testid="split-pane-split"
       className={`flex flex-1 min-w-0 min-h-0 ${isHorizontal ? 'flex-row' : 'flex-col'}`}
     >
-      <div style={firstStyle} className="flex min-w-0 min-h-0">
+      <div
+        style={firstStyle}
+        className="flex min-w-0 min-h-0 transition-all duration-(--dur-base) ease-(--ease-out-soft)"
+      >
         <PaneTreeNode node={node.first} visible={visible} />
       </div>
       <PaneDivider
@@ -148,7 +151,10 @@ function PaneSplit({
         ratio={node.ratio}
         onRatioChange={(ratio) => updateRatio(node.id, ratio)}
       />
-      <div style={secondStyle} className="flex min-w-0 min-h-0">
+      <div
+        style={secondStyle}
+        className="flex min-w-0 min-h-0 transition-all duration-(--dur-base) ease-(--ease-out-soft)"
+      >
         <PaneTreeNode node={node.second} visible={visible} />
       </div>
     </div>
