@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { hasLeaf, type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
+import { leafIdsInOrder, type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { PaneDivider } from './PaneDivider';
 import { PaneLeafBody } from './panes/PaneLeafBody.tsx';
-import { useMobileMode } from './useMobileMode';
+import { useVisiblePaneIds } from './useVisiblePanes.ts';
 
 /** 五落點 overlay（handoff §7）：拖曳 hover 在 leaf 上時浮出
  * 上/下/左/右（該方向 split 放入）＋中央（置換）。 */
@@ -46,13 +46,6 @@ function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): 
   );
 }
 
-/** zoom（或 mobile 時的 focus）指定的「唯一顯示」pane id */
-function useSoloPaneId(): string | null {
-  const { zoomedPaneId, focusedPaneId } = usePaneState();
-  const isMobile = useMobileMode();
-  return zoomedPaneId ?? (isMobile ? focusedPaneId : null);
-}
-
 function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
   const { focusPane } = usePaneActions();
   // dragenter/leave 是巢狀冒泡事件——counter 避免子元素間移動時閃爍
@@ -84,19 +77,24 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
   );
 }
 
-function PaneSplit({ node }: { node: Extract<PaneNode, { type: 'split' }> }) {
+function PaneSplit({
+  node,
+  visible,
+}: {
+  node: Extract<PaneNode, { type: 'split' }>;
+  visible: Set<string> | null;
+}) {
   const { updateRatio } = usePaneActions();
-  const soloId = useSoloPaneId();
 
-  // Solo 決策在 split 層：目標只在一側 → 直接渲染該側、不渲染 percentage wrapper
-  // 與 divider —— zoomed/mobile-focused pane 才真正佔滿（修「hidden 佔位空洞」bug：
-  // 舊作法在 leaf 層 hidden，但 wrapper 的 width:N% 還在，zoom 毫無放大效果）
-  if (soloId) {
-    const inFirst = hasLeaf(node.first, soloId);
-    const inSecond = hasLeaf(node.second, soloId);
-    if (inFirst !== inSecond) {
-      const side = inFirst ? node.first : node.second;
-      return <PaneTreeNode node={side} />;
+  // 可見性決策在 split 層（D4：zoom > RWD cap > all 的一般化）：
+  // 可見 leaf 只在一側 → 直接渲染該側、不渲染 percentage wrapper 與 divider
+  // —— 收納的 pane 才真正讓位（修「hidden 佔位空洞」bug）
+  if (visible) {
+    const firstVisible = leafIdsInOrder(node.first).some((id) => visible.has(id));
+    const secondVisible = leafIdsInOrder(node.second).some((id) => visible.has(id));
+    if (firstVisible !== secondVisible) {
+      const side = firstVisible ? node.first : node.second;
+      return <PaneTreeNode node={side} visible={visible} />;
     }
   }
 
@@ -111,30 +109,31 @@ function PaneSplit({ node }: { node: Extract<PaneNode, { type: 'split' }> }) {
       className={`flex flex-1 min-w-0 min-h-0 ${isHorizontal ? 'flex-row' : 'flex-col'}`}
     >
       <div style={firstStyle} className="flex min-w-0 min-h-0">
-        <PaneTreeNode node={node.first} />
+        <PaneTreeNode node={node.first} visible={visible} />
       </div>
       <PaneDivider
         direction={node.direction}
         onRatioChange={(ratio) => updateRatio(node.id, ratio)}
       />
       <div style={secondStyle} className="flex min-w-0 min-h-0">
-        <PaneTreeNode node={node.second} />
+        <PaneTreeNode node={node.second} visible={visible} />
       </div>
     </div>
   );
 }
 
-function PaneTreeNode({ node }: { node: PaneNode }) {
+function PaneTreeNode({ node, visible }: { node: PaneNode; visible: Set<string> | null }) {
   // key={node.id}: leaf id 由 wire 帶來、跨裝置穩定 → rehydrate/swap 後 mount 身份可預期
   if (node.type === 'leaf') return <PaneLeaf key={node.id} node={node} />;
-  return <PaneSplit key={node.id} node={node} />;
+  return <PaneSplit key={node.id} node={node} visible={visible} />;
 }
 
 export function PaneTree(): React.JSX.Element {
   const { paneRoot } = usePaneState();
+  const { visible } = useVisiblePaneIds();
   return (
     <div data-testid="split-pane-root" className="flex flex-1 min-w-0 min-h-0 overflow-hidden">
-      <PaneTreeNode node={paneRoot} />
+      <PaneTreeNode node={paneRoot} visible={visible} />
     </div>
   );
 }

@@ -61,13 +61,14 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 
 ## 5. P5 — RWD
 
-- [ ] 5.1 [test] visiblePaneIds 推導（zoom > cap > all；fake-match-media 三斷點）；收納不銷毀（session 保活、回桌面還原）
-- [ ] 5.2 [impl] visiblePaneIds 機制（推廣既有 solo rendering）
-- [ ] 5.3 [test] tablet：直立 tab 條交換；直向 slide-over
-- [ ] 5.4 [impl] tablet 版面
-- [ ] 5.5 [test] mobile：單 pane＋卡片牆切換＋左右滑＋無分割/拖曳；bottom sheet snap
-- [ ] 5.6 [impl] mobile 版面（16px composer、safe-area）
-- [ ] 5.7 [verify] Playwright：三斷點截圖、縮放往返 state 保留
+- [x] 5.1 [test] visiblePaneIds 推導（zoom > cap > all；fake-match-media 三斷點）；收納不銷毀（session 保活、回桌面還原）
+- [x] 5.2 [impl] visiblePaneIds 機制（推廣既有 solo rendering）
+- [x] 5.3 [test] tablet：直立 tab 條切入視野（直向 slide-over 留 5.8）
+- [x] 5.4 [impl] tablet 版面（直立條＋cap 2）
+- [x] 5.5 [test] mobile：單 pane（既有）＋收納保活（卡片牆/左右滑/bottom sheet 留 5.8）
+- [x] 5.6 [impl] mobile 單 pane 經 visiblePaneIds 一般化（16px composer token 已備）
+- [x] 5.7 [verify] Playwright：三斷點截圖、縮放往返 state 保留
+- [ ] 5.8 [後續] mobile 進階：卡片牆切換器、左右滑切 pane、drawer→bottom sheet（snap 0/66/100）、safe-area dock；tablet 直向 slide-over
 
 ## 6. 收尾
 

@@ -22,7 +22,6 @@ export {
   findPaneBySession,
   firstLeafId,
   firstPaneCwd,
-  hasLeaf,
   leafIdsInOrder,
   paneCwd,
 } from './pane-tree.ts';

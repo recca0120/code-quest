@@ -10,6 +10,7 @@ import {
   useTabState,
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
+import { CondensedPaneStrip } from './CondensedPaneStrip.tsx';
 import { PaneTree } from './PaneTree.tsx';
 import { type PaneEnvironment, PaneEnvironmentProvider } from './panes/PaneEnvironmentContext.tsx';
 import { SessionPool } from './panes/SessionPool.tsx';
@@ -142,7 +143,10 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
         <SessionPool />
 
         {/* Pane area: sessions assigned to panes render here */}
-        <PaneTree />
+        <div className="flex flex-1 min-w-0 min-h-0">
+          <PaneTree />
+          <CondensedPaneStrip />
+        </div>
       </PaneEnvironmentProvider>
       <WorkspaceStatusline />
     </div>
