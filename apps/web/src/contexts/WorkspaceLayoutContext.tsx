@@ -7,6 +7,8 @@
 import { createContext, type ReactNode, useContext, useState } from 'react';
 import {
   closeNode,
+  firstLeafId,
+  hasLeaf,
   makeLeaf,
   makeWorkspaceTab,
   mapNode,
@@ -42,6 +44,10 @@ export function usePaneState(): PaneStateValue {
 interface PaneActionsValue {
   splitPane: (direction: 'h' | 'v') => void;
   splitPaneAndAssign: (direction: 'h' | 'v', sessionId: string, cwd: string | null) => void;
+  /** 分割 focused pane 並在新半邊放入任意 content（picker ⌘⏎ 分割開啟） */
+  splitPaneAndSetContent: (direction: 'h' | 'v', content: PaneContent) => void;
+  /** 標準工作組（picker ⌘1）：focused pane 右側建 files/git 直欄，focus 留在原 pane */
+  openToolColumn: (cwd: string) => void;
   closePane: (paneId: string) => void;
   focusPane: (paneId: string) => void;
   updateRatio: (splitNodeId: string, ratio: number) => void;
@@ -168,6 +174,51 @@ export function WorkspaceLayoutProvider({ children }: { children: ReactNode }): 
           cwd,
         );
         return { ...t, paneRoot: newRoot, focusedPaneId: newLeafId };
+      });
+    },
+    splitPaneAndSetContent: (direction, content) => {
+      updateActiveTab((t) => {
+        const { root: split, newLeafId } = splitNode(t.paneRoot, t.focusedPaneId, direction);
+        if (!newLeafId) return t;
+        return {
+          ...t,
+          paneRoot: mapNode(split, (node) =>
+            node.type === 'leaf' && node.id === newLeafId ? { ...node, content } : node,
+          ),
+          focusedPaneId: newLeafId,
+        };
+      });
+    },
+    openToolColumn: (cwd) => {
+      updateActiveTab((t) => {
+        const targetId =
+          (t.focusedPaneId && hasLeaf(t.paneRoot, t.focusedPaneId) ? t.focusedPaneId : null) ??
+          firstLeafId(t.paneRoot);
+        if (!targetId) return t;
+        const toolColumn: PaneNode = {
+          type: 'split',
+          id: crypto.randomUUID(),
+          direction: 'v',
+          ratio: 0.5,
+          first: makeLeaf({ type: 'files', target: { kind: 'fixed', cwd } }),
+          second: makeLeaf({ type: 'git', target: { kind: 'fixed', cwd } }),
+        };
+        return {
+          ...t,
+          paneRoot: mapNode(t.paneRoot, (node) =>
+            node.type === 'leaf' && node.id === targetId
+              ? {
+                  type: 'split',
+                  id: crypto.randomUUID(),
+                  direction: 'h',
+                  ratio: 0.6,
+                  first: node,
+                  second: toolColumn,
+                }
+              : node,
+          ),
+          focusedPaneId: targetId,
+        };
       });
     },
     closePane: (paneId) => {

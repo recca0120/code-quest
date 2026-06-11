@@ -82,13 +82,11 @@ describe('identity 從 UI 端到端寫入（renderWithWorkspace 全真管線）'
     summoner.git()!.addWorktree({ name: 'wt-feat', path: WT_FEAT, branch: 'feat/x' });
     await addProject({ path: '/projects', dirName: 'app' }); // 另 primes main worktree + projectRoot
 
-    // 真 UI：EmptyState「New Session」→ PanePicker → feat/x worktree 的 💬 AI ▶ → + New Session
+    // 真 UI：EmptyState「New Session」→ PanePicker（Miller）→ 欄2 點 feat/x → 欄3 chat 卡
     await user.click(screen.getByRole('button', { name: 'New Session' }));
-    const wtSection = (await screen.findByText(/⎇ feat\/x/)).closest(
-      '[data-has-session]',
-    ) as HTMLElement;
-    await user.click(within(wtSection).getByRole('button', { name: /💬 AI/ }));
-    await user.click(await screen.findByRole('button', { name: /\+ New Session/i }));
+    const wtCol = await screen.findByTestId('pane-picker-col-worktrees');
+    await user.click(within(wtCol).getByText('feat/x'));
+    await user.click(screen.getByTestId('picker-type-chat'));
 
     // ① UI：chat pane 出現（session:init 已回流）
     await screen.findAllByPlaceholderText(/Esc to focus/i);

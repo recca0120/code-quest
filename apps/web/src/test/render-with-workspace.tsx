@@ -43,19 +43,13 @@ async function launchSession(
     });
   });
 
-  // Entry point A: "New Session" EmptyState button → opens PanePicker → [💬 AI ▶] → [+ New Session]
-  // Single provider (AI_PROVIDERS.length === 1): AI ▶ directly shows actions, no provider selection step.
+  // Entry point A: "New Session" EmptyState button → opens PanePicker (Miller 三欄)
+  // → 預設已選第一個 worktree → 點欄3 的 chat 類型卡
   const emptyStateBtn = screen.queryByRole('button', { name: 'New Session' });
   if (emptyStateBtn) {
     await user.click(emptyStateBtn);
-    const aiBtn = await screen.findAllByRole('button', { name: /💬 AI/i }, { timeout: 5000 });
-    await user.click(aiBtn[0]!);
-    const newSessionBtn = await screen.findByRole(
-      'button',
-      { name: /\+ New Session/i },
-      { timeout: 5000 },
-    );
-    await user.click(newSessionBtn);
+    const chatCard = await screen.findByTestId('picker-type-chat', {}, { timeout: 5000 });
+    await user.click(chatCard);
   } else {
     // Entry point B: SessionManager (⌘⇧M) → first worktree row "+ New session"
     // (SessionBar was removed by tmux-workspace-ui P1; manager is the entry now)

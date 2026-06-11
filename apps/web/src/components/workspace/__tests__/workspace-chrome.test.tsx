@@ -166,3 +166,22 @@ describe('底部狀態列（spec: focused pane 決定狀態列 context）', () =
     expect(within(statusline).getByText(/⌘⇧M/)).toBeInTheDocument();
   });
 });
+
+describe('PanePicker 全管線（P2：⌘K／標準工作組）', () => {
+  it('⌘K 開啟 picker；標準工作組一鍵建 chat＋files＋git 三 pane', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    // ⌘K（KeyboardShortcutsProvider 真綁定）
+    await user.keyboard('{Meta>}k{/Meta}');
+    expect(await screen.findByTestId('pane-picker-miller')).toBeInTheDocument();
+
+    // 標準工作組：focused pane 開 chat、右側直欄 files/git
+    await user.click(screen.getByTestId('picker-combo-standard'));
+    await waitFor(() => expect(screen.getAllByTestId('split-pane-leaf').length).toBe(4));
+    // files 與 git pane 都在（aria-label region）
+    expect(screen.getByRole('region', { name: 'files-pane' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'git-pane' })).toBeInTheDocument();
+  });
+});

@@ -23,15 +23,15 @@ TDD：每項先 [test] 後 [impl]。測試一律照 design.md §3（fake-summone
 
 ## 2. P2 — PanePicker Miller 三欄
 
-- [ ] 2.1 [test] 三欄資料源：projects/worktrees priming → 欄聯動；listing 載入中 loading 態（6.5）
-- [ ] 2.2 [impl] Miller 三欄版面（窄視窗單欄退化）；registry 類型 grid
-- [ ] 2.3 [test] 鍵盤協定：←→↑↓/⏎/⌘⏎/F G O D T/esc/搜尋過濾（user.keyboard 全程）
-- [ ] 2.4 [impl] 鍵盤導航 state machine
-- [ ] 2.5 [test] ⏎ 開到 focused pane（setContentInPane）；⌘⏎ 分割開啟＋min-size 拒絕 toast
-- [ ] 2.6 [impl] 開啟路徑接線
-- [ ] 2.7 [test] 進行中（busy＋pane 編號）/resume 歷史/常用組合 ⌘1 → 3-pane 預組
-- [ ] 2.8 [impl] 欄3 sections＋標準工作組
-- [ ] 2.9 [verify] Playwright：⌘K 全鍵盤開 pane journey
+- [x] 2.1 [test] 三欄資料源：projects/worktrees priming → 欄聯動；listing 載入中 loading 態（6.5）
+- [x] 2.2 [impl] Miller 三欄版面（窄視窗單欄退化）；registry 類型 grid
+- [x] 2.3 [test] 鍵盤協定：←→↑↓/⏎/⌘⏎/F G O D T/esc/搜尋過濾（user.keyboard 全程）
+- [x] 2.4 [impl] 鍵盤導航 state machine
+- [x] 2.5 [test] ⏎ 開到 focused pane（setContentInPane）；⌘⏎ 分割開啟（min-size 拒絕 toast 移至 4.1 與 DnD 護欄同源實作）
+- [x] 2.6 [impl] 開啟路徑接線
+- [x] 2.7 [test] 進行中（busy＋pane 編號）/resume 歷史/常用組合 ⌘1 → 3-pane 預組
+- [x] 2.8 [impl] 欄3 sections＋標準工作組
+- [x] 2.9 [verify] Playwright：⌘K 全鍵盤開 pane journey
 
 ## 3. P3 — Chat rail/dock ＋ Drawer
 

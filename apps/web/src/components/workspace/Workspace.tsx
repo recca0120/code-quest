@@ -31,7 +31,8 @@ type PanePickerConfig = Omit<
 >;
 
 function ConnectedPanePicker(props: PanePickerConfig) {
-  const { setSessionInPane, setContentInPane, focusPane } = usePaneActions();
+  const { setSessionInPane, setContentInPane, focusPane, splitPaneAndSetContent, openToolColumn } =
+    usePaneActions();
   const { focusedPaneId, paneRoot } = usePaneState();
   const { listSessions, resume } = useSession();
   const [pastSessions, setPastSessions] = useState<
@@ -85,13 +86,24 @@ function ConnectedPanePicker(props: PanePickerConfig) {
         }
         props.onClose();
       }}
-      onOpenToolPane={(type, cwd, paneId) => {
-        const target = paneId ?? focusedPaneId;
-        if (target) {
-          setContentInPane(target, { type, target: { kind: 'fixed', cwd } });
-          focusPane(target);
+      onOpenToolPane={(type, cwd, paneId, opts) => {
+        if (opts?.split) {
+          // ⌘⏎ 分割開啟（handoff §4 鍵位列）
+          splitPaneAndSetContent('h', { type, target: { kind: 'fixed', cwd } });
+        } else {
+          const target = paneId ?? focusedPaneId;
+          if (target) {
+            setContentInPane(target, { type, target: { kind: 'fixed', cwd } });
+            focusPane(target);
+          }
         }
         props.onClose();
+      }}
+      onOpenCombo={(cwd, projectCwd) => {
+        // 標準工作組（⌘1）：先建右側 files/git 直欄（focus 留原 pane），chat 經
+        // pendingSession 管線落原 focused pane
+        openToolColumn(cwd);
+        props.onNewSession?.(cwd, projectCwd, undefined);
       }}
     />
   );
@@ -113,7 +125,8 @@ function DocumentTitle() {
 
 export function Workspace(): React.JSX.Element {
   const { openPalette, registerActions } = useCommandPaletteActions();
-  useHotkeys('mod+k', () => openPalette(), NO_FORM);
+  // ⌘K 讓給 PanePicker（handoff §4：唯一內容入口）；palette 改 ⌘⇧K
+  useHotkeys('mod+shift+k', () => openPalette(), NO_FORM);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
@@ -198,7 +211,8 @@ export function Workspace(): React.JSX.Element {
     const result: Record<string, WorktreeInfo[]> = {};
     for (const p of projects) {
       const entry = listing[p.cwd];
-      if (Array.isArray(entry)) result[p.cwd] = entry;
+      // undefined = 尚未載入（picker 顯示 loading）；error/非陣列 = 已回但失敗 → 空列表
+      if (entry !== undefined) result[p.cwd] = Array.isArray(entry) ? entry : [];
     }
     return result;
   }, [listing, projects]);
@@ -235,6 +249,7 @@ export function Workspace(): React.JSX.Element {
             }}
             onNewWorktree={handleNewWorktree}
             onAddProject={handleOpenAddProjectDialog}
+            onOpenPicker={handleOpenModal}
           >
             <TabContainer
               pendingNewSession={pendingNewSession}

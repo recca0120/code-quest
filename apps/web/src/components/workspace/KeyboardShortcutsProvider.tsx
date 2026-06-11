@@ -36,6 +36,7 @@ function findAdjacentLeafId(
 function useKeyboardShortcuts(
   sessionManagerOpen: boolean,
   setSessionManagerOpen: (fn: (prev: boolean) => boolean) => void,
+  onOpenPicker?: (paneId?: string) => void,
 ): void {
   const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
   const { splitPane, closePane, focusPane, swapPane, zoomPane } = usePaneActions();
@@ -68,6 +69,12 @@ function useKeyboardShortcuts(
     function handler(e: KeyboardEvent): void {
       const meta = e.metaKey || e.ctrlKey;
       if (!meta) return;
+
+      if (e.key === 'k' && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        onOpenPicker?.(focusedPaneId ?? undefined);
+        return;
+      }
 
       if (e.key === 't' && !e.altKey && !e.shiftKey) {
         e.preventDefault();
@@ -184,12 +191,13 @@ function useKeyboardShortcuts(
     zoomPane,
     zoomedPaneId,
     setSessionManagerOpen,
+    onOpenPicker,
   ]);
 }
 
-/** 狀態列快捷鍵提示（handoff §1）——單一來源：必須與本 provider 的實際綁定同步。
- * ⌘K picker 於 P2 綁定後加項。 */
+/** 狀態列快捷鍵提示（handoff §1）——單一來源：必須與本 provider 的實際綁定同步。 */
 export const WORKSPACE_SHORTCUT_HINTS = [
+  { keys: '⌘K', label: 'picker' },
   { keys: '⌘\\', label: 'split ⇄' },
   { keys: '⌘-', label: 'split ⇵' },
   { keys: '⌘⇧Z', label: 'zoom' },
@@ -201,14 +209,17 @@ export function KeyboardShortcutsProvider({
   onNewSession,
   onNewWorktree,
   onAddProject,
+  onOpenPicker,
 }: {
   children: React.ReactNode;
   onNewSession?: (cwd: string, projectCwd: string) => void;
   onNewWorktree?: (projectCwd: string) => void;
   onAddProject?: () => void;
+  /** ⌘K — 開 PanePicker（唯一內容入口，handoff §4） */
+  onOpenPicker?: (paneId?: string) => void;
 }): React.JSX.Element {
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
-  useKeyboardShortcuts(sessionManagerOpen, setSessionManagerOpen);
+  useKeyboardShortcuts(sessionManagerOpen, setSessionManagerOpen, onOpenPicker);
   const ctxValue = useMemo(() => ({ open: () => setSessionManagerOpen(() => true) }), []);
   return (
     <SessionManagerContext.Provider value={ctxValue}>
