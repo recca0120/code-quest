@@ -4,7 +4,7 @@
 
 修復「開新 session」各入口的斷線：SessionManager 假按鈕、PanePicker targetPaneId 被丟、建 worktree 後 dead-end、create+place 邏輯下沉（D6，remove-session-bar 前置）。
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: SessionManager actions are wired
 

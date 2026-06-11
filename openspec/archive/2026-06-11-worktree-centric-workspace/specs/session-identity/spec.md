@@ -4,7 +4,7 @@
 
 Session 的 project/worktree 歸屬進入資料模型：建立時整包寫入 TabMeta，顯示層以 cwd 反查 live lookup map（不信快照）。修復「UI 上選 branch、建好後處處顯示不出來」與「breadcrumb 貼錯 project」。
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: TabMeta carries full identity at creation
 
