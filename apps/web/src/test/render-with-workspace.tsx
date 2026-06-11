@@ -51,12 +51,10 @@ async function launchSession(
     const chatCard = await screen.findByTestId('picker-type-chat', {}, { timeout: 5000 });
     await user.click(chatCard);
   } else {
-    // Entry point B: SessionManager (⌘⇧M) → first worktree row "+ New session"
-    // (SessionBar was removed by tmux-workspace-ui P1; manager is the entry now)
-    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
-    await screen.findByTestId('session-manager', {}, { timeout: 3000 });
-    const newSessionBtns = await screen.findAllByTestId('new-session-btn', {}, { timeout: 3000 });
-    await user.click(newSessionBtns[0]!);
+    // Entry point B: PanePicker (⌘K) → 預設選第一個 worktree → 點 chat 類型卡
+    await user.keyboard('{Control>}k{/Control}');
+    const chatCard = await screen.findByTestId('picker-type-chat', {}, { timeout: 5000 });
+    await user.click(chatCard);
   }
 
   await act(async () => {
@@ -92,12 +90,14 @@ async function addProject(
     git.addWorktree({ path: projectCwd, branch: 'main', name: dirName });
   }
 
-  // Detect entry point: EmptyState "Add Project" or WorkspaceTabBar "Add project"
+  // Detect entry point: EmptyState "Add Project" or PanePicker "＋ 新增 Project…"
   const emptyButton = screen.queryByRole('button', { name: 'Add Project' });
   if (emptyButton) {
     await user.click(emptyButton);
   } else {
-    await user.click(screen.getByRole('button', { name: /add project/i }));
+    await user.keyboard('{Control>}k{/Control}');
+    const addBtn = await screen.findByText(/新增 Project|Add project/i);
+    await user.click(addBtn);
   }
 
   // Browse FileTree → select → Add

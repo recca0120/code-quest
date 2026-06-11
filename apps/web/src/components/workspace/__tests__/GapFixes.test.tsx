@@ -10,7 +10,6 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { RightPane } from '@/components/workspace/RightPane';
-import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
 import { FsProvider } from '@/contexts/FsContext';
 import { GitProvider } from '@/contexts/GitContext';
 import { OpenspecProvider } from '@/contexts/OpenspecContext';
@@ -106,48 +105,5 @@ describe('Gap-2: Context Panel renders real FilesPane / GitPane / SpecPane', () 
     expect(screen.getByRole('tab', { name: /Files/i })).toHaveAttribute('data-state', 'active');
     await user.click(screen.getByRole('tab', { name: /Git/i }));
     expect(screen.getByRole('tab', { name: /Git/i })).toHaveAttribute('data-state', 'active');
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────
-// Gap-3: WorkspaceTabBar has [⊞] button that opens Session Manager
-// ─────────────────────────────────────────────────────────────────────
-describe('Gap-3: WorkspaceTabBar [⊞] opens Session Manager overlay', () => {
-  it('WorkspaceTabBar renders an "Open session manager" button', () => {
-    render(
-      <Wrapper>
-        <WorkspaceTabBar />
-      </Wrapper>,
-    );
-    expect(screen.getByRole('button', { name: /open session manager/i })).toBeInTheDocument();
-  });
-
-  it('clicking [⊞] opens session-manager overlay', async () => {
-    const user = userEvent.setup();
-    const result = await renderWithWorkspace();
-    const project = await result.addProject();
-    await project.launchSession();
-
-    await user.click(screen.getByRole('button', { name: /open session manager/i }));
-    expect(screen.getByTestId('session-manager')).toBeInTheDocument();
-  });
-
-  it('⌘⇧M and [⊞] both open the same session manager', async () => {
-    const user = userEvent.setup();
-    const result = await renderWithWorkspace();
-    const project = await result.addProject();
-    await project.launchSession();
-
-    // Open via keyboard shortcut
-    await user.keyboard('{Meta>}{Shift>}m{/Shift}{/Meta}');
-    expect(screen.getByTestId('session-manager')).toBeInTheDocument();
-
-    // Close via Escape
-    await user.keyboard('{Escape}');
-    expect(screen.queryByTestId('session-manager')).not.toBeInTheDocument();
-
-    // Open via button
-    await user.click(screen.getByRole('button', { name: /open session manager/i }));
-    expect(screen.getByTestId('session-manager')).toBeInTheDocument();
   });
 });

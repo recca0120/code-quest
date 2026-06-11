@@ -40,7 +40,6 @@ interface TabContainerProps {
   onSessionCreated?: () => void;
   onOpenModal?: (paneId?: string) => void;
   onOpenSettings?: () => void;
-  onAddProject?: () => void;
   onNewWorktree?: (projectCwd: string) => void;
 }
 
@@ -49,7 +48,6 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
   onSessionCreated,
   onOpenModal,
   onOpenSettings,
-  onAddProject,
   onNewWorktree,
 }) {
   const { tabs } = useTabState();
@@ -136,7 +134,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   return (
     <div data-testid="tab-container" className="flex flex-col flex-1 min-w-0 overflow-hidden">
-      <WorkspaceTabBar onOpenSettings={onOpenSettings} onAddProject={onAddProject} />
+      <WorkspaceTabBar onOpenSettings={onOpenSettings} />
       <ZoomBar />
       <PaneEnvironmentProvider value={paneEnvironment}>
         {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}

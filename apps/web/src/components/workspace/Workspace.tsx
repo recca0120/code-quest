@@ -183,7 +183,6 @@ export function Workspace(): React.JSX.Element {
     }
   }, [paletteOpen, paletteDefaultTab, closePalette, handleOpenModal]);
   const handleOpenSettings = useCallback(() => setSettingsOpen(true), []);
-  const handleOpenAddProjectDialog = useCallback(() => setDialogOpen(true), []);
   const handleNewWorktree = useCallback(
     (projectCwd: string) => {
       setActiveProject(projectCwd);
@@ -263,21 +262,12 @@ export function Workspace(): React.JSX.Element {
         >
           <NavigationIntentBridge />
           <DrawerProvider>
-            <KeyboardShortcutsProvider
-              onNewSession={(cwd, projectCwd) => {
-                setActiveProject(projectCwd);
-                setPendingSession({ projectCwd, sessionCwd: cwd });
-              }}
-              onNewWorktree={handleNewWorktree}
-              onAddProject={handleOpenAddProjectDialog}
-              onOpenPicker={handleOpenModal}
-            >
+            <KeyboardShortcutsProvider onOpenPicker={handleOpenModal}>
               <TabContainer
                 pendingNewSession={pendingNewSession}
                 onSessionCreated={handleSessionCreated}
                 onOpenModal={handleOpenModal}
                 onOpenSettings={handleOpenSettings}
-                onAddProject={handleOpenAddProjectDialog}
                 onNewWorktree={handleNewWorktree}
               />
               <DrawerHost />

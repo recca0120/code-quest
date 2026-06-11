@@ -109,13 +109,12 @@ describe('tab 預設命名（spec: 預設＝第一個 pane 的 worktree 名去�
       });
     });
 
-    // 新 workspace tab（空 pane）→ ⌘⇧M 從 discuss-layout row 開 session
+    // 新 workspace tab（空 pane）→ PanePicker 從 discuss-layout worktree 開 session
     await user.click(screen.getByTestId('workspace-tab-add'));
-    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
-    const row = (await screen.findByText('⎇ feat/discuss-layout')).closest(
-      '[data-testid^="worktree-row"]',
-    );
-    await user.click(within(row as HTMLElement).getByTestId('new-session-btn'));
+    await user.click(await screen.findByRole('button', { name: 'New Session' }));
+    // picker 欄2 選 discuss-layout worktree → 欄3 點 chat
+    await user.click(await screen.findByText('feat/discuss-layout'));
+    await user.click(screen.getByTestId('picker-type-chat'));
 
     // session 落新 tab 第一個 pane → label = 去 feat/ 前綴的 'discuss-layout'
     //（^$ 錨定：保留前綴的 'feat/discuss-layout' 不可過）
@@ -183,10 +182,10 @@ describe('底部狀態列（spec: focused pane 決定狀態列 context）', () =
       expect(within(statusline).queryByTestId('statusline-busy')).not.toBeInTheDocument(),
     );
 
-    // 從 manager 在 feat worktree 開第二個 session → focused 變新 pane → ⎇ feat/x
-    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
-    const featRow = (await screen.findByText('⎇ feat/x')).closest('[data-testid^="worktree-row"]');
-    await user.click(within(featRow as HTMLElement).getByTestId('new-session-btn'));
+    // 從 PanePicker 在 feat worktree 開第二個 session → focused 變新 pane → ⎇ feat/x
+    await user.keyboard('{Control>}k{/Control}');
+    await user.click(await screen.findByText('feat/x'));
+    await user.click(screen.getByTestId('picker-type-chat'));
     await waitFor(() =>
       expect(within(statusline).getByTestId('statusline-context')).toHaveTextContent('⎇ feat/x'),
     );
@@ -216,11 +215,10 @@ describe('底部狀態列（spec: focused pane 決定狀態列 context）', () =
       expect(within(statusline).getByTestId('statusline-busy')).toHaveTextContent('1 busy'),
     );
 
-    // 第二個 channel：再 prepareInit 一次（獨立 session id）→ manager 開第二個 session
+    // 第二個 channel：再 prepareInit 一次（獨立 session id）→ PanePicker 開第二個 session
     claude.prepareInit(s.init('sess-busy-b'));
-    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
-    const newSessionBtns = await screen.findAllByTestId('new-session-btn');
-    await user.click(newSessionBtns[0]!);
+    await user.keyboard('{Control>}k{/Control}');
+    await user.click(await screen.findByTestId('picker-type-chat'));
     await waitFor(() => expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2));
 
     // 新 session pane 取得 focus → 在它的 composer 送訊息 → 兩個同時 processing
@@ -304,7 +302,8 @@ describe('PanePicker 全管線（P2：⌘K／標準工作組）', () => {
     // getProjectRoot 指向 /projects/plain → listWorktrees 擲 NotARepoError → list 回 error
     summoner.filesystem().addDirectory('/projects', ['app', 'plain']);
     summoner.git()!.setProjectRoot('/projects/plain');
-    await user.click(screen.getByRole('button', { name: /add project/i }));
+    await user.keyboard('{Control>}k{/Control}');
+    await user.click(await screen.findByText(/新增 Project|Add project/i));
     await user.click(await screen.findByRole('treeitem', { name: 'projects' }));
     await user.click(await screen.findByRole('treeitem', { name: 'plain' }));
     await user.click(screen.getByRole('button', { name: /^add$/i }));

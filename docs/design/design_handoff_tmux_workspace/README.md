@@ -42,7 +42,7 @@
 - **頂部 tab bar**：高 38px，背景 `--color-surface`，底線 1px `--color-border`
   - 左：logo（18px 圓角 5px 方塊 `--color-accent`＋「Code Quest」13px/700）
   - tabs：高 32px、圓角 8 8 0 0、active＝`--color-bg` 底＋邊框＋底部 2px 蓋線接縫；內容＝編號（mono 10px，active 時 `--color-accent`）＋busy 燈（6px 圓點 `--color-accent`，pulse 1.2s）＋名稱＋×；**全部 `white-space: nowrap`**
-  - 右：⊞ Session Manager（⌘⇧M）、⌘K 鍵帽、⚙
+  - 右：⌘K 鍵帽、⚙
 - **底部狀態列**：高 26px，`--color-surface` 底、頂線 1px；mono 10.5px
   - 左：project 名（accent 色、600）＋ `⎇ branch`
   - 右：快捷鍵提示（⌘K picker／⌘D 垂直分割／⌘⇧D 水平分割／⌘⇧Z zoom）＋ `N busy`＋busy 燈
@@ -117,7 +117,6 @@
 | ⏎ / ⌘⏎（picker 內） | 開啟到目前 pane / 分割開啟 |
 | 1–9 | （按住 pane-jump 鍵時）跳到該編號 pane |
 | ⌥方向鍵 | 微調 focused pane 邊界 |
-| ⌘⇧M | Session Manager |
 | ⌘K 內輸入「›」 | 切換到指令模式（theme／字級／密度等都是指令） |
 | ⌘= / ⌘− / ⌘0 | 字級放大／縮小／重設 |
 

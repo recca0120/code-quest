@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import {
   findAncestorSplit,
   firstLeafId,
@@ -10,8 +10,6 @@ import {
 } from '@/contexts/TabContext';
 import { type FontSize, usePreferencesStore } from '@/stores/usePreferencesStore';
 import { guardSplitMinSize } from './pane-min-size.ts';
-import { SessionManager } from './SessionManager';
-import { SessionManagerContext } from './SessionManagerContext';
 import { useCreateSessionInPane } from './useCreateSessionInPane.ts';
 import { useMobileMode } from './useMobileMode';
 
@@ -37,11 +35,7 @@ function findAdjacentLeafId(
   return leaves[idx + 1] ?? null;
 }
 
-function useKeyboardShortcuts(
-  sessionManagerOpen: boolean,
-  setSessionManagerOpen: (fn: (prev: boolean) => boolean) => void,
-  onOpenPicker?: (paneId?: string) => void,
-): void {
+function useKeyboardShortcuts(onOpenPicker?: (paneId?: string) => void): void {
   const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
   const { splitPane, closePane, focusPane, swapPane, zoomPane, updateRatio } = usePaneActions();
   const { createSessionInPane } = useCreateSessionInPane();
@@ -210,12 +204,6 @@ function useKeyboardShortcuts(
         return;
       }
 
-      if (e.shiftKey && (e.key === 'm' || e.key === 'M')) {
-        e.preventDefault();
-        setSessionManagerOpen((prev) => !prev);
-        return;
-      }
-
       if (
         e.altKey &&
         (e.key === 'ArrowLeft' ||
@@ -239,24 +227,15 @@ function useKeyboardShortcuts(
       }
     }
 
-    function escapeHandler(e: KeyboardEvent): void {
-      if (e.key === 'Escape' && sessionManagerOpen) {
-        setSessionManagerOpen(() => false);
-      }
-    }
-
     document.addEventListener('keydown', handler);
-    document.addEventListener('keydown', escapeHandler);
     return () => {
       document.removeEventListener('keydown', handler);
-      document.removeEventListener('keydown', escapeHandler);
     };
   }, [
     paneRoot,
     focusedPaneId,
     focusedLeafCwd,
     isMobile,
-    sessionManagerOpen,
     splitPane,
     closePane,
     focusPane,
@@ -264,7 +243,6 @@ function useKeyboardShortcuts(
     swapPane,
     zoomPane,
     zoomedPaneId,
-    setSessionManagerOpen,
     onOpenPicker,
     updateRatio,
   ]);
@@ -276,47 +254,17 @@ export const WORKSPACE_SHORTCUT_HINTS = [
   { keys: '⌘D', label: 'split ⇄' },
   { keys: '⌘⇧D', label: 'split ⇵' },
   { keys: '⌘⇧Z', label: 'zoom' },
-  { keys: '⌘⇧M', label: 'sessions' },
   { keys: '⌥1-9', label: 'jump' },
 ] as const;
 
 export function KeyboardShortcutsProvider({
   children,
-  onNewSession,
-  onNewWorktree,
-  onAddProject,
   onOpenPicker,
 }: {
   children: React.ReactNode;
-  onNewSession?: (cwd: string, projectCwd: string) => void;
-  onNewWorktree?: (projectCwd: string) => void;
-  onAddProject?: () => void;
   /** ⌘K — 開 PanePicker（唯一內容入口，handoff §4） */
   onOpenPicker?: (paneId?: string) => void;
 }): React.JSX.Element {
-  const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
-  useKeyboardShortcuts(sessionManagerOpen, setSessionManagerOpen, onOpenPicker);
-  const ctxValue = useMemo(() => ({ open: () => setSessionManagerOpen(() => true) }), []);
-  return (
-    <SessionManagerContext.Provider value={ctxValue}>
-      {children}
-      {sessionManagerOpen && (
-        <SessionManager
-          onClose={() => setSessionManagerOpen(() => false)}
-          onNewSession={(cwd, projectCwd) => {
-            setSessionManagerOpen(() => false);
-            onNewSession?.(cwd, projectCwd);
-          }}
-          onNewWorktree={(projectCwd) => {
-            setSessionManagerOpen(() => false);
-            onNewWorktree?.(projectCwd);
-          }}
-          onAddProject={() => {
-            setSessionManagerOpen(() => false);
-            onAddProject?.();
-          }}
-        />
-      )}
-    </SessionManagerContext.Provider>
-  );
+  useKeyboardShortcuts(onOpenPicker);
+  return <>{children}</>;
 }

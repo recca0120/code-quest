@@ -7,7 +7,6 @@ import {
   type WorkspaceTab,
 } from '@/contexts/TabContext';
 import { formatWorktreeLabel } from './pane-label';
-import { useSessionManager } from './SessionManagerContext';
 import { useWorktreeLookup, type WorktreeIdentity } from './useAvailableWorktrees';
 
 const BUSY_STATUSES = new Set(['processing', 'busy', 'cancelling']);
@@ -33,13 +32,9 @@ function deriveTabLabel(
 
 interface WorkspaceTabBarProps {
   onOpenSettings?: () => void;
-  onAddProject?: () => void;
 }
 
-export function WorkspaceTabBar({
-  onOpenSettings,
-  onAddProject,
-}: WorkspaceTabBarProps = {}): React.JSX.Element {
+export function WorkspaceTabBar({ onOpenSettings }: WorkspaceTabBarProps = {}): React.JSX.Element {
   const {
     workspaceTabs,
     activeWorkspaceTabId,
@@ -52,7 +47,6 @@ export function WorkspaceTabBar({
   const lookup = useWorktreeLookup();
   const [renamingTabId, setRenamingTabId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
-  const { open: openSessionManager } = useSessionManager();
 
   return (
     <div
@@ -169,33 +163,13 @@ export function WorkspaceTabBar({
       >
         +
       </button>
-      <button
-        type="button"
-        aria-label="Open session manager"
-        onClick={openSessionManager}
-        className="ml-auto px-2 py-0.5 text-xs opacity-60 hover:opacity-100"
-        title="Session Manager (⌘⇧M)"
-      >
-        ⊞
-      </button>
       <span
         aria-hidden="true"
-        className="font-mono text-2xs text-muted bg-bg border border-border rounded px-1.5 py-0.5"
+        className="ml-auto font-mono text-2xs text-muted bg-bg border border-border rounded px-1.5 py-0.5"
         title="Pane picker (⌘K)"
       >
         ⌘K
       </span>
-      {onAddProject && (
-        <button
-          type="button"
-          aria-label="Add project"
-          onClick={onAddProject}
-          className="px-2 py-0.5 text-xs opacity-60 hover:opacity-100"
-          title="Add project"
-        >
-          + Project
-        </button>
-      )}
       {onOpenSettings && (
         <button
           type="button"
