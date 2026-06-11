@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   collectSessionsInPaneTree,
   firstPaneCwd,
@@ -23,6 +24,18 @@ export function WorkspaceStatusline(): React.JSX.Element {
   const { tabs } = useTabState();
   const { workspaceTabs } = useWorkspaceTab();
   const lookup = useWorktreeLookup();
+  const [fontHint, setFontHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const label = (e as CustomEvent).detail as string;
+      setFontHint(`Font: ${label}`);
+      const id = setTimeout(() => setFontHint(null), 2000);
+      return () => clearTimeout(id);
+    };
+    window.addEventListener('font-size-hint', handler);
+    return () => window.removeEventListener('font-size-hint', handler);
+  }, []);
 
   const cwd = (focusedPaneId ? paneCwd(paneRoot, focusedPaneId) : null) ?? firstPaneCwd(paneRoot);
   const identity = cwd ? lookup.get(cwd) : undefined;
@@ -48,6 +61,14 @@ export function WorkspaceStatusline(): React.JSX.Element {
         </span>
       )}
       <span className="ml-auto flex items-center gap-3">
+        {fontHint && (
+          <span
+            data-testid="statusline-font-hint"
+            className="text-accent font-semibold animate-fade-in"
+          >
+            {fontHint}
+          </span>
+        )}
         {WORKSPACE_SHORTCUT_HINTS.map((hint) => (
           // md(768) 起才顯桌面快捷鍵提示：640–767 視為 mobile 段
           <span key={hint.keys} className="hidden md:inline text-subtle">

@@ -244,7 +244,8 @@ describe('鍵盤協定（spec: ←→↑↓⏎⌘⏎／快捷字母／⌘1）', 
     const user = userEvent.setup();
     const props = setup();
     await user.click(screen.getByLabelText('picker search'));
-    // 預設 sel3=0（chat 卡）→ ↓ 到 files
+    // 預設 col=0 → →→ 移到 col=2
+    await user.keyboard('{ArrowRight}{ArrowRight}');
     expect(screen.getByTestId('picker-type-chat')).toHaveAttribute('data-active');
     await user.keyboard('{ArrowDown}');
     expect(screen.getByTestId('picker-type-files')).toHaveAttribute('data-active');
@@ -261,7 +262,7 @@ describe('鍵盤協定（spec: ←→↑↓⏎⌘⏎／快捷字母／⌘1）', 
     const user = userEvent.setup();
     setup();
     await user.click(screen.getByLabelText('picker search'));
-    await user.keyboard('{ArrowLeft}'); // 欄3 → 欄2
+    await user.keyboard('{ArrowRight}'); // 欄0 → 欄1
     await user.keyboard('{ArrowDown}'); // main → feat-x
     const featBtn = within(col.worktrees()).getByText('feat-x').closest('button');
     expect(featBtn).toHaveAttribute('data-active');
@@ -271,6 +272,7 @@ describe('鍵盤協定（spec: ←→↑↓⏎⌘⏎／快捷字母／⌘1）', 
     const user = userEvent.setup();
     const props = setup();
     await user.click(screen.getByLabelText('picker search'));
+    await user.keyboard('{ArrowRight}{ArrowRight}'); // col0 → col2
     await user.keyboard('{Meta>}{Enter}{/Meta}');
     expect(props.onNewSession).toHaveBeenCalledWith(
       '/projects/app',

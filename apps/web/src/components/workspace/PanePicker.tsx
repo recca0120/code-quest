@@ -398,7 +398,7 @@ export function PanePicker({
   useEffect(() => {
     if (open) {
       setQuery(initialQuery ?? '');
-      setCol(2);
+      setCol(0);
       setSelProjectCwd(null);
       setSelWorktreePath(null);
       setSel3(0);
@@ -514,7 +514,11 @@ export function PanePicker({
     }
     if (e.key === 'Enter') {
       e.preventDefault();
-      const item = contentItems[col === 2 ? sel3 : 0];
+      if (col < 2) {
+        setCol((col + 1) as 0 | 1 | 2);
+        return;
+      }
+      const item = contentItems[sel3];
       if (item) activate(item, e.metaKey || e.ctrlKey ? { split: true } : undefined);
       return;
     }

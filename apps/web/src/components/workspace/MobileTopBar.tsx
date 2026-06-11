@@ -11,9 +11,13 @@ const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 
 interface MobileTopBarProps {
   onOpenWall?: () => void;
+  onOpenPicker?: () => void;
 }
 
-export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Element | null {
+export function MobileTopBar({
+  onOpenWall,
+  onOpenPicker,
+}: MobileTopBarProps): React.JSX.Element | null {
   const isMobile = useMobileMode();
   const { paneRoot, focusedPaneId } = usePaneState();
   const { focusPane } = usePaneActions();
@@ -95,7 +99,7 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
         type="button"
         data-testid="mobile-topbar-wall-toggle"
         aria-label="open pane switcher"
-        onClick={onOpenWall}
+        onClick={leaves.length < 2 ? onOpenPicker : onOpenWall}
         className="flex items-center justify-center size-(--mobile-wall-toggle) rounded-(--radius-mobile-toggle) bg-bg border border-border text-[length:var(--text-body)] text-muted hover:text-text"
       >
         ⊞

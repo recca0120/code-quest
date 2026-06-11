@@ -23,18 +23,21 @@ function deriveTabLabel(
   if (cwd) {
     const identity = lookup.get(cwd);
     const source = identity ? formatWorktreeLabel(identity) : cwd;
-    const segments = source.split('/').filter(Boolean);
-    const last = segments[segments.length - 1];
-    if (last) return last;
+    const stripped = source.replace(/^(?:feat|fix|chore|hotfix|release|bugfix)\//, '');
+    if (stripped) return stripped;
   }
   return `Tab ${index + 1}`;
 }
 
 interface WorkspaceTabBarProps {
   onOpenSettings?: () => void;
+  onOpenPicker?: () => void;
 }
 
-export function WorkspaceTabBar({ onOpenSettings }: WorkspaceTabBarProps = {}): React.JSX.Element {
+export function WorkspaceTabBar({
+  onOpenSettings,
+  onOpenPicker,
+}: WorkspaceTabBarProps = {}): React.JSX.Element {
   const {
     workspaceTabs,
     activeWorkspaceTabId,
@@ -165,24 +168,23 @@ export function WorkspaceTabBar({ onOpenSettings }: WorkspaceTabBarProps = {}): 
       >
         +
       </button>
-      <span
-        aria-hidden="true"
-        className="ml-auto font-mono text-2xs text-muted bg-bg border border-border rounded px-1.5 py-0.5"
+      <button
+        type="button"
+        onClick={() => onOpenPicker?.()}
+        className="ml-auto font-mono text-2xs text-muted bg-bg border border-border rounded px-1.5 py-0.5 hover:text-text cursor-pointer"
         title="Pane picker (⌘K)"
       >
         ⌘K
-      </span>
-      {onOpenSettings && (
-        <button
-          type="button"
-          aria-label="Settings"
-          onClick={onOpenSettings}
-          className="px-2 py-0.5 text-[length:var(--text-ui)] opacity-60 hover:opacity-100"
-          title="Settings"
-        >
-          ⚙
-        </button>
-      )}
+      </button>
+      <button
+        type="button"
+        aria-label="Settings"
+        onClick={onOpenSettings}
+        className="px-2 py-0.5 text-[length:var(--text-ui)] opacity-60 hover:opacity-100"
+        title="Settings"
+      >
+        ⚙
+      </button>
     </div>
   );
 }

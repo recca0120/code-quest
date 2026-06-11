@@ -275,6 +275,17 @@ describe('⌘⇧K 直開指令模式（unified-command-entry：行為搬家 pale
   });
 });
 
+describe('⌘K 鍵帽點擊開 PanePicker（behavior-quick-fix #1）', () => {
+  it('點擊 tab bar 的 ⌘K 鍵帽 → PanePicker 開啟', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByTitle('Pane picker (⌘K)'));
+    expect(await screen.findByTestId('pane-picker-miller')).toBeInTheDocument();
+  });
+});
+
 describe('PanePicker 全管線（P2：⌘K／標準工作組）', () => {
   it('⌘K 開啟 picker；標準工作組一鍵建 chat＋files＋git 三 pane', async () => {
     const { user, addProject } = await renderWithWorkspace();
@@ -348,10 +359,10 @@ describe('⌘K target-pane 路由（picker 開到 focused pane）', () => {
       expect(screen.getAllByTestId('split-pane-leaf')[1]).toHaveAttribute('data-focused'),
     );
 
-    // ⌘K → 鍵盤導航：欄3 起點 chat(0) → ↓↓ 到 git(2) → ⏎
+    // ⌘K → 鍵盤導航：欄0 → →→ 到欄2 → ↓↓ 到 git(2) → ⏎
     await user.keyboard('{Meta>}k{/Meta}');
     await screen.findByTestId('pane-picker-miller');
-    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowDown}{ArrowDown}{Enter}');
 
     // git pane 落在第二 leaf；picker 關閉；第一 leaf 的 chat 不受影響
     await waitFor(() => {

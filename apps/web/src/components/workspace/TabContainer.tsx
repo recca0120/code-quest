@@ -134,13 +134,13 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
 
   return (
     <div data-testid="tab-container" className="flex flex-col flex-1 min-w-0 overflow-hidden">
-      <WorkspaceTabBar onOpenSettings={onOpenSettings} />
+      <WorkspaceTabBar onOpenSettings={onOpenSettings} onOpenPicker={() => onOpenModal?.()} />
       <ZoomBar />
       <PaneEnvironmentProvider value={paneEnvironment}>
         {/* Hidden mounts: inactive-tab sessions + unassigned pool (anti-double-mount) */}
         <SessionPool />
 
-        <MobileTopBar onOpenWall={() => setWallOpen(true)} />
+        <MobileTopBar onOpenWall={() => setWallOpen(true)} onOpenPicker={() => onOpenModal?.()} />
 
         {/* Pane area: sessions assigned to panes render here */}
         <div className="flex flex-1 min-w-0 min-h-0">

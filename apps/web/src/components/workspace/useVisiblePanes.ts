@@ -52,6 +52,7 @@ export function useVisiblePaneIds(): VisiblePanes {
   const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
   const isMobile = useMobileMode();
   const isTablet = useTabletMode();
+  const isPortrait = useTabletPortraitMode();
 
   const leaves = leafIdsInOrder(paneRoot);
   if (zoomedPaneId && leaves.includes(zoomedPaneId)) {
@@ -61,6 +62,13 @@ export function useVisiblePaneIds(): VisiblePanes {
     const focus = focusedPaneId && leaves.includes(focusedPaneId) ? focusedPaneId : leaves[0];
     if (!focus) return { visible: null, condensed: [] };
     return { visible: new Set([focus]), condensed: leaves.filter((id) => id !== focus) };
+  }
+  if (isPortrait && leaves.length > 2) {
+    const primaryId = leaves[0];
+    if (!primaryId) return { visible: null, condensed: [] };
+    const focusId = focusedPaneId && leaves.includes(focusedPaneId) ? focusedPaneId : primaryId;
+    const visible = focusId === primaryId ? new Set([primaryId]) : new Set([primaryId, focusId]);
+    return { visible, condensed: leaves.filter((id) => !visible.has(id)) };
   }
   if (isTablet && leaves.length > 2) {
     const focus = focusedPaneId && leaves.includes(focusedPaneId) ? focusedPaneId : leaves[0];
