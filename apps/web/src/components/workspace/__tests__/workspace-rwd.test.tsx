@@ -221,6 +221,52 @@ describe('斷點只改渲染數，不銷毀 pane tree（spec 核心原則）', (
   });
 });
 
+describe('tablet portrait slide-over（handoff §8 直向）', () => {
+  function portraitMatcher(query: string, width: number): boolean {
+    if (query === '(max-width: 767px)') return width <= 767;
+    if (query === '(min-width: 768px) and (max-width: 1023px)')
+      return width >= 768 && width <= 1023;
+    if (query === '(orientation: portrait)') return width >= 768 && width <= 1023;
+    return false;
+  }
+
+  async function twoPanesPortrait() {
+    const mm = setupMatchMedia(800, portraitMatcher);
+    const view = await renderWithWorkspace();
+    const project = await view.addProject();
+    await project.launchSession();
+
+    // split 時需 desktop 寬度讓 split 成功（min-size 護欄）
+    const leaf = screen.getByTestId('split-pane-leaf');
+    const spy = vi
+      .spyOn(leaf, 'getBoundingClientRect')
+      .mockReturnValue({ width: 1200, height: 800 } as DOMRect);
+    await view.user.click(screen.getAllByTestId('pane-split-h')[0]!);
+    await view.user.keyboard('{Escape}');
+    spy.mockRestore();
+    // portrait mode → PaneTree 應渲染 slide-over 而非正常 split
+    return { mm, view };
+  }
+
+  it('tablet portrait + 2 leaf → 主 pane + focused secondary 以 slide-over overlay', async () => {
+    await twoPanesPortrait();
+
+    // 分割後 focus 在新 pane（第二個）→ slide-over 應出現
+    await waitFor(() => expect(screen.getByTestId('slide-over-pane')).toBeInTheDocument());
+    expect(screen.getAllByTestId('split-pane-leaf').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('focus 切回第一個 pane → slide-over 收回', async () => {
+    const { view } = await twoPanesPortrait();
+    await waitFor(() => expect(screen.getByTestId('slide-over-pane')).toBeInTheDocument());
+
+    // 點主 pane（第一個 leaf）→ slide-over 應消失
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+    await view.user.click(leaves[0]!);
+    await waitFor(() => expect(screen.queryByTestId('slide-over-pane')).not.toBeInTheDocument());
+  });
+});
+
 describe('min-size 護欄（spec: 最小尺寸護欄；6.0）', () => {
   it('pane 實寬 < 640（2×320）時拒絕水平分割並 toast；夠寬則放行', async () => {
     setupMatchMedia(1440, widthMatcher);

@@ -8,8 +8,9 @@ import {
 } from '@/contexts/TabContext';
 import { PaneDivider } from './PaneDivider';
 import { PaneLeafBody } from './panes/PaneLeafBody.tsx';
+import { SlideOverPane } from './SlideOverPane';
 import { useMobileMode } from './useMobileMode';
-import { useVisiblePaneIds } from './useVisiblePanes.ts';
+import { useTabletPortraitMode, useVisiblePaneIds } from './useVisiblePanes.ts';
 
 /** 五落點 overlay（handoff §7）：拖曳 hover 在 leaf 上時浮出
  * 上/下/左/右（該方向 split 放入）＋中央（置換）。 */
@@ -167,11 +168,45 @@ function PaneTreeNode({ node, visible }: { node: PaneNode; visible: Set<string> 
   return <PaneSplit key={node.id} node={node} visible={visible} />;
 }
 
+function PortraitSlideOver({
+  paneRoot,
+  focusedPaneId,
+  focusPane,
+}: {
+  paneRoot: PaneNode;
+  focusedPaneId: string | null;
+  focusPane: (id: string) => void;
+}) {
+  const leaves = leafIdsInOrder(paneRoot);
+  const primaryId = leaves[0];
+  const isSecondaryFocused = focusedPaneId !== null && focusedPaneId !== primaryId;
+  const primaryNode = primaryId ? findLeafNode(paneRoot, primaryId) : null;
+  const secondaryNode = isSecondaryFocused ? findLeafNode(paneRoot, focusedPaneId) : null;
+
+  return (
+    <div className="relative flex flex-1 min-w-0 min-h-0">
+      {primaryNode && <PaneLeaf node={primaryNode} />}
+      <SlideOverPane
+        visible={isSecondaryFocused && secondaryNode !== null}
+        onSwipeClose={() => primaryId && focusPane(primaryId)}
+      >
+        {secondaryNode && <PaneLeaf node={secondaryNode} />}
+      </SlideOverPane>
+    </div>
+  );
+}
+
+function findLeafNode(node: PaneNode, id: string): Extract<PaneNode, { type: 'leaf' }> | null {
+  if (node.type === 'leaf') return node.id === id ? node : null;
+  return findLeafNode(node.first, id) ?? findLeafNode(node.second, id);
+}
+
 export function PaneTree(): React.JSX.Element {
-  const { paneRoot, focusedPaneId } = usePaneState();
+  const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
   const { focusPane } = usePaneActions();
   const { visible } = useVisiblePaneIds();
   const isMobile = useMobileMode();
+  const isPortrait = useTabletPortraitMode();
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   // mobile 左右滑切 pane（handoff §8）：左滑＝下一個、右滑＝上一個（先序）
@@ -195,7 +230,15 @@ export function PaneTree(): React.JSX.Element {
       onTouchStart={(e) => setTouchStartX(e.changedTouches[0]?.clientX ?? null)}
       onTouchEnd={handleTouchEnd}
     >
-      <PaneTreeNode node={paneRoot} visible={visible} />
+      {isPortrait && !zoomedPaneId ? (
+        <PortraitSlideOver
+          paneRoot={paneRoot}
+          focusedPaneId={focusedPaneId}
+          focusPane={focusPane}
+        />
+      ) : (
+        <PaneTreeNode node={paneRoot} visible={visible} />
+      )}
     </div>
   );
 }

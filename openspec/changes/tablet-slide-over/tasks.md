@@ -7,20 +7,20 @@
 
 ## 1. 斷點偵測
 
-- [ ] 1.1 [test] useTabletPortraitMode hook：tablet 寬 + portrait → true；landscape → false；desktop → false
-- [ ] 1.2 [impl] useTabletPortraitMode（組合 useTabletMode + matchMedia orientation:portrait）
+- [x] 1.1 [test] useTabletPortraitMode hook：tablet 寬 + portrait → true；landscape → false；desktop → false
+- [x] 1.2 [impl] useTabletPortraitMode（組合 useTabletMode + matchMedia orientation:portrait）
 
 ## 2. SlideOverPane 容器
 
-- [ ] 2.1 [test] SlideOverPane 渲染：absolute 定位、寬 58%、z-25、圓角、進場動效 class
-- [ ] 2.2 [impl] SlideOverPane 元件 + CSS（translateX 進退場 240ms）
+- [x] 2.1 [test] SlideOverPane 渲染：absolute 定位、寬 58%、z-25、圓角、進場動效 class
+- [x] 2.2 [impl] SlideOverPane 元件 + CSS（translateX 進退場 240ms）
 
 ## 3. Pane 渲染策略
 
-- [ ] 3.1 [test] tablet portrait + ≥2 leaf → 主 pane 全寬 + focused secondary 以 SlideOverPane overlay
-- [ ] 3.2 [impl] TabContainer / PaneLayout 在 portrait mode 下的渲染分歧
-- [ ] 3.3 [test] focus 切回第一個 pane → slide-over 收回
-- [ ] 3.4 [impl] focusPane 觸發 slide-over 進退場
+- [x] 3.1 [test] tablet portrait + ≥2 leaf → 主 pane 全寬 + focused secondary 以 SlideOverPane overlay
+- [x] 3.2 [impl] TabContainer / PaneLayout 在 portrait mode 下的渲染分歧
+- [x] 3.3 [test] focus 切回第一個 pane → slide-over 收回
+- [x] 3.4 [impl] focusPane 觸發 slide-over 進退場
 
 ## 4. Touch gesture — 右滑收回
 

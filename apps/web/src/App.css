@@ -585,6 +585,15 @@
   animation: paletteIn var(--dur-palette) ease-out both;
 }
 
+@keyframes slideOverIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@utility animate-slide-over-in {
+  animation: slideOverIn var(--dur-drawer) var(--ease-out-soft) both;
+}
+
 /* Global thin scrollbar — matches VS Code Dark+ style */
 * {
   scrollbar-width: thin;

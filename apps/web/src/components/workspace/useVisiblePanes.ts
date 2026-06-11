@@ -2,6 +2,23 @@ import { useEffect, useState } from 'react';
 import { leafIdsInOrder, usePaneState } from '@/contexts/TabContext';
 import { useMobileMode } from './useMobileMode';
 
+/** tablet 區間（768–1023）+ portrait：slide-over mode（handoff §8） */
+export function useTabletPortraitMode(): boolean {
+  const isTablet = useTabletMode();
+  const [isPortrait, setIsPortrait] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(orientation: portrait)').matches;
+  });
+  useEffect(() => {
+    const mq = window.matchMedia('(orientation: portrait)');
+    setIsPortrait(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsPortrait(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isTablet && isPortrait;
+}
+
 /** tablet 區間（768–1023）：同時可見 pane 上限 2（handoff §8） */
 export function useTabletMode(): boolean {
   const query = '(min-width: 768px) and (max-width: 1023px)';
