@@ -10,9 +10,9 @@ TDD；測試照 fake-summoner-client skill。按優先序排列。
 
 ## A. 小項收斂（worktree-centric 繼承）
 
-- [ ] A1 [test+impl] formatWorktreeLabel util 統一 branch ?? name fallback（抽到 workspace/pane-label.ts，4+ 處統一呼叫）
-- [ ] A2 [test+impl] tool pane header 與 §2 共通殼整併——WorktreeSwitcher emoji → PANE_TYPE_REGISTRY icon＋統一 header 組成順序
-- [ ] A5 [test+impl] PanePicker 建 session 時 branch 不傳入修正（6.8 不對稱）——onNewSession callback 帶 branch
+- [x] A1 [test+impl] formatWorktreeLabel util 統一 branch ?? name fallback（抽到 workspace/pane-label.ts，4+ 處統一呼叫）
+- [x] A2 [test+impl] tool pane header 與 §2 共通殼整併——WorktreeSwitcher emoji → PANE_TYPE_REGISTRY icon＋統一 header 組成順序
+- [x] A5 [test+impl] PanePicker 建 session 時 branch 不傳入修正（6.8 不對稱）——onNewSession callback 帶 branch
 - [ ] A3 [test+impl] WorktreeSwitcher：cwd 不在 listing 顯示 basename＋警示 badge；下拉 project 分組＋✓ 標記
 - [ ] A6 [test+impl] sessions-diff disconnected→idle 不建 tab（6.9）——確認是否 bug 並修或記錄為 by-design
 - [ ] A7 [test+impl] ChannelProvider remount 去重（6.11）——評估成本效益後修或記錄

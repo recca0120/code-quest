@@ -9,6 +9,7 @@ import {
   usePaneActions,
   useTabState,
 } from '@/contexts/TabContext';
+import { formatWorktreeLabel } from '../pane-label';
 import { PANE_TYPE_REGISTRY } from '../pane-registry';
 import { RightPane } from '../RightPane.tsx';
 import { TabContent } from '../TabContent.tsx';
@@ -78,7 +79,7 @@ export function SessionPane({
   if (!content.sessionId || !meta) {
     const hintWorktree = content.cwd ? lookup.get(content.cwd) : undefined;
     const hint = hintWorktree
-      ? `Last: ${hintWorktree.projectName} ⎇ ${hintWorktree.branch ?? hintWorktree.name}`
+      ? `Last: ${hintWorktree.projectName} ⎇ ${formatWorktreeLabel(hintWorktree)}`
       : undefined;
     return (
       <PaneShell toolbarProps={{ ...toolbarProps, typeIcon: CHAT_TYPE_ICON }} scrollable={false}>

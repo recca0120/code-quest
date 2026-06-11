@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
+import { formatWorktreeLabel } from './pane-label';
 import type { WorktreeOption } from './useAvailableWorktrees.ts';
 
 interface WorktreeSwitcherProps {
-  emoji: string;
+  icon: string;
   label: string;
   cwd: string;
   paneId: string;
@@ -12,11 +13,11 @@ interface WorktreeSwitcherProps {
 }
 
 function branchLabel(wt: WorktreeOption): string {
-  return `⎇ ${wt.branch ?? wt.name}`;
+  return `⎇ ${formatWorktreeLabel(wt)}`;
 }
 
 export function WorktreeSwitcher({
-  emoji,
+  icon,
   label,
   cwd,
   paneId,
@@ -37,7 +38,7 @@ export function WorktreeSwitcher({
         className="flex items-center gap-0.5 text-xs opacity-70 hover:opacity-100"
       >
         <span>
-          {emoji} {label}
+          {icon} {label}
         </span>
         <span className="ml-1">{displayLabel}</span>
         <span>▾</span>

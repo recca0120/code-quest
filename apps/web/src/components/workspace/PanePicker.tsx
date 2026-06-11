@@ -7,6 +7,7 @@ import type { Message } from '@/types/ui';
 import { isMessageVisible } from '@/utils/isMessageVisible';
 import { PaletteMessageList } from '../palette/PaletteMessageList';
 import { paletteMessageResults } from '../palette/palette-message-results';
+import { formatWorktreeLabel } from './pane-label';
 import { PANE_TYPE_REGISTRY, type PaneTypeEntry } from './pane-registry';
 import { useCommandFeatures } from './useCommandFeatures';
 
@@ -58,7 +59,13 @@ interface PanePickerProps {
   targetPaneId?: string;
   onShowHere?: (channelId: string, paneId?: string) => void;
   onResume?: (sessionId: string) => void;
-  onNewSession?: (cwd: string, projectCwd: string, paneId?: string, opts?: PickerOpenOpts) => void;
+  onNewSession?: (
+    cwd: string,
+    projectCwd: string,
+    paneId?: string,
+    opts?: PickerOpenOpts,
+    branch?: string,
+  ) => void;
   onOpenToolPane?: (type: ToolTabType, cwd: string, paneId?: string, opts?: PickerOpenOpts) => void;
   onOpenCombo?: (cwd: string, projectCwd: string) => void;
   onNewWorktree?: (projectCwd: string) => void;
@@ -418,7 +425,7 @@ export function PanePicker({
   const worktreesLoading = projectCwd !== null && worktreesRaw === undefined;
   const filteredWorktrees = useMemo(() => {
     const list = worktreesRaw ?? [];
-    return q ? list.filter((w) => (w.branch ?? w.name).toLowerCase().includes(q)) : list;
+    return q ? list.filter((w) => formatWorktreeLabel(w).toLowerCase().includes(q)) : list;
   }, [worktreesRaw, q]);
 
   const worktreePath =
@@ -426,7 +433,7 @@ export function PanePicker({
       ? selWorktreePath
       : (filteredWorktrees[0]?.path ?? null);
   const worktree = filteredWorktrees.find((w) => w.path === worktreePath) ?? null;
-  const branch = worktree ? (worktree.branch ?? worktree.name) : '';
+  const branch = worktree ? formatWorktreeLabel(worktree) : '';
 
   const activeSessions = sessions.filter((s) => s.cwd === worktreePath);
   const resumeSessions = pastSessions.filter((s) => s.cwd === worktreePath);
@@ -447,7 +454,7 @@ export function PanePicker({
     switch (item.kind) {
       case 'type':
         if (item.entry.key === 'chat') {
-          onNewSession?.(worktreePath, projectCwd, targetPaneId, opts);
+          onNewSession?.(worktreePath, projectCwd, targetPaneId, opts, branch || undefined);
         } else {
           onOpenToolPane?.(item.entry.key, worktreePath, targetPaneId, opts);
         }
@@ -664,7 +671,7 @@ export function PanePicker({
                         >
                           ⎇
                         </span>
-                        <span className="font-mono text-xs truncate">{w.branch ?? w.name}</span>
+                        <span className="font-mono text-xs truncate">{formatWorktreeLabel(w)}</span>
                         <span className="ml-auto font-mono text-2xs text-subtle whitespace-nowrap">
                           {chats.length > 0 && `${chats.length} chat${chats.length > 1 ? 's' : ''}`}
                           {busy && <span className="text-accent">・busy</span>}

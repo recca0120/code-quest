@@ -8,6 +8,7 @@ import {
   useTabState,
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
+import { formatWorktreeLabel } from './pane-label';
 import { useWorktreeLookup } from './useAvailableWorktrees.ts';
 
 interface SessionManagerProps {
@@ -190,7 +191,7 @@ export function SessionManager({
                       data-testid={`worktree-row-${wt.path}`}
                       className="flex items-center gap-2 px-2 py-1 text-xs"
                     >
-                      <span className="opacity-70">⎇ {wt.branch ?? wt.name}</span>
+                      <span className="opacity-70">⎇ {formatWorktreeLabel(wt)}</span>
                       {sessionIds.map((sessionId) => {
                         const sessionMeta = tabs[sessionId];
                         if (!sessionMeta) return null;

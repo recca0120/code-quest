@@ -20,13 +20,13 @@ const availableWorktrees = [
   { path: '/project/feature', branch: 'feat-auth', name: 'feature', projectName: 'app' },
 ];
 
-// T.4: shows emoji, label and current branch
-describe('WorktreeSwitcher (T.4) shows emoji, label and current branch', () => {
-  it('button shows emoji, label and ⎇ branch', () => {
+// T.4: shows icon, label and current branch
+describe('WorktreeSwitcher (T.4) shows icon, label and current branch', () => {
+  it('button shows icon, label and ⎇ branch', () => {
     render(
       <Wrapper>
         <WorktreeSwitcher
-          emoji="🌿"
+          icon="±"
           label="Git"
           cwd="/project/main"
           paneId="p1"
@@ -36,7 +36,7 @@ describe('WorktreeSwitcher (T.4) shows emoji, label and current branch', () => {
       </Wrapper>,
     );
     const btn = screen.getByRole('button', { name: /worktree switcher/i });
-    expect(btn.textContent).toContain('🌿 Git');
+    expect(btn.textContent).toContain('± Git');
     expect(btn.textContent).toContain('⎇ main');
   });
 
@@ -44,7 +44,7 @@ describe('WorktreeSwitcher (T.4) shows emoji, label and current branch', () => {
     render(
       <Wrapper>
         <WorktreeSwitcher
-          emoji="🌿"
+          icon="±"
           label="Git"
           cwd="/project/main"
           paneId="p1"
@@ -61,7 +61,7 @@ describe('WorktreeSwitcher (T.4) shows emoji, label and current branch', () => {
     render(
       <Wrapper>
         <WorktreeSwitcher
-          emoji="🌿"
+          icon="±"
           label="Git"
           cwd="/project/main"
           paneId="p1"
@@ -97,7 +97,7 @@ describe('WorktreeSwitcher (T.5) selecting worktree updates pane cwd', () => {
       const leafId = paneRoot.type === 'leaf' ? paneRoot.id : 'p1';
       return (
         <WorktreeSwitcher
-          emoji="🌿"
+          icon="±"
           label="Git"
           cwd="/project/main"
           paneId={leafId}

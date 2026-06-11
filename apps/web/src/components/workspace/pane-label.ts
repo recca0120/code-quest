@@ -1,5 +1,9 @@
 import type { PaneNode } from '@/contexts/TabContext';
 
+export function formatWorktreeLabel(wt: { branch?: string; name: string }): string {
+  return wt.branch ?? wt.name;
+}
+
 /**
  * leaf 的顯示名（mobile 卡片牆／tablet 直立條共用）：
  * session → cwd 尾段（無 cwd 退 'chat'）；其他類型 → 類型名。

@@ -1,5 +1,6 @@
 import { useGitState } from '@/contexts/GitContext';
 import { useProjectState } from '@/contexts/ProjectContext';
+import { formatWorktreeLabel } from './pane-label';
 
 interface WorktreesPaneSession {
   channelId: string;
@@ -38,7 +39,7 @@ export function WorktreesPane({
                 return (
                   <li key={wt.path} className="flex items-center justify-between gap-1 text-xs">
                     <span className="flex flex-col min-w-0">
-                      <span>⎇ {wt.branch ?? wt.name}</span>
+                      <span>⎇ {formatWorktreeLabel(wt)}</span>
                       <span className="text-muted truncate">{wt.path}</span>
                       {session?.title && (
                         <span className="text-muted truncate">{session.title}</span>
@@ -46,7 +47,7 @@ export function WorktreesPane({
                     </span>
                     <button
                       type="button"
-                      aria-label={`Open session for ⎇ ${wt.branch ?? wt.name}`}
+                      aria-label={`Open session for ⎇ ${formatWorktreeLabel(wt)}`}
                       onClick={() => onNewSession?.(wt.path)}
                       className="shrink-0 opacity-70 hover:opacity-100"
                     >

@@ -13,7 +13,7 @@ interface ToolPaneProps {
 }
 
 interface ToolPaneConfig {
-  emoji: string;
+  icon: string;
   label: string;
   makeContent: (cwd: string) => PaneContent;
   renderView: (cwd: string) => React.ReactNode;
@@ -27,7 +27,7 @@ function createToolPane(config: ToolPaneConfig) {
         toolbarProps={toolbarProps}
         tools={
           <WorktreeSwitcher
-            emoji={config.emoji}
+            icon={config.icon}
             label={config.label}
             cwd={cwd}
             paneId={paneId}
@@ -43,21 +43,21 @@ function createToolPane(config: ToolPaneConfig) {
 }
 
 export const GitPane: (props: ToolPaneProps) => React.JSX.Element = createToolPane({
-  emoji: '🌿',
+  icon: '±',
   label: 'Git',
   makeContent: (cwd) => ({ type: 'git', target: { kind: 'fixed', cwd } }),
   renderView: (cwd) => <GitView cwd={cwd} />,
 });
 
 export const FilesPane: (props: ToolPaneProps) => React.JSX.Element = createToolPane({
-  emoji: '📁',
+  icon: '▤',
   label: 'Files',
   makeContent: (cwd) => ({ type: 'files', target: { kind: 'fixed', cwd } }),
   renderView: (cwd) => <FilesView cwd={cwd} />,
 });
 
 export const OpenspecPane: (props: ToolPaneProps) => React.JSX.Element = createToolPane({
-  emoji: '📋',
+  icon: '◈',
   label: 'Spec',
   makeContent: (cwd) => ({ type: 'openspec', target: { kind: 'fixed', cwd } }),
   renderView: (cwd) => <SpecView cwd={cwd} />,

@@ -305,9 +305,9 @@ export function Workspace(): React.JSX.Element {
             allWorktrees={allWorktrees}
             activeProjectCwd={activeProjectCwd ?? undefined}
             targetPaneId={openInPaneTargetPaneId}
-            onNewSession={(cwd, projectCwd, targetPaneId) => {
+            onNewSession={(cwd, projectCwd, targetPaneId, _opts, branch) => {
               setActiveProject(projectCwd);
-              setPendingSession({ projectCwd, sessionCwd: cwd, targetPaneId });
+              setPendingSession({ projectCwd, sessionCwd: cwd, targetPaneId, branch });
               setOpenInPaneModalOpen(false);
             }}
             onNewWorktree={(projectCwd) => {

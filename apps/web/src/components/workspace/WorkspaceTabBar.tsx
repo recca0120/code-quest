@@ -6,6 +6,7 @@ import {
   useWorkspaceTab,
   type WorkspaceTab,
 } from '@/contexts/TabContext';
+import { formatWorktreeLabel } from './pane-label';
 import { useSessionManager } from './SessionManagerContext';
 import { useWorktreeLookup, type WorktreeIdentity } from './useAvailableWorktrees';
 
@@ -22,7 +23,7 @@ function deriveTabLabel(
   const cwd = firstPaneCwd(tab.paneRoot);
   if (cwd) {
     const identity = lookup.get(cwd);
-    const source = identity?.branch ?? identity?.name ?? cwd;
+    const source = identity ? formatWorktreeLabel(identity) : cwd;
     const segments = source.split('/').filter(Boolean);
     const last = segments[segments.length - 1];
     if (last) return last;

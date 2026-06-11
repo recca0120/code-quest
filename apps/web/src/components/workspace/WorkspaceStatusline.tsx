@@ -7,6 +7,7 @@ import {
   useWorkspaceTab,
 } from '@/contexts/TabContext';
 import { WORKSPACE_SHORTCUT_HINTS } from './KeyboardShortcutsProvider';
+import { formatWorktreeLabel } from './pane-label';
 import { useWorktreeLookup } from './useAvailableWorktrees';
 
 const BUSY_STATUSES = new Set(['processing', 'busy', 'cancelling']);
@@ -26,7 +27,7 @@ export function WorkspaceStatusline(): React.JSX.Element {
   const cwd = (focusedPaneId ? paneCwd(paneRoot, focusedPaneId) : null) ?? firstPaneCwd(paneRoot);
   const identity = cwd ? lookup.get(cwd) : undefined;
   const projectName = identity?.projectName ?? (cwd ? cwd.split('/').filter(Boolean).pop() : null);
-  const branch = identity?.branch ?? identity?.name;
+  const branch = identity ? formatWorktreeLabel(identity) : undefined;
 
   const busyCount = workspaceTabs.reduce((count, tab) => {
     for (const id of collectSessionsInPaneTree(tab.paneRoot)) {

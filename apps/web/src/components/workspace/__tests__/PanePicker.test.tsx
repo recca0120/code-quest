@@ -205,7 +205,7 @@ describe('進行中／resume／組合（spec: 欄3 sections）', () => {
 });
 
 describe('開啟路徑（spec: ⏎ 開到目前 pane／⌘⏎ 分割開啟）', () => {
-  it('點 chat 卡 → onNewSession(cwd, projectCwd, targetPaneId)', async () => {
+  it('點 chat 卡 → onNewSession(cwd, projectCwd, targetPaneId, opts) 且帶 branch', async () => {
     const user = userEvent.setup();
     const props = setup({ targetPaneId: 'pane-3' });
     await user.click(screen.getByTestId('picker-type-chat'));
@@ -214,6 +214,7 @@ describe('開啟路徑（spec: ⏎ 開到目前 pane／⌘⏎ 分割開啟）', 
       '/projects/app',
       'pane-3',
       undefined,
+      'main',
     );
   });
 
@@ -271,9 +272,15 @@ describe('鍵盤協定（spec: ←→↑↓⏎⌘⏎／快捷字母／⌘1）', 
     const props = setup();
     await user.click(screen.getByLabelText('picker search'));
     await user.keyboard('{Meta>}{Enter}{/Meta}');
-    expect(props.onNewSession).toHaveBeenCalledWith('/projects/app', '/projects/app', undefined, {
-      split: true,
-    });
+    expect(props.onNewSession).toHaveBeenCalledWith(
+      '/projects/app',
+      '/projects/app',
+      undefined,
+      {
+        split: true,
+      },
+      'main',
+    );
   });
 
   it('快捷字母 G 直接開 git pane（registry hotkey）', async () => {
