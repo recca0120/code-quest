@@ -1,15 +1,17 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
 import { WorktreeSwitcher } from '@/components/workspace/WorktreeSwitcher';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, usePaneState } from '@/contexts/TabContext';
-import { createFakeSummoner } from '@/test/fake-summoner';
+import { createFakeSummoner, type FakeSummoner } from '@/test/fake-summoner';
 
 function Wrapper({ children }: { children: React.ReactNode }) {
-  const summoner = createFakeSummoner();
+  const ref = useRef<FakeSummoner | null>(null);
+  if (!ref.current) ref.current = createFakeSummoner();
   return (
-    <SocketProvider socket={summoner.socket}>
+    <SocketProvider socket={ref.current.socket}>
       <TabProvider>{children}</TabProvider>
     </SocketProvider>
   );

@@ -187,7 +187,7 @@ describe('mobile solo rendering (4.2) — focused pane fills the area', () => {
     // mobile 下切 focus → solo 跟著換：MobileGapFixes.test.tsx 以 ⌘⌥←/→ 真 UI 驅動
 
     // 拉回桌面寬度 → solo 解除，split 全量渲染（divider 回來）
-    act(() => mm.triggerChange(1280));
+    await act(async () => mm.triggerChange(1280));
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
     expect(screen.getByTestId('pane-divider')).toBeInTheDocument();
   });
@@ -204,10 +204,10 @@ describe('central drop-zone swap (4.4／決策 14)', () => {
     await user.click(screen.getByTestId('pane-split-h'));
     const secondId = leavesOf(state().paneRoot).find((l) => l.id !== firstId)!.id;
     // arrange：塞 tool-pane content（真 GitView / FilesView 隨 pane 掛載）
-    act(() => {
+    await act(async () => {
       actions().setContentInPane(firstId, { type: 'git', target: { kind: 'fixed', cwd: '/a' } });
     });
-    act(() => {
+    await act(async () => {
       actions().setContentInPane(secondId, {
         type: 'files',
         target: { kind: 'fixed', cwd: '/b' },
@@ -271,8 +271,8 @@ describe('handleCreateTab fallback — focused tool pane must not swallow the se
     const { rerender } = render(<ContainerUI summoner={summoner} />);
 
     const leafId = leavesOf(probeState!.paneRoot)[0]!.id;
-    act(() => probeActions!.setContentInPane(leafId, { type: 'worktrees' }));
-    act(() => probeActions!.focusPane(leafId));
+    await act(async () => probeActions!.setContentInPane(leafId, { type: 'worktrees' }));
+    await act(async () => probeActions!.focusPane(leafId));
 
     rerender(<ContainerUI summoner={summoner} pending={{ cwd: '/repo/feat' }} />);
 
@@ -296,7 +296,7 @@ describe('pendingNewSession.targetPaneId — picker session lands in the TARGET 
 
     // arrange：先塞 git pane 讓 empty-state gate 打開，再用真 UI split 出空 pane
     const firstId = leavesOf(probeState!.paneRoot)[0]!.id;
-    act(() => {
+    await act(async () => {
       probeActions!.setContentInPane(firstId, {
         type: 'git',
         target: { kind: 'fixed', cwd: '/a' },
@@ -335,7 +335,7 @@ describe('empty-state gate (4.6) — 純 tool-pane layout 不被吃掉', () => {
   it('git pane 存在但零 session tab — pane 照常渲染，不顯示全域 EmptyState', async () => {
     render(<ContainerUI summoner={createFakeSummoner()} />);
     const firstId = leavesOf(probeState!.paneRoot)[0]!.id;
-    act(() => {
+    await act(async () => {
       probeActions!.setContentInPane(firstId, {
         type: 'git',
         target: { kind: 'fixed', cwd: '/repo' },

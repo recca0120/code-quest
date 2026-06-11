@@ -3,6 +3,7 @@
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { RightPane } from '@/components/workspace/RightPane';
 import { FsProvider } from '@/contexts/FsContext';
@@ -10,12 +11,13 @@ import { GitProvider } from '@/contexts/GitContext';
 import { OpenspecProvider } from '@/contexts/OpenspecContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider } from '@/contexts/TabContext';
-import { createFakeSummoner } from '@/test/fake-summoner';
+import { createFakeSummoner, type FakeSummoner } from '@/test/fake-summoner';
 
 function Wrapper({ children }: { children: React.ReactNode }) {
-  const summoner = createFakeSummoner();
+  const ref = useRef<FakeSummoner | null>(null);
+  if (!ref.current) ref.current = createFakeSummoner();
   return (
-    <SocketProvider socket={summoner.socket}>
+    <SocketProvider socket={ref.current.socket}>
       <GitProvider>
         <FsProvider>
           <OpenspecProvider>

@@ -53,12 +53,15 @@ describe('Gap-1: KeyboardShortcutsProvider is mounted in production', () => {
     );
   });
 
-  it('⌘W closes the focused pane without throwing', async () => {
+  it('⌘W on single pane is a no-op (no split → nothing to close)', async () => {
     const user = userEvent.setup();
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
-    await expect(user.keyboard('{Meta>}w{/Meta}')).resolves.toBeUndefined();
+
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
+    await user.keyboard('{Meta>}w{/Meta}');
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
   });
 });
 

@@ -9,10 +9,10 @@
 
 ## 1. act() 未 await
 
-- [ ] 1.1 [impl] pane-zoom-swap-gate.test.tsx:190 — `act(() => mm.triggerChange(...))` → `await act(async () => ...)`
-- [ ] 1.2 [impl] pane-zoom-swap-gate.test.tsx:207-214 — DnD swap 的 `act(() => actions()...)` → `await act(async () => ...)`
-- [ ] 1.3 [impl] phase1-integration.test.tsx:207 — DnD arrange 的 `act()` → `await act(async () => ...)`
-- [ ] 1.4 [verify] 全套 GREEN
+- [x] 1.1 [impl] pane-zoom-swap-gate.test.tsx:190 — `act(() => mm.triggerChange(...))` → `await act(async () => ...)`
+- [x] 1.2 [impl] pane-zoom-swap-gate.test.tsx:207-214 — DnD swap 的 `act(() => actions()...)` → `await act(async () => ...)`
+- [x] 1.3 [impl] phase1-integration.test.tsx:207 — DnD arrange 的 `act()` → `await act(async () => ...)`
+- [x] 1.4 [verify] 全套 GREEN
 
 ## 2. 直接呼叫 context action → UI 驅動
 
@@ -21,8 +21,8 @@
 
 ## 3. 空 assertion → 補行為 expect
 
-- [ ] 3.1 [impl] GapFixes.test.tsx:61 — `resolves.toBeUndefined()` → 補驗 pane 數量減少或 session 狀態
-- [ ] 3.2 [verify] GREEN
+- [x] 3.1 [impl] GapFixes.test.tsx:61 — `resolves.toBeUndefined()` → 補驗 pane 數量減少或 session 狀態
+- [x] 3.2 [verify] GREEN
 
 ## 4. 不完整 Harness → renderWithWorkspace/renderWithChannel
 
@@ -47,9 +47,9 @@
 
 ## 7. Wrapper 重建 summoner → useRef lazy init
 
-- [ ] 7.1 [impl] WorktreeSwitcher.test.tsx — Wrapper 內 `createFakeSummoner()` → `useRef` lazy init + onTestFinished cleanup
-- [ ] 7.2 [impl] RightPane.test.tsx — 同上
-- [ ] 7.3 [verify] GREEN
+- [x] 7.1 [impl] WorktreeSwitcher.test.tsx — Wrapper 內 `createFakeSummoner()` → `useRef` lazy init + onTestFinished cleanup
+- [x] 7.2 [impl] RightPane.test.tsx — 同上
+- [x] 7.3 [verify] GREEN
 
 ## 8. 收尾
 
