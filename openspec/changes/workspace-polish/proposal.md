@@ -4,36 +4,24 @@
 
 tmux-workspace-ui 與 worktree-centric-workspace 的核心行為骨架已完成並 archive。這個 change 收集**剩餘的功能增強與收斂**——來自 tmux §7 backlog 與 worktree §5/§6 的未完成項。
 
-## Scope（按優先序）
+## 完成項（A 系列 + B5）
 
-### 從 worktree-centric 繼承（§5/§6 留後）
-
-| # | 內容 | 量 |
+| # | 內容 | 結果 |
 |---|---|---|
-| A1 | `formatWorktreeLabel` util 統一 branch ?? name fallback（4+ 處） | trivial |
-| A2 | tool pane header 與共通殼（handoff §2）整併——WorktreeSwitcher emoji → registry icon | small |
-| A3 | WorktreeSwitcher：cwd 不在 listing 顯示 basename＋警示；下拉 project 分組＋✓ | small |
-| A4 | tool pane follow:'focused-session' 模式（wire 已預留 target.kind） | medium |
-| A5 | picker branch 傳入 onNewSession 不對稱修正（6.8） | small |
-| A6 | sessions-diff disconnected→idle 不建 tab（6.9，需確認是否為 bug） | small |
-| A7 | ChannelProvider remount 去重（6.11，評估） | small |
+| A1 | `formatWorktreeLabel` util 統一 branch ?? name fallback（10 處） | ✓ pane-label.ts |
+| A2 | WorktreeSwitcher emoji → PANE_TYPE_REGISTRY icon（±▤◈） | ✓ prop rename + values |
+| A3 | WorktreeSwitcher：cwd 不在 listing 顯示 basename＋⚠；下拉 ✓ 標記 | ✓ |
+| A5 | PanePicker onNewSession 帶 branch（修不對稱） | ✓ 第 5 參數 |
+| A6 | sessions-diff disconnected→idle 不建 tab | ✓ verified by-design |
+| A7 | ChannelProvider remount 去重 | ✓ verified by-design |
+| B5 | pane 開合重排 200ms 動效 | ✓ transition-all on split wrappers |
 
-### 從 tmux §7 繼承
+## 拆出的獨立 changes
 
-| # | 內容 | 量 |
+| 原項 | 獨立 change | 狀態 |
 |---|---|---|
-| B1 | tablet 直向 slide-over（58%、拖到底固定成分割） | large |
-| B2 | mobile 專屬頂列（txm-bar：tab 下拉＋pane dots＋⊞） | large |
-| B3 | 卡片牆 preview 縮影＋「＋」新增卡＋取代切換版面 | medium |
-| B4 | diff/terminal registry 類型實作 | large（依賴後端） |
-| B5 | pane 重排 200ms 動效（--dur-base） | medium |
-
-### 從 test-cleanup-web 繼承（10/13）
-
-| # | 內容 |
-|---|---|
-| C1 | 剩餘 3 tasks 收尾 |
-
-## 建議順序
-
-A1 → A2 → A5 → A3 → A6/A7 → B5 → A4 → B1/B2（大功能視需求） → B4（等後端）
+| B1 tablet slide-over | `tablet-slide-over` | 14/14 complete |
+| B2 mobile 頂列 | `mobile-rwd-polish` | 16/16 complete（含 B3） |
+| B3 卡片牆 preview | `mobile-rwd-polish` | 同上 |
+| B4 diff/terminal | `diff-terminal-panes` | 0/20（需後端 PTY） |
+| C1 test-cleanup 收尾 | `test-cleanup-web` | 13/13 complete |
