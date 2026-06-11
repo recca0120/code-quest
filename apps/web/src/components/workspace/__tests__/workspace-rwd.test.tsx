@@ -42,7 +42,7 @@ async function fourPanes() {
 
 describe('斷點只改渲染數，不銷毀 pane tree（spec 核心原則）', () => {
   it('tablet 上限 2＋直立條；點直立條項切入視野；回桌面原樹還原且 session 保活', async () => {
-    const { mm } = await fourPanes();
+    const { mm, view } = await fourPanes();
     const chatCountBefore = screen.getAllByPlaceholderText(/Esc to focus/i).length;
 
     // → tablet（800px）：只渲染 2 leaf＋直立條收納其餘
@@ -58,9 +58,7 @@ describe('斷點只改渲染數，不銷毀 pane tree（spec 核心原則）', (
 
     // 點直立條第一個 → 該 pane 進視野（focused 衍生 visible）
     const condensedId = within(strip).getAllByTestId(/^condensed-pane-/)[0]!.dataset.paneId!;
-    await within(strip)
-      .getAllByTestId(/^condensed-pane-/)[0]!
-      .click();
+    await view.user.click(within(strip).getAllByTestId(/^condensed-pane-/)[0]!);
     await waitFor(() => {
       const visibleIds = screen.getAllByTestId('split-pane-leaf').map((l) => l.dataset.paneId);
       expect(visibleIds).toContain(condensedId);
@@ -76,35 +74,138 @@ describe('斷點只改渲染數，不銷毀 pane tree（spec 核心原則）', (
     expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(chatCountBefore);
   });
 
+  it('tablet 直立條輪轉：點 condensed 後原 visible 之一回條上、徽章仍照全樹先序', async () => {
+    const { mm, view } = await fourPanes();
+    // 全樹先序（桌面 DOM 順序＝先序）——徽章編號的基準
+    const order = screen.getAllByTestId('split-pane-leaf').map((l) => l.dataset.paneId!);
+    await act(async () => {
+      mm.triggerChange(800);
+    });
+
+    const visibleBefore = screen.getAllByTestId('split-pane-leaf').map((l) => l.dataset.paneId!);
+    const strip = screen.getByTestId('condensed-pane-strip');
+    const chipsBefore = within(strip).getAllByTestId(/^condensed-pane-/);
+    const clickedId = chipsBefore[0]!.dataset.paneId!;
+
+    await view.user.click(chipsBefore[0]!);
+    await waitFor(() =>
+      expect(screen.getAllByTestId('split-pane-leaf').map((l) => l.dataset.paneId)).toContain(
+        clickedId,
+      ),
+    );
+
+    // 輪轉：可見上限仍 2 → 原 visible 至少一個被擠回條上、條上仍 2 chip
+    const chipsAfter = within(screen.getByTestId('condensed-pane-strip')).getAllByTestId(
+      /^condensed-pane-/,
+    );
+    const condensedAfter = chipsAfter.map((c) => c.dataset.paneId!);
+    expect(condensedAfter).toHaveLength(2);
+    expect(condensedAfter.some((id) => visibleBefore.includes(id))).toBe(true);
+    expect(condensedAfter).not.toContain(clickedId);
+
+    // 徽章＝該 pane 在「全樹先序」的固定編號（①②③④），不隨條上位置重排
+    const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
+    for (const chip of chipsAfter) {
+      expect(chip.textContent).toContain(CIRCLED[order.indexOf(chip.dataset.paneId!)]);
+    }
+  });
+
   it('mobile 卡片牆：⊞ 開 2 欄卡片、點卡切 pane；左右滑切換 focus', async () => {
-    const { mm } = await fourPanes();
+    const { mm, view } = await fourPanes();
     await act(async () => {
       mm.triggerChange(375);
     });
     expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
 
-    // ⊞ 開卡片牆 → 每個 leaf 一張卡
-    await screen.getByTestId('mobile-pane-wall-toggle').click();
+    // ⊞ 開卡片牆 → 每個 leaf 一張卡（卡序＝leaf 先序）
+    await view.user.click(screen.getByTestId('mobile-pane-wall-toggle'));
     const wall = await screen.findByTestId('mobile-pane-wall');
     const cards = within(wall).getAllByTestId(/^pane-wall-card-/);
     expect(cards).toHaveLength(4);
+    const order = cards.map((c) => c.dataset.paneId!);
 
     // 點第三張卡 → 該 pane 成為 solo、牆關閉
-    const targetId = cards[2]!.dataset.paneId!;
-    cards[2]!.click();
+    await view.user.click(cards[2]!);
     await waitFor(() => {
       expect(screen.queryByTestId('mobile-pane-wall')).not.toBeInTheDocument();
-      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(targetId);
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[2]);
     });
 
-    // 左滑（往左滑＝下一個 pane）
+    // 左滑＝先序「下一個」（order[3]），不是隨便換一個
     const root = screen.getByTestId('split-pane-root');
-    const before = screen.getByTestId('split-pane-leaf').dataset.paneId;
     fireEvent.touchStart(root, { changedTouches: [{ clientX: 300, clientY: 200 }] });
     fireEvent.touchEnd(root, { changedTouches: [{ clientX: 100, clientY: 200 }] });
     await waitFor(() =>
-      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).not.toBe(before),
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[3]),
     );
+
+    // 右滑＝反向回「上一個」（order[2]）
+    fireEvent.touchStart(root, { changedTouches: [{ clientX: 100, clientY: 200 }] });
+    fireEvent.touchEnd(root, { changedTouches: [{ clientX: 300, clientY: 200 }] });
+    await waitFor(() =>
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[2]),
+    );
+  });
+
+  it('swipe 邊界：首 pane 右滑不動、尾 pane 左滑不動、|dx|<50 不動', async () => {
+    const { mm, view } = await fourPanes();
+    // 全樹先序（桌面 DOM 順序＝先序）——mobile 收起前先記下
+    const order = screen.getAllByTestId('split-pane-leaf').map((l) => l.dataset.paneId!);
+    await act(async () => {
+      mm.triggerChange(375);
+    });
+
+    const swipe = (fromX: number, toX: number) => {
+      const root = screen.getByTestId('split-pane-root');
+      fireEvent.touchStart(root, { changedTouches: [{ clientX: fromX, clientY: 200 }] });
+      fireEvent.touchEnd(root, { changedTouches: [{ clientX: toX, clientY: 200 }] });
+    };
+
+    // 卡片牆切到首 pane
+    await view.user.click(screen.getByTestId('mobile-pane-wall-toggle'));
+    await view.user.click(await screen.findByTestId(`pane-wall-card-${order[0]}`));
+    await waitFor(() =>
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[0]),
+    );
+
+    // 首 pane 右滑（沒有上一個）→ 不動（也不准 wrap 到尾）
+    swipe(100, 300);
+    expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[0]);
+
+    // |dx| < 50（左滑 40px）→ 視為誤觸，不動
+    swipe(200, 160);
+    expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[0]);
+
+    // 對照組：足量左滑會動到先序下一個——證明前兩個「不動」不是 touch 模擬失效的假綠
+    swipe(300, 100);
+    await waitFor(() =>
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[1]),
+    );
+
+    // 卡片牆切到尾 pane → 左滑（沒有下一個）→ 不動
+    await view.user.click(screen.getByTestId('mobile-pane-wall-toggle'));
+    await view.user.click(await screen.findByTestId(`pane-wall-card-${order[3]}`));
+    await waitFor(() =>
+      expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[3]),
+    );
+    swipe(300, 100);
+    expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(order[3]);
+  });
+
+  it('遮罩鈕 close pane switcher：牆關閉、solo pane 不變', async () => {
+    const { mm, view } = await fourPanes();
+    await act(async () => {
+      mm.triggerChange(375);
+    });
+    const soloBefore = screen.getByTestId('split-pane-leaf').dataset.paneId;
+
+    await view.user.click(screen.getByTestId('mobile-pane-wall-toggle'));
+    await screen.findByTestId('mobile-pane-wall');
+
+    await view.user.click(screen.getByRole('button', { name: 'close pane switcher' }));
+    await waitFor(() => expect(screen.queryByTestId('mobile-pane-wall')).not.toBeInTheDocument());
+    // 沒點卡 → focus 沒換，solo 維持原 pane
+    expect(screen.getByTestId('split-pane-leaf').dataset.paneId).toBe(soloBefore);
   });
 
   it('mobile 單 pane：condensed sessions 一樣保活', async () => {

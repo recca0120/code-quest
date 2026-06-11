@@ -75,8 +75,12 @@ function setup(overrides: Partial<React.ComponentProps<typeof PanePicker>> = {})
     onAddProject: vi.fn(),
     ...overrides,
   };
-  render(<PanePicker {...props} />);
-  return props;
+  const { rerender } = render(<PanePicker {...props} />);
+  return {
+    ...props,
+    rerender: (next: Partial<React.ComponentProps<typeof PanePicker>>) =>
+      rerender(<PanePicker {...props} {...next} />),
+  };
 }
 
 const col = {
@@ -125,6 +129,31 @@ describe('三欄資料源與聯動（spec: Miller 三欄結構）', () => {
   it('listing 尚未載入（undefined）顯示 loading 態，不是空白（6.5）', () => {
     setup({ allWorktrees: {} });
     expect(screen.getByTestId('picker-worktrees-loading')).toBeInTheDocument();
+  });
+
+  it('listing 載入完成後 loading 解除、恢復 worktree 列表', () => {
+    const { rerender } = setup({ allWorktrees: {} });
+    expect(screen.getByTestId('picker-worktrees-loading')).toBeInTheDocument();
+
+    rerender({ allWorktrees });
+
+    expect(screen.queryByTestId('picker-worktrees-loading')).not.toBeInTheDocument();
+    expect(within(col.worktrees()).getByText('main')).toBeInTheDocument();
+    expect(within(col.worktrees()).getByText('feat-x')).toBeInTheDocument();
+  });
+
+  it('單欄退化 class guard：容器 flex-col＋lg:flex-row；欄2/欄3 border-t＋lg:border-t-0（handoff §4 乙案）', () => {
+    setup();
+    // 容器：mobile 直排（flex-col）、lg 以上三欄（lg:flex-row）
+    const containerClasses = col.projects().parentElement!.className.split(/\s+/);
+    expect(containerClasses).toContain('flex-col');
+    expect(containerClasses).toContain('lg:flex-row');
+    // 欄2/欄3：mobile 用上邊框分隔（border-t）、lg 以上取消（lg:border-t-0）
+    for (const column of [col.worktrees(), col.content()]) {
+      const classes = column.className.split(/\s+/);
+      expect(classes).toContain('border-t');
+      expect(classes).toContain('lg:border-t-0');
+    }
   });
 
   it('欄3 由 registry 渲染類型 grid（chat/files/git/spec）', () => {

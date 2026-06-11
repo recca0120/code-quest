@@ -170,7 +170,10 @@ describe('TabProvider', () => {
       expect(screen.getByTestId('session-manager')).toBeInTheDocument();
       await user.click(screen.getByTestId('session-manager-item-ch-1'));
       expect(screen.queryByTestId('session-manager')).not.toBeInTheDocument();
-      expect(screen.getByTestId('pane-header').dataset.focused).toBe('true');
+      // 「show here」語意：session 留在 focused pane（header 仍掛該 session 的 ⎇）
+      const headerAfterManager = screen.getByTestId('pane-header');
+      expect(headerAfterManager.dataset.focused).toBe('true');
+      expect(headerAfterManager.textContent).toContain('⎇ feat/one');
     });
 
     it('channel NOT yet in tabs（disconnected row）→ pending 等待不清除，session 復活才 activate', async () => {
@@ -300,6 +303,22 @@ describe('TabProvider', () => {
       expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('new');
     });
 
+    it('keeps activeTabId when the replaced tab is NOT the active one', async () => {
+      const { user } = renderInTab(<Harness trigger={{ oldId: 'other', newId: 'new' }} />);
+
+      await user.click(screen.getByText('seed-old'));
+      await user.click(screen.getByText('seed-other'));
+      await user.click(screen.getByText('activate-old'));
+      await user.click(screen.getByText('replace'));
+
+      // 'other' 被換成 'new'，但 active 仍是 'old'（replaceTab 不偷走 active）
+      expect(JSON.parse(screen.getByRole('status', { name: 'tabs' }).textContent!)).toEqual([
+        'old',
+        'new',
+      ]);
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('old');
+    });
+
     it('is a no-op when oldId is not in tabs', async () => {
       const { user } = renderInTab(<Harness trigger={{ oldId: 'missing', newId: 'new' }} />);
 
@@ -331,6 +350,34 @@ describe('TabProvider', () => {
       renderInTab(<Test />);
       expect(screen.getByRole('status', { name: 'tabs' })).toHaveTextContent('{}');
       expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('null');
+    });
+
+    it('addTab activates first tab when no active tab', async () => {
+      function Test() {
+        const { tabs, activeTabId } = useTabState();
+        const { addTab } = useTabActions();
+        return (
+          <>
+            <span role="status" aria-label="active">
+              {activeTabId ?? 'null'}
+            </span>
+            <span role="status" aria-label="count">
+              {Object.keys(tabs).length}
+            </span>
+            <button type="button" onClick={() => addTab('remote-ch')}>
+              add
+            </button>
+          </>
+        );
+      }
+      const { user } = renderInTab(<Test />);
+
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('null');
+
+      await user.click(screen.getByText('add'));
+
+      expect(screen.getByRole('status', { name: 'count' })).toHaveTextContent('1');
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('remote-ch');
     });
 
     it('addTab adds a tab', async () => {
@@ -607,8 +654,8 @@ describe('TabProvider', () => {
     });
   });
 
-  describe('split mode is removed', () => {
-    it('TabActions does not expose enterSplit / exitSplit', () => {
+  describe('public surface pin (split mode removed — 正向清單，不留恆真的 not.toHaveProperty)', () => {
+    it('TabActions exposes exactly the known action set (no enterSplit/exitSplit)', () => {
       const summoner = createFakeSummoner();
       const { result } = renderHook(() => useTabActions(), {
         wrapper: ({ children }) => (
@@ -620,11 +667,20 @@ describe('TabProvider', () => {
           </SocketProvider>
         ),
       });
-      expect(result.current).not.toHaveProperty('enterSplit');
-      expect(result.current).not.toHaveProperty('exitSplit');
+      expect(Object.keys(result.current).sort()).toEqual([
+        'addTab',
+        'createNewTab',
+        'removeTab',
+        'replaceActiveTab',
+        'replaceTab',
+        'setActiveTab',
+        'setTabPermissionMode',
+        'setTabStatus',
+        'setTabTitle',
+      ]);
     });
 
-    it('TabState does not expose splitTabId', () => {
+    it('TabState exposes exactly tabs + activeTabId (no splitTabId)', () => {
       const summoner = createFakeSummoner();
       const { result } = renderHook(() => useTabState(), {
         wrapper: ({ children }) => (
@@ -636,7 +692,7 @@ describe('TabProvider', () => {
           </SocketProvider>
         ),
       });
-      expect(result.current).not.toHaveProperty('splitTabId');
+      expect(Object.keys(result.current).sort()).toEqual(['activeTabId', 'tabs']);
     });
   });
 });

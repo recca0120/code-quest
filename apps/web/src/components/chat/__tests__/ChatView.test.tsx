@@ -1,6 +1,7 @@
 import { segments as s } from '@code-quest/test-kit';
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Toaster } from 'sonner';
 import { afterEach, describe, expect, it } from 'vitest';
 import { btwSignal } from '@/features/btw/btw-feature';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '@/test/helpers';
@@ -48,18 +49,20 @@ describe('ChatSession', () => {
   });
 
   it('displays messages from pipeline', async () => {
+    const user = userEvent.setup();
     const { claude } = await renderWithChannel(<ChatView />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'Hello{Enter}');
+    await user.type(textarea, 'Hello{Enter}');
     await emitAssistantTurn(claude, 'Hi back');
     expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText(/Hi back/)).toBeInTheDocument();
   });
 
   it('shows control request banner when pending', async () => {
+    const user = userEvent.setup();
     const { claude } = await renderWithChannel(<ChatView />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
+    await user.type(textarea, 'go{Enter}');
     await act(async () => {
       await claude.emitSegment(
         s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls' } } }),
@@ -76,14 +79,20 @@ describe('ChatSession', () => {
   });
 
   it('keeps input enabled when processing', async () => {
+    const user = userEvent.setup();
     await renderWithChannel(<ChatView />);
-    expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeEnabled();
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+    // 真進 processing：送出訊息後 Stop 鈕出現
+    await user.type(textarea, 'go{Enter}');
+    expect(screen.getByTitle('Stop')).toBeInTheDocument();
+    expect(textarea).toBeEnabled();
   });
 
   it('shows Stop button when processing', async () => {
+    const user = userEvent.setup();
     await renderWithChannel(<ChatView />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
+    await user.type(textarea, 'go{Enter}');
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
   });
 
@@ -94,9 +103,10 @@ describe('ChatSession', () => {
 
   describe('control flow pipeline', () => {
     it('tool_use interrupts streaming — text after tool_result still renders', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await act(async () => {
         await claude.emitSegment(s.textDelta('Before tool'));
         await claude.emitSegment(
@@ -107,7 +117,7 @@ describe('ChatSession', () => {
       });
 
       const yesButton = await screen.findByText('Yes');
-      await userEvent.click(yesButton);
+      await user.click(yesButton);
 
       await act(async () => {
         await claude.emitSegment(s.toolResult('toolu_1', 'file content'));
@@ -119,9 +129,10 @@ describe('ChatSession', () => {
     });
 
     it('tool_result flows through pipeline (verified via received)', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await act(async () => {
         await claude.emitSegment(
           s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }),
@@ -130,7 +141,7 @@ describe('ChatSession', () => {
       });
 
       const yesButton = await screen.findByText('Yes');
-      await userEvent.click(yesButton);
+      await user.click(yesButton);
 
       await act(async () => {
         await claude.emitSegment(s.toolResult('toolu_1', 'file contents'));
@@ -138,26 +149,39 @@ describe('ChatSession', () => {
       await emitAssistantTurn(claude, 'Done');
 
       expect(await screen.findByText(/Done/)).toBeInTheDocument();
-      expect(claude.received('control_response').length).toBeGreaterThan(0);
+      // CLI stdin 收到的 control_response envelope（claude/protocol.ts formatControlResponse）
+      expect(claude.received('control_response')).toContainEqual(
+        expect.objectContaining({
+          type: 'control_response',
+          response: expect.objectContaining({
+            subtype: 'success',
+            request_id: 'r1',
+            response: expect.objectContaining({ behavior: 'allow' }),
+          }),
+        }),
+      );
     });
 
     it('elicitation control_request renders dialog', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await act(async () => {
         await claude.emitSegment(
           s.controlRequestElicitation('elic-1', { message: 'Please confirm' }),
         );
       });
 
-      expect(screen.queryAllByText(/confirm/i).length).toBeGreaterThan(0);
+      const dialog = await screen.findByRole('dialog');
+      expect(within(dialog).getByText('Please confirm')).toBeInTheDocument();
     });
 
     it('chat:cancel_request silently removes pending control banner', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await act(async () => {
         await claude.emitSegment(
           s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: {} } }),
@@ -177,9 +201,10 @@ describe('ChatSession', () => {
     });
 
     it('notification error shows message in UI', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await act(async () => {
         await claude.emitSegment(
           s.controlRequestShowNotification('notif-1', {
@@ -189,13 +214,14 @@ describe('ChatSession', () => {
         );
       });
 
-      expect(screen.queryAllByText(/Something went wrong|error/i).length).toBeGreaterThan(0);
+      expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     });
 
     it('notification warning shows message in UI', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await act(async () => {
         await claude.emitSegment(
           s.controlRequestShowNotification('notif-2', {
@@ -205,13 +231,19 @@ describe('ChatSession', () => {
         );
       });
 
-      expect(screen.queryAllByText(/Be careful|warning/i).length).toBeGreaterThan(0);
+      expect(screen.getByText('Be careful')).toBeInTheDocument();
     });
 
     it('notification with buttons shows in UI', async () => {
-      const { claude } = await renderWithChannel(<ChatView />);
+      const user = userEvent.setup();
+      const { claude } = await renderWithChannel(
+        <>
+          <ChatView />
+          <Toaster />
+        </>,
+      );
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await act(async () => {
         await claude.emitSegment(
           s.controlRequestShowNotification('notif-3', {
@@ -222,13 +254,16 @@ describe('ChatSession', () => {
         );
       });
 
-      expect(screen.queryAllByText(/Retry/i).length).toBeGreaterThan(0);
+      // chat 內 system message ＋ toast 上真正可點的 Retry 鈕
+      expect(screen.getByText('Retry?')).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'Retry' })).toBeInTheDocument();
     });
 
     it('open_diff control_request does not crash the component', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await emitAssistantTurn(claude);
       await act(async () => {
         await claude.emitSegment(
@@ -245,9 +280,10 @@ describe('ChatSession', () => {
 
   describe('message:result pipeline', () => {
     it('message:result transitions from Stop to Send button (processing → idle)', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       expect(screen.getByTitle('Stop')).toBeInTheDocument();
 
       await emitAssistantTurn(claude, 'done');
@@ -256,9 +292,10 @@ describe('ChatSession', () => {
     });
 
     it('message:result with error shows error message', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
 
       await act(async () => {
         await claude.emitSegment(s.resultResumeNotFound({ errors: ['Something failed'] }));
@@ -269,9 +306,10 @@ describe('ChatSession', () => {
     });
 
     it('streaming text deltas accumulate and result returns to idle', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
 
       await act(async () => {
         await claude.emitSegment(s.textDelta('Hello '));
@@ -283,9 +321,10 @@ describe('ChatSession', () => {
     });
 
     it('diffRespond with unknown toolId does not crash the component', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, 'go{Enter}');
+      await user.type(textarea, 'go{Enter}');
       await emitAssistantTurn(claude);
       await act(async () => {
         await claude.emitSegment(
@@ -333,16 +372,17 @@ describe('ChatSession', () => {
 
   describe('/reload-plugins slash command', () => {
     it('selecting /reload-plugins from slash menu does not send chat message to CLI', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatView />, {
         initSegment: s.init('sess', { slashCommands: ['reload-plugins'] }),
       });
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.click(textarea);
-      await userEvent.keyboard('/');
+      await user.click(textarea);
+      await user.keyboard('/');
       const slashSection = await screen.findByRole('group', { name: 'Slash Commands' });
       const reloadItem = within(slashSection).getByText('/reload-plugins');
-      await userEvent.click(reloadItem);
+      await user.click(reloadItem);
 
       expect(claude.received('user')).toHaveLength(0);
     });

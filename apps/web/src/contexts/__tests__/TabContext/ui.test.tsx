@@ -1,23 +1,14 @@
+import {
+  createFakeServer,
+  createTestContainer,
+  type ProjectStore,
+  TYPES,
+} from '@code-quest/server/test';
 import { segments as s } from '@code-quest/test-kit';
-import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import type { ReactElement } from 'react';
-import { describe, expect, it } from 'vitest';
-import { SocketProvider } from '@/contexts/SocketContext';
-import { TabProvider, useTabActions, useTabState } from '@/contexts/TabContext';
+import { act, screen } from '@testing-library/react';
+import { describe, expect, it, onTestFinished } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
-
-function renderInTab(ui: ReactElement) {
-  const summoner = createFakeSummoner();
-  const user = userEvent.setup();
-  render(
-    <SocketProvider socket={summoner.socket}>
-      <TabProvider>{ui}</TabProvider>
-    </SocketProvider>,
-  );
-  return { claude: summoner.claude(), user };
-}
 
 describe('TabProvider', () => {
   describe('tab bar UI', () => {
@@ -55,56 +46,46 @@ describe('TabProvider', () => {
   });
 
   describe('socket events', () => {
-    it('addTab activates first tab when no active tab', async () => {
-      function Test() {
-        const { tabs, activeTabId } = useTabState();
-        const { addTab } = useTabActions();
-        return (
-          <>
-            <span role="status" aria-label="active">
-              {activeTabId ?? 'null'}
-            </span>
-            <span role="status" aria-label="count">
-              {Object.keys(tabs).length}
-            </span>
-            <button type="button" onClick={() => addTab('remote-ch')}>
-              add
-            </button>
-          </>
-        );
-      }
-      const { user } = renderInTab(<Test />);
-
-      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('null');
-
-      await user.click(screen.getByText('add'));
-
-      expect(screen.getByRole('status', { name: 'count' })).toHaveTextContent('1');
-      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('remote-ch');
-    });
-
     it('launching a session does not create duplicate tabs', async () => {
-      const { claude, addProject: addProj } = await renderWithWorkspace();
+      const { claude, summoner, addProject: addProj } = await renderWithWorkspace();
       const proj = await addProj();
       await proj.launchSession();
       // Emit assistant turn to ensure session is stable
       await act(async () => {
         await claude.emitSegment(s.result());
       });
-      // Only one session panel should be visible
+      // ② socket：React 層只發了一次 session:launch（無重複 spawn）
+      expect(summoner.sentEvents('session:launch')).toHaveLength(1);
+      // ① UI：only one session panel should be visible
       expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(1);
     });
 
-    it('session:created with cwd auto-creates project and tab remains visible', async () => {
-      const { addProject: addProj } = await renderWithWorkspace();
-      const proj = await addProj();
-      await proj.launchSession();
+    it('a session launched elsewhere with cwd auto-creates the project (no manual addProject)', async () => {
+      // 真隔離：不走 addProject——project 必須由 session 生命週期自動長出
+      // （server: session:init → ProjectAutoUpserter → projects:added broadcast）
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      onTestFinished(() => server.destroy());
+      const summoner = createFakeSummoner(server);
+      await renderWithWorkspace({ summoner });
+      expect(screen.getByText('No projects yet')).toBeInTheDocument();
 
-      // After renderWithWorkspace, session:created was broadcast with cwd
-      // → deriveProjects should have created a project
-      // → Workspace should render project path with TabProvider(sessions)
-      // → Tab should be visible in project's TabContainer
-      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+      // 另一個裝置 launch 一個帶 cwd 的 session（真 server pipeline；CLI init
+      // segments 由 harness 的 prepareInit 供給容器綁定的 provider）
+      const seeder = createFakeSummoner(server).claude();
+      await act(async () => {
+        await seeder.send('session:launch', { channelId: 'ch-auto', cwd: '/auto/repo' });
+      });
+
+      // ① UI：project 出現 → EmptyState 讓位給 workspace tab bar
+      await screen.findByTestId('workspace-tab-bar');
+      expect(screen.queryByText('No projects yet')).not.toBeInTheDocument();
+      // ② 廣播：本 client 收到 projects:added
+      expect(summoner.receivedEvents('projects:added')).toHaveLength(1);
+      // ③ server store：projects row 已寫入
+      await expect(
+        container.get<ProjectStore>(TYPES.ProjectStore).getByPath('/auto/repo'),
+      ).resolves.toMatchObject({ path: '/auto/repo' });
     });
 
     it('workspace remains visible after session becomes dead', async () => {

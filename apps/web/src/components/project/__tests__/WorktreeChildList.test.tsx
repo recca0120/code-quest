@@ -65,7 +65,7 @@ describe('WorktreeChildList', () => {
       </Wrapper>,
     );
     const moreBtn = screen.getByLabelText('More actions');
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(moreBtn);
+    await userEvent.setup().click(moreBtn);
     expect(await screen.findByText('Open in new chat')).toBeInTheDocument();
     expect(screen.getByText('Archive')).toBeInTheDocument();
   });
@@ -79,7 +79,7 @@ describe('WorktreeChildList', () => {
       </Wrapper>,
     );
     const moreBtn = screen.getByLabelText('More actions');
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(moreBtn);
+    await userEvent.setup().click(moreBtn);
     expect(await screen.findByRole('menuitem', { name: /open in new chat/i })).toBeInTheDocument();
   });
 
@@ -98,13 +98,13 @@ describe('WorktreeChildList', () => {
     });
 
     it('shows "Open past session…"', async () => {
-      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      const user = userEvent.setup();
       await user.click(screen.getByLabelText('More actions'));
       expect(await findItem(/open past session/i)).toBeInTheDocument();
     });
 
     it('shows "Switch branch…"', async () => {
-      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      const user = userEvent.setup();
       await user.click(screen.getByLabelText('More actions'));
       expect(await findItem(/switch branch/i)).toBeInTheDocument();
     });
@@ -124,9 +124,7 @@ describe('WorktreeChildList', () => {
           <WorktreeChildList worktrees={worktrees} projectCwd="/repo" />
         </Wrapper>,
       );
-      await userEvent
-        .setup({ pointerEventsCheck: 0 })
-        .click(screen.getByLabelText('Open worktree feat/x'));
+      await userEvent.setup().click(screen.getByLabelText('Open worktree feat/x'));
       expect(state!.lastWorktreeByProject['/repo']).toBe('/repo/.claude/worktrees/feat-x');
     });
 
@@ -148,9 +146,7 @@ describe('WorktreeChildList', () => {
       // record a previous tab for feat-x worktree
       act(() => actions!.recordLastTab('/repo/.claude/worktrees/feat-x', 'ch-remembered'));
 
-      await userEvent
-        .setup({ pointerEventsCheck: 0 })
-        .click(screen.getByLabelText('Open worktree feat/x'));
+      await userEvent.setup().click(screen.getByLabelText('Open worktree feat/x'));
       expect(state!.pendingActivateChannel).toMatchObject({
         channelId: 'ch-remembered',
       });
@@ -169,9 +165,7 @@ describe('WorktreeChildList', () => {
           <WorktreeChildList worktrees={worktrees} projectCwd="/repo" />
         </Wrapper>,
       );
-      await userEvent
-        .setup({ pointerEventsCheck: 0 })
-        .click(screen.getByLabelText('Open worktree feat/x'));
+      await userEvent.setup().click(screen.getByLabelText('Open worktree feat/x'));
       expect(state!.pendingActivateChannel).toBeNull();
     });
   });

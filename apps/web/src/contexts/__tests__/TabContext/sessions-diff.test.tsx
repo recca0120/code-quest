@@ -125,12 +125,18 @@ describe('sessions diff — 1-added/1-removed swap heuristic', () => {
   it('still replaces the active tab when the removed session IS the active tab (session swap)', async () => {
     const { claude } = await renderHarness();
 
-    // server reports session A — diff adds it as a tab
+    // server reports session A plus a background session BG — the BG tab is what
+    // separates true swap semantics (active follows the NEW channel) from the
+    // fallback add+remove path (removeTab would promote the first remaining key,
+    // i.e. ch-bg, to active). Without it both code paths converge on ch-a2.
     await act(async () => {
-      claude.pushServerEvent('session:states', { sessions: [summary('ch-a', '/a')] });
+      claude.pushServerEvent('session:states', {
+        sessions: [summary('ch-a', '/a'), summary('ch-bg', '/bg')],
+      });
     });
     act(() => actionsProbe!.setActiveTab('ch-a'));
     expect(stateProbe!.activeTabId).toBe('ch-a');
+    expect(Object.keys(stateProbe!.tabs).sort()).toEqual(['ch-a', 'ch-bg']);
 
     // active session is swapped for a new channel (e.g. resume/teleport)
     const mark = sessionsHistory.length;
@@ -139,10 +145,13 @@ describe('sessions diff — 1-added/1-removed swap heuristic', () => {
       claude.pushServerEvent('session:states', { sessions: [summary('ch-a2', '/a')] });
     });
     // single-tick swap shape, same proof as above
-    expect(transitionsAfter(mark)).toEqual(['ch-a2']);
+    expect(transitionsAfter(mark)).toEqual(['ch-bg,ch-a2']);
 
+    // swap 語意：active 必須跟到新 channel（fallback 會把 active 落到 ch-bg）
     expect(stateProbe!.activeTabId).toBe('ch-a2');
     expect(stateProbe!.tabs['ch-a']).toBeUndefined();
     expect(stateProbe!.tabs['ch-a2']).toBeDefined();
+    // 背景 session 不受 swap 影響：仍在、且非 active
+    expect(stateProbe!.tabs['ch-bg']).toBeDefined();
   });
 });

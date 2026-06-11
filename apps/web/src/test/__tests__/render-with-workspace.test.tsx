@@ -1,6 +1,11 @@
-import { createFakeServer, createTestContainer } from '@code-quest/server/test';
-import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import {
+  createFakeServer,
+  createTestContainer,
+  type SessionStore,
+  TYPES,
+} from '@code-quest/server/test';
+import { screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '../fake-summoner.ts';
 import { emitAssistantTurn, sendUserMessage } from '../helpers.tsx';
 import { renderWithWorkspace } from '../render-with-workspace.tsx';
@@ -11,15 +16,6 @@ describe('renderWithWorkspace', () => {
     const project = await addProject();
     await project.launchSession();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
-  });
-
-  it('returns claude and user', async () => {
-    const { claude, user, addProject } = await renderWithWorkspace();
-    const project = await addProject();
-    await project.launchSession();
-    expect(claude).toBeDefined();
-    expect(claude.emitSegment).toBeDefined();
-    expect(user).toBeDefined();
   });
 
   it('claude.emitSegment flushes React without explicit act()', async () => {
@@ -55,17 +51,24 @@ describe('renderWithWorkspace', () => {
     // CLI responds
     await emitAssistantTurn(claude, 'ok');
 
-    // Session title shows in the pane header after first user message.
+    // ① UI: session title shows in the pane header after first user message.
     const breadcrumb = screen.getAllByTestId('pane-header')[0]!;
-    const { within } = await import('@testing-library/react');
     expect(within(breadcrumb).getByText('fix the login page')).toBeInTheDocument();
 
-    // DB has CLI-generated title
-    const sessionStore = container.get<{
-      getByChannelId(channelId: string): Promise<{ title?: string } | null>;
-    }>(Symbol.for('SessionStore'));
-    const record = await sessionStore.getByChannelId(channelId);
-    expect(record).toBeDefined();
-    expect(record!.title).toBe('Fix the login bug');
+    // ② Server broadcast: session:states carries the CLI-generated title.
+    await vi.waitFor(() => {
+      const summaries = claude
+        .receivedEvents('session:states')
+        .flatMap((payload) => payload.sessions);
+      expect(summaries).toContainEqual(
+        expect.objectContaining({ channelId, title: 'Fix the login bug' }),
+      );
+    });
+
+    // ③ DB: CLI-generated title persisted (poll — persistence races the broadcast).
+    const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+    await expect
+      .poll(async () => (await sessionStore.getByChannelId(channelId))?.title)
+      .toBe('Fix the login bug');
   });
 });

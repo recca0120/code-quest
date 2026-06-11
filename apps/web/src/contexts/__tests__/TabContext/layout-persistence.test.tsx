@@ -19,9 +19,10 @@ import {
 } from '@code-quest/server/test';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, onTestFinished } from 'vitest';
+import { useEffect } from 'react';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar';
-import { AppConfigProvider } from '@/contexts/AppInitContext';
+import { AppConfigProvider, useAppConfigActions } from '@/contexts/AppInitContext';
 import { GitProvider } from '@/contexts/GitContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SocketProvider } from '@/contexts/SocketContext';
@@ -75,10 +76,45 @@ function WorkspaceStateProbe() {
   return null;
 }
 
-/** debounce 是 500ms — negative 斷言（「不發生」）需要明確的真實時間窗 */
+/** app:init ACK 落地訊號 — subscribeInit 在 ACK parse 成功後同步 fan-out，
+ *  negative 斷言（「layout 沒被套用」）前先等這個正向訊號，避免只證明「request 已送出」 */
+let initAckCount = 0;
+function InitAckProbe() {
+  const { subscribeInit } = useAppConfigActions();
+  useEffect(
+    () =>
+      subscribeInit(() => {
+        initAckCount += 1;
+      }),
+    [subscribeInit],
+  );
+  return null;
+}
+
+/** Fake timers（只 fake setTimeout/clearTimeout）＋ jest shim。
+ *  FakeServer/FakeSocket 相容性：跨端傳遞走 queueMicrotask（不在 toFake 內），
+ *  advanceTimersByTimeAsync 的每個 await tick 之間 microtask 照常 flush，
+ *  所以 ACK / broadcast 不受影響。
+ *  jest shim 的原因：RTL 的 asyncWrapper 以 setTimeout(0) drain microtask，
+ *  但只在偵測到 jest fake timers 時才推進 clock（jestFakeTimersAreEnabled 檢查
+ *  `typeof jest !== 'undefined'`）——Vitest 下沒有 jest global，faked 的
+ *  setTimeout(0) 永不觸發，userEvent 會卡死。 */
+function installFakeTimers() {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  (globalThis as Record<string, unknown>).jest = {
+    advanceTimersByTime: (ms: number) => vi.advanceTimersByTime(ms),
+  };
+  onTestFinished(() => {
+    delete (globalThis as Record<string, unknown>).jest;
+    vi.useRealTimers();
+  });
+}
+
+/** debounce 是 500ms — negative 斷言（「不發生」）需要明確的時間窗。
+ *  需在已呼叫 installFakeTimers() 的測試內使用。 */
 function settleDebounce() {
   return act(async () => {
-    await new Promise((r) => setTimeout(r, 700));
+    await vi.advanceTimersByTimeAsync(700);
   });
 }
 
@@ -122,10 +158,13 @@ describe('app:init rehydrate', () => {
     onTestFinished(() => server.destroy());
 
     const summoner = createFakeSummoner(server);
-    renderClient(summoner);
+    initAckCount = 0;
+    renderClient(summoner, <InitAckProbe />);
 
-    await waitFor(() => expect(summoner.sentEvents('app:init')).toHaveLength(1));
-    await act(async () => {});
+    // 正向落地訊號：ACK 已回並 fan-out（不只是 request 已送出）——之後的
+    // negative 斷言（仍是預設單 tab）才有意義
+    await waitFor(() => expect(initAckCount).toBeGreaterThanOrEqual(1));
+    expect(summoner.sentEvents('app:init')).toHaveLength(1);
     expect(screen.getAllByTestId('workspace-tab')).toHaveLength(1);
   });
 });
@@ -256,7 +295,8 @@ describe('layout:sync 防呆與 LWW 套用細節', () => {
 
 describe('debounced layout:save', () => {
   it('debounces multiple rapid local changes to a single layout:save (real handler stores merged result)', async () => {
-    const user = userEvent.setup();
+    installFakeTimers();
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
     const container = createTestContainer();
     const server = createFakeServer(container);
     onTestFinished(() => server.destroy());
@@ -266,7 +306,7 @@ describe('debounced layout:save', () => {
     // 兩個 debounce 窗內的真 UI 變更
     await user.click(screen.getByTestId('workspace-tab-add'));
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 200));
+      await vi.advanceTimersByTimeAsync(200);
     });
     await user.click(screen.getByTestId('workspace-tab-add'));
     expect(screen.getAllByTestId('workspace-tab')).toHaveLength(3);

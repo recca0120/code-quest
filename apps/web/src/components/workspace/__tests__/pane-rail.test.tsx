@@ -20,6 +20,38 @@ function summonerKeyOf(container: ReturnType<typeof createTestContainer>): strin
   return container.get<{ provider: string }>(TYPES.ChannelManager).provider;
 }
 
+interface FakeRO {
+  cb: (entries: { contentRect: { width: number } }[]) => void;
+  targets: Element[];
+  disconnected: boolean;
+}
+
+/** instance-tracking RO fake：記每個 instance 的 observe target 與 disconnected flag，
+ *  cb 由測試手動觸發（jsdom 無 layout）。記得 afterEach `vi.unstubAllGlobals()`。 */
+function installFakeResizeObserver(): FakeRO[] {
+  const instances: FakeRO[] = [];
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      private readonly entry: FakeRO;
+      constructor(cb: FakeRO['cb']) {
+        this.entry = { cb, targets: [], disconnected: false };
+        instances.push(this.entry);
+      }
+      observe(target: Element): void {
+        this.entry.targets.push(target);
+      }
+      unobserve(target: Element): void {
+        this.entry.targets = this.entry.targets.filter((t) => t !== target);
+      }
+      disconnect(): void {
+        this.entry.disconnected = true;
+      }
+    },
+  );
+  return instances;
+}
+
 describe('rail 預設展開＋⇥ 收合 ↔ dock（spec: 同一資料源的兩種展開態）', () => {
   it('新 chat 預設展開 rail；⇥ 收合變 dock chips；點 chip 展開回該分頁', async () => {
     const { user, addProject } = await renderWithWorkspace();
@@ -85,21 +117,7 @@ describe('窄 pane 自動收合（spec: <720px 自動收合）', () => {
   });
 
   it('pane 寬 <720 時 rail 自動收合成 dock；恢復寬度不自動展開', async () => {
-    // fake ResizeObserver：記住 callback，測試手動觸發寬度變化
-    const callbacks: Array<(entries: { contentRect: { width: number } }[]) => void> = [];
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        cb: (entries: { contentRect: { width: number } }[]) => void;
-        constructor(cb: (entries: { contentRect: { width: number } }[]) => void) {
-          this.cb = cb;
-          callbacks.push(cb);
-        }
-        observe() {}
-        disconnect() {}
-        unobserve() {}
-      },
-    );
+    const instances = installFakeResizeObserver();
 
     const { addProject } = await renderWithWorkspace();
     const project = await addProject();
@@ -108,16 +126,46 @@ describe('窄 pane 自動收合（spec: <720px 自動收合）', () => {
 
     // pane 變窄 → 自動收合
     await act(async () => {
-      for (const cb of callbacks) cb([{ contentRect: { width: 600 } }]);
+      for (const inst of instances) inst.cb([{ contentRect: { width: 600 } }]);
     });
     expect(screen.queryByRole('region', { name: 'right-pane-body' })).not.toBeInTheDocument();
     expect(screen.getByTestId('pane-dock')).toBeInTheDocument();
 
     // 恢復寬度 → 維持 dock（尊重上次狀態，不自動展開）
     await act(async () => {
-      for (const cb of callbacks) cb([{ contentRect: { width: 1000 } }]);
+      for (const inst of instances) inst.cb([{ contentRect: { width: 1000 } }]);
     });
     expect(screen.queryByRole('region', { name: 'right-pane-body' })).not.toBeInTheDocument();
+  });
+
+  it('close pane 後 SessionPane 的 RO instance disconnect；stale callback 觸發不 throw', async () => {
+    const instances = installFakeResizeObserver();
+
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    // SessionPane 的 RO instance＝observe target 是 rail body 祖先（pane body div）的那個
+    const railBody = screen.getByRole('region', { name: 'right-pane-body' });
+    const sessionRO = instances.find((inst) => inst.targets.some((t) => t.contains(railBody)));
+    if (!sessionRO) throw new Error('SessionPane 的 ResizeObserver instance 不存在');
+    expect(sessionRO.disconnected).toBe(false);
+
+    // 升級出第二個 pane（files，rail 預設分頁）→ 關閉 session pane（剩 files pane）
+    await user.click(screen.getByRole('button', { name: 'promote rail to pane' }));
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+    expect(leaves).toHaveLength(2);
+    await user.click(within(leaves[0]!).getByTestId('pane-close'));
+    const remaining = screen.getAllByTestId('split-pane-leaf');
+    expect(remaining).toHaveLength(1);
+    expect(within(remaining[0]!).getByRole('region', { name: 'files-pane' })).toBeInTheDocument();
+
+    // unmount cleanup 跑過 → disconnect；stale callback 再觸發為 no-op（不 throw）
+    expect(sessionRO.disconnected).toBe(true);
+    await act(async () => {
+      sessionRO.cb([{ contentRect: { width: 600 } }]);
+    });
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(1);
   });
 });
 
@@ -199,8 +247,13 @@ describe('rail 拖寬把手（rail resize；persist width）', () => {
     });
   });
 
-  it('clamp [180, 560]：拖過頭取邊界值', async () => {
-    const { addProject } = await renderWithWorkspace();
+  it('clamp [180, 560]：拖過頭取邊界值；放開後邊界值 persist、move 不再生效', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+
+    const { addProject } = await renderWithWorkspace({ summoner });
     const project = await addProject();
     await project.launchSession();
 
@@ -213,6 +266,21 @@ describe('rail 拖寬把手（rail resize；persist width）', () => {
     fireEvent.pointerMove(window, { pointerId: 1, clientX: 2400 });
     expect(screen.getByTestId('chat-rail-wrapper').style.width).toBe('180px');
     fireEvent.pointerUp(window, { pointerId: 1, clientX: 2400 });
+
+    // 放開的邊界值走 debounce persist 進 server LayoutStore
+    await waitFor(
+      () => {
+        const stored = container.get<LayoutStore>(TYPES.LayoutStore).get(summonerKeyOf(container));
+        const root = stored?.layout.tabs[0]?.paneRoot;
+        if (root?.type !== 'leaf' || root.content.type !== 'session') throw new Error('pending');
+        expect(root.content.rail).toMatchObject({ width: 180 });
+      },
+      { timeout: 2000 },
+    );
+
+    // pointerUp 後 move 不再生效（listener 已移除）
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 1000 });
+    expect(screen.getByTestId('chat-rail-wrapper').style.width).toBe('180px');
   });
 });
 
@@ -223,9 +291,9 @@ describe('dock chips count 徽章（6.5）', () => {
     onTestFinished(() => server.destroy());
     const summoner = createFakeSummoner(server);
     summoner.git()!.setChangedFiles([
-      { path: 'a.ts', status: 'M' },
-      { path: 'b.ts', status: 'A' },
-    ] as never);
+      { status: 'M', file: 'a.ts' },
+      { status: 'A', file: 'b.ts' },
+    ]);
 
     const { user, addProject } = await renderWithWorkspace({ summoner });
     const project = await addProject();
@@ -236,5 +304,60 @@ describe('dock chips count 徽章（6.5）', () => {
       expect(screen.getByTestId('pane-dock-count-git')).toHaveTextContent('2');
       expect(screen.getByTestId('pane-dock-count-files')).toHaveTextContent('2');
     });
+  });
+});
+
+describe('spec count（openspec list → rail 分頁徽章／dock chip）', () => {
+  it('點 Spec 分頁：真 openspec list 載入 primed changes，分頁徽章顯示 ·2', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+    summoner.openspec()!.setChanges([
+      { name: 'add-foo', tasks: { done: 1, total: 3 }, status: 'in-progress' },
+      { name: 'fix-bar', tasks: null, status: 'no-tasks' },
+    ]);
+
+    const { user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
+
+    // 真 pipeline：SpecView 經 openspec:list RPC 列出 primed changes
+    await user.click(screen.getByRole('tab', { name: /Spec/i }));
+    expect(await screen.findByText('add-foo')).toBeInTheDocument();
+    expect(screen.getByText('fix-bar')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('rail-tab-count-spec')).toHaveTextContent('·2'));
+  });
+
+  it('空 changes：Spec 分頁載入完成後 count 0 不顯示徽章', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    // 等 SpecView 真載入完（空清單 placeholder）再驗徽章缺席——避免 pending fetch 的 vacuous pass
+    await user.click(screen.getByRole('tab', { name: /Spec/i }));
+    expect(await screen.findByText('No active changes')).toBeInTheDocument();
+    expect(screen.queryByTestId('rail-tab-count-spec')).not.toBeInTheDocument();
+  });
+
+  it('不開 spec 收合：list error → spec count null，dock chip 無徽章（git 徽章照常）', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+    summoner.git()!.setChangedFiles([{ status: 'M', file: 'a.ts' }]);
+    summoner.openspec()!.setListError('openspec-cli-not-found');
+
+    const { user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByRole('button', { name: 'collapse rail' }));
+    const dock = screen.getByTestId('pane-dock');
+    // git count 已到（counts 管線活著）→ spec 徽章缺席非 vacuous
+    await waitFor(() =>
+      expect(within(dock).getByTestId('pane-dock-count-git')).toHaveTextContent('1'),
+    );
+    expect(within(dock).queryByTestId('pane-dock-count-spec')).not.toBeInTheDocument();
   });
 });

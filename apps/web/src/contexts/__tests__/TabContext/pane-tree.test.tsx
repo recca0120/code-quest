@@ -6,8 +6,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
-import { describe, expect, it } from 'vitest';
-import { SocketProvider } from '@/contexts/SocketContext';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import type { PaneNode } from '@/contexts/TabContext';
 import {
   buildSessionPaneLabels,
@@ -16,24 +15,21 @@ import {
   usePaneActions,
   usePaneState,
 } from '@/contexts/TabContext';
-import { createFakeSummoner } from '@/test/fake-summoner';
 
+// 裸 TabProvider（比照 pane-content-shape）：pane tree 純 client state，
+// useLayoutPersistence 的 contexts 是 soft-bound——不需要 socket harness。
 function renderWithPanes(ui: ReactElement) {
-  const summoner = createFakeSummoner();
   const user = userEvent.setup();
-  render(
-    <SocketProvider socket={summoner.socket}>
-      <TabProvider>{ui}</TabProvider>
-    </SocketProvider>,
-  );
+  render(<TabProvider>{ui}</TabProvider>);
   return { user };
 }
 
-// ── 1.1 Type tests (compile-time) ── the `satisfies PaneContent` annotations make
-// tsc reject any drift from the current variants (the old version lacked
-// annotations entirely and silently passed with long-obsolete shapes).
+// ── 1.1 Type tests (compile-time) ── `satisfies` 擋各 variant 的 shape drift、
+// expectTypeOf 釘死 union 全集（增刪 variant 都過不了 tsc --noEmit）。
+// 不留 runtime expects：舊版的 expect(session.type).toBe('session') 等
+// 全是字面值複述（恆真），不提供任何行為保護。
 describe('PaneContent / PaneNode types (1.1)', () => {
-  it('can construct all current PaneContent variants', () => {
+  it('can construct all current PaneContent variants (type-level assertions)', () => {
     const session = { type: 'session', sessionId: 'abc', cwd: '/repo' } satisfies PaneContent;
     const sessionNull = { type: 'session', sessionId: null, cwd: null } satisfies PaneContent;
     const git = { type: 'git', target: { kind: 'fixed', cwd: '/repo' } } satisfies PaneContent;
@@ -43,12 +39,15 @@ describe('PaneContent / PaneNode types (1.1)', () => {
       target: { kind: 'fixed', cwd: '/repo' },
     } satisfies PaneContent;
     const worktrees = { type: 'worktrees' } satisfies PaneContent;
-    expect(session.type).toBe('session');
-    expect(sessionNull.sessionId).toBeNull();
-    expect(git.target.kind).toBe('fixed');
-    expect(files.type).toBe('files');
-    expect(openspec.type).toBe('openspec');
-    expect(worktrees.type).toBe('worktrees');
+    expectTypeOf(session).toExtend<PaneContent>();
+    expectTypeOf(sessionNull).toExtend<PaneContent>();
+    expectTypeOf(git).toExtend<PaneContent>();
+    expectTypeOf(files).toExtend<PaneContent>();
+    expectTypeOf(openspec).toExtend<PaneContent>();
+    expectTypeOf(worktrees).toExtend<PaneContent>();
+    expectTypeOf<PaneContent['type']>().toEqualTypeOf<
+      'session' | 'git' | 'files' | 'openspec' | 'worktrees'
+    >();
   });
 });
 
@@ -104,6 +103,51 @@ describe('splitPane action (1.3)', () => {
     const { user } = renderWithPanes(<Test />);
     await user.click(screen.getByRole('button', { name: 'split' }));
     expect(newPaneContent).toMatchObject({ type: 'session', sessionId: null, cwd: null });
+  });
+});
+
+// ── openToolColumn action（標準工作組：picker ⌘1）──
+describe('openToolColumn action', () => {
+  it('focused leaf 右側建 files/git 直欄：root h-split 0.6、first=原 leaf、second=v-split（files 上 git 下）、focus 留原 leaf', async () => {
+    let root: PaneNode | null = null;
+    let focusedId: string | null = null;
+    let originalLeafId = '';
+
+    function Test() {
+      const { paneRoot, focusedPaneId } = usePaneState();
+      const { openToolColumn } = usePaneActions();
+      root = paneRoot;
+      focusedId = focusedPaneId;
+      if (paneRoot.type === 'leaf' && !originalLeafId) originalLeafId = paneRoot.id;
+      return (
+        <button type="button" onClick={() => openToolColumn('/wt')}>
+          tool-column
+        </button>
+      );
+    }
+
+    const { user } = renderWithPanes(<Test />);
+    await user.click(screen.getByRole('button', { name: 'tool-column' }));
+
+    // cast：root 在 render closure 內賦值，TS 的 CFA 看不見、停在初始 null
+    const r = root as PaneNode | null;
+    if (!r || r.type !== 'split') throw new Error('root should be an h-split after openToolColumn');
+    expect(r.direction).toBe('h');
+    expect(r.ratio).toBe(0.6);
+    expect(r.first).toMatchObject({ type: 'leaf', id: originalLeafId });
+
+    const column = r.second;
+    if (column.type !== 'split') throw new Error('second should be the files/git v-split column');
+    expect(column.direction).toBe('v');
+    expect(column.first).toMatchObject({
+      type: 'leaf',
+      content: { type: 'files', target: { kind: 'fixed', cwd: '/wt' } },
+    });
+    expect(column.second).toMatchObject({
+      type: 'leaf',
+      content: { type: 'git', target: { kind: 'fixed', cwd: '/wt' } },
+    });
+    expect(focusedId).toBe(originalLeafId);
   });
 });
 

@@ -3,10 +3,11 @@ import { FakeGit } from '@code-quest/test-kit';
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
+import { COMPOSE_PLACEHOLDER } from '@/test/helpers';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('Create Worktree end-to-end flow (dialog → session in new worktree)', () => {
-  it('right-click ProjectCard → Create Worktree… → fill name → submit → new tab in same Project', async () => {
+  it('SessionManager (⌘⇧M) → + New worktree → fill name → submit → session opens in new worktree', async () => {
     // Arrange: FakeGit reports /projects/app as the git root for any cwd under it.
     const fakeGit = new FakeGit();
     fakeGit.setProjectRoot('/projects/app');
@@ -19,7 +20,7 @@ describe('Create Worktree end-to-end flow (dialog → session in new worktree)',
     await project.launchSession();
 
     // Sanity: chat panel is active.
-    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
 
     // Act: SessionManager (⌘⇧M) → "+ New worktree"
     // (SessionBar 的 [+] dropdown 已由 tmux-workspace-ui P1 移除)
@@ -36,14 +37,26 @@ describe('Create Worktree end-to-end flow (dialog → session in new worktree)',
     await user.type(screen.getByLabelText(/new branch name/i), 'feat-a');
     await user.click(screen.getByRole('button', { name: /^Create$/ }));
 
-    // Assert: dialog closes AND a session opens in the new worktree
+    // Assert ①: dialog closes AND a session opens in the new worktree
     // (worktree-centric entry-wiring: the create-worktree dead-end is gone —
     // coming from a new-session flow continues straight into a session).
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: /new worktree/i })).not.toBeInTheDocument();
     });
     await waitFor(() => {
-      expect(screen.getAllByPlaceholderText(/Esc to focus/i).length).toBe(2);
+      expect(screen.getAllByPlaceholderText(COMPOSE_PLACEHOLDER).length).toBe(2);
     });
+
+    // Assert ②: client→server RPC layer — worktree create + launch in the new path.
+    const newWorktreePath = '/projects/app/.claude/worktrees/feat-a';
+    const creates = summoner.sentEvents('git:worktree:add');
+    expect(creates).toHaveLength(1);
+    expect(creates[0]).toMatchObject({
+      cwd: '/projects/app',
+      newBranch: 'feat-a',
+      path: newWorktreePath,
+    });
+    const launches = summoner.sentEvents('session:launch');
+    expect(launches.at(-1)).toMatchObject({ cwd: newWorktreePath });
   });
 });

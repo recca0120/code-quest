@@ -1,8 +1,11 @@
 import type { SessionStateSummary } from '@code-quest/schemas';
-import { render, screen } from '@testing-library/react';
+import { createFakeServer } from '@code-quest/server/test';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
+import { AppConfigProvider } from '@/contexts/AppInitContext';
+import { SessionProvider, useSession } from '@/contexts/SessionContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider, useTabActions, useTabState } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
@@ -36,7 +39,10 @@ function renderWithSessions(ui: ReactElement, initialSessions: SessionStateSumma
 
 describe('TabProvider', () => {
   describe('tab creation from sessions', () => {
-    it('preserves branch from session sync (pane header needs this)', () => {
+    it('preserves branch from session sync (pane header needs this)', async () => {
+      // 真 pipeline（fake-summoner-client skill）：SessionsBridge 鏡像 Workspace.tsx
+      // 的接線（useSession().sessions → TabProvider sessions prop），session 由
+      // claude.pushServerEvent('session:states') 經真 socket 流入。
       function Test() {
         const { tabs, activeTabId } = useTabState();
         const branch = activeTabId ? tabs[activeTabId]?.branch : undefined;
@@ -46,17 +52,46 @@ describe('TabProvider', () => {
           </span>
         );
       }
-      const { setSessions } = renderWithSessions(<Test />);
-      setSessions([
-        {
-          channelId: 'ch-1',
-          state: 'idle',
-          cwd: '/my/project',
-          projectRoot: '/my/project',
-          branch: 'feat/my-feature',
-        },
-      ]);
-      expect(screen.getByRole('status', { name: 'branch' })).toHaveTextContent('feat/my-feature');
+      function SessionsBridge() {
+        const { sessions } = useSession();
+        return (
+          <TabProvider sessions={sessions}>
+            <Test />
+          </TabProvider>
+        );
+      }
+      const server = createFakeServer();
+      onTestFinished(() => server.destroy());
+      const summoner = createFakeSummoner(server);
+      render(
+        <SocketProvider socket={summoner.socket}>
+          <AppConfigProvider>
+            <SessionProvider>
+              <SessionsBridge />
+            </SessionProvider>
+          </AppConfigProvider>
+        </SocketProvider>,
+      );
+      // app:init replay 會 wholesale setSessions —— 先 settle 再 push（同 production 順序）
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+      expect(summoner.sentEvents('app:init')).toHaveLength(1);
+
+      await act(async () => {
+        summoner.claude().pushServerEvent('session:states', {
+          sessions: [
+            {
+              channelId: 'ch-1',
+              state: 'idle',
+              cwd: '/my/project',
+              projectRoot: '/my/project',
+              branch: 'feat/my-feature',
+            },
+          ],
+        });
+      });
+      expect(screen.getByRole('status', { name: 'branch' }).textContent).toBe('feat/my-feature');
     });
 
     it('preserves cwd from session sync (resume / fork need this)', () => {
@@ -138,8 +173,10 @@ describe('TabProvider', () => {
       const sessions = [idleSession('a')];
       const { setSessions } = renderWithSessions(<Test />, sessions);
       const before = screen.getByRole('status', { name: 'tabs' }).textContent;
-      setSessions(sessions);
-      expect(screen.getByRole('status', { name: 'tabs' })).toHaveTextContent(before!);
+      expect(before).toContain('"a"'); // arrange 已落地（非空 baseline）
+      // 新 reference、同內容 —— effect deps [sessions] 變、diff 真的重跑
+      setSessions([...sessions]);
+      expect(screen.getByRole('status', { name: 'tabs' }).textContent).toBe(before);
     });
 
     it('sets activeTabId to first session when no active tab', () => {

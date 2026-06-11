@@ -19,7 +19,10 @@ const hoverTintConsumers = {
 } as const;
 
 function extractBlock(selector: RegExp): string {
-  return appCss.match(selector)?.[1] ?? '';
+  const block = appCss.match(selector)?.[1];
+  // 非空守門：block 不存在時直接 throw，避免空字串讓 not.toMatch 斷言恆真。
+  if (!block) throw new Error(`extractBlock: no match in App.css for ${selector}`);
+  return block;
 }
 
 const themeBlock = extractBlock(/@theme\s*\{([\s\S]*?)\n\}/);
@@ -98,7 +101,9 @@ describe('App.css static shape', () => {
           new RegExp(`\\[data-mode="${mode}"\\][^{]*\\{([\\s\\S]*?)\\n\\}`),
         );
         expect(block).toMatch(accentRef);
-        expect(block).toMatch(new RegExp(`--mode-shadow-alpha:\\s*${shadowAlpha}\\b`));
+        // (?!\.\d) — `0` 不可誤配 `0.2`（\b 會在 `0.` 處成立）；dot 需跳脫。
+        const alphaPattern = shadowAlpha.replace('.', '\\.');
+        expect(block).toMatch(new RegExp(`--mode-shadow-alpha:\\s*${alphaPattern}(?!\\.\\d)`));
       });
 
       it(`declares --color-composer-border as ${composerMix}% mode-accent mix for data-mode="${mode}"`, () => {
@@ -115,6 +120,8 @@ describe('App.css static shape', () => {
   });
 });
 
+// TODO(audit): 以下三個 describe 對 TSX 原始碼做 regex 斷言（脆弱、易受 refactor 影響）。
+// 應改為 DOM 層測試（render 後驗 className / data-mode attribute）——屬大改，另開 change 處理。
 describe('T2 tint consumers use theme tokens (no bg-white*, no hover-tint-*)', () => {
   for (const [name, src] of Object.entries(hoverTintConsumers)) {
     it(`${name}.tsx is hardcode-free`, () => {

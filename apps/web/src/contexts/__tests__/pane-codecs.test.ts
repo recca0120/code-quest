@@ -197,6 +197,21 @@ describe('pane-codecs — serializeLayout (version envelope)', () => {
       activeTabId: 't1',
     });
   });
+
+  it('activeWorkspaceTabId null 時 activeTabId fallback 到 tabs[0].id', () => {
+    const layout = serializeLayout({
+      workspaceTabs: [
+        {
+          id: 't1',
+          label: 'main',
+          paneRoot: { type: 'leaf', id: 'p1', content: { type: 'worktrees' } },
+        },
+        { id: 't2', paneRoot: { type: 'leaf', id: 'p2', content: { type: 'worktrees' } } },
+      ],
+      activeWorkspaceTabId: null,
+    });
+    expect(layout.activeTabId).toBe('t1');
+  });
 });
 
 describe("pane-codecs — reserved 'follow' target degrades (D5 placeholder)", () => {

@@ -37,8 +37,20 @@ describe('movePaneTo', () => {
     const cSpot = next.second;
     if (cSpot.type !== 'split') throw new Error('C spot should be split');
     expect(cSpot.direction).toBe('h');
+    expect(cSpot.ratio).toBe(0.5);
     expect(cSpot.first).toMatchObject({ id: 'C' });
     expect(cSpot.second).toMatchObject({ content: { target: { cwd: '/a' } } });
+  });
+
+  it('left：A 拖到 B 的左落點 → B 變 h-split、A 在左半（first）、ratio 0.5', () => {
+    const next = movePaneTo(threePanes(), 'A', 'B', 'left');
+    if (next.type !== 'split') throw new Error('root should be s2');
+    const bSpot = next.first;
+    if (bSpot.type !== 'split') throw new Error('B spot should be split');
+    expect(bSpot.direction).toBe('h');
+    expect(bSpot.ratio).toBe(0.5);
+    expect(bSpot.first).toMatchObject({ content: { target: { cwd: '/a' } } });
+    expect(bSpot.second).toMatchObject({ id: 'B' });
   });
 
   it('top：A 拖到 B 的上落點 → B 變 v-split、A 在上半', () => {
@@ -47,6 +59,7 @@ describe('movePaneTo', () => {
     const bSpot = next.first;
     if (bSpot.type !== 'split') throw new Error('B spot');
     expect(bSpot.direction).toBe('v');
+    expect(bSpot.ratio).toBe(0.5);
     expect(bSpot.first).toMatchObject({ content: { target: { cwd: '/a' } } });
     expect(bSpot.second).toMatchObject({ id: 'B' });
   });

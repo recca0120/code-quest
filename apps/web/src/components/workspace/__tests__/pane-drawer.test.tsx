@@ -60,6 +60,37 @@ describe('drawer 單例（spec: 全域單例 drawer）', () => {
   });
 });
 
+describe('drawer 拖左緣調寬（handoff §5 grabber）', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('pointermove 即時寬度＝innerWidth−clientX；clamp 下限 480；pointerUp 後 move 不變', async () => {
+    // jsdom 預設 innerWidth 1024：1024−600=424 會直接撞 clamp——拉大到 1600 先驗公式再驗 clamp
+    vi.stubGlobal('innerWidth', 1600);
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByRole('button', { name: 'open in drawer' }));
+    const drawer = await screen.findByTestId('workspace-drawer');
+
+    // 往左拖 → 寬度＝innerWidth − clientX（pointermove 即時反映）
+    fireEvent.pointerDown(screen.getByTestId('drawer-grabber'), { pointerId: 1, clientX: 800 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 600 });
+    expect(drawer.style.width).toBe('1000px'); // 1600 − 600
+
+    // 拖過頭往右 → clamp 下限 480（1600−1500=100 → 480）
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 1500 });
+    expect(drawer.style.width).toBe('480px');
+
+    // 放開後 move 不再生效（listener 已移除）
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 1500 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 700 });
+    expect(drawer.style.width).toBe('480px');
+  });
+});
+
 describe('釘選成 pane（spec: 釘選成 pane）', () => {
   it('⊞ 釘選：descriptor 轉新 leaf（右側 split）、drawer 關、layout 經 debounce 存檔', async () => {
     const container = createTestContainer();

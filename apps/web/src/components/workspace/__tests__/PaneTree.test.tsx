@@ -6,7 +6,7 @@
  * 驅動全走真 UI——split 用 pane header 的 pane-split-h / pane-split-v 按鈕，
  * zoom 用 click pane 取得 focus 後 ⌘⇧Z。
  */
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
@@ -72,7 +72,7 @@ describe('SplitPane (4.3) divider renders and updates ratio on drag', () => {
     expect(screen.getByTestId('pane-divider')).toHaveAttribute('data-direction', 'h');
   });
 
-  it('renders a divider with the split direction inside the split container (drag→updateRatio wiring is covered by PaneDivider.test + manual acceptance)', async () => {
+  it('renders a divider with the split direction inside the split container', async () => {
     const user = userEvent.setup();
     renderPaneTree();
 
@@ -84,6 +84,33 @@ describe('SplitPane (4.3) divider renders and updates ratio on drag', () => {
     // Verify it's placed between the two pane leaves (parent is the split container)
     const splitContainer = screen.getByTestId('split-pane-split');
     expect(splitContainer.contains(divider)).toBe(true);
+  });
+
+  it('真拖 divider（pointerdown→move→up）接通 pointer→updateRatio→reflow：first wrapper 寬度照拖曳方向變', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    await user.click(screen.getByTestId('pane-split-h'));
+
+    const firstWidth = () =>
+      Number.parseFloat(
+        (screen.getByTestId('split-pane-split').firstElementChild as HTMLElement).style.width,
+      );
+    const before = firstWidth();
+    expect(before).toBeCloseTo(50);
+
+    // happy-dom 無 layout：parent.offsetWidth=0 → delta/totalSize 飽和到 clamp 邊界，
+    // 比例精確值在整合層不可得——斷言接線本身（寬度變了且方向正確）
+    const divider = screen.getByTestId('pane-divider');
+    fireEvent.pointerDown(divider, { clientX: 500, pointerId: 1 });
+    fireEvent.pointerMove(window, { clientX: 620 });
+    fireEvent.pointerUp(window);
+    const afterRight = firstWidth();
+    expect(afterRight).toBeGreaterThan(before); // 往右拖 → first 變寬
+
+    fireEvent.pointerDown(divider, { clientX: 620, pointerId: 1 });
+    fireEvent.pointerMove(window, { clientX: 500 });
+    fireEvent.pointerUp(window);
+    expect(firstWidth()).toBeLessThan(afterRight); // 往左拖 → first 變窄
   });
 });
 
@@ -146,6 +173,43 @@ describe('divider 強化（4.3）', () => {
       .width;
     expect(after).not.toBe(before);
     expect(Number.parseFloat(after)).toBeGreaterThan(Number.parseFloat(before));
+  });
+
+  it('focused 在 second 半邊時 ⌥→ 反向（first wrapper 變窄）、⌥← 回升', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    await user.click(screen.getByTestId('pane-split-h'));
+    // focus 第二個 leaf（split 後 focus 已落新 leaf；點擊使其確定）
+    await user.click(screen.getAllByTestId('split-pane-leaf')[1]!);
+
+    const firstWidth = () =>
+      Number.parseFloat(
+        (screen.getByTestId('split-pane-split').firstElementChild as HTMLElement).style.width,
+      );
+    expect(firstWidth()).toBeCloseTo(50);
+    // focused 在 second：⌥→＝second 邊長大＝ratio 降 → first wrapper 變窄
+    await user.keyboard('{Alt>}{ArrowRight}{/Alt}');
+    expect(firstWidth()).toBeCloseTo(45);
+    // ⌥← 反向回升
+    await user.keyboard('{Alt>}{ArrowLeft}{/Alt}');
+    expect(firstWidth()).toBeCloseTo(50);
+  });
+
+  it('⌥→ 連按 20 次 clamp 在下限：first wrapper 停在 10%、不再下降', async () => {
+    const user = userEvent.setup();
+    renderPaneTree();
+    await user.click(screen.getByTestId('pane-split-h'));
+    await user.click(screen.getAllByTestId('split-pane-leaf')[1]!);
+
+    for (let i = 0; i < 20; i++) {
+      await user.keyboard('{Alt>}{ArrowRight}{/Alt}');
+    }
+    const width = Number.parseFloat(
+      (screen.getByTestId('split-pane-split').firstElementChild as HTMLElement).style.width,
+    );
+    // 每步 5%，8 步就到下限——連按 20 次仍 clamp 在 10%（不可低於、也不該停在中途）
+    expect(width).toBeGreaterThanOrEqual(10);
+    expect(width).toBeLessThan(10.001);
   });
 });
 

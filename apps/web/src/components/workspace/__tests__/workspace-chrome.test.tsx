@@ -5,13 +5,15 @@
  * - tab 預設命名＝第一個 pane 的 worktree 名（去前綴）；rename 後不覆寫
  * 全真 pipeline：renderWithWorkspace ＋ FakeGit priming，零自家 mock。
  */
+import { EVENTS } from '@code-quest/schemas';
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import { segments as s } from '@code-quest/test-kit';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, onTestFinished } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
+import { WORKSPACE_SHORTCUT_HINTS } from '../KeyboardShortcutsProvider';
 
 function workspaceTabs(): HTMLElement[] {
   return screen.getAllByTestId('workspace-tab');
@@ -32,6 +34,29 @@ describe('tab busy 燈（spec: tab busy 燈聚合）', () => {
     // assistant + result → busy 熄滅
     await emitAssistantTurn(claude, 'done');
     await waitFor(() => expect(workspaceTabs()[0]).not.toHaveAttribute('data-busy'));
+  });
+
+  it('busy 時 tab 內亮 busy dot（animate-busy-pulse）；result 後消失', async () => {
+    const { user, claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    expect(
+      within(workspaceTabs()[0]!).queryByTestId('workspace-tab-busy-dot'),
+    ).not.toBeInTheDocument();
+
+    await sendUserMessage(user, 'work');
+    await waitFor(() => {
+      const dot = within(workspaceTabs()[0]!).getByTestId('workspace-tab-busy-dot');
+      expect(dot.className).toContain('animate-busy-pulse');
+    });
+
+    await emitAssistantTurn(claude, 'done');
+    await waitFor(() =>
+      expect(
+        within(workspaceTabs()[0]!).queryByTestId('workspace-tab-busy-dot'),
+      ).not.toBeInTheDocument(),
+    );
   });
 });
 
@@ -63,28 +88,45 @@ describe('tab 單擊切換／雙擊 rename（spec: 單擊切換、雙擊改名�
 
 describe('tab 預設命名（spec: 預設＝第一個 pane 的 worktree 名去前綴）', () => {
   it('開啟 worktree session 後，tab label 顯示去前綴的 worktree 名', async () => {
-    const container = createTestContainer();
-    const server = createFakeServer(container);
-    onTestFinished(() => server.destroy());
-    const summoner = createFakeSummoner(server);
-    summoner.git()!.setProjectRoot('/projects/app');
-    summoner.git()!.markAsRepo?.('/projects/app');
-    summoner.git()!.addWorktree({
-      name: 'discuss-layout',
-      path: '/projects/app/.worktrees/discuss-layout',
-      branch: 'feat/discuss-layout',
-    });
-
-    const view = await renderWithWorkspace({ summoner });
-    const project = await view.addProject({ path: '/projects', dirName: 'app' });
+    const { user, summoner, addProject } = await renderWithWorkspace();
+    const project = await addProject({ path: '/projects', dirName: 'app' });
     await project.launchSession();
 
-    // launchSession 開在 project root（branch main 經 lookup）→ label = main worktree 名
-    // 此測試聚焦規則本身：tab label 不再是 "Tab 1"，而是反映 worktree
-    await waitFor(() => {
-      const label = workspaceTabs()[0]!.textContent ?? '';
-      expect(label).not.toMatch(/Tab 1/);
+    // launchSession 開在 main worktree → 預設名經 lookup 推導為 'main'（非 "Tab 1"）
+    await waitFor(() =>
+      expect(within(workspaceTabs()[0]!).getByTestId('workspace-tab-label')).toHaveTextContent(
+        /^main$/,
+      ),
+    );
+
+    // 真管線建 worktree（git:worktree:add → broadcast → listing）。path 尾段（wt-1）
+    // 與 branch 尾段（discuss-layout）刻意不同：label 只可能來自 lookup 的去前綴 branch
+    await act(async () => {
+      await summoner.send(EVENTS.git.worktree.add, {
+        cwd: '/projects/app',
+        name: 'wt-1',
+        newBranch: 'feat/discuss-layout',
+      });
     });
+
+    // 新 workspace tab（空 pane）→ ⌘⇧M 從 discuss-layout row 開 session
+    await user.click(screen.getByTestId('workspace-tab-add'));
+    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
+    const row = (await screen.findByText('⎇ feat/discuss-layout')).closest(
+      '[data-testid^="worktree-row"]',
+    );
+    await user.click(within(row as HTMLElement).getByTestId('new-session-btn'));
+
+    // session 落新 tab 第一個 pane → label = 去 feat/ 前綴的 'discuss-layout'
+    //（^$ 錨定：保留前綴的 'feat/discuss-layout' 不可過）
+    await waitFor(() =>
+      expect(within(workspaceTabs()[1]!).getByTestId('workspace-tab-label')).toHaveTextContent(
+        /^discuss-layout$/,
+      ),
+    );
+    expect(within(workspaceTabs()[0]!).getByTestId('workspace-tab-label')).toHaveTextContent(
+      /^main$/,
+    );
   });
 
   it('使用者 rename 過的 tab 不被自動命名覆寫（label 永遠優先於推導名）', async () => {
@@ -157,14 +199,85 @@ describe('底部狀態列（spec: focused pane 決定狀態列 context）', () =
     );
   });
 
+  it('兩 session 同時 processing → "2 busy"；一個 result → "1 busy"', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    onTestFinished(() => server.destroy());
+    const summoner = createFakeSummoner(server);
+    summoner.claude().prepareInit(s.init('sess-busy-a'));
+
+    const { user, claude, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
+
+    const statusline = screen.getByTestId('workspace-statusline');
+    await sendUserMessage(user, 'first task');
+    await waitFor(() =>
+      expect(within(statusline).getByTestId('statusline-busy')).toHaveTextContent('1 busy'),
+    );
+
+    // 第二個 channel：再 prepareInit 一次（獨立 session id）→ manager 開第二個 session
+    claude.prepareInit(s.init('sess-busy-b'));
+    await user.keyboard('{Meta>}{Shift>}M{/Shift}{/Meta}');
+    const newSessionBtns = await screen.findAllByTestId('new-session-btn');
+    await user.click(newSessionBtns[0]!);
+    await waitFor(() => expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2));
+
+    // 新 session pane 取得 focus → 在它的 composer 送訊息 → 兩個同時 processing
+    //（processing 中的 session 1 composer placeholder 已變 "Queue another message…"，
+    //  /Esc to focus/ 只會命中 idle 的新 session）
+    const focusedLeaf = screen
+      .getAllByTestId('split-pane-leaf')
+      .find((leaf) => leaf.hasAttribute('data-focused'));
+    const composer2 = await within(focusedLeaf as HTMLElement).findByPlaceholderText(
+      /Esc to focus/i,
+    );
+    await user.click(composer2);
+    await user.type(composer2, 'second task');
+    await user.keyboard('{Enter}');
+    await waitFor(() =>
+      expect(within(statusline).getByTestId('statusline-busy')).toHaveTextContent('2 busy'),
+    );
+
+    // 後開的 session（provider.latest）回 result → 只剩 1 busy（另一個還在跑）
+    await emitAssistantTurn(claude, 'done');
+    await waitFor(() =>
+      expect(within(statusline).getByTestId('statusline-busy')).toHaveTextContent('1 busy'),
+    );
+  });
+
   it('快捷鍵提示與 KeyboardShortcutsProvider 同源', async () => {
     const { addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();
     const statusline = screen.getByTestId('workspace-statusline');
-    // 單一來源常數的代表項（⌘K picker 於 P2 綁定後加入 hints）
-    expect(within(statusline).getByText(/⌘⇧Z/)).toBeInTheDocument();
-    expect(within(statusline).getByText(/⌘⇧M/)).toBeInTheDocument();
+    // 單一來源：常數的每一條 keys＋label 都必須出現在狀態列
+    for (const hint of WORKSPACE_SHORTCUT_HINTS) {
+      expect(
+        within(statusline).getByText((_, el) => el?.textContent === `${hint.keys} ${hint.label}`),
+      ).toBeInTheDocument();
+    }
+  });
+});
+
+describe('CommandPalette（⌘⇧K；⌘K 讓位給 PanePicker）', () => {
+  it('⌘⇧K 開 palette（非 picker）；esc 關閉', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    // palette hotkey 走 NO_FORM（composer 聚焦時不觸發）→ 先點空白處移出焦點
+    await user.click(document.body);
+    // useHotkeys 的 mod 在非 mac（jsdom）解析為 Ctrl
+    await user.keyboard('{Control>}{Shift>}K{/Shift}{/Control}');
+    expect(await screen.findByRole('dialog', { name: 'Command Palette' })).toBeInTheDocument();
+    // 開的是 palette 不是 picker（⌘K 才是 picker）
+    expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Command Palette' })).not.toBeInTheDocument(),
+    );
   });
 });
 
@@ -184,6 +297,76 @@ describe('PanePicker 全管線（P2：⌘K／標準工作組）', () => {
     // files 與 git pane 都在（rail 內也有 files/git view → 用 getAllBy 不取唯一）
     expect(screen.getAllByRole('region', { name: 'files-pane' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('region', { name: 'git-pane' }).length).toBeGreaterThan(0);
+  });
+
+  it('git list 失敗的 project：欄2 顯示空清單而非 loading；正常 repo 照列', async () => {
+    const { user, summoner, addProject } = await renderWithWorkspace();
+    const project = await addProject({ path: '/projects', dirName: 'app' });
+    await project.launchSession();
+
+    // 第二個 project 手動走 UI 加入、刻意不 priming git repo（不 markAsRepo）：
+    // getProjectRoot 指向 /projects/plain → listWorktrees 擲 NotARepoError → list 回 error
+    summoner.filesystem().addDirectory('/projects', ['app', 'plain']);
+    summoner.git()!.setProjectRoot('/projects/plain');
+    await user.click(screen.getByRole('button', { name: /add project/i }));
+    await user.click(await screen.findByRole('treeitem', { name: 'projects' }));
+    await user.click(await screen.findByRole('treeitem', { name: 'plain' }));
+    await user.click(screen.getByRole('button', { name: /^add$/i }));
+
+    await user.keyboard('{Meta>}k{/Meta}');
+    await screen.findByTestId('pane-picker-miller');
+    const col1 = screen.getByTestId('pane-picker-col-projects');
+    const col2 = screen.getByTestId('pane-picker-col-worktrees');
+
+    // 選非 repo 的 project → error ≠ loading：不顯 loading、worktree 清單空
+    await user.click(await within(col1).findByRole('button', { name: /plain/ }));
+    await waitFor(() => {
+      expect(within(col2).queryByTestId('picker-worktrees-loading')).not.toBeInTheDocument();
+      const worktreeRows = within(col2)
+        .queryAllByRole('button')
+        .filter((b) => b.textContent?.includes('⎇'));
+      expect(worktreeRows).toHaveLength(0);
+    });
+
+    // 對照組：切回正常 repo → worktrees 照列（同一個 picker、同一份 allWorktrees）
+    await user.click(within(col1).getByRole('button', { name: /app/ }));
+    await waitFor(() => expect(within(col2).getByText('main')).toBeInTheDocument());
+  });
+});
+
+describe('⌘K target-pane 路由（picker 開到 focused pane）', () => {
+  it('split 後 focus 第二 leaf → ⌘K → 鍵盤選 git ⏎ → git pane 落第二 leaf、第一 leaf 不變', async () => {
+    const { user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    // ⌘D 分割（自動開 picker）→ esc 關閉，新 leaf 留空
+    await user.keyboard('{Meta>}d{/Meta}');
+    await screen.findByTestId('pane-picker-miller');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('split-pane-leaf')).toHaveLength(2);
+
+    // focus 第二（空）leaf
+    await user.click(screen.getAllByTestId('split-pane-leaf')[1]!);
+    await waitFor(() =>
+      expect(screen.getAllByTestId('split-pane-leaf')[1]).toHaveAttribute('data-focused'),
+    );
+
+    // ⌘K → 鍵盤導航：欄3 起點 chat(0) → ↓↓ 到 git(2) → ⏎
+    await user.keyboard('{Meta>}k{/Meta}');
+    await screen.findByTestId('pane-picker-miller');
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+    // git pane 落在第二 leaf；picker 關閉；第一 leaf 的 chat 不受影響
+    await waitFor(() => {
+      const leaves = screen.getAllByTestId('split-pane-leaf');
+      expect(within(leaves[1]!).getByRole('region', { name: 'git-pane' })).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument();
+    const leaves = screen.getAllByTestId('split-pane-leaf');
+    expect(within(leaves[0]!).getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+    expect(within(leaves[0]!).queryByRole('region', { name: 'git-pane' })).not.toBeInTheDocument();
   });
 });
 
