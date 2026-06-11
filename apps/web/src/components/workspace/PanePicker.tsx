@@ -120,15 +120,15 @@ function ImportView({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2 mb-1">
-        <button type="button" onClick={onBack} className="text-sm font-mono">
+        <button type="button" onClick={onBack} className="text-[length:var(--text-body)] font-mono">
           ←
         </button>
-        <span className="text-sm text-muted">Import — ⎇ {branch}</span>
+        <span className="text-[length:var(--text-body)] text-muted">Import — ⎇ {branch}</span>
       </div>
       <button
         type="button"
         onClick={() => onImport?.('claude-jsonl', worktreePath)}
-        className="px-3 py-2 text-sm text-left rounded-(--radius-row) border border-border hover:bg-hover-tint"
+        className="px-3 py-2 text-[length:var(--text-body)] text-left rounded-(--radius-row) border border-border hover:bg-hover-tint"
       >
         📄 Claude JSONL
       </button>
@@ -202,7 +202,7 @@ function CommandModeView({
           onKeyDown={handleKey}
           placeholder="輸入指令…"
           aria-label="picker search"
-          className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-dim"
+          className="flex-1 bg-transparent py-1.5 text-[length:var(--text-body)] outline-none placeholder:text-dim"
         />
         <kbd className="font-mono text-2xs text-subtle border border-border rounded px-1 py-0.5">
           esc
@@ -216,7 +216,7 @@ function CommandModeView({
             data-testid={`command-item-${f.id}`}
             data-active={sel === idx || undefined}
             onClick={() => executeItem(f)}
-            className={`flex items-center gap-2 px-3 text-sm text-left rounded-(--radius-row) ${
+            className={`flex items-center gap-2 px-3 text-[length:var(--text-body)] text-left rounded-(--radius-row) ${
               sel === idx ? 'bg-selected text-selected-text' : 'hover:bg-hover-tint'
             }`}
             style={{ minHeight: 'var(--palette-row-h)' }}
@@ -315,7 +315,7 @@ function MessageSearchView({
         <button
           type="button"
           onClick={() => onQueryChange('›')}
-          className="text-sm font-mono text-subtle hover:text-text"
+          className="text-[length:var(--text-body)] font-mono text-subtle hover:text-text"
         >
           ←
         </button>
@@ -329,7 +329,7 @@ function MessageSearchView({
           onKeyDown={handleKey}
           placeholder="搜尋對話訊息…"
           aria-label="picker search"
-          className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-dim"
+          className="flex-1 bg-transparent py-1.5 text-[length:var(--text-body)] outline-none placeholder:text-dim"
         />
         <kbd className="font-mono text-2xs text-subtle border border-border rounded px-1 py-0.5">
           esc
@@ -346,18 +346,18 @@ function MessageSearchView({
           listRef={listRef}
         />
         {messageResults.length === 0 && (
-          <p className="px-4 py-6 text-sm text-subtle text-center">
+          <p className="px-4 py-6 text-[length:var(--text-body)] text-subtle text-center">
             {searchQuery ? '找不到符合的訊息' : '目前沒有對話訊息'}
           </p>
         )}
       </div>
       <div className="border-t border-border px-4 py-1.5 flex gap-4 shrink-0">
-        <span className="text-xs font-mono text-faint tracking-wider">
+        <span className="text-[length:var(--text-ui)] font-mono text-faint tracking-wider">
           {searchQuery
             ? `${messageResults.length} result${messageResults.length === 1 ? '' : 's'}`
             : `${visibleMessages.length} messages`}
         </span>
-        <span className="text-xs font-mono text-faint tracking-wider ml-auto">
+        <span className="text-[length:var(--text-ui)] font-mono text-faint tracking-wider ml-auto">
           ↑↓ navigate · ↵ jump · ← back · esc close
         </span>
       </div>
@@ -576,7 +576,7 @@ export function PanePicker({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜尋 project / worktree / session…"
                 aria-label="picker search"
-                className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-dim"
+                className="flex-1 bg-transparent py-1.5 text-[length:var(--text-body)] outline-none placeholder:text-dim"
               />
               <kbd className="font-mono text-2xs text-subtle border border-border rounded px-1 py-0.5">
                 esc
@@ -601,7 +601,7 @@ export function PanePicker({
                       setSel3(0);
                       setCol(0);
                     }}
-                    className={`flex items-center gap-2 px-2 py-1 min-h-7 text-sm text-left rounded-(--radius-row) ${
+                    className={`flex items-center gap-2 px-2 py-1 min-h-(--dock-chip-h) text-[length:var(--text-body)] text-left rounded-(--radius-row) ${
                       p.cwd === projectCwd
                         ? 'bg-selected text-selected-text'
                         : 'hover:bg-hover-tint'
@@ -624,7 +624,7 @@ export function PanePicker({
                   <button
                     type="button"
                     onClick={onAddProject}
-                    className="px-2 py-1 text-xs text-left text-subtle hover:text-text mt-auto"
+                    className="px-2 py-1 text-[length:var(--text-ui)] text-left text-subtle hover:text-text mt-auto"
                   >
                     + Add project…
                   </button>
@@ -641,7 +641,7 @@ export function PanePicker({
                 {worktreesLoading ? (
                   <p
                     data-testid="picker-worktrees-loading"
-                    className="text-xs text-subtle px-2 py-1"
+                    className="text-[length:var(--text-ui)] text-subtle px-2 py-1"
                   >
                     Loading worktrees…
                   </p>
@@ -659,7 +659,7 @@ export function PanePicker({
                           setSel3(0);
                           setCol(1);
                         }}
-                        className={`flex items-center gap-2 px-2 py-1 min-h-7 text-left rounded-(--radius-row) ${
+                        className={`flex items-center gap-2 px-2 py-1 min-h-(--dock-chip-h) text-left rounded-(--radius-row) ${
                           w.path === worktreePath
                             ? 'bg-selected text-selected-text'
                             : 'hover:bg-hover-tint'
@@ -671,7 +671,9 @@ export function PanePicker({
                         >
                           ⎇
                         </span>
-                        <span className="font-mono text-xs truncate">{formatWorktreeLabel(w)}</span>
+                        <span className="font-mono text-[length:var(--text-ui)] truncate">
+                          {formatWorktreeLabel(w)}
+                        </span>
                         <span className="ml-auto font-mono text-2xs text-subtle whitespace-nowrap">
                           {chats.length > 0 && `${chats.length} chat${chats.length > 1 ? 's' : ''}`}
                           {busy && <span className="text-accent">・busy</span>}
@@ -684,7 +686,7 @@ export function PanePicker({
                   <button
                     type="button"
                     onClick={() => onNewWorktree(projectCwd)}
-                    className="px-2 py-1 text-xs text-left text-subtle hover:text-text mt-auto"
+                    className="px-2 py-1 text-[length:var(--text-ui)] text-left text-subtle hover:text-text mt-auto"
                   >
                     + New worktree…
                   </button>
@@ -716,7 +718,7 @@ export function PanePicker({
                         onClick={(e) =>
                           activate(item, e.metaKey || e.ctrlKey ? { split: true } : undefined)
                         }
-                        className={`flex flex-col items-center gap-0.5 px-2 py-2.5 text-xs rounded-(--radius-card) border ${
+                        className={`flex flex-col items-center gap-0.5 px-2 py-2.5 text-[length:var(--text-ui)] rounded-(--radius-card) border ${
                           col === 2 && sel3 === idx
                             ? 'border-(--color-accent-border-50) bg-selected'
                             : 'border-border bg-bg hover:border-accent/55 hover:bg-(--color-row-active-bg)'
@@ -746,7 +748,7 @@ export function PanePicker({
                           data-testid={`modal-session-item-${item.session.channelId}`}
                           data-active={(col === 2 && sel3 === idx) || undefined}
                           onClick={() => activate(item)}
-                          className={`flex items-center px-2 py-1.5 rounded-(--radius-row) text-sm text-left ${
+                          className={`flex items-center px-2 py-1.5 rounded-(--radius-row) text-[length:var(--text-body)] text-left ${
                             col === 2 && sel3 === idx ? 'bg-selected' : 'hover:bg-hover-tint'
                           }`}
                         >
@@ -756,7 +758,7 @@ export function PanePicker({
                             </span>{' '}
                             {item.session.title ?? item.session.channelId}
                             {item.session.paneLabel && (
-                              <span className="text-xs text-subtle ml-2">
+                              <span className="text-[length:var(--text-ui)] text-subtle ml-2">
                                 ← {item.session.paneLabel}
                               </span>
                             )}
@@ -778,7 +780,7 @@ export function PanePicker({
                           data-testid={`picker-resume-item-${item.session.id}`}
                           data-active={(col === 2 && sel3 === idx) || undefined}
                           onClick={() => onResume?.(item.session.id)}
-                          className={`flex items-center gap-2 px-2 py-1.5 rounded-(--radius-row) text-sm text-left ${
+                          className={`flex items-center gap-2 px-2 py-1.5 rounded-(--radius-row) text-[length:var(--text-body)] text-left ${
                             col === 2 && sel3 === idx ? 'bg-selected' : 'hover:bg-hover-tint'
                           }`}
                         >
@@ -802,7 +804,7 @@ export function PanePicker({
                         data-testid="picker-combo-standard"
                         data-active={(col === 2 && sel3 === idx) || undefined}
                         onClick={() => activate(item)}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded-(--radius-row) text-sm text-left border border-dashed ${
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-(--radius-row) text-[length:var(--text-body)] text-left border border-dashed ${
                           col === 2 && sel3 === idx
                             ? 'border-accent bg-selected'
                             : 'border-border hover:bg-hover-tint'
@@ -818,7 +820,7 @@ export function PanePicker({
                         type="button"
                         data-active={(col === 2 && sel3 === idx) || undefined}
                         onClick={() => activate(item)}
-                        className="px-2 py-1 text-xs text-left text-subtle hover:text-text"
+                        className="px-2 py-1 text-[length:var(--text-ui)] text-left text-subtle hover:text-text"
                       >
                         ⬆ Import…
                       </button>

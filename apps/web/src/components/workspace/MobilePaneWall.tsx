@@ -87,7 +87,7 @@ export function MobilePaneWall({
           />
           <div
             data-testid="mobile-pane-wall"
-            className="relative grid grid-cols-2 gap-3 p-3.5 mt-12 overflow-y-auto"
+            className="relative grid grid-cols-2 gap-3 p-3.5 mt-(--mobile-topbar-h) overflow-y-auto"
           >
             {leaves.map((id, idx) => {
               const isActive = focusedPaneId === id;

@@ -38,7 +38,7 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
           type="button"
           data-testid="mobile-topbar-tab-dropdown"
           onClick={() => setTabDropdownOpen((v) => !v)}
-          className="flex items-center gap-1 min-h-9 px-3 text-xs font-semibold text-text truncate max-w-24 rounded-(--radius-mobile-tabdrop) border border-border bg-bg"
+          className="flex items-center gap-1 min-h-(--hit-min) px-3 text-[length:var(--text-ui)] font-semibold text-text truncate max-w-24 rounded-(--radius-mobile-tabdrop) border border-border bg-bg"
         >
           <span className="truncate">{tabLabel}</span>
           <span className="text-subtle">▾</span>

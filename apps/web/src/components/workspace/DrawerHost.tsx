@@ -172,7 +172,7 @@ export function DrawerHost(): React.JSX.Element | null {
               <button
                 type="button"
                 onClick={handlePin}
-                className="px-2 py-1 text-xs rounded-(--radius-row) bg-(--color-accent-soft) text-accent border border-(--color-accent-border-45)"
+                className="px-2 py-1 text-[length:var(--text-ui)] rounded-(--radius-row) bg-(--color-accent-soft) text-accent border border-(--color-accent-border-45)"
               >
                 ⊞ 釘選成 pane
               </button>
@@ -181,7 +181,7 @@ export function DrawerHost(): React.JSX.Element | null {
               type="button"
               aria-label="toggle drawer fullscreen"
               onClick={() => setFullscreen((v) => !v)}
-              className="px-2 py-1 text-xs opacity-60 hover:opacity-100"
+              className="px-2 py-1 text-[length:var(--text-ui)] opacity-60 hover:opacity-100"
               title="全螢幕"
             >
               ⤢
@@ -190,7 +190,7 @@ export function DrawerHost(): React.JSX.Element | null {
               type="button"
               aria-label="close drawer"
               onClick={closeDrawer}
-              className="px-2 py-1 text-xs opacity-60 hover:opacity-100"
+              className="px-2 py-1 text-[length:var(--text-ui)] opacity-60 hover:opacity-100"
             >
               ✕
             </button>

@@ -54,11 +54,11 @@ export function DialogContent({
 
   return (
     <RadixDialog.Portal container={container ?? undefined}>
-      <RadixDialog.Overlay className={cn(overlayPos, 'z-modal bg-bg/38')} />
+      <RadixDialog.Overlay className={cn(overlayPos, 'z-modal bg-overlay')} />
       <RadixDialog.Content
         className={cn(
           contentPos,
-          'bg-surface text-text border border-border rounded-lg shadow-floating outline-none',
+          'bg-surface text-text border border-border rounded-(--radius-card) shadow-floating outline-none',
           scrollable ? 'overflow-y-auto' : 'overflow-hidden flex flex-col',
           SIZE_CLASSES[size],
           className,

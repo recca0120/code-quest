@@ -630,13 +630,13 @@
   0%,
   25% {
     box-shadow:
-      0 0 0 2px rgba(217, 119, 87, 0.65),
-      0 0 8px rgba(217, 119, 87, 0.15);
+      0 0 0 2px rgba(var(--color-accent-rgb), 0.65),
+      0 0 8px rgba(var(--color-accent-rgb), 0.15);
   }
   100% {
     box-shadow:
-      0 0 0 2px rgba(217, 119, 87, 0),
-      0 0 0 rgba(217, 119, 87, 0);
+      0 0 0 2px rgba(var(--color-accent-rgb), 0),
+      0 0 0 rgba(var(--color-accent-rgb), 0);
   }
 }
 
