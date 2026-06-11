@@ -24,15 +24,15 @@
 
 ## 4. Touch gesture — 右滑收回
 
-- [ ] 4.1 [test] 右滑 > 100px → slide-over 收回（focus 回主 pane）
-- [ ] 4.2 [impl] pointer events handler（pointerdown/move/up + velocity）
+- [x] 4.1 [test] 右滑 > 100px → slide-over 收回（focus 回主 pane）
+- [x] 4.2 [impl] pointer events handler（pointerdown/move/up + velocity）
 
 ## 5. Touch gesture — 左拖釘選
 
-- [ ] 5.1 [test] 左拖 > 100px + pointerup → pane tree 新增永久 split
-- [ ] 5.2 [impl] pin-to-split 轉換（splitPaneAndSetContent）
+- [x] 5.1 [test] 左拖 > 100px + pointerup → pane tree 新增永久 split
+- [x] 5.2 [impl] pin-to-split 轉換（splitPaneAndSetContent）
 
 ## 6. 收尾
 
-- [ ] 6.1 [test] zoom 時 slide-over 不顯示（zoom 優先）
-- [ ] 6.2 [verify] 全套綠 + 手動測試 tablet portrait 模擬
+- [x] 6.1 [test] zoom 時 slide-over 不顯示（zoom 優先）
+- [x] 6.2 [verify] 全套綠 + 手動測試 tablet portrait 模擬
