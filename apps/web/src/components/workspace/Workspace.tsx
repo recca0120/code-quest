@@ -140,7 +140,7 @@ function DocumentTitle() {
 }
 
 export function Workspace(): React.JSX.Element {
-  const { registerActions, closePalette } = useCommandPaletteActions();
+  const { closePalette } = useCommandPaletteActions();
   const { open: paletteOpen, defaultTab: paletteDefaultTab } = useCommandPaletteState();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -154,13 +154,6 @@ export function Workspace(): React.JSX.Element {
     branch?: string;
     targetPaneId?: string;
   } | null>(null);
-
-  useEffect(() => {
-    registerActions({
-      onAddProject: () => setDialogOpen(true),
-      onOpenSettings: () => setSettingsOpen(true),
-    });
-  }, [registerActions]);
 
   const { projects, activeProjectCwd } = useProjectState();
   const { sessions } = useSession();

@@ -61,7 +61,7 @@ function clampRailWidth(width: number): number {
 
 const TRIGGER_BASE = cn(
   tabTrigger,
-  'flex-1 h-8 inline-flex items-center justify-center gap-1 text-2xs outline-none min-w-0',
+  'flex-1 h-8 inline-flex items-center justify-center gap-1 text-[length:var(--text-label)] outline-none min-w-0',
 );
 
 export function RightPane({
@@ -187,19 +187,20 @@ export function RightPane({
           {(mounted.has('spec') || active === 'spec') && <SpecView cwd={cwd} />}
         </TabContent>
       </section>
-      {onPromote && (
-        <div className="flex items-center px-2 py-1 border-t border-border-subtle shrink-0 whitespace-nowrap overflow-hidden">
+      <div className="flex items-center gap-2 px-2 py-1 border-t border-border-subtle shrink-0 whitespace-nowrap overflow-hidden font-mono text-2xs text-dim">
+        <span>⤢ 點項目開 drawer</span>
+        {onPromote && (
           <button
             type="button"
             aria-label="promote rail to pane"
             onClick={() => onPromote(railTabContent(active, cwd))}
-            className="font-mono text-2xs text-subtle hover:text-text"
+            className="text-subtle hover:text-text"
             title="把目前分頁開成獨立 pane"
           >
-            ⊞ 升級成 pane
+            ⌘⏎ 升級成 pane
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </Tabs.Root>
   );
 }

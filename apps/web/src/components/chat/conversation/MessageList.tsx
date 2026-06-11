@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { useCommandPalette, useCommandPaletteActions } from '@/contexts/CommandPaletteContext';
+import { useCommandPaletteActions, useCommandPaletteState } from '@/contexts/CommandPaletteContext';
 import {
   useChannelControl,
   useChannelId,
@@ -188,7 +188,7 @@ export const MessageList: React.ForwardRefExoticComponent<
   const { stopTask: onStopTask, diffRespond: onDiffRespond } = useChannelControl();
   const { enabledTypes, registerUnknownType, unknownTypes } = useMessageVisibility();
   const { registerJumpTo, unregisterJumpTo, openPalette } = useCommandPaletteActions();
-  const { open: paletteOpen } = useCommandPalette();
+  const { open: paletteOpen } = useCommandPaletteState();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isAtBottomRef = useRef(true);

@@ -601,7 +601,7 @@ export function PanePicker({
                       setSel3(0);
                       setCol(0);
                     }}
-                    className={`flex items-center gap-2 px-2 py-1 text-sm text-left rounded-(--radius-row) ${
+                    className={`flex items-center gap-2 px-2 py-1 min-h-7 text-sm text-left rounded-(--radius-row) ${
                       p.cwd === projectCwd
                         ? 'bg-selected text-selected-text'
                         : 'hover:bg-hover-tint'
@@ -659,7 +659,7 @@ export function PanePicker({
                           setSel3(0);
                           setCol(1);
                         }}
-                        className={`flex items-center gap-2 px-2 py-1 text-left rounded-(--radius-row) ${
+                        className={`flex items-center gap-2 px-2 py-1 min-h-7 text-left rounded-(--radius-row) ${
                           w.path === worktreePath
                             ? 'bg-selected text-selected-text'
                             : 'hover:bg-hover-tint'

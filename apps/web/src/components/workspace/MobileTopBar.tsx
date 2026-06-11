@@ -80,7 +80,7 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
               data-pane-id={id}
               data-active={isActive || undefined}
               onClick={() => focusPane(id)}
-              className={`text-sm font-mono leading-none ${
+              className={`text-[length:var(--text-pane-dot)] font-mono leading-none ${
                 isActive ? 'text-accent' : 'text-subtle'
               }`}
             >

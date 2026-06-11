@@ -1,6 +1,6 @@
 /**
  * Gap-M: Mobile 強制單 pane — focused leaf solo rendering。
- * （Gap-C SessionBar overflow 在 SessionBarOverflow.test.tsx。）
+ *
  *
  * 全真寫法（fake-summoner-client skill）：最小真 provider stack（Socket→AppConfig→
  * Project→Git→Tab→KeyboardShortcuts）＋真 PaneLeafBody（空 session leaf 渲染輕量

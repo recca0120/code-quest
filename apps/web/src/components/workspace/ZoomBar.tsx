@@ -48,7 +48,7 @@ export function ZoomBar(): React.JSX.Element | null {
   return (
     <div
       data-testid="zoom-bar"
-      className="flex items-center gap-2 px-3 py-1 bg-accent/10 border-b border-accent/25 text-xs text-accent shrink-0"
+      className="flex items-center gap-2 px-3 py-1 bg-(--color-accent-soft) border-b border-accent/25 text-xs text-accent shrink-0"
     >
       <span>
         ⤢ Zoom 中 — pane {badge}

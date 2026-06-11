@@ -136,9 +136,11 @@
   --text-ui: calc(12px * var(--font-scale));
   --text-code: calc(11.5px * var(--font-scale));
   --text-statusline: calc(10.5px * var(--font-scale));
+  --text-label: calc(11px * var(--font-scale));
+  --text-pane-dot: 22px;
   /* 例外：--text-input-sm 16px 固定，防 iOS 聚焦縮放 */
 
-  /* density：預設 comfortable 檔 */
+  /* density：預設 default 檔 */
   --density-row-pad-y: 5px;
   --msg-gap: 16px;
   /* compact/relaxed 同時覆寫 --pane-header-h / --tabbar-h / --tab-h / --statusline-h（見下方） */
@@ -399,17 +401,6 @@
 :root[data-fontsize="xl"] {
   --font-scale: 1.15;
 }
-/* 舊軸向後相容（rem cascade，與 --font-scale 獨立——共存不衝突） */
-:root[data-font="sm"] {
-  font-size: 14px;
-}
-:root[data-font="md"] {
-  font-size: 16px;
-}
-:root[data-font="lg"] {
-  font-size: 18px;
-}
-
 /* Density axis — 兩層：--spacing 縮放 + 元件 token 覆寫（App.proposal.css §5） */
 :root[data-density="compact"] {
   --spacing: 0.21875rem;

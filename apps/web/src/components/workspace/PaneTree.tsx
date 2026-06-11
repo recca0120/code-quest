@@ -50,7 +50,7 @@ function DropZones({ paneId, onHide }: { paneId: string; onHide: () => void }): 
             }
           }}
           style={{ position: 'absolute', ...zone.style }}
-          className="flex items-center justify-center rounded-(--radius-card) border-2 border-dashed border-accent/55 bg-accent/10 text-2xs font-semibold text-accent data-[hot]:border-solid data-[hot]:bg-accent/25"
+          className="flex items-center justify-center rounded-(--radius-card) border-2 border-dashed border-accent/55 bg-(--color-accent-soft) text-2xs font-semibold text-accent data-[hot]:border-solid data-[hot]:bg-accent/25"
         >
           {zone.label}
         </div>

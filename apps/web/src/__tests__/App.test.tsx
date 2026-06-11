@@ -28,7 +28,7 @@ describe('App', () => {
     });
     render(<App />);
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
-    expect(document.documentElement.dataset.font).toBe('l');
+    expect(document.documentElement.dataset.fontsize).toBe('l');
     expect(document.documentElement.dataset.density).toBe('compact');
   });
 

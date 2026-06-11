@@ -30,34 +30,34 @@
 
 ## 4. WARNING — 元件樣式對齊
 
-- [ ] 4.1 [test] Rail tab 字級為 11px（非 10px）
-- [ ] 4.2 [impl] RightPane.tsx + PaneDock.tsx：tab/chip label 字級 → 11px token
-- [ ] 4.3 [test] Rail hint 列含「⤢ 點項目開 drawer」＋「⌘⏎ 升級成 pane」
-- [ ] 4.4 [impl] RightPane.tsx hint 文字補完；PaneDock.tsx hint 文字補完
-- [ ] 4.5 [test] ZoomBar 背景用 `--color-accent-soft` token；DropZones 同
-- [ ] 4.6 [impl] ZoomBar.tsx + PaneTree.tsx DropZones：`bg-accent/10` → `bg-(--color-accent-soft)`
-- [ ] 4.7 [test] MobileTopBar pane dots 字號 22px
-- [ ] 4.8 [impl] MobileTopBar.tsx pane dots `text-sm` → 22px
-- [ ] 4.9 [test] PanePicker Miller 列 minHeight ≥ 28px（compact density 下）
-- [ ] 4.10 [impl] PanePicker.tsx 欄1/欄2 列加 minHeight 保護
+- [x] 4.1 [test] Rail tab 字級為 11px（非 10px）
+- [x] 4.2 [impl] RightPane.tsx + PaneDock.tsx：tab/chip label 字級 → 11px token
+- [x] 4.3 [test] Rail hint 列含「⤢ 點項目開 drawer」＋「⌘⏎ 升級成 pane」
+- [x] 4.4 [impl] RightPane.tsx hint 文字補完；PaneDock.tsx hint 文字補完
+- [x] 4.5 [test] ZoomBar 背景用 `--color-accent-soft` token；DropZones 同
+- [x] 4.6 [impl] ZoomBar.tsx + PaneTree.tsx DropZones：`bg-accent/10` → `bg-(--color-accent-soft)`
+- [x] 4.7 [test] MobileTopBar pane dots 字號 22px
+- [x] 4.8 [impl] MobileTopBar.tsx pane dots `text-sm` → 22px
+- [x] 4.9 [test] PanePicker Miller 列 minHeight ≥ 28px（compact density 下）
+- [x] 4.10 [impl] PanePicker.tsx 欄1/欄2 列加 minHeight 保護
 
 ## 5. WARNING — Drawer 樣式
 
-- [ ] 5.1 [test] Drawer ⊞ 釘選按鈕為 primary 樣式（bg-accent text-on-accent）
-- [ ] 5.2 [impl] DrawerHost.tsx ⊞ 按鈕改 primary 樣式
-- [ ] 5.3 [impl] DrawerHost.tsx 移除 diffstat TODO 註解（功能 out of scope，不留空 TODO）
+- [x] 5.1 [test] Drawer ⊞ 釘選按鈕為 primary 樣式（bg-accent text-on-accent）
+- [x] 5.2 [impl] DrawerHost.tsx ⊞ 按鈕改 primary 樣式
+- [x] 5.3 [impl] DrawerHost.tsx 移除 diffstat TODO 註解（功能 out of scope，不留空 TODO）
 
 ## 6. Dead Code 清理
 
-- [ ] 6.1 [impl] App.tsx 移除 `ds.font = fontSize`；App.css 移除 `[data-font="sm|md|lg"]` 區段
-- [ ] 6.2 [impl] App.css comment L141 `comfortable` → `default`；L129 `dark` → `clay-dark`
-- [ ] 6.3 [impl] Workspace.tsx 移除 `registerActions` 呼叫；CommandPaletteContext 移除 `registerActions`/`paletteActions`
-- [ ] 6.4 [impl] CommandPaletteContext 移除 `useCommandPalette()` 合體 hook；MessageList.tsx 改用 `useCommandPaletteState()`
-- [ ] 6.5 [impl] Workspace.test.tsx 重命名 3 個含 "SessionBar" 的 test
-- [ ] 6.6 [impl] useAvailableWorktrees.ts JSDoc 移除 SessionBar 引用；MobileGapFixes.test.tsx 移除死注解
-- [ ] 6.7 [impl] useCommandFeatures.ts search-messages TODO 註解移除（execute 已由 CommandModeView 特殊處理）
+- [x] 6.1 [impl] App.tsx 移除 `ds.font = fontSize`；App.css 移除 `[data-font="sm|md|lg"]` 區段
+- [x] 6.2 [impl] App.css comment L141 `comfortable` → `default`；L129 `dark` → `clay-dark`
+- [x] 6.3 [impl] Workspace.tsx 移除 `registerActions` 呼叫；CommandPaletteContext 移除 `registerActions`/`paletteActions`
+- [x] 6.4 [impl] CommandPaletteContext 移除 `useCommandPalette()` 合體 hook；MessageList.tsx 改用 `useCommandPaletteState()`
+- [x] 6.5 [impl] Workspace.test.tsx 重命名 3 個含 "SessionBar" 的 test
+- [x] 6.6 [impl] useAvailableWorktrees.ts JSDoc 移除 SessionBar 引用；MobileGapFixes.test.tsx 移除死注解
+- [x] 6.7 [impl] useCommandFeatures.ts search-messages TODO 註解移除（execute 已由 CommandModeView 特殊處理）
 
 ## 7. 收尾
 
-- [ ] 7.1 [verify] tsc clean + 全套 vitest green
-- [ ] 7.2 [verify] 瀏覽器手動驗證：theme 切換（clay-dark↔light↔roast）、density 切換、mobile/tablet 模擬
+- [x] 7.1 [verify] tsc clean + 全套 vitest green
+- [x] 7.2 [verify] 瀏覽器手動驗證：theme 切換（clay-dark↔light↔roast）、density 切換、mobile/tablet 模擬

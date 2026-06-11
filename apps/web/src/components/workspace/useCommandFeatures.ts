@@ -22,14 +22,11 @@ export function useCommandFeatures(): Feature[] {
       createColorThemeFeature({ colorTheme, setColorTheme }),
       createFontSizeFeature({ fontSize, setFontSize }),
       createDensityFeature({ density, setDensity }),
-      // search 指令（placeholder——完整訊息搜尋在 3.3/3.4 實作）
       {
         id: 'search-messages',
         label: '搜尋對話訊息',
         section: 'Context',
-        execute: () => {
-          // TODO: 3.3/3.4 接入 CommandPalette Messages tab
-        },
+        execute: () => {},
       },
     ],
     [colorTheme, setColorTheme, fontSize, setFontSize, density, setDensity],

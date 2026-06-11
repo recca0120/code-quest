@@ -167,13 +167,12 @@ export function DrawerHost(): React.JSX.Element | null {
           <span className="font-mono text-xs font-semibold truncate">
             {drawerTitle(drawer.content)}
           </span>
-          {/* diffstat（handoff §5）：資料管線尚未提供 diff 統計——有資料後補在標題右側 */}
           <span className="ml-auto flex items-center gap-2">
             {!isMobile && (
               <button
                 type="button"
                 onClick={handlePin}
-                className="px-2 py-1 text-xs rounded-(--radius-row) bg-accent-soft border border-accent/45 text-accent"
+                className="px-2 py-1 text-xs rounded-(--radius-row) bg-accent text-selected-text border border-accent"
               >
                 ⊞ 釘選成 pane
               </button>

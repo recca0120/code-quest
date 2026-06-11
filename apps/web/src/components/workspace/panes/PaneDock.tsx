@@ -44,7 +44,7 @@ export function PaneDock({
           data-testid={`pane-dock-chip-${key}`}
           onClick={() => onOpen(key)}
           className={cn(
-            'flex items-center gap-1 px-2.5 text-2xs rounded-full border h-(--dock-chip-h)',
+            'flex items-center gap-1 px-2.5 text-[length:var(--text-label)] rounded-full border h-(--dock-chip-h)',
             key === activeTab
               ? 'bg-accent-soft border-accent text-bright'
               : 'border-border hover:bg-hover-tint',
@@ -60,7 +60,7 @@ export function PaneDock({
         </button>
       ))}
       <span className="ml-auto font-mono text-2xs text-dim whitespace-nowrap">
-        <span className="max-md:hidden">點 chip 展開側欄</span>
+        <span className="max-md:hidden">點 chip 開 drawer・⌘⏎ 升級成 pane</span>
         <span className="md:hidden">左右滑切 pane</span>
       </span>
     </div>

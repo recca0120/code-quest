@@ -31,7 +31,7 @@ describe('Workspace — with project', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('workspace chrome is rendered (tab bar + statusline; SessionBar removed by tmux-workspace-ui P1)', async () => {
+  it('workspace chrome is rendered (tab bar + statusline)', async () => {
     await setup();
     expect(screen.getByTestId('workspace-tab-bar')).toBeInTheDocument();
     expect(screen.getByTestId('workspace-statusline')).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('Workspace — with project', () => {
     expect(screen.queryByTestId('global-bar')).not.toBeInTheDocument();
   });
 
-  it('SessionBar shows multiple sessions, each auto-assigned to a pane (split)', async () => {
+  it('multiple sessions auto-assigned to panes (split)', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
@@ -78,7 +78,7 @@ describe('Workspace — multi-project', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('sessions from two projects appear in the same SessionBar (cross-project)', async () => {
+  it('sessions from two projects appear in the same workspace (cross-project)', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
@@ -92,7 +92,7 @@ describe('Workspace — multi-project', () => {
     expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(2);
   });
 
-  it('two projects both appear in single SessionBar with all sessions', async () => {
+  it('two projects both appear in workspace with all sessions', async () => {
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();

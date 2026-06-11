@@ -11,7 +11,7 @@ export interface WorktreeOption {
 
 /**
  * Flattens projects × git worktree listing into the option list consumed by
- * WorktreeSwitcher / SessionBar / pane restore hints. Single assembly point —
+ * WorktreeSwitcher / pane restore hints. Single assembly point —
  * replaced by the worktree-centric D3 cwd→identity lookup map when that lands.
  */
 export function useAvailableWorktrees(): WorktreeOption[] {
