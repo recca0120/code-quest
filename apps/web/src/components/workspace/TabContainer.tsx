@@ -11,6 +11,7 @@ import {
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
 import { CondensedPaneStrip } from './CondensedPaneStrip.tsx';
+import { MobileDockBar } from './MobileDockBar.tsx';
 import { MobilePaneWall } from './MobilePaneWall.tsx';
 import { MobileTopBar } from './MobileTopBar.tsx';
 import { PaneTree } from './PaneTree.tsx';
@@ -147,6 +148,7 @@ export const TabContainer: React.FC<TabContainerProps> = memo(function TabContai
           <PaneTree />
           <CondensedPaneStrip />
         </div>
+        <MobileDockBar />
         <MobilePaneWall open={wallOpen} onOpenChange={setWallOpen} />
       </PaneEnvironmentProvider>
       <WorkspaceStatusline />

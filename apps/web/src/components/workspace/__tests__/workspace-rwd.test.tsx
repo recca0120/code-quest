@@ -221,6 +221,37 @@ describe('斷點只改渲染數，不銷毀 pane tree（spec 核心原則）', (
   });
 });
 
+describe('MobileDockBar（mobile-dock-bar）', () => {
+  it('mobile mode → MobileDockBar 渲染；desktop → 不渲染', async () => {
+    const mm = setupMatchMedia(1440, widthMatcher);
+    const view = await renderWithWorkspace();
+    const project = await view.addProject();
+    await project.launchSession();
+
+    expect(screen.queryByTestId('mobile-dock-bar')).not.toBeInTheDocument();
+
+    await act(async () => mm.triggerChange(375));
+    expect(screen.getByTestId('mobile-dock-bar')).toBeInTheDocument();
+
+    await act(async () => mm.triggerChange(1440));
+    expect(screen.queryByTestId('mobile-dock-bar')).not.toBeInTheDocument();
+  });
+
+  it('顯示 pane type chips（files/git/spec，不含 chat）+ hint 文字', async () => {
+    setupMatchMedia(375, widthMatcher);
+    const view = await renderWithWorkspace();
+    const project = await view.addProject();
+    await project.launchSession();
+
+    const bar = screen.getByTestId('mobile-dock-bar');
+    expect(within(bar).getByText('files')).toBeInTheDocument();
+    expect(within(bar).getByText('git')).toBeInTheDocument();
+    expect(within(bar).getByText('spec')).toBeInTheDocument();
+    expect(within(bar).queryByText('chat')).not.toBeInTheDocument();
+    expect(within(bar).getByText(/左右滑切 pane/)).toBeInTheDocument();
+  });
+});
+
 describe('MobileTopBar（mobile-rwd-polish B2）', () => {
   it('mobile mode → MobileTopBar 渲染；desktop → 不渲染', async () => {
     const mm = setupMatchMedia(1440, widthMatcher);
