@@ -62,7 +62,9 @@ export function WorkspaceTabBar({ onOpenSettings }: WorkspaceTabBarProps = {}): 
         <span className="flex items-center justify-center size-4.5 rounded-(--radius-chip) bg-accent text-selected-text text-2xs font-bold">
           ⚔
         </span>
-        <span className="text-xs font-bold text-bright hidden md:inline">Code Quest</span>
+        <span className="text-[length:var(--text-body)] font-bold text-bright hidden md:inline">
+          Code Quest
+        </span>
       </span>
       {workspaceTabs.map((tab, index) => {
         const sessionIds = collectSessionsInPaneTree(tab.paneRoot);
@@ -87,7 +89,7 @@ export function WorkspaceTabBar({ onOpenSettings }: WorkspaceTabBarProps = {}): 
             }}
             // gap-2(8px) 近似 design 的 7px（無 scale；compact density 下恰為 7px）；
             // active 的 after = 2px bg-bg 蓋線，接縫蓋掉 bar 底線（design .tx-tab.active::after）
-            className={`flex items-center gap-2 px-3 text-xs whitespace-nowrap rounded-t-lg h-(--tab-h) self-end border border-b-0 cursor-pointer ${
+            className={`flex items-center gap-2 px-3 text-[length:var(--text-ui)] whitespace-nowrap rounded-t-lg h-(--tab-h) self-end border border-b-0 cursor-pointer ${
               isActive
                 ? 'bg-bg border-border text-bright relative after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-bg'
                 : 'border-transparent text-muted hover:bg-surface-hover'
