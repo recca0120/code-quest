@@ -117,7 +117,7 @@ export function MobilePaneWall({
                       setOpen(false);
                     }
                   }}
-                  className={`flex flex-col items-start gap-2 h-(--wall-card-h) p-3 rounded-(--radius-mobile-card) border bg-surface text-left text-sm cursor-pointer ${
+                  className={`flex flex-col items-start gap-2 h-(--wall-card-h) p-3 rounded-(--radius-mobile-card) border bg-surface text-left text-[length:var(--text-body)] cursor-pointer ${
                     isActive
                       ? 'border-(--color-pane-focus) ring-1 ring-(--color-pane-focus-ring)'
                       : 'border-border hover:border-accent'
@@ -131,7 +131,7 @@ export function MobilePaneWall({
                       <span
                         aria-hidden="true"
                         data-testid={`pane-wall-busy-${id}`}
-                        className="size-1.5 rounded-full bg-accent animate-pulse"
+                        className="size-1.5 rounded-full bg-accent animate-busy-pulse"
                       />
                     )}
                     {leaves.length > 1 && (

@@ -46,7 +46,7 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
         {tabDropdownOpen && (
           <div
             data-testid="mobile-topbar-tab-list"
-            className="absolute top-full left-0 mt-1 z-popover bg-surface border border-border rounded shadow-floating py-1 min-w-32"
+            className="absolute top-full left-0 mt-1 z-popover bg-surface border border-border rounded-(--radius-chip) shadow-floating py-1 min-w-32"
           >
             {workspaceTabs.map((wt, idx) => (
               <button
@@ -96,7 +96,7 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
         data-testid="mobile-topbar-wall-toggle"
         aria-label="open pane switcher"
         onClick={onOpenWall}
-        className="flex items-center justify-center size-(--mobile-wall-toggle) rounded-(--radius-mobile-toggle) bg-bg border border-border text-sm text-muted hover:text-text"
+        className="flex items-center justify-center size-(--mobile-wall-toggle) rounded-(--radius-mobile-toggle) bg-bg border border-border text-[length:var(--text-body)] text-muted hover:text-text"
       >
         ⊞
       </button>

@@ -53,7 +53,7 @@ export function SlideOverPane({
         width: 'var(--slideover-w)',
         transform: dragOffset > 0 ? `translateX(${dragOffset}px)` : undefined,
       }}
-      className="absolute right-2.5 top-2.5 bottom-2.5 z-25 flex flex-col bg-bg border border-border rounded-(--radius-mobile-card) shadow-floating animate-slide-over-in"
+      className="absolute right-2.5 top-2.5 bottom-2.5 z-float flex flex-col bg-bg border border-border rounded-(--radius-mobile-card) shadow-floating animate-slide-over-in"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

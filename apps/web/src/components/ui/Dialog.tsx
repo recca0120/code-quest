@@ -73,7 +73,7 @@ export function DialogContent({
             hideTitle
               ? 'sr-only'
               : cn(
-                  'text-sm font-semibold text-text mb-3',
+                  'text-[length:var(--text-body)] font-semibold text-text mb-3',
                   hideTitleDivider ? '' : 'pb-2 border-b border-border',
                 )
           }

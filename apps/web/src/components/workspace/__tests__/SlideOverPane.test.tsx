@@ -15,7 +15,7 @@ describe('SlideOverPane 容器（2.1）', () => {
 
     const cls = container.className;
     expect(cls).toMatch(/absolute/);
-    expect(cls).toMatch(/z-25/);
+    expect(cls).toMatch(/z-float/);
     expect(cls).toMatch(/rounded/);
     // 58% width via inline style
     expect(container.style.width).toBe('var(--slideover-w)');
