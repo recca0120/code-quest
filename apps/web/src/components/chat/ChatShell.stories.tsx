@@ -20,10 +20,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const WithTitle: Story = {
-  args: { title: 'Fix the login bug' },
-};
-
 export const HeavyToolUse: Story = {
   decorators: [
     withStoryChannel({
@@ -31,7 +27,6 @@ export const HeavyToolUse: Story = {
       messages: makeHeavyToolUseConversation(),
     }),
   ],
-  args: { title: 'Migrate old API' },
 };
 
 export const WithSkillInvocation: Story = {
@@ -41,7 +36,6 @@ export const WithSkillInvocation: Story = {
       messages: makeSkillInvocationConversation(),
     }),
   ],
-  args: { title: 'Validate Zod schema' },
 };
 
 export const SubagentRunning: Story = {
@@ -51,7 +45,6 @@ export const SubagentRunning: Story = {
       messages: makeSubagentRunning(),
     }),
   ],
-  args: { title: 'Analyse protocol.md' },
 };
 
 export const SubagentDone: Story = {
@@ -61,5 +54,4 @@ export const SubagentDone: Story = {
       messages: makeSubagentDone(),
     }),
   ],
-  args: { title: 'Analyse protocol.md' },
 };

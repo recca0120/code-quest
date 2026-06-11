@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useProjectState } from '@/contexts/ProjectContext';
 import {
   collectSessionsInPaneTree,
   type PaneNode,
@@ -8,7 +7,6 @@ import {
   useWorkspaceTabState,
 } from '@/contexts/TabContext';
 import { TabContent } from '../TabContent.tsx';
-import { useWorktreeLookup } from '../useAvailableWorktrees.ts';
 import { useVisiblePaneIds } from '../useVisiblePanes.ts';
 import { usePaneEnvironment } from './PaneEnvironmentContext.tsx';
 
@@ -45,12 +43,6 @@ export function SessionPool(): React.JSX.Element {
   const { paneRoot } = usePaneState();
   const { visible } = useVisiblePaneIds();
   const env = usePaneEnvironment();
-  const { projects, activeProjectCwd } = useProjectState();
-  const lookup = useWorktreeLookup();
-  const projectNameOf = (meta: { projectCwd?: string; cwd?: string }): string => {
-    const projectCwd = meta.projectCwd ?? (meta.cwd ? lookup.get(meta.cwd)?.projectCwd : undefined);
-    return projects.find((p) => p.cwd === (projectCwd ?? activeProjectCwd))?.name ?? '';
-  };
 
   // Single source of truth: both sets derive from workspaceTabs (the active
   // tab's paneRoot is workspaceTabs[active].paneRoot — no usePaneState needed)
@@ -81,8 +73,6 @@ export function SessionPool(): React.JSX.Element {
               channelId={id}
               cwd={meta.cwd}
               branch={meta.branch}
-              title={meta.title}
-              projectName={projectNameOf(meta)}
               mode={meta.mode}
               onNewChannel={NOOP}
             />
@@ -100,8 +90,6 @@ export function SessionPool(): React.JSX.Element {
               channelId={id}
               cwd={meta.cwd}
               branch={meta.branch}
-              title={meta.title}
-              projectName={projectNameOf(meta)}
               mode={meta.mode}
               onNewChannel={NOOP}
             />
@@ -118,10 +106,7 @@ export function SessionPool(): React.JSX.Element {
               channelId={id}
               cwd={meta.cwd}
               branch={meta.branch}
-              title={meta.title}
-              projectName={projectNameOf(meta)}
               mode={meta.mode}
-              onToggleLeft={env.onToggleLeft}
               onNewChannel={(newCwd) => env.onNewTab({ cwd: newCwd })}
             />
           ))}

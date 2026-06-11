@@ -19,25 +19,21 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ThinkingBlock: Story = {
-  args: { title: 'Caching strategy' },
   decorators: [withScenario(makeThinkingBlock())],
   play: expectTextbox,
 };
 
 export const MultiToolChain: Story = {
-  args: { title: 'TODO report' },
   decorators: [withScenario(makeMultiToolChainAdvanced())],
   play: expectTextbox,
 };
 
 export const StreamlinedOutput: Story = {
-  args: { title: 'ESLint setup' },
   decorators: [withScenario(makeStreamlinedOutput())],
   play: expectTextbox,
 };
 
 export const TaskStarted: Story = {
-  args: { title: 'Auth refactor' },
   decorators: [withScenario(makeTaskStarted())],
   play: expectTextbox,
 };

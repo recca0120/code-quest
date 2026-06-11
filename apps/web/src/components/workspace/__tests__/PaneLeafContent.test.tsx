@@ -1,11 +1,22 @@
 /**
  * TG.4: PaneLeafContent rightOpen state — ChatBreadcrumb toggle shows/hides RightPane
  */
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
 
-describe('PaneLeafContent (TG.4) rail toggle via ChatBreadcrumb（P3：預設展開）', () => {
+describe('PaneLeafContent (TG.4) rail toggle（單一 pane header；chat-pane-header-unification）', () => {
+  it('☰/⊞ 按鈕在 pane header 內（breadcrumb 已移除——單一 header）', async () => {
+    const { addProject } = await renderWithWorkspace();
+    const { launchSession } = await addProject();
+    await launchSession();
+
+    const header = screen.getAllByTestId('pane-header')[0]!;
+    expect(within(header).getByRole('button', { name: /toggle right pane/i })).toBeInTheDocument();
+    // breadcrumb 整條移除
+    expect(screen.queryByLabelText('chat-breadcrumb')).not.toBeInTheDocument();
+  });
+
   it('rail 預設展開（handoff：新 chat 預設展開側欄）', async () => {
     const { addProject } = await renderWithWorkspace();
     const { launchSession } = await addProject();

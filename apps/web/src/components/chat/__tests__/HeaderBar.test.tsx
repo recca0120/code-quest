@@ -1,10 +1,8 @@
 import { segments as s } from '@code-quest/test-kit';
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { HeaderBar } from '../HeaderBar.tsx';
-import { ResumeButton } from '../ResumeButton.tsx';
 
 const INIT = {
   initSegment: s.init('sess-1', { model: 'claude-sonnet-4-6' }),
@@ -51,19 +49,5 @@ describe('HeaderBar (context mode)', () => {
       INIT,
     );
     expect(screen.getByText('Custom Action')).toBeInTheDocument();
-  });
-});
-
-describe('ResumeButton', () => {
-  it('shows clock/history button', async () => {
-    await renderWithChannel(<ResumeButton onResumed={vi.fn()} />, INIT);
-    expect(screen.getByTitle('Session history')).toBeInTheDocument();
-  });
-
-  it('clicking opens session history popover', async () => {
-    const user = userEvent.setup();
-    await renderWithChannel(<ResumeButton onResumed={vi.fn()} />, INIT);
-    await user.click(screen.getByTitle('Session history'));
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 });

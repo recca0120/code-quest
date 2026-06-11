@@ -1,8 +1,12 @@
-import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import {
+  Bars3Icon,
+  ChatBubbleLeftRightIcon,
+  RectangleGroupIcon,
+} from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { IconButton } from '@/components/ui/IconButton';
 import { useDrawerActionsOptional } from '@/contexts/DrawerContext';
-import { useProjectState } from '@/contexts/ProjectContext';
 import {
   type PaneContent,
   type RailState,
@@ -41,7 +45,6 @@ export function SessionPane({
   const { tabs } = useTabState();
   const env = usePaneEnvironment();
   const lookup = useWorktreeLookup();
-  const { projects, activeProjectCwd } = useProjectState();
   const { setContentInPane, splitPaneAndSetContent } = usePaneActions();
   const openDrawer = useDrawerActionsOptional()?.openDrawer;
 
@@ -93,28 +96,43 @@ export function SessionPane({
     );
   }
 
-  // Per-session identity: meta.projectCwd（建立時寫入）→ cwd 反查 lookup → activeProject fallback
-  const sessionProjectCwd =
-    meta.projectCwd ?? (meta.cwd ? lookup.get(meta.cwd)?.projectCwd : undefined);
-  const projectName =
-    projects.find((p) => p.cwd === (sessionProjectCwd ?? activeProjectCwd))?.name ?? '';
-
   return (
     <PaneShell
       toolbarProps={{ ...toolbarProps, branch: meta.branch, title: meta.title }}
       scrollable={false}
+      tools={
+        // 單一 pane header（chat-pane-header-unification）：breadcrumb 的按鈕上移
+        <>
+          {env.onToggleLeft && (
+            <IconButton
+              variant="plain"
+              aria-label="Toggle left sidebar"
+              onClick={env.onToggleLeft}
+              className="w-6 h-6 text-muted hover:text-text hover:bg-hover-tint"
+            >
+              <Bars3Icon className="w-3.5 h-3.5" />
+            </IconButton>
+          )}
+          {meta.cwd && (
+            <IconButton
+              variant="plain"
+              aria-label="Toggle right pane"
+              onClick={() => setRail({ ...rail, open: !rail.open })}
+              className="w-6 h-6 text-muted hover:text-text hover:bg-hover-tint"
+            >
+              <RectangleGroupIcon className="w-3.5 h-3.5" />
+            </IconButton>
+          )}
+        </>
+      }
     >
-      <div ref={bodyRef} className="flex flex-col h-full min-h-0">
-        <div className="flex-1 min-h-0">
+      <div ref={bodyRef} className="flex flex-col flex-1 min-h-0">
+        <div className="flex-1 min-h-0 flex flex-col">
           <TabContent
             channelId={content.sessionId}
             cwd={meta.cwd}
             branch={meta.branch}
-            title={meta.title}
-            projectName={projectName}
             mode={meta.mode}
-            onToggleLeft={env.onToggleLeft}
-            onToggleRight={meta.cwd ? () => setRail({ ...rail, open: !rail.open }) : undefined}
             onNewChannel={(newCwd) => env.onNewTab({ cwd: newCwd })}
             rightPane={
               rail.open && meta.cwd ? (

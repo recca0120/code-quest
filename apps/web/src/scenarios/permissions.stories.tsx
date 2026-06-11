@@ -29,19 +29,16 @@ function withPendingChannel(createFlow: () => { messages: Message[]; pending: Pe
 }
 
 export const ToolApproval: Story = {
-  args: { title: 'Clean build artifacts' },
   decorators: [withPendingChannel(makeToolApprovalFlow)],
   play: expectTextbox,
 };
 
 export const ToolDenial: Story = {
-  args: { title: 'Delete log files' },
   decorators: [withPendingChannel(makeToolDenialFlow)],
   play: expectTextbox,
 };
 
 export const PlanReview: Story = {
-  args: { title: 'Refactor auth module' },
   decorators: [withPendingChannel(makePlanReviewFlow)],
   play: expectTextbox,
 };

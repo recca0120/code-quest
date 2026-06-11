@@ -116,7 +116,7 @@ describe('identity 從 UI 端到端寫入（renderWithWorkspace 全真管線）'
     expect(
       within(screen.getByTestId('workspace-statusline')).getByText(/feat\/x/),
     ).toBeInTheDocument();
-    const breadcrumb = await screen.findByLabelText('chat-breadcrumb');
-    expect(within(breadcrumb).getByText('app')).toBeInTheDocument();
+    // project 名顯示已遷移 statusline（breadcrumb 移除）
+    expect(within(screen.getByTestId('workspace-statusline')).getByText('app')).toBeInTheDocument();
   });
 });

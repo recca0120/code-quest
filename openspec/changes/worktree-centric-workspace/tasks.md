@@ -9,7 +9,7 @@ P2 UI 增強與 P3 收斂列於 §5-§6 留後。共用 TabMeta 型別——單�
 - [x] 1.2 [impl] TabMeta 加 `projectCwd?`；createNewTab opts 擴充；pendingSession 管線（Workspace→TabContainer→handleCreateTab）與 SessionBar dropdown 傳入 projectCwd/branch
 - [x] 1.3 [test] `useWorktreeLookup()` — projects × listing 推導 Map<cwd, identity>；listing 變更時更新
 - [x] 1.4 [impl] useAvailableWorktrees.ts 加 `useWorktreeLookup`（同源衍生）
-- [x] 1.5 [test] SessionPane breadcrumb — 跨 project session 顯示自己的 project 名（非 activeProject）
+- [x] 1.5 [test] SessionPane breadcrumb — 跨 project session 顯示自己的 project 名（~~已隨 chat-pane-header-unification 移除：breadcrumb 不存在，project 顯示由 statusline 承接~~）
 - [x] 1.6 [impl] SessionPane/SessionPool 的 projectName 改 per-session 推導（meta.projectCwd ?? lookup(meta.cwd)，activeProject 僅 fallback）
 - [x] 1.7 [test] SessionBar ⎇ badge — 優先 lookup(cwd).branch（checkout 改名即時反映），meta.branch fallback
 - [x] 1.8 [impl] SessionBar/SessionManager 顯示層接 lookup

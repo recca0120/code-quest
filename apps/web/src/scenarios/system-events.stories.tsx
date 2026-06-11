@@ -20,31 +20,26 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ErrorRecovery: Story = {
-  args: { title: 'Database migration' },
   decorators: [withScenario(makeErrorRecovery())],
   play: expectTextbox,
 };
 
 export const RateLimit: Story = {
-  args: { title: 'Test migration' },
   decorators: [withScenario(makeRateLimitEvent())],
   play: expectTextbox,
 };
 
 export const CompactBoundary: Story = {
-  args: { title: 'Debug auth flow' },
   decorators: [withScenario(makeCompactBoundary())],
   play: expectTextbox,
 };
 
 export const Interrupt: Story = {
-  args: { title: 'Test analysis' },
   decorators: [withScenario(makeInterrupt())],
   play: expectTextbox,
 };
 
 export const HookExecution: Story = {
-  args: { title: 'Git commit' },
   decorators: [withScenario(makeHookExecution())],
   play: expectTextbox,
 };

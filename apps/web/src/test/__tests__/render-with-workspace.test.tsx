@@ -55,8 +55,8 @@ describe('renderWithWorkspace', () => {
     // CLI responds
     await emitAssistantTurn(claude, 'ok');
 
-    // Session title shows in breadcrumb bar after first user message.
-    const breadcrumb = await screen.findByLabelText('chat-breadcrumb');
+    // Session title shows in the pane header after first user message.
+    const breadcrumb = screen.getAllByTestId('pane-header')[0]!;
     const { within } = await import('@testing-library/react');
     expect(within(breadcrumb).getByText('fix the login page')).toBeInTheDocument();
 

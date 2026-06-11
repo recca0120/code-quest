@@ -27,7 +27,6 @@ export const EmptySession: Story = {
 };
 
 export const SimpleQA: Story = {
-  args: { title: 'Project overview' },
   decorators: [withScenario(makeSimpleQA())],
   play: expectTextbox,
 };

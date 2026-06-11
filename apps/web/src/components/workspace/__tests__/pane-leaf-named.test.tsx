@@ -41,7 +41,6 @@ vi.mock('../../chat/ChatView.tsx', () => ({
 const PROJECT_APP = '/projects/app';
 const PROJECT_OTHER = '/projects/other';
 const FEAT_CWD = '/projects/app/feat';
-const OTHER_MAIN_CWD = '/projects/other/main';
 
 let probeActions: ReturnType<typeof usePaneActions> | null = null;
 let probeState: ReturnType<typeof usePaneState> | null = null;
@@ -234,19 +233,7 @@ describe('SessionPane — self-heal (3.5)', () => {
   });
 });
 
-describe('SessionPane — per-session project name（worktree-centric 1.5）', () => {
-  it('cross-project session shows ITS project name, not the active project', async () => {
-    const { claude } = await setup(); // setup 已把 active project 設為 app
-    await act(async () => {
-      claude.pushServerEvent('session:states', {
-        sessions: [
-          { channelId: 'ch-b', state: 'idle', cwd: OTHER_MAIN_CWD, projectRoot: PROJECT_OTHER },
-        ],
-      });
-    });
-    setSession('ch-b', OTHER_MAIN_CWD);
-
-    // activeProject 是 app，但這個 session 屬於 other
-    expect(screen.getByTestId('chat-view').textContent).toBe('other');
-  });
-});
+// worktree-centric 1.5（per-session project name in breadcrumb）：行為已隨
+// chat-pane-header-unification 移除——breadcrumb 不存在，project 顯示由
+// statusline（focused pane）承接；跨 project pane 的歸屬可視性 trade-off
+// 記錄於該 change proposal。

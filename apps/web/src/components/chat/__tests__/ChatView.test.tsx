@@ -11,16 +11,6 @@ afterEach(() => {
   btwSignal.setState({ open: false, question: '', answer: null, loading: false, error: null });
 });
 
-describe('ChatView header bar', () => {
-  it('ResumeButton (clock icon) renders inside the chat-breadcrumb header bar, not below it', async () => {
-    const { container } = await renderWithChannel(<ChatView />);
-    const breadcrumb = container.querySelector('header[aria-label="chat-breadcrumb"]');
-    expect(breadcrumb).toBeTruthy();
-    const clockBtn = within(breadcrumb as HTMLElement).getByTitle('Session history');
-    expect(clockBtn).toBeInTheDocument();
-  });
-});
-
 describe('ChatSession overlay placement', () => {
   it('SideQuestionDialog is not inside the message list area', async () => {
     const { container } = await renderWithChannel(<ChatView />);
@@ -36,15 +26,6 @@ describe('ChatSession overlay placement', () => {
     const dialog = await screen.findByRole('dialog');
     const messageSection = container.querySelector('section[aria-label="message-content-wrapper"]');
     expect(messageSection).toBeTruthy();
-    expect(messageSection!.contains(dialog)).toBe(false);
-  });
-
-  it('SessionHistoryPopover dialog is not inside the message content area', async () => {
-    const user = userEvent.setup();
-    const { container } = await renderWithChannel(<ChatView />);
-    await user.click(screen.getByTitle('Session history'));
-    const dialog = await screen.findByRole('dialog');
-    const messageSection = container.querySelector('section[aria-label="message-content-wrapper"]');
     expect(messageSection!.contains(dialog)).toBe(false);
   });
 });
@@ -88,9 +69,10 @@ describe('ChatSession', () => {
     expect(screen.getByText('Yes')).toBeInTheDocument();
   });
 
-  it('renders HeaderBar', async () => {
+  it('chat 內無第二條 header（breadcrumb 已移除——chat-pane-header-unification）', async () => {
     await renderWithChannel(<ChatView />);
-    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.queryByLabelText('chat-breadcrumb')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Session history')).not.toBeInTheDocument();
   });
 
   it('keeps input enabled when processing', async () => {
@@ -105,26 +87,9 @@ describe('ChatSession', () => {
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
   });
 
-  it('shows session title in HeaderBar when title is set', async () => {
-    await renderWithChannel(<ChatView title="Fix the login bug" />);
-    expect(screen.getByText('Fix the login bug')).toBeInTheDocument();
-  });
-
   it('does not render TabBar', async () => {
     await renderWithChannel(<ChatView />);
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
-  });
-
-  it('shows Session history button in HeaderBar', async () => {
-    await renderWithChannel(<ChatView />);
-    expect(screen.getByTitle('Session history')).toBeInTheDocument();
-  });
-
-  it('clicking Session history button opens resume overlay', async () => {
-    const user = userEvent.setup();
-    await renderWithChannel(<ChatView />);
-    await user.click(screen.getByTitle('Session history'));
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   describe('control flow pipeline', () => {

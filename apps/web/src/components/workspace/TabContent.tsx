@@ -2,11 +2,8 @@ import { ChannelProvider } from '@/contexts/channel';
 import { type TabMeta, useTabActions } from '@/contexts/TabContext';
 import { ChatView } from '../chat/ChatView.tsx';
 
-export interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'mode' | 'branch'> {
+export interface TabContentProps extends Pick<TabMeta, 'cwd' | 'mode' | 'branch'> {
   channelId: string;
-  projectName: string;
-  onToggleLeft?: () => void;
-  onToggleRight?: () => void;
   onNewChannel?: (cwd: string) => void;
   rightPane?: React.ReactNode;
 }
@@ -20,11 +17,7 @@ export function TabContent({
   channelId,
   cwd,
   branch,
-  title,
-  projectName,
   mode,
-  onToggleLeft,
-  onToggleRight,
   onNewChannel,
   rightPane,
 }: TabContentProps): React.JSX.Element {
@@ -42,13 +35,7 @@ export function TabContent({
       }}
       onNewChannel={onNewChannel}
     >
-      <ChatView
-        title={title}
-        projectName={projectName}
-        onToggleLeft={onToggleLeft}
-        onToggleRight={onToggleRight}
-        rightPane={rightPane}
-      />
+      <ChatView rightPane={rightPane} />
     </ChannelProvider>
   );
 }
