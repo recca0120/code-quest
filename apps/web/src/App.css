@@ -99,6 +99,9 @@
   /* accent 淡底（design tokens.css: --accent-soft）——active dock chip 等；
      由 --color-accent 派生，跟著 data-theme 自動換色 */
   --color-accent-soft: color-mix(in srgb, var(--color-accent) 13%, transparent);
+  --color-accent-border-35: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  --color-accent-border-45: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  --color-accent-border-50: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
 
   --shadow-floating: 0 16px 40px rgba(8, 6, 4, 0.6);
 

@@ -126,7 +126,7 @@ export function WorkspaceTabBar({ onOpenSettings }: WorkspaceTabBarProps = {}): 
                   }
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-transparent outline-none w-20 text-xs"
+                className="bg-transparent outline-none w-20 text-[length:var(--text-ui)]"
               />
             ) : (
               // 單擊冒泡到 tab 切換；雙擊進 rename
@@ -161,7 +161,7 @@ export function WorkspaceTabBar({ onOpenSettings }: WorkspaceTabBarProps = {}): 
         type="button"
         data-testid="workspace-tab-add"
         onClick={() => addWorkspaceTab()}
-        className="px-2 py-0.5 text-xs opacity-60 hover:opacity-100"
+        className="px-2 py-0.5 text-[length:var(--text-ui)] opacity-60 hover:opacity-100"
       >
         +
       </button>
@@ -177,7 +177,7 @@ export function WorkspaceTabBar({ onOpenSettings }: WorkspaceTabBarProps = {}): 
           type="button"
           aria-label="Settings"
           onClick={onOpenSettings}
-          className="px-2 py-0.5 text-xs opacity-60 hover:opacity-100"
+          className="px-2 py-0.5 text-[length:var(--text-ui)] opacity-60 hover:opacity-100"
           title="Settings"
         >
           ⚙

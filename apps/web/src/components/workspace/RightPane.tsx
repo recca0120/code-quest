@@ -61,7 +61,7 @@ function clampRailWidth(width: number): number {
 
 const TRIGGER_BASE = cn(
   tabTrigger,
-  'flex-1 h-8 inline-flex items-center justify-center gap-1 text-[length:var(--text-label)] outline-none min-w-0',
+  'flex-1 h-(--tab-h) inline-flex items-center justify-center gap-1 text-[length:var(--text-label)] outline-none min-w-0',
 );
 
 export function RightPane({
@@ -129,9 +129,9 @@ export function RightPane({
         <div
           data-testid="rail-grabber"
           onPointerDown={handleGrabberDown}
-          className="group absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-accent/40 flex items-center justify-center z-10"
+          className="group absolute left-0 top-0 bottom-0 w-(--pane-gap) cursor-col-resize hover:bg-accent/40 flex items-center justify-center z-10"
         >
-          <span className="w-(--drawer-grab-bar-w) h-11 rounded-full bg-text-dim group-hover:bg-accent" />
+          <span className="w-(--drawer-grab-bar-w) h-(--hit-min) rounded-full bg-text-dim group-hover:bg-accent" />
         </div>
       )}
       <Tabs.List className="flex items-center border-b border-border-subtle">
@@ -157,7 +157,7 @@ export function RightPane({
             aria-label="open in drawer"
             title="以 drawer 檢視完整內容"
             onClick={() => onOpenDrawer(railTabContent(active, cwd))}
-            className="px-1 h-8 text-subtle hover:text-text shrink-0"
+            className="px-1 h-(--tab-h) text-subtle hover:text-text shrink-0"
           >
             ⤢
           </button>
@@ -168,7 +168,7 @@ export function RightPane({
             aria-label="collapse rail"
             title="收合側欄"
             onClick={onCollapse}
-            className="px-1 h-8 text-subtle hover:text-text shrink-0"
+            className="px-1 h-(--tab-h) text-subtle hover:text-text shrink-0"
           >
             ⇥
           </button>

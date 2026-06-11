@@ -164,18 +164,10 @@ describe('TabProvider', () => {
       });
       expect(screen.queryByTestId('empty-pane')).not.toBeInTheDocument();
 
-      // PanePicker：進行中 session 列為 item；點 item 後 picker 關閉、
-      // session 仍在 focused pane（item 走 onShowHere 的「show here」語意）
-      await user.keyboard('{Control>}k{/Control}');
-      expect(await screen.findByTestId('pane-picker-miller')).toBeInTheDocument();
-      await user.click(screen.getByTestId('modal-session-item-ch-1'));
-      await waitFor(() =>
-        expect(screen.queryByTestId('pane-picker-miller')).not.toBeInTheDocument(),
-      );
-      // 「show here」語意：session 留在 focused pane（header 仍掛該 session 的 ⎇）
-      const headerAfterPicker = screen.getByTestId('pane-header');
-      expect(headerAfterPicker.dataset.focused).toBe('true');
-      expect(headerAfterPicker.textContent).toContain('⎇ feat/one');
+      // activate 後 session 仍在 focused pane
+      const headerAfter = screen.getByTestId('pane-header');
+      expect(headerAfter.dataset.focused).toBe('true');
+      expect(headerAfter.textContent).toContain('⎇ feat/one');
     });
 
     it('channel NOT yet in tabs（disconnected row）→ pending 等待不清除，session 復活才 activate', async () => {

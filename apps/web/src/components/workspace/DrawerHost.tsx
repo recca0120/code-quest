@@ -172,7 +172,7 @@ export function DrawerHost(): React.JSX.Element | null {
               <button
                 type="button"
                 onClick={handlePin}
-                className="px-2 py-1 text-xs rounded-(--radius-row) bg-(--color-accent-soft) text-accent border border-[color-mix(in_srgb,var(--color-accent)_45%,var(--color-border))]"
+                className="px-2 py-1 text-xs rounded-(--radius-row) bg-(--color-accent-soft) text-accent border border-(--color-accent-border-45)"
               >
                 ⊞ 釘選成 pane
               </button>

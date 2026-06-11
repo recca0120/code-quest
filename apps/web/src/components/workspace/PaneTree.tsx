@@ -98,8 +98,7 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
       data-focused={isFocused || undefined}
       data-dimmed={isDimmed || undefined}
       data-mode={permissionMode}
-      style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
-      className={`group/pane flex flex-1 min-w-0 min-h-0 flex-col rounded-(--pane-radius) border ${
+      className={`group/pane flex flex-1 min-w-0 min-h-0 flex-col overflow-hidden relative rounded-(--pane-radius) border ${
         isFocused
           ? 'border-(--color-pane-focus) ring-1 ring-(--color-pane-focus-ring)'
           : 'border-border'

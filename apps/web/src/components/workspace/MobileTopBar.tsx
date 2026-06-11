@@ -46,7 +46,7 @@ export function MobileTopBar({ onOpenWall }: MobileTopBarProps): React.JSX.Eleme
         {tabDropdownOpen && (
           <div
             data-testid="mobile-topbar-tab-list"
-            className="absolute top-full left-0 mt-1 z-popover bg-popover border border-border rounded shadow-md py-1 min-w-32"
+            className="absolute top-full left-0 mt-1 z-popover bg-surface border border-border rounded shadow-floating py-1 min-w-32"
           >
             {workspaceTabs.map((wt, idx) => (
               <button
