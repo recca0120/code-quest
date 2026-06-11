@@ -25,7 +25,15 @@ function extractBlock(selector: RegExp): string {
   return block;
 }
 
-const themeBlock = extractBlock(/@theme\s*\{([\s\S]*?)\n\}/);
+// 合併所有 @theme 區塊內容（App.css 拆成多段 @theme 方便註解分組）
+const themeBlock = (() => {
+  const blocks: string[] = [];
+  const re = /@theme\s*\{([\s\S]*?)\n\}/g;
+  let m: RegExpExecArray | null;
+  for (m = re.exec(appCss); m !== null; m = re.exec(appCss)) blocks.push(m[1]!);
+  if (blocks.length === 0) throw new Error('No @theme blocks found in App.css');
+  return blocks.join('\n');
+})();
 const darkBlock = extractBlock(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/);
 const lightBlock = extractBlock(/:root\[data-theme="light"\]\s*\{([\s\S]*?)\n\}/);
 
@@ -163,5 +171,80 @@ describe('T3 ComposeToolbar send button uses data-mode + CSS var dispatch', () =
     expect(composeToolbarSrc).toMatch(/function SendButton\(/);
     expect(composeToolbarSrc).toMatch(/data-mode=\{mode\}/);
     expect(composeToolbarSrc).toMatch(/bg-mode-accent\b/);
+  });
+});
+
+// ── T6 — font-scale axis (App.proposal.css §4) ──
+describe('T6 — font-scale axis', () => {
+  it('@theme declares --font-scale, --text-body, --text-ui, --text-code, --text-statusline', () => {
+    expect(themeBlock).toMatch(/--font-scale:\s*1\b/);
+    expect(themeBlock).toMatch(/--text-body:\s*calc\(13px\s*\*\s*var\(--font-scale\)\)/);
+    expect(themeBlock).toMatch(/--text-ui:\s*calc\(12px\s*\*\s*var\(--font-scale\)\)/);
+    expect(themeBlock).toMatch(/--text-code:\s*calc\(11\.5px\s*\*\s*var\(--font-scale\)\)/);
+    expect(themeBlock).toMatch(/--text-statusline:\s*calc\(10\.5px\s*\*\s*var\(--font-scale\)\)/);
+  });
+
+  it('declares data-fontsize="s" with --font-scale: 0.92', () => {
+    expect(appCss).toMatch(/:root\[data-fontsize="s"\]\s*\{\s*--font-scale:\s*0\.92/);
+  });
+
+  it('declares data-fontsize="l" and "xl"', () => {
+    expect(appCss).toMatch(/:root\[data-fontsize="l"\]\s*\{\s*--font-scale:\s*1\.08/);
+    expect(appCss).toMatch(/:root\[data-fontsize="xl"\]\s*\{\s*--font-scale:\s*1\.15/);
+  });
+});
+
+// ── T7 — density component-token overrides (App.proposal.css §5) ──
+describe('T7 — density component-token overrides', () => {
+  it('@theme declares --density-row-pad-y and --msg-gap', () => {
+    expect(themeBlock).toMatch(/--density-row-pad-y:\s*5px/);
+    expect(themeBlock).toMatch(/--msg-gap:\s*16px/);
+  });
+
+  it('compact overrides pane-header-h / tabbar-h / tab-h / statusline-h', () => {
+    const compact = extractBlock(/:root\[data-density="compact"\]\s*\{([\s\S]*?)\n\}/);
+    expect(compact).toMatch(/--pane-header-h:\s*26px/);
+    expect(compact).toMatch(/--tabbar-h:\s*34px/);
+    expect(compact).toMatch(/--tab-h:\s*28px/);
+    expect(compact).toMatch(/--statusline-h:\s*22px/);
+  });
+
+  it('relaxed overrides pane-header-h / tabbar-h / tab-h / statusline-h', () => {
+    const relaxed = extractBlock(/:root\[data-density="relaxed"\]\s*\{([\s\S]*?)\n\}/);
+    expect(relaxed).toMatch(/--pane-header-h:\s*34px/);
+    expect(relaxed).toMatch(/--tabbar-h:\s*42px/);
+    expect(relaxed).toMatch(/--statusline-h:\s*30px/);
+  });
+});
+
+// ── T8 — command palette tokens (App.proposal.css §4) ──
+describe('T8 — command palette tokens', () => {
+  it('@theme declares palette-w, palette-input-h, palette-row-h, palette-max-h', () => {
+    expect(themeBlock).toMatch(/--palette-w:\s*640px/);
+    expect(themeBlock).toMatch(/--palette-input-h:\s*48px/);
+    expect(themeBlock).toMatch(/--palette-row-h:\s*36px/);
+    expect(themeBlock).toMatch(/--palette-max-h:\s*min\(480px,\s*64vh\)/);
+  });
+
+  it('@theme declares --color-palette-match and --dur-palette', () => {
+    expect(themeBlock).toMatch(/--color-palette-match:\s*var\(--color-accent-mark-bg\)/);
+    expect(themeBlock).toMatch(/--dur-palette:\s*160ms/);
+  });
+});
+
+// ── T9 — V3 roast theme (App.proposal.css §6) ──
+describe('T9 — V3 roast theme', () => {
+  it('declares data-theme="roast" with distinct bg and accent', () => {
+    const roast = extractBlock(/:root\[data-theme="roast"\]\s*\{([\s\S]*?)\n\}/);
+    expect(roast).toMatch(/--color-bg:\s*#14100c/);
+    expect(roast).toMatch(/--color-accent:\s*#e08348/);
+    expect(roast).toMatch(/--color-text:\s*#e0d5c2/);
+  });
+});
+
+// ── T10 — theme-transition token ──
+describe('T10 — theme-transition token', () => {
+  it('@theme declares --theme-transition', () => {
+    expect(themeBlock).toMatch(/--theme-transition:\s*120ms\s+ease/);
   });
 });

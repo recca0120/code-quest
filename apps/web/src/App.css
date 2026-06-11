@@ -124,6 +124,36 @@
   --radius-composer: 14px;
 }
 
+/* --- 偏好設定 tokens：theme / font-size / density ＋ command palette ---
+   三軸互相獨立，各自存 localStorage：
+   <html data-theme="dark|light|roast|auto"
+         data-fontsize="s|m|l|xl"
+         data-density="compact|comfortable|relaxed"> */
+@theme {
+  /* font-size：--font-scale 乘到所有 type token */
+  --font-scale: 1;
+  --text-body: calc(13px * var(--font-scale));
+  --text-ui: calc(12px * var(--font-scale));
+  --text-code: calc(11.5px * var(--font-scale));
+  --text-statusline: calc(10.5px * var(--font-scale));
+  /* 例外：--text-input-sm 16px 固定，防 iOS 聚焦縮放 */
+
+  /* density：預設 comfortable 檔 */
+  --density-row-pad-y: 5px;
+  --msg-gap: 16px;
+  /* compact/relaxed 同時覆寫 --pane-header-h / --tabbar-h / --tab-h / --statusline-h（見下方） */
+
+  /* command palette（⌘⇧K，與 PanePicker 共用 modal shell） */
+  --palette-w: 640px;
+  --palette-input-h: 48px;
+  --palette-row-h: 36px;
+  --palette-max-h: min(480px, 64vh);
+  --color-palette-match: var(--color-accent-mark-bg);
+  --dur-palette: 160ms;
+
+  --theme-transition: 120ms ease;
+}
+
 /* --- RWD tokens ---
    斷點：<768 mobile／768–1024 tablet／≥1024 desktop（mobile/tablet 界線用內建 md）。
    原則：pane tree 不銷毀，斷點只改變「同時渲染幾個 pane」。 */
@@ -355,7 +385,19 @@
   --shadow-floating: 0 12px 32px rgba(60, 50, 35, 0.14);
 }
 
-/* Font-size axis — html font-size drives rem cascade. md = browser default (16px). */
+/* Font-size axis — --font-scale 乘數（App.proposal.css §4）。
+   data-fontsize="s|m|l|xl"，m 為預設（--font-scale: 1）。
+   保留舊 data-font 別名作為向後相容（兩個 attr 同時生效不衝突）。 */
+:root[data-fontsize="s"] {
+  --font-scale: 0.92;
+}
+:root[data-fontsize="l"] {
+  --font-scale: 1.08;
+}
+:root[data-fontsize="xl"] {
+  --font-scale: 1.15;
+}
+/* 舊軸向後相容（rem cascade，與 --font-scale 獨立——共存不衝突） */
 :root[data-font="sm"] {
   font-size: 14px;
 }
@@ -366,10 +408,57 @@
   font-size: 18px;
 }
 
-/* Density axis — override Tailwind's `--spacing` base to shrink all p, gap, m
-   utilities proportionally (comfortable = default 0.25rem; compact 0.875x = 0.21875rem). */
+/* Density axis — 兩層：--spacing 縮放 + 元件 token 覆寫（App.proposal.css §5） */
 :root[data-density="compact"] {
   --spacing: 0.21875rem;
+  --density-row-pad-y: 3px;
+  --msg-gap: 12px;
+  --pane-header-h: 26px;
+  --tabbar-h: 34px;
+  --tab-h: 28px;
+  --statusline-h: 22px;
+  --palette-row-h: 32px;
+}
+:root[data-density="relaxed"] {
+  --density-row-pad-y: 8px;
+  --msg-gap: 20px;
+  --pane-header-h: 34px;
+  --tabbar-h: 42px;
+  --tab-h: 36px;
+  --statusline-h: 30px;
+  --palette-row-h: 40px;
+}
+
+/* --- V3 焙茶・金（data-theme="roast"；App.proposal.css §6）--- */
+:root[data-theme="roast"] {
+  color-scheme: dark;
+  --color-bg: #14100c;
+  --color-surface: #1d1712;
+  --color-surface-hover: #261e16;
+  --color-border: #41372a;
+  --color-text: #e0d5c2;
+  --color-text-muted: #a8977e;
+  --color-text-bright: #f5ecdc;
+  --color-text-subtle: #7d6f59;
+  --color-text-dim: #5d5240;
+  --color-text-faint: #3d352a;
+  --color-accent: #e08348;
+  --color-success: #8fb37c;
+  --color-warning: #d9b36b;
+  --color-danger: #e26b50;
+  --color-info: #8aa6c8;
+  --color-assistant: #e08348;
+  --color-code: #1d1712;
+  --color-code-block: #0f0c08;
+  --color-input-bg: #241c14;
+  --color-selected: rgba(217, 179, 107, 0.12);
+  --color-selected-text: #f5ecdc;
+  --color-claude-clay-orange: #e08348;
+  --color-accent-rgb: 224, 131, 72;
+  --color-accent-glow: rgba(224, 131, 72, 0.08);
+  --color-row-active-bg: rgba(224, 131, 72, 0.07);
+  --color-accent-mark-bg: rgba(224, 131, 72, 0.3);
+  --shadow-floating: 0 16px 40px rgba(0, 0, 0, 0.65);
 }
 
 /* Theme-reactive prose — rewires Tailwind Typography CSS vars to our tokens
