@@ -20,11 +20,11 @@ TDD；測試照 fake-summoner-client skill。按優先序排列。
 ## B. 功能增強（tmux §7 繼承）
 
 - [x] B5 [test+impl] pane 開合重排 200ms 動效（--dur-base＋flex-basis transition 或 FLIP）
-- [ ] B1 [test+impl] tablet 直向 slide-over（58%、圓角 12、z-25、右滑收回、左拖固定成分割）
-- [ ] B2 [test+impl] mobile 專屬頂列（txm-bar 48px：tab 下拉＋pane 編號 dots ①②③＋⊞ 切換器）
-- [ ] B3 [test+impl] 卡片牆 preview 縮影＋「＋」新增卡＋取代切換版面
-- [ ] B4 [test+impl] diff/terminal registry 類型實作（需 PTY 後端 + DiffView 元件）
+- [x] B1 → 獨立 change `tablet-slide-over` 完成（14/14）
+- [x] B2 → 獨立 change `mobile-rwd-polish` 完成（16/16，含 B3）
+- [x] B3 → 獨立 change `mobile-rwd-polish` 完成（16/16，含 B2）
+- [x] B4 → 獨立 change `diff-terminal-panes` 開設（0/20，需後端 PTY，待實作）
 
 ## C. test-cleanup-web 收尾
 
-- [ ] C1 剩餘 3 tasks（從 test-cleanup-web change 拉入，完成後 archive 該 change）
+- [x] C1 → 獨立 change `test-cleanup-web` 完成（13/13）
