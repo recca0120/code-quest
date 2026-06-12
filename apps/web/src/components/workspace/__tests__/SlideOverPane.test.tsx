@@ -9,16 +9,8 @@ describe('SlideOverPane 容器（2.1）', () => {
         <div data-testid="child">hello</div>
       </SlideOverPane>,
     );
-    const container = screen.getByTestId('slide-over-pane');
-    expect(container).toBeInTheDocument();
+    expect(screen.getByTestId('slide-over-pane')).toBeInTheDocument();
     expect(screen.getByTestId('child')).toBeInTheDocument();
-
-    const cls = container.className;
-    expect(cls).toMatch(/absolute/);
-    expect(cls).toMatch(/z-float/);
-    expect(cls).toMatch(/rounded/);
-    // 58% width via inline style
-    expect(container.style.width).toBe('var(--slideover-w)');
   });
 
   it('visible=false 時不渲染', () => {
@@ -84,17 +76,6 @@ describe('SlideOverPane 右滑手勢收回（4.1）', () => {
     fireEvent.pointerMove(pane, { clientX: 180 });
     fireEvent.pointerUp(pane);
     expect(onSwipeClose).not.toHaveBeenCalled();
-  });
-});
-
-describe('SlideOverPane zoom 優先（6.1）', () => {
-  it('visible=false 時不渲染（zoom mode 由 PaneTree 傳 visible=false）', () => {
-    render(
-      <SlideOverPane visible={false}>
-        <div data-testid="child">hello</div>
-      </SlideOverPane>,
-    );
-    expect(screen.queryByTestId('slide-over-pane')).not.toBeInTheDocument();
   });
 });
 

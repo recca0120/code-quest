@@ -91,18 +91,6 @@ describe('Workspace — multi-project', () => {
     // Both sessions render side-by-side in the same workspace tab.
     expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(2);
   });
-
-  it('two projects both appear in workspace with all sessions', async () => {
-    const result = await renderWithWorkspace();
-    const project = await result.addProject();
-    await project.launchSession();
-
-    result.claude.prepareInit();
-    const project2 = await result.addProject({ path: '/projects', dirName: 'other-project' });
-    await project2.launchSession();
-
-    expect(screen.getAllByPlaceholderText(/Esc to focus/i)).toHaveLength(2);
-  });
 });
 
 describe('Workspace — Desktop (≥1024px)', () => {
@@ -112,13 +100,7 @@ describe('Workspace — Desktop (≥1024px)', () => {
     expect(screen.queryByTitle('Projects')).toBeNull();
   });
 
-  it('Settings button is in WorkspaceTabBar', async () => {
-    await setupWithProject(1440);
-    const tabBar = screen.getByTestId('workspace-tab-bar');
-    expect(tabBar.querySelector('[aria-label="Settings"]')).toBeInTheDocument();
-  });
-
-  it('shows Settings button in WorkspaceTabBar; click opens Settings dialog', async () => {
+  it('Settings button in WorkspaceTabBar; click opens Settings dialog', async () => {
     const { user } = await setupWithProject(1440);
     await user.click(screen.getByRole('button', { name: /^settings$/i }));
     expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();

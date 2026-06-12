@@ -8,5 +8,5 @@
 
 ## Sub-changes
 
-- [ ] 1. `test-critical-fixes` — 高優先 7 項（act await、空 assertion、Skill 違規、mutable probe）
-- [ ] 2. `test-cleanup-polish` — 中低優先 15 項（重複合併、className→行為、命名、簡化）
+- [x] 1. `test-critical-fixes` — 高優先 7 項（act await、空 assertion、Skill 違規、mutable probe）
+- [x] 2. `test-cleanup-polish` — 中低優先 15 項（重複合併、className→行為、命名、簡化）
