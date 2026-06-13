@@ -18,6 +18,7 @@ import {
 } from '@code-quest/schemas';
 import type {
   CreateWorktreeOptions,
+  DiffStatResult,
   Git,
   GitAddResult,
   GitCommitResult,
@@ -43,6 +44,11 @@ export class RemoteGit implements Git {
   async status(cwd: string): Promise<GitStatusResult> {
     const raw = await this.rpc.request(REMOTE_METHODS.git.status, { cwd });
     return gitStatusResultSchema.parse(raw);
+  }
+
+  async diffStat(cwd: string): Promise<DiffStatResult> {
+    const raw = await this.rpc.request(REMOTE_METHODS.git.diffStat, { cwd });
+    return raw as DiffStatResult;
   }
 
   async checkout(cwd: string, branch: string): Promise<void> {

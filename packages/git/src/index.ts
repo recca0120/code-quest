@@ -3,6 +3,8 @@ export { LocalGit } from './local-git.ts';
 export { RemoteGit } from './remote-git.ts';
 export type {
   CreateWorktreeOptions,
+  DiffStatFile,
+  DiffStatResult,
   Git,
   GitAddResult,
   GitCommitResult,

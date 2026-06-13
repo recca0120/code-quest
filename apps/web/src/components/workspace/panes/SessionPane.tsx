@@ -123,33 +123,38 @@ export function SessionPane({
       }
     >
       <div ref={bodyRef} className="flex flex-col flex-1 min-h-0">
-        <div className="flex-1 min-h-0 flex flex-col">
-          <TabContent
-            channelId={content.channelId}
-            cwd={meta.cwd}
-            branch={meta.branch}
-            mode={meta.mode}
-            onNewChannel={(newCwd) => env.onNewTab({ cwd: newCwd })}
-            railWidth={railWidth}
-            rightPane={
-              rail.open && meta.cwd ? (
-                <RightPane
-                  cwd={meta.cwd}
-                  activeTab={rail.tab}
-                  onTabChange={(tab) => setRail({ ...rail, tab })}
-                  onCollapse={() => setRail({ ...rail, open: false })}
-                  onOpenDrawer={openDrawer}
-                  onPromote={(c) => splitPaneAndSetContent('h', c)}
-                  width={railWidth}
-                  onWidthDrag={setDragWidth}
-                  onWidthCommit={(w) => {
-                    setDragWidth(null);
-                    setRail({ ...rail, width: w });
-                  }}
-                />
-              ) : undefined
-            }
-          />
+        <div className="flex flex-1 min-h-0">
+          <div className="flex-1 min-h-0 flex flex-col">
+            <TabContent
+              channelId={content.channelId}
+              cwd={meta.cwd}
+              branch={meta.branch}
+              mode={meta.mode}
+              onNewChannel={(newCwd) => env.onNewTab({ cwd: newCwd })}
+            />
+          </div>
+          {rail.open && meta.cwd && (
+            <div
+              data-testid="chat-rail-wrapper"
+              className="w-(--rail-w) shrink-0 border-l border-border-subtle overflow-y-auto"
+              style={railWidth !== undefined ? { width: railWidth } : undefined}
+            >
+              <RightPane
+                cwd={meta.cwd}
+                activeTab={rail.tab}
+                onTabChange={(tab) => setRail({ ...rail, tab })}
+                onCollapse={() => setRail({ ...rail, open: false })}
+                onOpenDrawer={openDrawer}
+                onPromote={(c) => splitPaneAndSetContent('h', c)}
+                width={railWidth}
+                onWidthDrag={setDragWidth}
+                onWidthCommit={(w) => {
+                  setDragWidth(null);
+                  setRail({ ...rail, width: w });
+                }}
+              />
+            </div>
+          )}
         </div>
         {!rail.open && meta.cwd && (
           <PaneDock

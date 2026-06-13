@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ui/ErrorFallback.tsx';
@@ -17,27 +17,19 @@ import { SocketProvider } from './contexts/SocketContext.tsx';
 import { useEffectiveColorTheme } from './hooks/useEffectiveColorTheme.ts';
 import { createSocket, type TypedSocket } from './socket/client.ts';
 import { usePreferencesStore } from './stores/usePreferencesStore.ts';
+import { composeProviders } from './utils/compose-providers.tsx';
 import './App.css';
 
-export function AppProviders({ children }: { children: ReactNode }): React.JSX.Element {
-  return (
-    <SessionProvider>
-      <PluginProvider>
-        <ProjectProvider>
-          <NavigationProvider>
-            <GitProvider>
-              <FsProvider>
-                <OpenspecProvider>
-                  <CommandPaletteProvider>{children}</CommandPaletteProvider>
-                </OpenspecProvider>
-              </FsProvider>
-            </GitProvider>
-          </NavigationProvider>
-        </ProjectProvider>
-      </PluginProvider>
-    </SessionProvider>
-  );
-}
+export const AppProviders: React.ComponentType<{ children: React.ReactNode }> = composeProviders([
+  SessionProvider,
+  PluginProvider,
+  ProjectProvider,
+  NavigationProvider,
+  GitProvider,
+  FsProvider,
+  OpenspecProvider,
+  CommandPaletteProvider,
+]);
 
 export function App(): React.JSX.Element {
   const [socket, setSocket] = useState<TypedSocket | null>(null);

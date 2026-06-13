@@ -3,7 +3,13 @@ import { isAbsolute, resolve, sep } from 'node:path';
 import type { SimpleGit } from 'simple-git';
 import { AlreadyRepoError, NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';
-import type { GitDiffResult, GitLogResult, GitStatusResult, MinimalLogger } from './types.ts';
+import type {
+  DiffStatResult,
+  GitDiffResult,
+  GitLogResult,
+  GitStatusResult,
+  MinimalLogger,
+} from './types.ts';
 import { noopLogger } from './types.ts';
 
 const GIT_STATUS_UNTRACKED = '??';
@@ -49,6 +55,37 @@ export class GitCommands {
       behind: s.behind,
       hasUpstream: s.tracking != null,
     };
+  }
+
+  async diffStat(cwd: string): Promise<DiffStatResult> {
+    const git = createGit(cwd);
+    const [unstaged, staged] = await Promise.all([
+      rawGit(git, ['diff', '--numstat']),
+      rawGit(git, ['diff', '--numstat', '--cached']),
+    ]);
+    const map = new Map<string, { insertions: number; deletions: number }>();
+    for (const output of [unstaged.stdout, staged.stdout]) {
+      for (const line of output.split('\n')) {
+        if (!line.trim()) continue;
+        const parts = line.split('\t');
+        const ins = parts[0] ?? '-';
+        const del = parts[1] ?? '-';
+        const file = parts.slice(2).join('\t');
+        const insertions = ins === '-' ? 0 : Number.parseInt(ins, 10);
+        const deletions = del === '-' ? 0 : Number.parseInt(del, 10);
+        const existing = map.get(file);
+        if (existing) {
+          existing.insertions += insertions;
+          existing.deletions += deletions;
+        } else {
+          map.set(file, { insertions, deletions });
+        }
+      }
+    }
+    const files = [...map.entries()].map(([file, stats]) => ({ file, ...stats }));
+    const totalInsertions = files.reduce((sum, f) => sum + f.insertions, 0);
+    const totalDeletions = files.reduce((sum, f) => sum + f.deletions, 0);
+    return { files, totalInsertions, totalDeletions };
   }
 
   async checkout(cwd: string, branch: string): Promise<void> {

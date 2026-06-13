@@ -156,12 +156,18 @@ export function create({
       return;
     }
     try {
-      const status = await gitService.status(parsed.data.cwd);
+      const cwd = parsed.data.cwd;
+      const [status, diffStat] = await Promise.all([
+        gitService.status(cwd),
+        gitService.diffStat(cwd),
+      ]);
       callback?.(
         ok({
           branch: status.branch,
           isClean: status.isClean,
           changedFilesCount: status.changedFiles.length,
+          insertions: diffStat.totalInsertions,
+          deletions: diffStat.totalDeletions,
         }),
       );
     } catch (e) {

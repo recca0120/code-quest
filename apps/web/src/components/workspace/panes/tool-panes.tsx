@@ -1,7 +1,5 @@
-import { FilesView } from '@/components/files/FilesView';
-import { GitView } from '@/components/git/GitView';
-import { SpecView } from '@/components/spec/SpecView';
 import type { PaneContent } from '@/contexts/TabContext';
+import { renderPaneView } from '../pane-view-render';
 import { useAvailableWorktrees } from '../useAvailableWorktrees.ts';
 import { WorktreeSwitcher } from '../WorktreeSwitcher.tsx';
 import { PaneShell, type PaneToolbarCommonProps } from './PaneShell.tsx';
@@ -46,19 +44,19 @@ export const GitPane: (props: ToolPaneProps) => React.JSX.Element = createToolPa
   icon: '±',
   label: 'Git',
   makeContent: (cwd) => ({ type: 'git', target: { kind: 'fixed', cwd } }),
-  renderView: (cwd) => <GitView cwd={cwd} />,
+  renderView: (cwd) => renderPaneView('git', cwd),
 });
 
 export const FilesPane: (props: ToolPaneProps) => React.JSX.Element = createToolPane({
   icon: '▤',
   label: 'Files',
   makeContent: (cwd) => ({ type: 'files', target: { kind: 'fixed', cwd } }),
-  renderView: (cwd) => <FilesView cwd={cwd} />,
+  renderView: (cwd) => renderPaneView('files', cwd),
 });
 
 export const OpenspecPane: (props: ToolPaneProps) => React.JSX.Element = createToolPane({
   icon: '◈',
   label: 'Spec',
   makeContent: (cwd) => ({ type: 'openspec', target: { kind: 'fixed', cwd } }),
-  renderView: (cwd) => <SpecView cwd={cwd} />,
+  renderView: (cwd) => renderPaneView('openspec', cwd),
 });

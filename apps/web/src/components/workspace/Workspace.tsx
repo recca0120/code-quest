@@ -2,7 +2,6 @@ import type { WorktreeInfo } from '@code-quest/git';
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useCommandPaletteActions, useCommandPaletteState } from '@/contexts/CommandPaletteContext';
 import { DrawerProvider } from '@/contexts/DrawerContext.tsx';
@@ -17,15 +16,17 @@ import {
   usePaneActions,
   usePaneState,
 } from '@/contexts/TabContext';
+import {
+  useWorkspaceDialogsActions,
+  WorkspaceDialogsProvider,
+} from '@/contexts/WorkspaceDialogsContext';
 import { NO_FORM } from '@/utils/hotkey-options';
-import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
-import { CreateWorktreeDialog } from '../project/CreateWorktreeDialog.tsx';
-import { SettingsDialog } from '../settings/SettingsDialog.tsx';
 import { DrawerHost } from './DrawerHost.tsx';
 import { KeyboardShortcutsProvider } from './KeyboardShortcutsProvider.tsx';
 import { NavigationIntentBridge } from './NavigationIntentBridge.tsx';
 import { PanePicker } from './PanePicker.tsx';
 import { TabContainer } from './TabContainer.tsx';
+import { WorkspaceDialogs } from './WorkspaceDialogs.tsx';
 
 type PanePickerConfig = Omit<
   React.ComponentProps<typeof PanePicker>,
@@ -125,11 +126,6 @@ function ConnectedPanePicker(props: PanePickerConfig) {
   );
 }
 
-const ADD_PROJECT_ERRORS: Record<string, (p: string) => string> = {
-  path_not_found: (p) => `Path not found: ${p}`,
-  path_not_directory: (p) => `Not a directory: ${p}`,
-};
-
 function DocumentTitle() {
   const { sessions } = useSession();
   const isBusy = sessions.some((s) => s.state === 'busy');
@@ -140,11 +136,17 @@ function DocumentTitle() {
 }
 
 export function Workspace(): React.JSX.Element {
+  return (
+    <WorkspaceDialogsProvider>
+      <WorkspaceInner />
+    </WorkspaceDialogsProvider>
+  );
+}
+
+function WorkspaceInner(): React.JSX.Element {
   const { closePalette } = useCommandPaletteActions();
   const { open: paletteOpen, defaultTab: paletteDefaultTab } = useCommandPaletteState();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
+  const { openAddProject, openSettings, openCreateWorktree } = useWorkspaceDialogsActions();
   const [panePickerOpen, setOpenInPaneModalOpen] = useState(false);
   const [pickerInitialQuery, setPickerInitialQuery] = useState<string | undefined>();
   const [openInPaneTargetPaneId, setOpenInPaneTargetPaneId] = useState<string | undefined>();
@@ -158,23 +160,18 @@ export function Workspace(): React.JSX.Element {
   const { projects, activeProjectCwd } = useProjectState();
   const { sessions } = useSession();
   const { selectedWorktreeCwd } = useNavigationState();
-  const { addProject, setActiveProject } = useProjectActions();
+  const { setActiveProject } = useProjectActions();
   const { listing } = useGitState();
   const { list: listWorktrees } = useGitActions();
 
-  // Stable identities for TabContainer props — Workspace re-renders on every
-  // session:states tick; inline arrows here would defeat memo(TabContainer)
-  // and churn paneEnvironment (the D5 render-isolation invariant)
   const handleSessionCreated = useCallback(() => setPendingSession(null), []);
   const handleOpenModal = useCallback((paneId?: string, opts?: { initialQuery?: string }) => {
     setOpenInPaneTargetPaneId(paneId);
     setPickerInitialQuery(opts?.initialQuery);
     setOpenInPaneModalOpen(true);
   }, []);
-  // ⌘⇧K 直開指令模式（unified-command-entry：› 前綴預填）
   useHotkeys('mod+shift+k', () => handleOpenModal(undefined, { initialQuery: '›' }), NO_FORM);
 
-  // openPalette（⌘F 等）轉接到 PanePicker（unified-command-entry 4.3）
   useEffect(() => {
     if (paletteOpen) {
       closePalette();
@@ -182,13 +179,14 @@ export function Workspace(): React.JSX.Element {
       handleOpenModal(undefined, { initialQuery });
     }
   }, [paletteOpen, paletteDefaultTab, closePalette, handleOpenModal]);
-  const handleOpenSettings = useCallback(() => setSettingsOpen(true), []);
+
+  const handleOpenSettings = useCallback(() => openSettings(), [openSettings]);
   const handleNewWorktree = useCallback(
     (projectCwd: string) => {
       setActiveProject(projectCwd);
-      setWorktreeDialogOpen(true);
+      openCreateWorktree(projectCwd);
     },
-    [setActiveProject],
+    [setActiveProject, openCreateWorktree],
   );
 
   useEffect(() => {
@@ -199,21 +197,6 @@ export function Workspace(): React.JSX.Element {
     }
   }, [projects, listing, listWorktrees]);
 
-  async function handleAddProject(cwd: string) {
-    const res = await addProject(cwd);
-    if ('error' in res) {
-      const p = res.path ?? cwd;
-      const msg = ADD_PROJECT_ERRORS[res.error]?.(p) ?? `Could not add project (${res.error})`;
-      toast.error(msg);
-      return;
-    }
-    setDialogOpen(false);
-  }
-
-  const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
-
-  // Stable identity per pendingSession value — an inline object would re-fire
-  // TabContainer's create effect on every Workspace render (duplicate sessions)
   const pendingNewSession = useMemo(
     () =>
       pendingSession
@@ -231,7 +214,6 @@ export function Workspace(): React.JSX.Element {
     const result: Record<string, WorktreeInfo[]> = {};
     for (const p of projects) {
       const entry = listing[p.cwd];
-      // undefined = 尚未載入（picker 顯示 loading）；error/非陣列 = 已回但失敗 → 空列表
       if (entry !== undefined) result[p.cwd] = Array.isArray(entry) ? entry : [];
     }
     return result;
@@ -250,7 +232,7 @@ export function Workspace(): React.JSX.Element {
           icon={<FolderOpenIcon className="w-10 h-10" />}
           message="No projects yet"
           actionLabel="Add Project"
-          onAction={() => setDialogOpen(true)}
+          onAction={openAddProject}
         />
       ) : (
         <TabProvider
@@ -295,34 +277,21 @@ export function Workspace(): React.JSX.Element {
             }}
             onNewWorktree={(projectCwd) => {
               setActiveProject(projectCwd);
-              setWorktreeDialogOpen(true);
+              openCreateWorktree(projectCwd);
               setOpenInPaneModalOpen(false);
             }}
             onAddProject={() => {
-              setDialogOpen(true);
+              openAddProject();
               setOpenInPaneModalOpen(false);
             }}
           />
         </TabProvider>
       )}
-      <AddProjectDialog
-        open={dialogOpen}
-        onSelect={handleAddProject}
-        onClose={() => setDialogOpen(false)}
-        addedProjectCwds={addedProjectCwds}
+      <WorkspaceDialogs
+        onWorktreeCreated={(projectCwd, path) => {
+          setPendingSession({ projectCwd, sessionCwd: path });
+        }}
       />
-      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      {worktreeDialogOpen && activeProjectCwd && (
-        <CreateWorktreeDialog
-          open
-          cwd={activeProjectCwd}
-          onClose={() => setWorktreeDialogOpen(false)}
-          onCreated={(path) => {
-            // 所有現行入口都來自 new-session flow — 建完即開，終結 8 步 dead-end
-            setPendingSession({ projectCwd: activeProjectCwd, sessionCwd: path });
-          }}
-        />
-      )}
     </main>
   );
 }

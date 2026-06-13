@@ -1,6 +1,7 @@
 import { GitCommands } from './commands.ts';
 import type {
   CreateWorktreeOptions,
+  DiffStatResult,
   Git,
   GitDiffResult,
   GitLogResult,
@@ -22,6 +23,7 @@ export class LocalGit implements Git {
   }
 
   status = (cwd: string): Promise<GitStatusResult> => this.commands.status(cwd);
+  diffStat = (cwd: string): Promise<DiffStatResult> => this.commands.diffStat(cwd);
   checkout = (cwd: string, branch: string): Promise<void> => this.commands.checkout(cwd, branch);
   log = (cwd: string, limit?: number): Promise<GitLogResult> => this.commands.log(cwd, limit);
   diff = (cwd: string, filePath?: string, status?: string): Promise<GitDiffResult> =>

@@ -252,7 +252,13 @@ export const worktreeStatusResponseSchema: z.ZodDiscriminatedUnion<
       {
         ok: z.ZodLiteral<true>;
         data: z.ZodObject<
-          { branch: z.ZodString; isClean: z.ZodBoolean; changedFilesCount: z.ZodNumber },
+          {
+            branch: z.ZodString;
+            isClean: z.ZodBoolean;
+            changedFilesCount: z.ZodNumber;
+            insertions: z.ZodNumber;
+            deletions: z.ZodNumber;
+          },
           z.core.$strip
         >;
       },
@@ -269,6 +275,8 @@ export const worktreeStatusResponseSchema: z.ZodDiscriminatedUnion<
     branch: z.string(),
     isClean: z.boolean(),
     changedFilesCount: z.number().int().nonnegative(),
+    insertions: z.number().int().nonnegative(),
+    deletions: z.number().int().nonnegative(),
   }),
 );
 export type WorktreeStatusResponse = z.infer<typeof worktreeStatusResponseSchema>;

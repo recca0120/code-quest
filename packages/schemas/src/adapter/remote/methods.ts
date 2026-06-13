@@ -32,6 +32,7 @@ export const REMOTE_METHODS = {
     push: 'git/push',
     fetch: 'git/fetch',
     pull: 'git/pull',
+    diffStat: 'git/diffStat',
     discardFile: 'git/discardFile',
     getRepoRoot: 'git/getRepoRoot',
     getProjectRoot: 'git/getProjectRoot',

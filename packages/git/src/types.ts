@@ -15,6 +15,13 @@ export type GitStatusResult = {
 export type GitLogResult = { entries: GitLogEntry[] } | { error: string };
 export type GitDiffResult = { diff: string };
 
+export type DiffStatFile = { file: string; insertions: number; deletions: number };
+export type DiffStatResult = {
+  files: DiffStatFile[];
+  totalInsertions: number;
+  totalDeletions: number;
+};
+
 export type GitAddResult = { ok: true } | { error: string };
 export type GitCommitResult = { ok: true; hash: string } | { error: string };
 export type GitPushResult = { ok: true } | { error: string };
@@ -42,6 +49,7 @@ export interface Git {
   readonly capabilities: GitCapabilities;
 
   status(cwd: string): Promise<GitStatusResult>;
+  diffStat(cwd: string): Promise<DiffStatResult>;
   checkout(cwd: string, branch: string): Promise<void>;
   log(cwd: string, limit?: number): Promise<GitLogResult>;
   diff(cwd: string, filePath?: string, status?: string): Promise<GitDiffResult>;

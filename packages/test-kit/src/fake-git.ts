@@ -1,6 +1,7 @@
 import {
   AlreadyRepoError,
   type CreateWorktreeOptions,
+  type DiffStatResult,
   type Git,
   type GitDiffResult,
   type GitLogResult,
@@ -181,6 +182,10 @@ export class FakeGit implements Git {
       behind: this._behind,
       hasUpstream: this._hasUpstream,
     };
+  }
+
+  async diffStat(_cwd: string): Promise<DiffStatResult> {
+    return { files: [], totalInsertions: 0, totalDeletions: 0 };
   }
 
   async checkout(_cwd: string, _branch: string): Promise<void> {

@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
-import { FilesView } from '@/components/files/FilesView';
-import { GitView } from '@/components/git/GitView';
-import { SpecView } from '@/components/spec/SpecView';
+import { useEffect, useMemo, useState } from 'react';
 import { useDrawerActions, useDrawerState } from '@/contexts/DrawerContext';
+import { useGitActions } from '@/contexts/GitContext';
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
 import { PANE_TYPE_REGISTRY } from './pane-registry';
+import { renderPaneView } from './pane-view-render';
 import { useMobileMode } from './useMobileMode';
 
 function drawerTitle(content: PaneContent): string {
@@ -21,16 +20,11 @@ function drawerIcon(content: PaneContent): string | null {
 function renderDrawerBody(content: PaneContent): React.ReactNode {
   if (!('target' in content) || content.target.kind !== 'fixed') return null;
   const cwd = content.target.cwd;
-  switch (content.type) {
-    case 'git':
-      return <GitView cwd={cwd} />;
-    case 'files':
-      return <FilesView cwd={cwd} />;
-    case 'openspec':
-      return <SpecView cwd={cwd} />;
-    default:
-      return null;
+  const type = content.type;
+  if (type === 'git' || type === 'files' || type === 'openspec') {
+    return renderPaneView(type, cwd);
   }
+  return null;
 }
 
 /**
@@ -45,13 +39,14 @@ export function DrawerHost(): React.JSX.Element | null {
   const [widthPx, setWidthPx] = useState<number | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const isMobile = useMobileMode();
+  const gitActions = useGitActions();
   // mobile bottom sheet 三段 snap（handoff §8：0／66／100）——0＝關閉
   const [sheetSnap, setSheetSnap] = useState<66 | 100>(66);
+  const [diffStat, setDiffStat] = useState<{ insertions: number; deletions: number } | null>(null);
   // 滑入動效：初掛 translate-x-full（mobile translate-y-full）→ 0，遮罩 fade
   const [entered, setEntered] = useState(false);
 
   // 開新 drawer 時重置寬度狀態，並起動滑入 transition
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 以 drawer 身份重置
   useEffect(() => {
     setWidthPx(null);
     setFullscreen(false);
@@ -68,6 +63,27 @@ export function DrawerHost(): React.JSX.Element | null {
       cancelAnimationFrame(raf2);
     };
   }, [drawer]);
+
+  const drawerCwd = useMemo(() => {
+    if (!drawer) return null;
+    if ('target' in drawer.content && drawer.content.target.kind === 'fixed')
+      return drawer.content.target.cwd;
+    return null;
+  }, [drawer]);
+
+  useEffect(() => {
+    setDiffStat(null);
+    if (!drawer || drawer.content.type !== 'git' || !drawerCwd) return;
+    let cancelled = false;
+    gitActions.status(drawerCwd).then((res) => {
+      if (cancelled || 'error' in res) return;
+      if (res.insertions + res.deletions > 0)
+        setDiffStat({ insertions: res.insertions, deletions: res.deletions });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [drawer, drawerCwd, gitActions]);
 
   function handleSheetGrabberDown(e: React.PointerEvent<HTMLDivElement>): void {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -138,7 +154,6 @@ export function DrawerHost(): React.JSX.Element | null {
       >
         {/* mobile sheet grabber（44×5）：上下拖 snap 0/66/100 */}
         {isMobile && (
-          // biome-ignore lint/a11y/noStaticElementInteractions: sheet 拖拉把手——esc／遮罩為等效關閉
           <div
             data-testid="sheet-grabber"
             onPointerDown={handleSheetGrabberDown}
@@ -149,7 +164,6 @@ export function DrawerHost(): React.JSX.Element | null {
         )}
         {/* 左緣拖寬把手（handoff §5：左緣 6px 熱區＋中央 44px 把手條）——mobile sheet 不提供 */}
         {!isMobile && (
-          // biome-ignore lint/a11y/noStaticElementInteractions: resize 把手——鍵盤等效為 ⤢ 全螢幕切換
           <div
             data-testid="drawer-grabber"
             onPointerDown={handleGrabberDown}
@@ -167,12 +181,17 @@ export function DrawerHost(): React.JSX.Element | null {
           <span className="font-mono text-[length:var(--text-ui)] font-semibold truncate">
             {drawerTitle(drawer.content)}
           </span>
+          {diffStat && (
+            <span data-testid="drawer-diffstat" className="font-mono text-2xs text-dim">
+              +{diffStat.insertions} / -{diffStat.deletions}
+            </span>
+          )}
           <span className="ml-auto flex items-center gap-2">
             {!isMobile && (
               <button
                 type="button"
                 onClick={handlePin}
-                className="px-2 py-1 text-[length:var(--text-ui)] rounded-(--radius-row) bg-(--color-accent-soft) text-accent border border-(--color-accent-border-45)"
+                className="px-2 py-1 text-[length:var(--text-ui)] rounded-(--radius-row) bg-accent text-selected-text"
               >
                 ⊞ 釘選成 pane
               </button>

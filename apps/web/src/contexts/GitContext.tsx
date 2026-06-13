@@ -66,9 +66,16 @@ interface WorktreeActions {
   initRepo: (cwd: string) => Promise<InitRepoResult>;
   listBranches: (cwd: string) => Promise<string[] | { error: string }>;
   checkout: (worktreeCwd: string, branch: string) => Promise<CheckoutResult>;
-  status: (
-    worktreeCwd: string,
-  ) => Promise<{ branch: string; isClean: boolean; changedFilesCount: number } | { error: string }>;
+  status: (worktreeCwd: string) => Promise<
+    | {
+        branch: string;
+        isClean: boolean;
+        changedFilesCount: number;
+        insertions: number;
+        deletions: number;
+      }
+    | { error: string }
+  >;
   rename: (
     worktreeCwd: string,
     newBranchName: string,

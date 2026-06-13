@@ -7,13 +7,7 @@ import { ChatInputArea } from './compose/ChatInputArea.tsx';
 import { MessageList } from './conversation/MessageList.tsx';
 import { WorktreeBanner } from './WorktreeBanner.tsx';
 
-interface ChatViewProps {
-  rightPane?: React.ReactNode;
-  /** rail 寬（px，拖寬把手 persist）；缺省走 --rail-w token */
-  railWidth?: number;
-}
-
-export function ChatView({ rightPane, railWidth }: ChatViewProps): React.JSX.Element {
+export function ChatView(): React.JSX.Element {
   const channelId = useChannelId();
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelComposeActions();
@@ -32,26 +26,14 @@ export function ChatView({ rightPane, railWidth }: ChatViewProps): React.JSX.Ele
       <ChannelOverlays />
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         {worktree && <WorktreeBanner worktree={worktree} />}
-        <div className="flex flex-1 overflow-hidden min-h-0">
-          <ChatShell>
-            <ChatShell.Body>
-              <MessageList />
-            </ChatShell.Body>
-            <ChatShell.Footer>
-              <ChatInputArea />
-            </ChatShell.Footer>
-          </ChatShell>
-          {rightPane && (
-            <div
-              data-testid="chat-rail-wrapper"
-              className="w-(--rail-w) shrink-0 border-l border-border-subtle overflow-y-auto"
-              // inline width 蓋過 class 的 token 預設（rail resize persist）
-              style={railWidth !== undefined ? { width: railWidth } : undefined}
-            >
-              {rightPane}
-            </div>
-          )}
-        </div>
+        <ChatShell>
+          <ChatShell.Body>
+            <MessageList />
+          </ChatShell.Body>
+          <ChatShell.Footer>
+            <ChatInputArea />
+          </ChatShell.Footer>
+        </ChatShell>
       </div>
     </>
   );
