@@ -1,5 +1,7 @@
 import type { PaneNode } from '@/contexts/TabContext';
 
+export const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
+
 export function formatWorktreeLabel(wt: { branch?: string; name: string }): string {
   return wt.branch ?? wt.name;
 }

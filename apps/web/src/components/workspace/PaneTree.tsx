@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  findLeafById,
   leafIdsInOrder,
   type PaneNode,
   usePaneActions,
@@ -73,7 +74,7 @@ function PaneLeaf({ node }: { node: Extract<PaneNode, { type: 'leaf' }> }) {
       : undefined;
   // 唯一 pane／尚無 focus 時不 dim（dim 只用來區分 focus 對象）。
   // dim 套在內容層（handoff §2：.dimmed 只 dim .cq-pane-body 不含 header）——
-  // wrapper 掛 group/pane＋data-dimmed，PaneShell 的 body 容器以 group-data-[dimmed]/pane 收
+  // wrapper 掛 group/pane＋data-dimmed，Pane 的 body 容器以 group-data-[dimmed]/pane 收
   const isDimmed = !isFocused && focusedPaneId !== null && paneRoot.type === 'split';
   // dragenter/leave 是巢狀冒泡事件——counter 避免子元素間移動時閃爍
   const [dragDepth, setDragDepth] = useState(0);
@@ -183,8 +184,8 @@ function PortraitSlideOver({
   const leaves = leafIdsInOrder(paneRoot);
   const primaryId = leaves[0];
   const isSecondaryFocused = focusedPaneId !== null && focusedPaneId !== primaryId;
-  const primaryNode = primaryId ? findLeafNode(paneRoot, primaryId) : null;
-  const secondaryNode = isSecondaryFocused ? findLeafNode(paneRoot, focusedPaneId) : null;
+  const primaryNode = primaryId ? findLeafById(paneRoot, primaryId) : null;
+  const secondaryNode = isSecondaryFocused ? findLeafById(paneRoot, focusedPaneId) : null;
 
   return (
     <div className="relative flex flex-1 min-w-0 min-h-0">
@@ -200,11 +201,6 @@ function PortraitSlideOver({
       </SlideOverPane>
     </div>
   );
-}
-
-function findLeafNode(node: PaneNode, id: string): Extract<PaneNode, { type: 'leaf' }> | null {
-  if (node.type === 'leaf') return node.id === id ? node : null;
-  return findLeafNode(node.first, id) ?? findLeafNode(node.second, id);
 }
 
 export function PaneTree(): React.JSX.Element {

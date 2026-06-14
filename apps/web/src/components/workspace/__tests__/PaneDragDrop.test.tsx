@@ -7,8 +7,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { Pane } from '@/components/workspace/Pane';
 import { PaneTree } from '@/components/workspace/PaneTree';
+import { Toolbar as PaneToolbar } from '@/components/workspace/panes/Pane';
 import { GitProvider } from '@/contexts/GitContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 import { SocketProvider } from '@/contexts/SocketContext';
@@ -33,7 +33,7 @@ describe('PaneDragDrop (D.1) pane header drag indicator', () => {
   it('header has draggable attribute', () => {
     render(
       <Wrapper>
-        <Pane.Toolbar paneId="p1" />
+        <PaneToolbar paneId="p1" />
       </Wrapper>,
     );
     expect(screen.getByTestId('pane-header')).toHaveAttribute('draggable', 'true');
@@ -42,7 +42,7 @@ describe('PaneDragDrop (D.1) pane header drag indicator', () => {
   it('dragstart sets data-dragging attribute', () => {
     render(
       <Wrapper>
-        <Pane.Toolbar paneId="p1" />
+        <PaneToolbar paneId="p1" />
       </Wrapper>,
     );
     const header = screen.getByTestId('pane-header');
@@ -53,7 +53,7 @@ describe('PaneDragDrop (D.1) pane header drag indicator', () => {
   it('dragend removes data-dragging attribute', () => {
     render(
       <Wrapper>
-        <Pane.Toolbar paneId="p1" />
+        <PaneToolbar paneId="p1" />
       </Wrapper>,
     );
     const header = screen.getByTestId('pane-header');
@@ -70,7 +70,7 @@ describe('PaneDragDrop (D.3) ghost drag image', () => {
     render(
       <Wrapper>
         <div data-pane-id="p1">
-          <Pane.Toolbar paneId="p1" />
+          <PaneToolbar paneId="p1" />
         </div>
       </Wrapper>,
     );
@@ -102,7 +102,7 @@ describe('PaneDragDrop (D.3) ghost drag image', () => {
     render(
       <Wrapper>
         <div data-pane-id="p1">
-          <Pane.Toolbar paneId="p1" />
+          <PaneToolbar paneId="p1" />
         </div>
       </Wrapper>,
     );

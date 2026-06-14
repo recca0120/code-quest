@@ -1,9 +1,7 @@
 import { leafIdsInOrder, usePaneActions, usePaneState } from '@/contexts/TabContext';
-import { leafLabel } from './pane-label.ts';
+import { CIRCLED, leafLabel } from './pane-label.ts';
 import { usePaneEnvironment } from './panes/PaneEnvironmentContext.tsx';
 import { useTabletMode, useVisiblePaneIds } from './useVisiblePanes.ts';
-
-const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 
 /**
  * Tablet 直立 tab 條（handoff §8）：超出上限的 pane 收成右側 34px 直立條，

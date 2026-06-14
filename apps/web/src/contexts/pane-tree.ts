@@ -157,6 +157,14 @@ export function hasLeaf(node: PaneNode, id: string): boolean {
   return hasLeaf(node.first, id) || hasLeaf(node.second, id);
 }
 
+export function findLeafById(
+  node: PaneNode,
+  id: string,
+): Extract<PaneNode, { type: 'leaf' }> | null {
+  if (node.type === 'leaf') return node.id === id ? node : null;
+  return findLeafById(node.first, id) ?? findLeafById(node.second, id);
+}
+
 function leafCwd(content: PaneContent): string | null {
   if (content.type === 'session') return content.cwd;
   if ('target' in content && content.target.kind === 'fixed') return content.target.cwd;

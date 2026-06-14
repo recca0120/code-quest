@@ -19,6 +19,7 @@ export {
   buildSessionPaneLabels,
   collectSessionsInPaneTree,
   findAncestorSplit,
+  findLeafById,
   findPaneByChannel,
   firstLeafId,
   firstPaneCwd,

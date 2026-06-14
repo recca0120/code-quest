@@ -14,9 +14,9 @@ import { PANE_TYPE_REGISTRY } from '../pane-registry';
 import { RightPane } from '../RightPane.tsx';
 import { TabContent } from '../TabContent.tsx';
 import { useWorktreeLookup } from '../useAvailableWorktrees.ts';
+import { Pane, type PaneToolbarCommonProps } from './Pane.tsx';
 import { PaneDock } from './PaneDock.tsx';
 import { usePaneEnvironment } from './PaneEnvironmentContext.tsx';
-import { PaneShell, type PaneToolbarCommonProps } from './PaneShell.tsx';
 
 /** handoff 定案：新 chat 預設展開側欄 */
 const DEFAULT_RAIL: RailState = { open: true, tab: 'files' };
@@ -82,7 +82,7 @@ export function SessionPane({
       ? `Last: ${hintWorktree.projectName} ⎇ ${formatWorktreeLabel(hintWorktree)}`
       : undefined;
     return (
-      <PaneShell toolbarProps={{ ...toolbarProps, typeIcon: CHAT_TYPE_ICON }} scrollable={false}>
+      <Pane toolbarProps={{ ...toolbarProps, typeIcon: CHAT_TYPE_ICON }} scrollable={false}>
         <EmptyState
           data-testid="empty-pane"
           icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}
@@ -95,12 +95,12 @@ export function SessionPane({
               : () => env.onNewTab({ targetPaneId: paneId })
           }
         />
-      </PaneShell>
+      </Pane>
     );
   }
 
   return (
-    <PaneShell
+    <Pane
       toolbarProps={{
         ...toolbarProps,
         branch: meta.branch,
@@ -165,6 +165,6 @@ export function SessionPane({
           />
         )}
       </div>
-    </PaneShell>
+    </Pane>
   );
 }

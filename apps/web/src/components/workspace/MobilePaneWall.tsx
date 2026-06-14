@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import {
   collectSessionsInPaneTree,
+  findLeafById,
   leafIdsInOrder,
   type PaneNode,
   usePaneActions,
   usePaneState,
   useTabState,
 } from '@/contexts/TabContext';
-import { leafLabel } from './pane-label.ts';
+import { CIRCLED, leafLabel } from './pane-label.ts';
 import { PANE_TYPE_REGISTRY } from './pane-registry';
 import { usePaneEnvironment } from './panes/PaneEnvironmentContext.tsx';
 import { useMobileMode } from './useMobileMode';
 
-const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 const BUSY_STATUSES = new Set(['processing', 'busy', 'cancelling']);
 
 function cardPreview(
@@ -29,11 +29,6 @@ function cardPreview(
   if (!entry) return null;
   const cwd = 'target' in c ? c.target.cwd : '';
   return { icon: entry.icon, preview: cwd.split('/').pop() ?? cwd };
-}
-
-function findLeaf(node: PaneNode, id: string): PaneNode | null {
-  if (node.type === 'leaf') return node.id === id ? node : null;
-  return findLeaf(node.first, id) ?? findLeaf(node.second, id);
 }
 
 /**
@@ -91,7 +86,7 @@ export function MobilePaneWall({
           >
             {leaves.map((id, idx) => {
               const isActive = focusedPaneId === id;
-              const leaf = findLeaf(paneRoot, id);
+              const leaf = findLeafById(paneRoot, id);
               const isBusy =
                 leaf !== null &&
                 [...collectSessionsInPaneTree(leaf)].some(

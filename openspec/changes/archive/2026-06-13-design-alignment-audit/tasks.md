@@ -3,7 +3,7 @@
 務必用 fake-summoner-client harness 做 TDD（先改測試 RED → 改 code GREEN）。expect 反映 design spec 定義的目標態。
 
 - [x] 1. **RWD-breakpoint**: `useTabletMode()` 下限 768→640px；相關 `useMobileMode()` 也確認用 640px；測試 setupMatchMedia 驗證 640–1023 為 tablet
-- [ ] 2. **drawer-diffstat**: (deferred — 需要新建 useGitDiffstat hook 連到 git context，另開 change) DrawerHost header 加 diffstat（+N/-N lines），從 drawer content 的 git diff 資料取得；測試驗 diffstat 文字渲染
+- [x] 2. **drawer-diffstat**: DrawerHost header 加 diffstat（+N/-N lines），透過 gitActions.status() 取得 insertions/deletions；已在 drawer-diffstat change 實作完成
 - [x] 3. **logo-visibility**: WorkspaceTabBar logo text 移除 `hidden md:inline`，改為 `hidden sm:inline`（640px 以上顯示）；測試 setupMatchMedia(640) 驗證 logo text 可見
 - [x] 4. **tab-busy-dot**: busy 燈改為 DOM 常駐 + `invisible`/`visible` 切換（非 conditional render）；測試驗證非 busy 時 dot 元素仍在 DOM
 - [x] 5. **pane-focus-border**: App.css `--color-pane-focus` 的 `color-mix` 第二參數從 `var(--color-border)` 改為 `transparent`；測試驗 CSS variable 值

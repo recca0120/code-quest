@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatWorktreeLabel } from '../pane-label';
+import { CIRCLED, formatWorktreeLabel } from '../pane-label';
+
+describe('CIRCLED', () => {
+  it('exports a 9-char string of circled digits ①–⑨', () => {
+    expect(CIRCLED).toBe('①②③④⑤⑥⑦⑧⑨');
+    expect(CIRCLED).toHaveLength(9);
+  });
+});
 
 describe('formatWorktreeLabel', () => {
   it('branch 存在時回傳 branch', () => {

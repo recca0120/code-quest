@@ -2,27 +2,30 @@ import { ArrowsPointingOutIcon, ViewColumnsIcon, XMarkIcon } from '@heroicons/re
 import { useEffect, useRef, useState } from 'react';
 import { leafIdsInOrder, usePaneState } from '@/contexts/TabContext';
 import { cn } from '@/utils/cn';
-import { useMobileMode } from './useMobileMode';
+import { useMobileMode } from '../useMobileMode';
 
-interface ToolbarProps {
+export interface PaneToolbarCommonProps {
   paneId: string;
+  isOnly?: boolean;
   branch?: string;
   title?: string;
-  cwd?: string;
-  isOnly?: boolean;
-  /** pane 類型 glyph（handoff §2 組成：編號徽章→類型 icon→標題）；session pane 傳 chat ✦ */
+  /** pane 類型 glyph（handoff §2）；session pane 傳 chat ✦ */
   typeIcon?: React.ReactNode;
   onSplitH?: () => void;
   onSplitV?: () => void;
   onZoom?: () => void;
   onClose?: () => void;
+}
+
+interface ToolbarProps extends PaneToolbarCommonProps {
+  cwd?: string;
   children?: React.ReactNode;
 }
 
 const TOOL_BTN =
   'w-6 h-6 flex items-center justify-center rounded hover:bg-hover-tint transition-colors';
 
-function Toolbar({
+export function Toolbar({
   paneId,
   branch,
   title,
@@ -47,7 +50,6 @@ function Toolbar({
     ghostRef.current = null;
   }
 
-  // unmount 時清掉殘留 ghost（drag 中 pane 被關閉等邊界）
   // biome-ignore lint/correctness/useExhaustiveDependencies: cleanup-only effect
   useEffect(() => removeGhost, []);
 
@@ -55,8 +57,6 @@ function Toolbar({
     setIsDragging(true);
     e.dataTransfer.setData('text/plain', paneId);
     e.dataTransfer.effectAllowed = 'move';
-    // ghost 縮影（handoff §7）：clone 整個 pane、半尺寸 cap 330×170、-1.5° 浮起
-    // happy-dom/jsdom 無 setDragImage → guard
     if (typeof e.dataTransfer.setDragImage !== 'function') return;
     const pane = e.currentTarget.closest('[data-pane-id]');
     if (!(pane instanceof HTMLElement)) return;
@@ -64,7 +64,6 @@ function Toolbar({
     const height = Math.min(Math.round(pane.offsetHeight / 2) || 170, 170);
     const ghost = pane.cloneNode(true) as HTMLElement;
     Object.assign(ghost.style, {
-      // 置 offscreen——setDragImage 的來源節點必須在 DOM 內，但不能閃現在版面上
       position: 'fixed',
       top: '-10000px',
       left: '0px',
@@ -84,7 +83,6 @@ function Toolbar({
     try {
       e.dataTransfer.setDragImage(ghost, Math.round(width / 2), 16);
     } catch {
-      // happy-dom 的 setDragImage 存在但擲 Not implemented——不留孤兒節點
       removeGhost();
     }
   }
@@ -94,7 +92,6 @@ function Toolbar({
     removeGhost();
   }
 
-  // 決策 14：header 只當 drag source——置換唯一落點是 PaneTree 的 drop-zone-center
   return (
     <div
       role="toolbar"
@@ -195,18 +192,33 @@ function Toolbar({
   );
 }
 
-function Content({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function Content({ children }: { children: React.ReactNode }): React.JSX.Element {
   return <div className="flex-1 overflow-auto min-h-0">{children}</div>;
 }
 
-type PaneComponent = ((props: { children: React.ReactNode }) => React.JSX.Element) & {
-  Toolbar: typeof Toolbar;
-  Content: typeof Content;
-};
-
-export const Pane: PaneComponent = Object.assign(
-  function Pane({ children }: { children: React.ReactNode }): React.JSX.Element {
-    return <div className="flex flex-col flex-1 min-w-0 min-h-0">{children}</div>;
-  },
-  { Toolbar, Content },
-);
+/**
+ * The single place that renders Toolbar + Content for leaf bodies — toolbar
+ * existence and common-prop wiring are guaranteed here, named pane components
+ * only contribute the `tools` slot and the body.
+ */
+export function Pane({
+  toolbarProps,
+  tools,
+  scrollable = true,
+  children,
+}: {
+  toolbarProps: PaneToolbarCommonProps;
+  tools?: React.ReactNode;
+  /** false = body manages its own layout/scroll (session panes) */
+  scrollable?: boolean;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <div className="flex flex-col flex-1 min-w-0 min-h-0">
+      <Toolbar {...toolbarProps}>{tools}</Toolbar>
+      <div className="flex flex-col flex-1 min-w-0 min-h-0 group-data-[dimmed]/pane:opacity-(--pane-dim-opacity)">
+        {scrollable ? <Content>{children}</Content> : children}
+      </div>
+    </div>
+  );
+}

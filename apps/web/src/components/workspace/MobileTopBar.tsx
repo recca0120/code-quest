@@ -5,9 +5,8 @@ import {
   usePaneState,
   useWorkspaceTab,
 } from '@/contexts/TabContext';
+import { CIRCLED } from './pane-label.ts';
 import { useMobileMode } from './useMobileMode';
-
-const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 
 interface MobileTopBarProps {
   onOpenWall?: () => void;

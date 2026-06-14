@@ -82,9 +82,13 @@ export class GitCommands {
         }
       }
     }
-    const files = [...map.entries()].map(([file, stats]) => ({ file, ...stats }));
-    const totalInsertions = files.reduce((sum, f) => sum + f.insertions, 0);
-    const totalDeletions = files.reduce((sum, f) => sum + f.deletions, 0);
+    let totalInsertions = 0;
+    let totalDeletions = 0;
+    const files = [...map.entries()].map(([file, stats]) => {
+      totalInsertions += stats.insertions;
+      totalDeletions += stats.deletions;
+      return { file, ...stats };
+    });
     return { files, totalInsertions, totalDeletions };
   }
 

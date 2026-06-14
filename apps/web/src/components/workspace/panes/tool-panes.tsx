@@ -2,7 +2,7 @@ import type { PaneContent } from '@/contexts/TabContext';
 import { renderPaneView } from '../pane-view-render';
 import { useAvailableWorktrees } from '../useAvailableWorktrees.ts';
 import { WorktreeSwitcher } from '../WorktreeSwitcher.tsx';
-import { PaneShell, type PaneToolbarCommonProps } from './PaneShell.tsx';
+import { Pane, type PaneToolbarCommonProps } from './Pane.tsx';
 
 interface ToolPaneProps {
   paneId: string;
@@ -21,7 +21,7 @@ function createToolPane(config: ToolPaneConfig) {
   return function ToolPane({ paneId, cwd, toolbarProps }: ToolPaneProps): React.JSX.Element {
     const availableWorktrees = useAvailableWorktrees();
     return (
-      <PaneShell
+      <Pane
         toolbarProps={toolbarProps}
         tools={
           <WorktreeSwitcher
@@ -35,7 +35,7 @@ function createToolPane(config: ToolPaneConfig) {
         }
       >
         {config.renderView(cwd)}
-      </PaneShell>
+      </Pane>
     );
   };
 }

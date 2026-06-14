@@ -12,7 +12,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { KeyboardShortcutsProvider } from '@/components/workspace/KeyboardShortcutsProvider';
-import { Pane } from '@/components/workspace/Pane';
+import { Toolbar as PaneToolbar } from '@/components/workspace/panes/Pane';
 import { SocketProvider } from '@/contexts/SocketContext';
 import {
   TabProvider,
@@ -105,7 +105,7 @@ describe('Fix-2: Focused pane has CSS ring indicator', () => {
   it('PaneHeader exposes data-focused for styling hooks', () => {
     render(
       <Wrapper>
-        <Pane.Toolbar paneId="p1" />
+        <PaneToolbar paneId="p1" />
       </Wrapper>,
     );
     // 裸 toolbar（無 TabProvider focus）不帶 data-focused；attr 由 focused 狀態驅動
@@ -213,7 +213,7 @@ describe('Fix-6: PaneHeader drag uses dataTransfer (no module-level state)', () 
   it('dragstart stores paneId in dataTransfer', () => {
     render(
       <Wrapper>
-        <Pane.Toolbar paneId="pane-abc" />
+        <PaneToolbar paneId="pane-abc" />
       </Wrapper>,
     );
     const header = screen.getByTestId('pane-header');

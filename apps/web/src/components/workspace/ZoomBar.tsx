@@ -6,9 +6,8 @@ import {
   usePaneState,
   useTabState,
 } from '@/contexts/TabContext';
+import { CIRCLED } from './pane-label.ts';
 import { PANE_TYPE_REGISTRY } from './pane-registry';
-
-const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 
 function findLeafContent(node: PaneNode, paneId: string): PaneContent | null {
   if (node.type === 'leaf') return node.id === paneId ? node.content : null;

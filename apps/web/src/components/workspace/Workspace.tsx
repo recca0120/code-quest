@@ -25,6 +25,7 @@ import { DrawerHost } from './DrawerHost.tsx';
 import { KeyboardShortcutsProvider } from './KeyboardShortcutsProvider.tsx';
 import { NavigationIntentBridge } from './NavigationIntentBridge.tsx';
 import { PanePicker } from './PanePicker.tsx';
+import { CIRCLED } from './pane-label.ts';
 import { TabContainer } from './TabContainer.tsx';
 import { WorkspaceDialogs } from './WorkspaceDialogs.tsx';
 
@@ -32,9 +33,6 @@ type PanePickerConfig = Omit<
   React.ComponentProps<typeof PanePicker>,
   'onShowHere' | 'onOpenToolPane' | 'onResume' | 'pastSessions'
 >;
-
-/** pane 編號 glyph（與 ZoomBar 同款；超出範圍退 #N） */
-const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
 
 function ConnectedPanePicker(props: PanePickerConfig) {
   const { setSessionInPane, setContentInPane, focusPane, splitPaneAndSetContent, openToolColumn } =

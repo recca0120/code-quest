@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDrawerActions, useDrawerState } from '@/contexts/DrawerContext';
 import { useGitActions } from '@/contexts/GitContext';
 import { type PaneContent, usePaneActions } from '@/contexts/TabContext';
@@ -19,12 +19,9 @@ function drawerIcon(content: PaneContent): string | null {
 
 function renderDrawerBody(content: PaneContent): React.ReactNode {
   if (!('target' in content) || content.target.kind !== 'fixed') return null;
-  const cwd = content.target.cwd;
-  const type = content.type;
-  if (type === 'git' || type === 'files' || type === 'openspec') {
-    return renderPaneView(type, cwd);
-  }
-  return null;
+  const { type } = content;
+  if (type !== 'git' && type !== 'files' && type !== 'openspec') return null;
+  return renderPaneView(type, content.target.cwd);
 }
 
 /**
@@ -64,12 +61,10 @@ export function DrawerHost(): React.JSX.Element | null {
     };
   }, [drawer]);
 
-  const drawerCwd = useMemo(() => {
-    if (!drawer) return null;
-    if ('target' in drawer.content && drawer.content.target.kind === 'fixed')
-      return drawer.content.target.cwd;
-    return null;
-  }, [drawer]);
+  const drawerCwd =
+    drawer && 'target' in drawer.content && drawer.content.target.kind === 'fixed'
+      ? drawer.content.target.cwd
+      : null;
 
   useEffect(() => {
     setDiffStat(null);
@@ -173,11 +168,14 @@ export function DrawerHost(): React.JSX.Element | null {
           </div>
         )}
         <header className="flex items-center gap-2 px-4 h-10 border-b border-border-subtle bg-surface shrink-0">
-          {drawerIcon(drawer.content) && (
-            <span aria-hidden="true" className="text-dim">
-              {drawerIcon(drawer.content)}
-            </span>
-          )}
+          {(() => {
+            const icon = drawerIcon(drawer.content);
+            return icon ? (
+              <span aria-hidden="true" className="text-dim">
+                {icon}
+              </span>
+            ) : null;
+          })()}
           <span className="font-mono text-[length:var(--text-ui)] font-semibold truncate">
             {drawerTitle(drawer.content)}
           </span>

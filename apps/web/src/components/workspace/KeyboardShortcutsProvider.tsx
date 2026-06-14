@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import {
   findAncestorSplit,
+  findLeafById,
   firstLeafId,
   leafIdsInOrder,
   type PaneNode,
@@ -18,22 +19,15 @@ function findAdjacentLeafId(
   currentId: string,
   direction: 'left' | 'right' | 'up' | 'down',
 ): string | null {
-  // Collect all leaves in order
-  const leaves: string[] = [];
-  function collect(node: PaneNode): void {
-    if (node.type === 'leaf') {
-      leaves.push(node.id);
-      return;
-    }
-    collect(node.first);
-    collect(node.second);
-  }
-  collect(root);
+  const leaves = leafIdsInOrder(root);
   const idx = leaves.indexOf(currentId);
   if (idx < 0) return null;
   if (direction === 'left' || direction === 'up') return leaves[idx - 1] ?? null;
   return leaves[idx + 1] ?? null;
 }
+
+const FONT_SIZES: FontSize[] = ['s', 'm', 'l', 'xl'];
+const FONT_LABELS: Record<FontSize, string> = { s: 'S', m: 'M', l: 'L', xl: 'XL' };
 
 function useKeyboardShortcuts(onOpenPicker?: (paneId?: string) => void): void {
   const { paneRoot, focusedPaneId, zoomedPaneId } = usePaneState();
@@ -44,11 +38,7 @@ function useKeyboardShortcuts(onOpenPicker?: (paneId?: string) => void): void {
 
   const focusedLeafCwd = (() => {
     if (!focusedPaneId) return undefined;
-    function findLeaf(node: PaneNode): Extract<PaneNode, { type: 'leaf' }> | null {
-      if (node.type === 'leaf') return node.id === focusedPaneId ? node : null;
-      return findLeaf(node.first) ?? findLeaf(node.second);
-    }
-    const leaf = findLeaf(paneRoot);
+    const leaf = findLeafById(paneRoot, focusedPaneId);
     if (!leaf) return undefined;
     if (leaf.content.type === 'session' && leaf.content.channelId) {
       return tabs[leaf.content.channelId]?.cwd ?? undefined;
@@ -69,28 +59,26 @@ function useKeyboardShortcuts(onOpenPicker?: (paneId?: string) => void): void {
 
       // ⌘=/⌘-/⌘0 字級快捷鍵（preferences-axis-alignment §4c）
       if (meta && !e.shiftKey && !e.altKey) {
-        const SIZES: FontSize[] = ['s', 'm', 'l', 'xl'];
         const { fontSize, setFontSize } = usePreferencesStore.getState();
-        const idx = SIZES.indexOf(fontSize);
-        const LABELS: Record<FontSize, string> = { s: 'S', m: 'M', l: 'L', xl: 'XL' };
+        const idx = FONT_SIZES.indexOf(fontSize);
         if (e.key === '=' || e.key === '+') {
           e.preventDefault();
-          const next = SIZES[(idx + 1) % SIZES.length] ?? fontSize;
+          const next = FONT_SIZES[(idx + 1) % FONT_SIZES.length] ?? fontSize;
           setFontSize(next);
-          window.dispatchEvent(new CustomEvent('font-size-hint', { detail: LABELS[next] }));
+          window.dispatchEvent(new CustomEvent('font-size-hint', { detail: FONT_LABELS[next] }));
           return;
         }
         if (e.key === '-') {
           e.preventDefault();
-          const next = SIZES[(idx - 1 + SIZES.length) % SIZES.length] ?? fontSize;
+          const next = FONT_SIZES[(idx - 1 + FONT_SIZES.length) % FONT_SIZES.length] ?? fontSize;
           setFontSize(next);
-          window.dispatchEvent(new CustomEvent('font-size-hint', { detail: LABELS[next] }));
+          window.dispatchEvent(new CustomEvent('font-size-hint', { detail: FONT_LABELS[next] }));
           return;
         }
         if (e.key === '0') {
           e.preventDefault();
           setFontSize('m');
-          window.dispatchEvent(new CustomEvent('font-size-hint', { detail: LABELS.m }));
+          window.dispatchEvent(new CustomEvent('font-size-hint', { detail: FONT_LABELS.m }));
           return;
         }
       }

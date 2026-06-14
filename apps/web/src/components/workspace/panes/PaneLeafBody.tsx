@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import { type PaneNode, usePaneActions, usePaneState } from '@/contexts/TabContext';
 import { guardSplitMinSize } from '../pane-min-size.ts';
+import type { PaneToolbarCommonProps } from './Pane.tsx';
 import { usePaneEnvironment } from './PaneEnvironmentContext.tsx';
-import type { PaneToolbarCommonProps } from './PaneShell.tsx';
 import { SessionPane } from './SessionPane.tsx';
 import { FilesPane, GitPane, OpenspecPane } from './tool-panes.tsx';
 import { WorktreesPaneContainer } from './WorktreesPaneContainer.tsx';
